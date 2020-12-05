@@ -1,0 +1,256 @@
+---
+title: 大数据之Hadoop
+categories: 
+- Hadoop
+tags: 
+- Hadoop介绍
+mathjax: true
+---
+
+
+
+# Hadoop介绍
+
+## 组成部分
+
+* Hadoop主要由3部分组成：
+  * Mapreduce编程模型
+  * HDFS分布式文件存储
+  * YARN
+
+<!--more-->
+
+## 配置信息
+
+管理员密码：admin123
+
+DNS1=202.103.24.68
+DNS2=202.103.44.150
+
+export HADOOP_HOME=/usr/local/hadoop-2.6.4
+export PATH=$HADOOP_HOME/bin$PATH:/usr/java/jdk1.8.0_201-amd64/bin
+
+
+
+## Hadoop HDFS 简介
+
+**概念：** 
+
+**namenode**：负责记录 数据块 的分布情况– 数据元数据信息 
+**datanode**:负责实际存储 数据块 
+**block**：是Hadoop最小存储数据单位 默认 128M 
+**secondarynamenode**: 辅助namenode完成fsimage管理或者优化
+
+
+
+##  HDFS简单命令
+
+* hadoop  version   //查看版本
+* hadoop fs        //文件系统客户端
+* hadoop  jar    //运行jar包
+* hadoop classpath //查看类路径
+* hadoop checknative //检查本地库并压缩
+* hadoop distcp   // 远程递归拷贝文件
+* hadoop credential //认证
+* hadoop trace    //跟踪
+
+
+
+* $ hdfs dfs -mkdir-p /user/ubuntu/        //在hdfs上建立文件夹
+* $ hdfs dfs -puthdfs.cmd  /user/ubuntu/  //将本地文件上传到HDFS
+* $ hdfs dfs -get/user/ubuntu/hadoop.cmd  a.cmd   //将文件从HDFS取回本地
+* $  hdfs dfs -rm -r  -f  /user/ubuntu/    //删除
+* $ hdfs dfs -ls -R/                       //递归展示HDFS文件系统
+
+
+
+
+
+一、hadoop所在目录
+cd usr/local/hadoop
+1
+
+
+二、启动hadoop
+bash ./starth.sh  
+% 运行start-dfs.sh
+% 运行start-yarn.sh
+1
+2
+3
+
+
+启动dfs，浏览器查看：
+
+172.16.31.17:50070
+1
+
+
+启动脚本，浏览器查看：
+
+172.16.31.17:8088
+1
+
+
+停止脚本：
+
+bash ./stoph.sh
+1
+三、常用命令
+
+1.显示hadoop目录结构
+
+hdfs dfs -ls -R /
+1
+
+
+2.在hadoop指定目录内创建新目录
+
+hdfs dfs -mkdir /winnie
+1
+
+
+3.将本地文件夹存储至hadoop
+
+hdfs dfs -put [本地目录] [hadoop目录]
+1
+
+
+4.将本地文件存储至hadoop
+
+hdfs dfs -put [本地地址] [hadoop目录]
+1
+
+
+5.查看指定目录下内容
+
+hdfs dfs -ls [文件目录]
+1
+
+
+6.打开某个已存在文件
+
+hdfs dfs -cat [file_path]
+1
+
+
+7.在hadoop指定目录下新建一个空文件
+
+hdfs dfs -touchz /winnie/test03.txt
+1
+
+
+8.将hadoop上某个文件重命名
+
+hdfs dfs -mv /winnie/test03.txt /winnie/test.txt
+1
+
+
+9.将hadoop上某个文件down至本地已有目录下
+
+hdfs dfs -get [文件目录] [本地目录]
+1
+
+
+10.将hadoop指定目录下所有内容保存为一个文件，同时down至本地
+
+hdfs dfs -getmerge /winnie/hadoop-file /home/spark/hadoop-file/test.txt
+1
+
+
+11.删除hadoop上指定文件
+
+hdfs dfs -rm [文件地址]
+1
+
+
+12.删除hadoop上指定文件夹（包含子目录等）
+
+hdfs dfs -rm -r [目录地址]
+hdfs dfs -rmr [目录地址]
+1
+2
+
+
+13.将正在运行的hadoop作业kill掉
+
+hadoop job -kill [job-id]
+1
+14.查看帮助
+
+hdfs dfs -help
+1
+四、安全模式
+1.退出安全模式
+
+NameNode在启动时会自动进入安全模式，安全模式是NameNode的一种状态，在这个阶段，文件系统不允许有任何修改。
+
+系统显示Name node in safe mode，说明系统正处于安全模式，这时只需要等待几十秒即可，也可通过下面的命令退出安全模式：
+
+/usr/local/hadoop$bin/hadoop dfsadmin -safemode leave
+1
+
+
+2.进入安全模式
+
+在必要情况下，可以通过以下命令吧HDFS置于安全模式：
+
+/usr/local/hadoop$bin/hadoop dfsadmin -safemode enter
+1
+
+五、补充
+
+1.对hdfs操作的命令格式是hdfs dfs
+
+1.1 -ls 表示对hdfs下一级目录的查看
+1.2 -lsr 表示对hdfs目录的递归查看
+1.3 -mkdir 创建目录
+1.4 -put 从Linux上传文件到hdfs
+1.5 -get 从hdfs下载文件到linux
+1.6 -text 查看文件内容
+1.7 -rm 表示删除文件
+1.7 -rmr 表示递归删除文件
+
+2.hdfs在对数据存储进行block划分时，如果文件大小超过block，那么按照block大小进行划分；不如block size的，划分为一个块，是实际数据大小。
+
+3.hadoop常用命令：
+
+hdfs dfs  查看Hadoop HDFS支持的所有命令   
+hdfs dfs –ls  列出目录及文件信息   
+hdfs dfs –lsr  循环列出目录、子目录及文件信息      
+hdfs dfs –tail /user/sunlightcs/test.txt  查看最后1KB的内容   
+
+hdfs dfs –copyFromLocal test.txt /user/sunlightcs/test.txt  从本地文件系统复制文件到HDFS文件系统，等同于put命令   
+hdfs dfs –copyToLocal /user/sunlightcs/test.txt test.txt  从HDFS文件系统复制文件到本地文件系统，等同于get命令   
+
+hdfs dfs –chgrp [-R] /user/sunlightcs  修改HDFS系统中/user/sunlightcs目录所属群组，选项-R递归执行，跟linux命令一样   
+hdfs dfs –chown [-R] /user/sunlightcs  修改HDFS系统中/user/sunlightcs目录拥有者，选项-R递归执行   
+hdfs dfs –chmod [-R] MODE /user/sunlightcs  修改HDFS系统中/user/sunlightcs目录权限，MODE可以为相应权限的3位数或+/-{rwx}，选项-R递归执行
+
+hdfs dfs –count [-q] PATH  查看PATH目录下，子目录数、文件数、文件大小、文件名/目录名   
+hdfs dfs –cp SRC [SRC …] DST       将文件从SRC复制到DST，如果指定了多个SRC，则DST必须为一个目录   
+hdfs dfs –du PATH  显示该目录中每个文件或目录的大小   
+hdfs dfs –dus PATH  类似于du，PATH为目录时，会显示该目录的总大小   
+
+hdfs dfs –expunge  清空回收站，文件被删除时，它首先会移到临时目录.Trash/中，当超过延迟时间之后，文件才会被永久删除   
+
+hdfs dfs –getmerge SRC [SRC …] LOCALDST [addnl]   获取由SRC指定的所有文件，将它们合并为单个文件，并写入本地文件系统中的LOCALDST，选项addnl将在每个文件的末尾处加上一个换行符   
+
+hdfs dfs –test –[ezd] PATH     对PATH进行如下类型的检查：-e PATH是否存在，如果PATH存在，返回0，否则返回1；-z 文件是否为空，如果长度为0，返回0，否则返回1； -d 是否为目录，如果PATH为目录，返回0，否则返回1  
+
+hdfs dfs –text PATH  显示文件的内容，当文件为文本文件时，等同于cat；文件为压缩格式（gzip以及hadoop的二进制序列文件格式）时，会先解压缩    
+
+hdfs dfs –help ls  查看某个[ls]命令的帮助文档
+
+
+
+## Mapreduce解释
+
+- **mapper的角色:**hadoop将用户提交的mapper可执行程序或脚本作为一个单独的进程加载起来，这个进程我们称之为mapper进程，hadoop不断地将文件片段转换为行，传递到我们的mapper进程中，mapper进程通过标准输入的方式一行一行地获取这些数据，然后设法将其转换为键值对，再通过标准输出的形式将这些键值对按照一对儿一行的方式输出出去。
+
+- 虽然在我们的mapper函数中，我们自己能分得清key/value(比方说有可能在我们的代码中使用的是string key,int value)，但是当我们采用标准输出之后，key value是打印到一行作为结果输出的(比如sys.stdout.write("%s\t%s\n"%(birthyear,gender)))，因此我们为了保证hadoop能从中鉴别出我们的键值对，键值对中一定要以分隔符'\t'即Tab(也可自定义分隔符)字符分隔，这样才能保证hadoop正确地为我们进行partitoner、shuffle等等过程。
+
+- **reducer的角色:**hadoop将用户提交的reducer可执行程序或脚本同样作为一个单独的进程加载起来，这个进程我们称之为reducer进程，hadoop不断地将键值对(按键排序)按照一对儿一行的方式传递到reducer进程中，reducer进程同样通过标准输入的方式按行获取这些键值对儿，进行自定义计算后将结果通过标准输出的形式输出出去。
+
+- 在reducer这个过程中需要注意的是：传递进reducer的键值对是按照键排过序的，这点是由MR框架的sort过程保证的，因此如果读到一个键与前一个键不同，我们就可以知道当前key对应的pairs已经结束了，接下来将是新的key对应的pairs。
+
