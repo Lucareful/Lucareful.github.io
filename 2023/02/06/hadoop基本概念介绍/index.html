@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Hadoop介绍 组成部分  Hadoop主要由3部分组成：  Mapreduce编程模型 HDFS分布式文件存储 YARN">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大数据之Hadoop">
+<meta property="og:url" content="https://luenci.me/2023/02/06/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="Hadoop介绍 组成部分  Hadoop主要由3部分组成：  Mapreduce编程模型 HDFS分布式文件存储 YARN">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="Hadoop介绍">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>大数据之Hadoop | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          大数据之Hadoop
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>Hadoop介绍</h1>
+<h2 id="组成部分">组成部分</h2>
+<ul>
+<li>Hadoop主要由3部分组成：
+<ul>
+<li>Mapreduce编程模型</li>
+<li>HDFS分布式文件存储</li>
+<li>YARN</li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h2 id="配置信息">配置信息</h2>
+<p>管理员密码：admin123</p>
+<p>DNS1=202.103.24.68<br>
+DNS2=202.103.44.150</p>
+<p>export HADOOP_HOME=/usr/local/hadoop-2.6.4<br>
+export PATH=$HADOOP_HOME/bin$PATH:/usr/java/jdk1.8.0_201-amd64/bin</p>
+<h2 id="Hadoop-HDFS-简介">Hadoop HDFS 简介</h2>
+<p><strong>概念：</strong></p>
+<p><strong>namenode</strong>：负责记录 数据块 的分布情况– 数据元数据信息<br>
+<strong>datanode</strong>:负责实际存储 数据块<br>
+<strong>block</strong>：是Hadoop最小存储数据单位 默认 128M<br>
+<strong>secondarynamenode</strong>: 辅助namenode完成fsimage管理或者优化</p>
+<h2 id="HDFS简单命令">HDFS简单命令</h2>
+<ul>
+<li>
+<p>hadoop  version   //查看版本</p>
+</li>
+<li>
+<p>hadoop fs        //文件系统客户端</p>
+</li>
+<li>
+<p>hadoop  jar    //运行jar包</p>
+</li>
+<li>
+<p>hadoop classpath //查看类路径</p>
+</li>
+<li>
+<p>hadoop checknative //检查本地库并压缩</p>
+</li>
+<li>
+<p>hadoop distcp   // 远程递归拷贝文件</p>
+</li>
+<li>
+<p>hadoop credential //认证</p>
+</li>
+<li>
+<p>hadoop trace    //跟踪</p>
+</li>
+<li>
+<p>$ hdfs dfs -mkdir-p /user/ubuntu/        //在hdfs上建立文件夹</p>
+</li>
+<li>
+<p>$ hdfs dfs -puthdfs.cmd  /user/ubuntu/  //将本地文件上传到HDFS</p>
+</li>
+<li>
+<p>$ hdfs dfs -get/user/ubuntu/hadoop.cmd  a.cmd   //将文件从HDFS取回本地</p>
+</li>
+<li>
+<p>$  hdfs dfs -rm -r  -f  /user/ubuntu/    //删除</p>
+</li>
+<li>
+<p>$ hdfs dfs -ls -R/                       //递归展示HDFS文件系统</p>
+</li>
+</ul>
+<p>一、hadoop所在目录<br>
+cd usr/local/hadoop<br>
+1</p>
+<p>二、启动hadoop<br>
+bash ./starth.sh<br>
+% <a target="_blank" rel="noopener" href="http://xn--start-dfs-u17zx81d.sh">运行start-dfs.sh</a><br>
+% <a target="_blank" rel="noopener" href="http://xn--start-yarn-3f62aw61d.sh">运行start-yarn.sh</a><br>
+1<br>
+2<br>
+3</p>
+<p>启动dfs，浏览器查看：</p>
+<p>172.16.31.17:50070<br>
+1</p>
+<p>启动脚本，浏览器查看：</p>
+<p>172.16.31.17:8088<br>
+1</p>
+<p>停止脚本：</p>
+<p>bash ./stoph.sh<br>
+1<br>
+三、常用命令</p>
+<p>1.显示hadoop目录结构</p>
+<p>hdfs dfs -ls -R /<br>
+1</p>
+<p>2.在hadoop指定目录内创建新目录</p>
+<p>hdfs dfs -mkdir /winnie<br>
+1</p>
+<p>3.将本地文件夹存储至hadoop</p>
+<p>hdfs dfs -put [本地目录] [hadoop目录]<br>
+1</p>
+<p>4.将本地文件存储至hadoop</p>
+<p>hdfs dfs -put [本地地址] [hadoop目录]<br>
+1</p>
+<p>5.查看指定目录下内容</p>
+<p>hdfs dfs -ls [文件目录]<br>
+1</p>
+<p>6.打开某个已存在文件</p>
+<p>hdfs dfs -cat [file_path]<br>
+1</p>
+<p>7.在hadoop指定目录下新建一个空文件</p>
+<p>hdfs dfs -touchz /winnie/test03.txt<br>
+1</p>
+<p>8.将hadoop上某个文件重命名</p>
+<p>hdfs dfs -mv /winnie/test03.txt /winnie/test.txt<br>
+1</p>
+<p>9.将hadoop上某个文件down至本地已有目录下</p>
+<p>hdfs dfs -get [文件目录] [本地目录]<br>
+1</p>
+<p>10.将hadoop指定目录下所有内容保存为一个文件，同时down至本地</p>
+<p>hdfs dfs -getmerge /winnie/hadoop-file /home/spark/hadoop-file/test.txt<br>
+1</p>
+<p>11.删除hadoop上指定文件</p>
+<p>hdfs dfs -rm [文件地址]<br>
+1</p>
+<p>12.删除hadoop上指定文件夹（包含子目录等）</p>
+<p>hdfs dfs -rm -r [目录地址]<br>
+hdfs dfs -rmr [目录地址]<br>
+1<br>
+2</p>
+<p>13.将正在运行的hadoop作业kill掉</p>
+<p>hadoop job -kill [job-id]<br>
+1<br>
+14.查看帮助</p>
+<p>hdfs dfs -help<br>
+1<br>
+四、安全模式<br>
+1.退出安全模式</p>
+<p>NameNode在启动时会自动进入安全模式，安全模式是NameNode的一种状态，在这个阶段，文件系统不允许有任何修改。</p>
+<p>系统显示Name node in safe mode，说明系统正处于安全模式，这时只需要等待几十秒即可，也可通过下面的命令退出安全模式：</p>
+<p>/usr/local/hadoop$bin/hadoop dfsadmin -safemode leave<br>
+1</p>
+<p>2.进入安全模式</p>
+<p>在必要情况下，可以通过以下命令吧HDFS置于安全模式：</p>
+<p>/usr/local/hadoop$bin/hadoop dfsadmin -safemode enter<br>
+1</p>
+<p>五、补充</p>
+<p>1.对hdfs操作的命令格式是hdfs dfs</p>
+<p>1.1 -ls 表示对hdfs下一级目录的查看<br>
+1.2 -lsr 表示对hdfs目录的递归查看<br>
+1.3 -mkdir 创建目录<br>
+1.4 -put 从Linux上传文件到hdfs<br>
+1.5 -get 从hdfs下载文件到linux<br>
+1.6 -text 查看文件内容<br>
+1.7 -rm 表示删除文件<br>
+1.7 -rmr 表示递归删除文件</p>
+<p>2.hdfs在对数据存储进行block划分时，如果文件大小超过block，那么按照block大小进行划分；不如block size的，划分为一个块，是实际数据大小。</p>
+<p>3.hadoop常用命令：</p>
+<p>hdfs dfs  查看Hadoop HDFS支持的所有命令<br>
+hdfs dfs –ls  列出目录及文件信息<br>
+hdfs dfs –lsr  循环列出目录、子目录及文件信息<br>
+hdfs dfs –tail /user/sunlightcs/test.txt  查看最后1KB的内容</p>
+<p>hdfs dfs –copyFromLocal test.txt /user/sunlightcs/test.txt  从本地文件系统复制文件到HDFS文件系统，等同于put命令<br>
+hdfs dfs –copyToLocal /user/sunlightcs/test.txt test.txt  从HDFS文件系统复制文件到本地文件系统，等同于get命令</p>
+<p>hdfs dfs –chgrp [-R] /user/sunlightcs  修改HDFS系统中/user/sunlightcs目录所属群组，选项-R递归执行，跟linux命令一样<br>
+hdfs dfs –chown [-R] /user/sunlightcs  修改HDFS系统中/user/sunlightcs目录拥有者，选项-R递归执行<br>
+hdfs dfs –chmod [-R] MODE /user/sunlightcs  修改HDFS系统中/user/sunlightcs目录权限，MODE可以为相应权限的3位数或+/-{rwx}，选项-R递归执行</p>
+<p>hdfs dfs –count [-q] PATH  查看PATH目录下，子目录数、文件数、文件大小、文件名/目录名<br>
+hdfs dfs –cp SRC [SRC …] DST       将文件从SRC复制到DST，如果指定了多个SRC，则DST必须为一个目录<br>
+hdfs dfs –du PATH  显示该目录中每个文件或目录的大小<br>
+hdfs dfs –dus PATH  类似于du，PATH为目录时，会显示该目录的总大小</p>
+<p>hdfs dfs –expunge  清空回收站，文件被删除时，它首先会移到临时目录.Trash/中，当超过延迟时间之后，文件才会被永久删除</p>
+<p>hdfs dfs –getmerge SRC [SRC …] LOCALDST [addnl]   获取由SRC指定的所有文件，将它们合并为单个文件，并写入本地文件系统中的LOCALDST，选项addnl将在每个文件的末尾处加上一个换行符</p>
+<p>hdfs dfs –test –[ezd] PATH     对PATH进行如下类型的检查：-e PATH是否存在，如果PATH存在，返回0，否则返回1；-z 文件是否为空，如果长度为0，返回0，否则返回1； -d 是否为目录，如果PATH为目录，返回0，否则返回1</p>
+<p>hdfs dfs –text PATH  显示文件的内容，当文件为文本文件时，等同于cat；文件为压缩格式（gzip以及hadoop的二进制序列文件格式）时，会先解压缩</p>
+<p>hdfs dfs –help ls  查看某个[ls]命令的帮助文档</p>
+<h2 id="Mapreduce解释">Mapreduce解释</h2>
+<ul>
+<li>
+<p>**mapper的角色:**hadoop将用户提交的mapper可执行程序或脚本作为一个单独的进程加载起来，这个进程我们称之为mapper进程，hadoop不断地将文件片段转换为行，传递到我们的mapper进程中，mapper进程通过标准输入的方式一行一行地获取这些数据，然后设法将其转换为键值对，再通过标准输出的形式将这些键值对按照一对儿一行的方式输出出去。</p>
+</li>
+<li>
+<p>虽然在我们的mapper函数中，我们自己能分得清key/value(比方说有可能在我们的代码中使用的是string key,int value)，但是当我们采用标准输出之后，key value是打印到一行作为结果输出的(比如sys.stdout.write(“%s\t%s\n”%(birthyear,gender)))，因此我们为了保证hadoop能从中鉴别出我们的键值对，键值对中一定要以分隔符’\t’即Tab(也可自定义分隔符)字符分隔，这样才能保证hadoop正确地为我们进行partitoner、shuffle等等过程。</p>
+</li>
+<li>
+<p>**reducer的角色:**hadoop将用户提交的reducer可执行程序或脚本同样作为一个单独的进程加载起来，这个进程我们称之为reducer进程，hadoop不断地将键值对(按键排序)按照一对儿一行的方式传递到reducer进程中，reducer进程同样通过标准输入的方式按行获取这些键值对儿，进行自定义计算后将结果通过标准输出的形式输出出去。</p>
+</li>
+<li>
+<p>在reducer这个过程中需要注意的是：传递进reducer的键值对是按照键排过序的，这点是由MR框架的sort过程保证的，因此如果读到一个键与前一个键不同，我们就可以知道当前key对应的pairs已经结束了，接下来将是新的key对应的pairs。</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Hadoop%E4%BB%8B%E7%BB%8D/" rel="tag"># Hadoop介绍</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/" rel="prev" title="Java基本知识">
+      <i class="fa fa-chevron-left"></i> Java基本知识
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/go%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" rel="next" title="golang并发编程">
+      golang并发编程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">Hadoop介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%84%E6%88%90%E9%83%A8%E5%88%86"><span class="nav-number">1.1.</span> <span class="nav-text">组成部分</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.</span> <span class="nav-text">配置信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hadoop-HDFS-%E7%AE%80%E4%BB%8B"><span class="nav-number">1.3.</span> <span class="nav-text">Hadoop HDFS 简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS%E7%AE%80%E5%8D%95%E5%91%BD%E4%BB%A4"><span class="nav-number">1.4.</span> <span class="nav-text">HDFS简单命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mapreduce%E8%A7%A3%E9%87%8A"><span class="nav-number">1.5.</span> <span class="nav-text">Mapreduce解释</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

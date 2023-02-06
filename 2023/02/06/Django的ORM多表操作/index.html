@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="ORM多表操作 API    函数 说明     all() 查询所有结果   filter(**kwargs) 包含了与所给筛选条件相匹配的对象   get(**kwargs) 返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选条件的对象超过一个或者没有都会抛出错误。   exclude(**kwargs) 它包含了与所给筛选条件不匹配的对象   order_by(*field">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django的ORM多表操作">
+<meta property="og:url" content="https://luenci.me/2023/02/06/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="ORM多表操作 API    函数 说明     all() 查询所有结果   filter(**kwargs) 包含了与所给筛选条件相匹配的对象   get(**kwargs) 返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选条件的对象超过一个或者没有都会抛出错误。   exclude(**kwargs) 它包含了与所给筛选条件不匹配的对象   order_by(*field">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="ORM">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Django的ORM多表操作 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Django的ORM多表操作
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>ORM多表操作</h1>
+<h2 id="API">API</h2>
+<table>
+<thead>
+<tr>
+<th>函数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>all()</td>
+<td>查询所有结果</td>
+</tr>
+<tr>
+<td>filter(**kwargs)</td>
+<td>包含了与所给筛选条件相匹配的对象</td>
+</tr>
+<tr>
+<td>get(**kwargs)</td>
+<td>返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选条件的对象超过一个或者没有都会抛出错误。</td>
+</tr>
+<tr>
+<td>exclude(**kwargs)</td>
+<td>它包含了与所给筛选条件不匹配的对象</td>
+</tr>
+<tr>
+<td>order_by(*field)</td>
+<td>对查询结果排序 用法:order_by (“price”)  <code>DESC</code> 降序</td>
+</tr>
+<tr>
+<td>reverse():</td>
+<td>对查询结果反向排序</td>
+</tr>
+<tr>
+<td>count()</td>
+<td>返回数据库中匹配查询(<code>QuerySet</code>)的对象数量</td>
+</tr>
+<tr>
+<td>first()</td>
+<td>返回第一条记录</td>
+</tr>
+<tr>
+<td>last()</td>
+<td>返回最后一条记录</td>
+</tr>
+<tr>
+<td>exists()</td>
+<td>如果<code>QuerySet</code>包含数据，就返回<code>True</code>，否则返回<code>False</code> 相当于<code>limit 1</code>(用途查询这个表中是否有值)</td>
+</tr>
+<tr>
+<td>values(*field)</td>
+<td>用法:<code>Book.objects.all.values(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[&#123;‘title’:‘aa’,‘pirce’:12&#125;,&#123;&#125;]</code></td>
+</tr>
+<tr>
+<td>values_list(*field):</td>
+<td>用法:<code>Book.objects.all.values_list(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[(‘aa’,12),(‘bb’,33)]</code></td>
+</tr>
+<tr>
+<td>distinct()</td>
+<td>从返回结果中剔除重复纪录 用法:<code>Book.objects.all.values(‘title’,‘price’).distinct()</code> 错误用法 <code>Book.objects.all.distinct()</code> 因为id不相同,其他相同,无法去重</td>
+</tr>
+</tbody>
+</table>
+<h2 id="模糊查询">模糊查询</h2>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">__exact   精确等于 like ‘aaa’</span><br><span class="line">__iexact   精确等于 忽略大小写 ilike ‘aaa’</span><br><span class="line">__contains  是否包含 like ‘<span class="variable">%aaa%</span>’</span><br><span class="line">__icontains 包含 忽略大小写 ilike ‘<span class="variable">%aaa%</span>’，但是对于sqlite来说，contains的作用效果等同于icontains。</span><br><span class="line">__gt     大于</span><br><span class="line">__gte     大于等于</span><br><span class="line">__lt     小于</span><br><span class="line">__lte     小于等于</span><br><span class="line">__in     存在于一个list范围内</span><br><span class="line">__startswith 以…开头</span><br><span class="line">__istartswith 以…开头 忽略大小写</span><br><span class="line">__endswith  以…结尾</span><br><span class="line">__iendswith 以…结尾，忽略大小写</span><br><span class="line">__range   在…范围内</span><br><span class="line">__year     日期字段的年份</span><br><span class="line">__month   日期字段的月份</span><br><span class="line">__day     日期字段的日</span><br><span class="line">__isnull=True/False</span><br><span class="line">__isnull=True 与 __exact=None的区别</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h2 id="外键的定义">外键的定义</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># modeld.py</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Book</span>(models.Model):</span><br><span class="line">    name = models.CharField(max_length=<span class="number">20</span>)</span><br><span class="line">    price = models.FloatField()</span><br><span class="line">    pub_date = models.DateField()</span><br><span class="line">    publish = models.ForeignKey(<span class="string">&quot;Publish&quot;</span>,on_delete=models.CASCADE)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Publish</span>(models.Model):</span><br><span class="line">    name = models.CharField(max_length=<span class="number">32</span>)</span><br><span class="line">    city = models.CharField(max_length=<span class="number">32</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="on-delete的参数"><code>on_delete</code>的参数</h3>
+<ul>
+<li><code>CASCADE</code>:这就是默认的选项，级联删除，你无需显性指定它。</li>
+<li><code>PROTECT</code>: 保护模式，如果采用该选项，删除的时候，会抛出<code>ProtectedError</code>错误。</li>
+<li><code>SET_NULL</code>: 置空模式，删除的时候，外键字段被设置为空，前提就是<code>blank=True</code>, <code>null=True</code>,定义该字段的时候，允许为空。</li>
+<li><code>SET_DEFAULT</code>: 置默认值，删除的时候，外键字段设置为默认值，所以定义外键的时候注意加上一个默认值。</li>
+<li><code>SET()</code>: 自定义一个值，该值只能是对应的实体了</li>
+<li><code>DO_NOTHING</code>:不采取行动。如果您的数据库后端强制执行参照完整性，会造成<code>IntegrityError</code>，除非您手动将SQL 约束<code>ON DELETE</code>添加到数据库字段。</li>
+</ul>
+<h2 id="一对多之对象查询">一对多之对象查询</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 通过外键实现关联查询</span></span><br><span class="line"><span class="comment"># 一对多： book_obj ————————————》一定是一个对象</span></span><br><span class="line">book_obj = Book.objects.get(name=<span class="string">&quot;python进阶&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(book_obj.publish)</span><br><span class="line"><span class="built_in">print</span>(book_obj.publish.name)</span><br><span class="line"><span class="built_in">print</span>(book_obj.publish.city)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询出版社出版的所有书籍和价格</span></span><br><span class="line"><span class="comment"># 方法一</span></span><br><span class="line">pub_obj = Publish.objects.<span class="built_in">filter</span>(name=<span class="string">&quot;人民出版社&quot;</span>)[<span class="number">0</span>]</span><br><span class="line">ret = Book.objects.<span class="built_in">filter</span>(publish=pub_obj).values(<span class="string">&quot;name&quot;</span>,<span class="string">&quot;price&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(ret) <span class="comment"># &lt;QuerySet [&#123;&#x27;name&#x27;: &#x27;linux运维&#x27;, &#x27;price&#x27;: 77.0&#125;]&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法二</span></span><br><span class="line">pub_obj = Publish.objects.<span class="built_in">filter</span>(name=<span class="string">&quot;机械出版社&quot;</span>)[<span class="number">0</span>]</span><br><span class="line"><span class="built_in">print</span>(pub_obj.book_set.<span class="built_in">all</span>())  <span class="comment"># &lt;QuerySet [&lt;Book: python进阶&gt;]&gt;</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">type</span>(pub_obj.book_set.<span class="built_in">all</span>()))  <span class="comment"># &lt;class &#x27;django.db.models.query.QuerySet&#x27;&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(pub_obj.book_set.<span class="built_in">all</span>().values(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;price&quot;</span>))</span><br></pre></td></tr></table></figure>
+<h2 id="多对多对象添加">多对多对象添加</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 多对多添加信息</span></span><br><span class="line">book_obj = Book.objects.get(<span class="built_in">id</span>=<span class="number">2</span>)</span><br><span class="line">author_obj = Author.objects.get(<span class="built_in">id</span>=<span class="number">1</span>)</span><br><span class="line"><span class="comment"># 添加关系</span></span><br><span class="line">book_obj.author.add(author_obj)</span><br><span class="line"><span class="comment"># 删除关系</span></span><br><span class="line">book_obj.author.remove(author_obj)</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="聚合查询与分组查询">聚合查询与分组查询</h2>
+<h3 id="聚合查询">聚合查询:</h3>
+<h4 id="aggregate-args-kwargs"><code>aggregate</code>(*args, **kwargs)</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#1.聚合  aggregate:返回值是一个字典</span></span><br><span class="line"><span class="keyword">from</span> django.db.models <span class="keyword">import</span> Avg,Max,Min,Count</span><br><span class="line"><span class="comment">#问题:查询所有书籍的平均价格,最高价格,最低价格</span></span><br><span class="line"></span><br><span class="line">ret = Book.objects.<span class="built_in">all</span>().aggregate(avg_price=Avg(<span class="string">&#x27;price&#x27;</span>),max_price = Max(<span class="string">&#x27;price&#x27;</span>),min_price=Min(<span class="string">&#x27;price&#x27;</span>))</span><br><span class="line"><span class="built_in">print</span>(ret)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>aggregate()</code>是<code>QuerySet</code> 的一个终止子句，意思是说，它返回一个包含一些键值对的字典。键的名称是聚合值的标识符，值是计算出来的聚合值。键的名称是按照字段和聚合函数的名称自动生成出来的。如果你想要为聚合值指定一个名称，可以向聚合子句提供它。</li>
+</ul>
+<h2 id="分组查询">分组查询</h2>
+<h3 id="annotate-args-kwargs">annotate(*args, **kwargs)</h3>
+<ul>
+<li>表单模型.objects.values(“group by 分组字段”).annotate(聚合函数(‘聚合字段’))</li>
+</ul>
+<h2 id="F查询">F查询</h2>
+<ul>
+<li>Django 支持 F() 对象之间以及 F() 对象和常数之间的加减乘除和取模的操作。</li>
+</ul>
+<h2 id="Q查询">Q查询</h2>
+<ul>
+<li>filter() 等方法中的关键字参数查询都是一起进行“AND” 的。 如果你需要执行更复杂的查询（例如OR语句），你可以使用Q对象</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ORM/" rel="tag"># ORM</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Django%E7%9A%84logger/" rel="prev" title="Django的logger配置">
+      <i class="fa fa-chevron-left"></i> Django的logger配置
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/" rel="next" title="Django的ORM字段介绍">
+      Django的ORM字段介绍 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">ORM多表操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#API"><span class="nav-number">1.1.</span> <span class="nav-text">API</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E7%B3%8A%E6%9F%A5%E8%AF%A2"><span class="nav-number">1.2.</span> <span class="nav-text">模糊查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%96%E9%94%AE%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="nav-number">1.3.</span> <span class="nav-text">外键的定义</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#on-delete%E7%9A%84%E5%8F%82%E6%95%B0"><span class="nav-number">1.3.1.</span> <span class="nav-text">on_delete的参数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E5%AF%B9%E5%A4%9A%E4%B9%8B%E5%AF%B9%E8%B1%A1%E6%9F%A5%E8%AF%A2"><span class="nav-number">1.4.</span> <span class="nav-text">一对多之对象查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E5%AF%B9%E5%A4%9A%E5%AF%B9%E8%B1%A1%E6%B7%BB%E5%8A%A0"><span class="nav-number">1.5.</span> <span class="nav-text">多对多对象添加</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%9A%E5%90%88%E6%9F%A5%E8%AF%A2%E4%B8%8E%E5%88%86%E7%BB%84%E6%9F%A5%E8%AF%A2"><span class="nav-number">1.6.</span> <span class="nav-text">聚合查询与分组查询</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%81%9A%E5%90%88%E6%9F%A5%E8%AF%A2"><span class="nav-number">1.6.1.</span> <span class="nav-text">聚合查询:</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#aggregate-args-kwargs"><span class="nav-number">1.6.1.1.</span> <span class="nav-text">aggregate(*args, **kwargs)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E7%BB%84%E6%9F%A5%E8%AF%A2"><span class="nav-number">1.7.</span> <span class="nav-text">分组查询</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#annotate-args-kwargs"><span class="nav-number">1.7.1.</span> <span class="nav-text">annotate(*args, **kwargs)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#F%E6%9F%A5%E8%AF%A2"><span class="nav-number">1.8.</span> <span class="nav-text">F查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Q%E6%9F%A5%E8%AF%A2"><span class="nav-number">1.9.</span> <span class="nav-text">Q查询</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

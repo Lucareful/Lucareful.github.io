@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Linux操作系统  “一切皆文件”  系统启动流程 引导图    最初始阶段 当我们打开计算机电源，计算机会自动从主板的BlOS（Basic Input&#x2F;output System）读取其中所存储的程序。这一程序通常知道一些直接连接在主板上的硬件（硬盘，网络接口，键盘，串口，并口）。现在大部分的BIOS允许你从软盘、光盘或者硬盘中选择一个来启动计算机。   下一步，计算机将从你所选择的存储设备中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux学习（一）">
+<meta property="og:url" content="https://luenci.me/2021/08/09/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="Linux操作系统  “一切皆文件”  系统启动流程 引导图    最初始阶段 当我们打开计算机电源，计算机会自动从主板的BlOS（Basic Input&#x2F;output System）读取其中所存储的程序。这一程序通常知道一些直接连接在主板上的硬件（硬盘，网络接口，键盘，串口，并口）。现在大部分的BIOS允许你从软盘、光盘或者硬盘中选择一个来启动计算机。   下一步，计算机将从你所选择的存储设备中">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502160423268.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502155136848.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200501204906550.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200501215623758.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502123137125.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502123543551.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502132024461.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502170646416.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502171251931.png">
+<meta property="article:published_time" content="2021-08-09T09:18:39.685Z">
+<meta property="article:modified_time" content="2020-05-23T07:59:21.900Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="Linux知识">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502160423268.png">
+
+<link rel="canonical" href="https://luenci.me/2021/08/09/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux学习（一） | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2021/08/09/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux学习（一）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-08-09 17:18:39" itemprop="dateCreated datePublished" datetime="2021-08-09T17:18:39+08:00">2021-08-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-05-23 15:59:21" itemprop="dateModified" datetime="2020-05-23T15:59:21+08:00">2020-05-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">核心知识</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/08/09/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/08/09/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>14 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>Linux操作系统</h1>
+<ul>
+<li>“一切皆文件”</li>
+</ul>
+<h2 id="系统启动流程">系统启动流程</h2>
+<p>引导图</p>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502160423268.png" alt="引导图"></p>
+<ul>
+<li>
+<p>最初始阶段<br>
+当我们打开计算机电源，计算机会自动从主板的<code>BlOS</code>（Basic Input/output System）读取其中所存储的程序。这一程序通常知道一些直接连接在主板上的硬件（硬盘，网络接口，键盘，串口，并口）。现在大部分的BIOS允许你从软盘、光盘或者硬盘中选择一个来启动计算机。</p>
+</li>
+<li>
+<p>下一步，计算机将从你所选择的存储设备中读取起始的512 bytes（比如光盘一开是的512 bytes，如果我们从光盘启动的话）。这<code>512bytes</code>叫做主引导记录<code>MBR</code>（master boot record）。<code>MBR</code>会告诉电脑从该设备的某一个分区（partition）来装载引导加载程序（boot loader）。<code>Boot loader</code>储存有操作系统（OS）的相关信息，比如操作系统名称，操作系统内核（kernel）所在位置等。常用的<code>boot loader</code>有<code>GRUB</code>和<code>LILO</code>。</p>
+</li>
+<li>
+<p>随后，<code>boot loade</code>r会帮助我们加载<code>kernel</code>。<code>kernel</code>实际上是一个用来操作计算机的程序，它是计算机操作系统的内核，主要的任务是管理计算机的硬件资源，充当软件和硬件的接口。操作系统上的任何操作都要通过<code>kernel</code>传达给硬件。<code>Windows</code>和<code>Linux</code>各自有自己<code>kernel</code>。</p>
+</li>
+<li>
+<p>狭义的操作系统就是指<code>kernel</code>，广义的操作系统包括<code>kernel</code>以及<code>kernel</code>之上的各种应用。</p>
+</li>
+<li>
+<p>（Linus Torvalds与其说是Linux之父，不如说是<code>Linux kernel</code>之父。他依然负责<code>Linux kernel</code>的开发和维护。至于<code>Ubuntu</code>，<code>Red Hat</code>，它们都是基于相同的<code>kernel</code>之上，囊括了不同的应用和界面构成的一个更加完整的操作系统版本。）实际上，我们可以在多个分区安装<code>boot loader</code>，每个<code>boot loader</code>对应不同的操作系统，在读取<code>MBR</code>的时候选择我们想要启动的boot loader。这就是多操作系统的原理。</p>
+</li>
+<li>
+<p>小结：<code>BlOS -&gt; MBR -&gt; boot loader -&gt; kernel</code></p>
+</li>
+<li>
+<p>kernel</p>
+<ul>
+<li>如果我们加载的是Linux kernel，Linux kernel开始工作。kernel会首先预留自己运行所需的内存空间，然后通过驱动程序（driver）检测计算机硬件。这样，操作系统就可以知道自己有哪些硬件可用。随后，kernel会启动一个init进程。它是Linux系统中的1号进程（Linux系统没有0号进程）。到此，kernel就完成了在计算机启动阶段的工作，交接给init来管理。</li>
+<li>小结：<code>kernel -&gt; init process </code></li>
+</ul>
+</li>
+<li>
+<p><code>init process</code></p>
+<p>（根据boot loader的选项，Linux此时可以进入单用户模式（single user mode））。在此模式下，初始脚本还没有开始执行，我们可以检测并修复计算机可能存在的错误）随后，init会运行一系列的初始脚本（startup scripts），这些脚本是Linux中常见的shell scripts。这些脚本执行如下功能：</p>
+<ul>
+<li>设置计算机名称，时区，检测文件系统，挂载硬盘，清空临时文件，设置网络等</li>
+</ul>
+<p>当这些初始脚本，操作系统已经完全准备好了，只是，还没有人可以登录！！！init会给出登录（login）对话框，或者是图形化的登录界面。</p>
+</li>
+<li>
+<p>输入用户名（比如说luenci）和密码，DONE！</p>
+</li>
+<li>
+<p>在此后的过程中，你将以用户（user）luenci的身份操作电脑。此外，根据你创建用户时的设定，Linux还会将你归到某个组（group）中，比如可以是stupid组，或者是luenci组。所以你将是用户luenci，同时是luenci组的组员。（注意，组luenci和用户luenci只是重名而已，就好想你可以叫Dell，同时还是Dell公司的老板一样。你完全也可以是用户luenci，同时为stupid组的组员）</p>
+</li>
+</ul>
+<h3 id="启动级别">启动级别</h3>
+<ul>
+<li>
+<p>7种运行级别</p>
+<p>运行级别（<code>Runlevel</code>）指的是Unix或者Linux等类Unix操作系统的运行模式，不同的运行模式下系统的功能也有所有不同。Linux 系统下通常分为<code>7</code>种运行级别，分别是从<code>0</code>到<code>6</code>。各级别介绍如下：</p>
+</li>
+<li>
+<p><code>0</code>–停机模式</p>
+<ul>
+<li>在这种模式下，系统处于停机状态，系统默认运行级别不能设为<code>0</code>，否则将不能正常启动。这个运行级别主要用于关闭任务，在<code>/etc/rc0.d</code>目录下的各个连接命令都是此级别的命令，在关闭系统时，这些命令将被逐个执行。它 们会杀掉所有进程、关闭虚拟内存和交换文件、卸载文件系统和交换分区。</li>
+</ul>
+</li>
+<li>
+<p><code>1</code>– 单用户模式。</p>
+<ul>
+<li>在这种运行模下，系统处于单用户工作状态，登录用户具有root权限，文件系统被加载但是网络却没有被加载，因此也无法远程登陆。这个运行级别，只允一个用户从本地计算机上登录，<code>/etc/rc1.d</code>目录下的所有文件与此运行级别相关连，这个运行级别一般用于系统管理与维护。</li>
+</ul>
+</li>
+<li>
+<p><code>2</code> - -多用户模式。</p>
+<ul>
+<li>用户可以通过网络进行登录，但没有<code>NFS</code>（Network File System），即网络文件统。<code>/etc/rc2.d</code>目录下所有文件与此级别相连。</li>
+</ul>
+</li>
+<li>
+<p><code>3</code> - -完全多用户模式。</p>
+</li>
+<li>
+<p>用户可以通过网络进行登录，且有<code>NFS</code>，用户登陆后会进入控制台命令行模式。这也是缺省的运行模式，在这种运行级别下所有网络服务程序会一起运行。<code>/etc/rc2.d</code>录下的文件与此级别相连</p>
+</li>
+<li>
+<p><code>4</code> - -自定义模式。</p>
+<ul>
+<li>这是一种系统未使用的保留模式，<code>/etc/rc4.d</code>目录与此级别相连。这一级别是用户自定义的运行级别，用户可以根自己的需要进行一些自定义设置。如果想要运行这一级别的话，必须在<code>rc3.d</code>目录下放入连接文件，就像其他<code>rc*.d</code>目录下的文件，并指明是启动还是终止进程。</li>
+</ul>
+</li>
+<li>
+<p><code>5</code> - -图形化模式。</p>
+<ul>
+<li>在 Linux 下运行<code>X Window</code>就是使用这一运行级别，用户登录后将进入图形化的GUI界面。在这一级别下除了DNS的<code>named</code>与级别<code>3</code>不同，其余的都相同。</li>
+</ul>
+</li>
+<li>
+<p><code>6</code> – 重启模式。</p>
+<ul>
+<li>系统正常关闭并重启，默认运行级别不能设为<code>5</code>，否则系统将不能正常启动。<code>/etc/rc6.d</code>目录与此级别相连。在这一运行级别下，不会关闭电源，<code>/etc/rc6.d</code>目录下的连接与<code>rc0.d</code>目录下的连接基本相同；不同之处在于，虽然它们都执行<code>halt</code>（关闭）命令，但是给<code>halt</code>传递的参数不同，所级别<code>6</code>会重新启动系统而<code>0</code>会关闭系统。</li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h3 id="GRUB加密">GRUB加密</h3>
+<ul>
+<li><code>GRUB</code>程序和<code>grub.conf</code>文件</li>
+<li>1）掌握GRUB的定义：<code>GRUB</code>是<code>Grand Unified Boot loader</code>（多重操作系统启动管理器）的缩写。<br>
+心</li>
+<li>2）掌握grub的配置文件为：<code>grub.conf</code>设置<code>grub Md5</code>加密命令<code>grub-md5-crypt </code>
+<ul>
+<li><code>Password=明文</code>或<code>password-md5密文</code>（编辑grub配置文件的密码）</li>
+</ul>
+</li>
+<li>Title red hat 标题
+<ul>
+<li><code>Password=明文或password--md5密文</code>（加载内核系统引导必须的密码）</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502155136848.png" alt="grub配置"></p>
+<h3 id="BIOS加密">BIOS加密</h3>
+<ul>
+<li>设置BIOS密码来防止更改GRU配置文件</li>
+<li>但是这种方法可将主板电池扣下，主板自动还原，密码也失效了</li>
+</ul>
+<p><em><code>没有绝对的安全，要不停的学习</code></em></p>
+<h2 id="目录结构">目录结构</h2>
+<ul>
+<li>在Linux或UNIX操作系统中，所有的文件和目录都被组织成一个以根节点开始的倒置的<em><strong>树状结构</strong></em>。</li>
+</ul>
+<h3 id="顶层根目录的表示">顶层根目录的表示</h3>
+<ul>
+<li>使用<code>'/'</code>来表示根目录</li>
+</ul>
+<h3 id="文件系统中的特殊目录">文件系统中的特殊目录</h3>
+<ul>
+<li><code>.</code>表示当前目录，即用户所在的工作目录</li>
+<li><code>..</code>表示父目录，即当前目录的上一层目录</li>
+<li><code>~</code>代表当前用户的家目录（home）</li>
+</ul>
+<!-- more -->
+<h3 id="一些重要目录">一些重要目录</h3>
+<ol>
+<li><code>bin</code>目录：用来存放常用的可执行文件</li>
+<li><code>sbin</code>目录：用来存放系统的可执行文件</li>
+<li><code>home</code>家目录：用来存放用户自己的文件或目录，其中，超级用户<code>root</code>的家目普通用户的家目录被存放在<code>/home</code>目录下，并使用用户名作为最后一级目的名称，如<code>luenci</code>用户的家目录为<code>/home/luenci</code></li>
+<li><code>dev</code>目录：设备文件目录</li>
+<li><code>etc</code>目录：配置文件目录</li>
+<li>挂载点（目录）：通常可移除式硬件会被挂载在<code>/media</code>或<code>/mnt</code>目录之下</li>
+</ol>
+<h2 id="用户，群组，权限管理">用户，群组，权限管理</h2>
+<ul>
+<li><code>/etc/passed</code>文件中存放用户的信息</li>
+<li>分别对应的是：<code>用户名：密码：user_id：group_id：描述名：家目录（home）：登录后执行的命令</code></li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200501204906550.png" alt="1"></p>
+<ul>
+<li>如果执行的登录命令为：<code>/bin/bash</code>则可以登录</li>
+<li>如果执行的登录命令为：<code>/sbin/nologin</code>则不可以登录</li>
+<li><code>user_id</code>: 500以前id号为系统占用的</li>
+</ul>
+<h3 id="useradd命令的常用选项">useradd命令的常用选项</h3>
+<ul>
+<li><code>-u</code>：指定用户的UID</li>
+<li><code>-g</code>：指定用户所属的群组</li>
+<li><code>-d</code>：指定用户的家目录</li>
+<li><code>-c</code>：指定用户的备注信息</li>
+<li><code>-s</code>：指定用户所用的shell</li>
+<li><code>-r</code>: 删除用户</li>
+</ul>
+<h2 id="文件的权限管理">文件的权限管理</h2>
+<ul>
+<li>权限信息(用户权限(u);组权限(g);其他用户权限(0))；硬链接数；用户；用户组；文件大小；文件创建日期</li>
+<li>r-&gt;4</li>
+<li>w-&gt;2</li>
+<li>x-&gt;1</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200501215623758.png" alt="2"></p>
+<ul>
+<li>
+<p><code>-</code>开头代表一个文件类型</p>
+</li>
+<li>
+<p><code>d</code>开头代表一个目录类型</p>
+</li>
+<li>
+<p><code>l</code>开头代表一个软链接</p>
+</li>
+<li>
+<p><code>b（block）</code>开头代表设备文件</p>
+</li>
+<li>
+<p><code>p</code>开头有代表管道文件</p>
+</li>
+</ul>
+<h3 id="对于可执行文件的运行">对于可执行文件的运行</h3>
+<ul>
+<li><code>sh 可执行文件名</code></li>
+<li><code>bash 可执行文件名</code></li>
+<li><code>./可执行文件名</code></li>
+<li><code>. 可执行文件名</code></li>
+</ul>
+<h2 id="目录的权限管理">目录的权限管理</h2>
+<ul>
+<li><code>ll -d 目录</code>查看目录的权限</li>
+<li><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502123137125.png" alt="3"></li>
+</ul>
+<h2 id="更改文件的用户和组">更改文件的用户和组</h2>
+<ul>
+<li><code>chown  用户.组别  文件名</code></li>
+<li><code>chown -R</code>递归修改用户和组</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502123543551.png" alt="4"></p>
+<h2 id="文件合并">文件合并</h2>
+<ul>
+<li>
+<p><code>wc -l 文件名</code>统计文件行数</p>
+</li>
+<li>
+<p><code>&gt;</code>以覆盖的方式写入内容</p>
+</li>
+<li>
+<p><code>&gt;&gt;</code>以追加的方式写入内容</p>
+</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502132024461.png" alt=""></p>
+<h2 id="解压和压缩命令">解压和压缩命令</h2>
+<p>1、.<code>tar </code></p>
+<p>解包：<code>tar xvf FileName.tar</code><br>
+打包：<code>tar cvf FileName.tar DirName</code><br>
+（注：tar是打包，不是压缩！）</p>
+<p>2、<code>.gz</code></p>
+<p>解压1：<code>gunzip FileName.gz</code><br>
+解压2：<code>gzip -d FileName.gz</code><br>
+压缩：<code>gzip FileName</code></p>
+<p>3、<code>.tar.gz</code> 和<code> .tgz</code></p>
+<p>解压：<code>tar zxvf FileName.tar.gz</code><br>
+压缩：<code>tar zcvf FileName.tar.gz DirName</code></p>
+<p>4、<code>.bz2</code></p>
+<p>解压1：<code>bzip2 -d FileName.bz2</code><br>
+解压2：<code>bunzip2 FileName.bz2</code><br>
+压缩：<code> bzip2 -z FileName</code></p>
+<p>5、<code>.tar.bz2</code></p>
+<p>解压：<code>tar jxvf FileName.tar.bz2</code><br>
+压缩：<code>tar jcvf FileName.tar.bz2 DirName</code></p>
+<p>6、<code>.bz</code></p>
+<p>解压1：<code>bzip2 -d FileName.bz</code><br>
+解压2：<code>bunzip2 FileName.bz</code></p>
+<p>7、<code>.tar.bz</code></p>
+<p>解压：<code>tar jxvf FileName.tar.bz</code></p>
+<p>8、.Z</p>
+<p>解压：<code>uncompress FileName.Z</code><br>
+压缩：<code>compress FileName</code></p>
+<p>9、<code>.tar.Z</code></p>
+<p>解压：<code>tar Zxvf FileName.tar.Z</code><br>
+压缩：<code>tar Zcvf FileName.tar.Z DirName</code></p>
+<p>10、<code>.zip</code></p>
+<p>解压：<code>unzip FileName.zip</code><br>
+压缩：<code>zip FileName.zip DirName</code></p>
+<p>11、<code>.rar</code></p>
+<p>解压：<code>rar x FileName.rar</code><br>
+压缩：<code>rar a FileName.rar DirName</code></p>
+<p>12、<code>.lha</code></p>
+<p>解压：<code>lha -e FileName.lha</code><br>
+压缩：<code>lha -a FileName.lha FileName</code></p>
+<p>13、<code>.rpm</code></p>
+<p>解包：<code>rpm2cpio FileName.rpm | cpio -div</code></p>
+<h2 id="vim一些常见指令">vim一些常见指令</h2>
+<ul>
+<li>
+<p>快速在屏幕中移动光标的位置的命令</p>
+<ul>
+<li><code>H</code>光标移动到这个屏幕的最上方那一行的第一个字符</li>
+<li><code>M</code>无标移动到这个屏幕的中央那一行的第一个字符</li>
+<li><code>L</code>无标移动到这个屏幕的最下那一行的第一个字符</li>
+</ul>
+</li>
+<li>
+<p><code>G</code>移动到文件的最后一行</p>
+</li>
+<li>
+<p><code>gg</code>移动到文件的第一行</p>
+</li>
+<li>
+<p><code>ctrl+ r</code>恢复上一次操作</p>
+</li>
+<li>
+<p><code>u</code>撤销上一个操作</p>
+</li>
+<li>
+<p><code>ctrl+a</code>跳到文件的首部</p>
+</li>
+<li>
+<p><code>ctrl+e</code>跳到文件的尾部</p>
+</li>
+<li>
+<p><code>yy</code>复制</p>
+</li>
+<li>
+<p><code>p</code>粘贴到行尾</p>
+</li>
+<li>
+<p><code>P</code>站贴到行头</p>
+</li>
+</ul>
+<h2 id="top命令">top命令</h2>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502170646416.png" alt=""></p>
+<h3 id="第一行">第一行</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字符</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">top - 10:03:19</td>
+<td style="text-align:center">当前系统时间</td>
+</tr>
+<tr>
+<td style="text-align:center">up 137 days , 10:40</td>
+<td style="text-align:center">系统已运行时间</td>
+</tr>
+<tr>
+<td style="text-align:center">2 user</td>
+<td style="text-align:center">在线用户</td>
+</tr>
+<tr>
+<td style="text-align:center">load average: 0.00, 0.01, 0.05</td>
+<td style="text-align:center">系统负载。三个数值分别为  1分钟、5分钟、15分钟前到现在的平均值。</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>2 user，包含系统用户。</p>
+</blockquote>
+<hr>
+<h3 id="第二行">第二行</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字符</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Tasks : 92 total</td>
+<td style="text-align:center">总进程数</td>
+</tr>
+<tr>
+<td style="text-align:center">2 running</td>
+<td style="text-align:center">正在运行的进程数</td>
+</tr>
+<tr>
+<td style="text-align:center">90 sleeping</td>
+<td style="text-align:center">正在睡眠的进程数</td>
+</tr>
+<tr>
+<td style="text-align:center">0 stopped</td>
+<td style="text-align:center">停止的进程数</td>
+</tr>
+<tr>
+<td style="text-align:center">0 zombie</td>
+<td style="text-align:center">僵尸进程数</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>僵尸进程:一个子进程在其父进程没有调用wait()或waitpid()的情况下退出。这个子进程就是僵尸进程。如果其父进程还存在而一直不调用wait，则该僵尸进程将无法回收，等到其父进程退出后该进程将被init回收。</p>
+</blockquote>
+<hr>
+<h3 id="第三行">第三行</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字符</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">%Cpu(s): 0.3 us</td>
+<td style="text-align:center">cpu占用率(%)，用户进程占用cpu百分率</td>
+</tr>
+<tr>
+<td style="text-align:center">0.3 sy</td>
+<td style="text-align:center">系统占用cpu百分率</td>
+</tr>
+<tr>
+<td style="text-align:center">0.0 ni</td>
+<td style="text-align:center">用户进程空间内改变过优先级的进程占用CPU百分比</td>
+</tr>
+<tr>
+<td style="text-align:center">99.3 id</td>
+<td style="text-align:center">cpu空闲率</td>
+</tr>
+<tr>
+<td style="text-align:center">0.0 wa</td>
+<td style="text-align:center">等待IO的CPU时间百分比</td>
+</tr>
+<tr>
+<td style="text-align:center">0.0 hi</td>
+<td style="text-align:center">硬中断（Hardware IRQ）占用CPU的百分比</td>
+</tr>
+<tr>
+<td style="text-align:center">0.0 si</td>
+<td style="text-align:center">软中断（Software Interrupts）占用CPU的百分比</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>cpu的使用情况</p>
+</blockquote>
+<hr>
+<h3 id="第四行">第四行</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字符</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">KiB Mem : 1016916 total</td>
+<td style="text-align:center">内存总量（我这里是1G）</td>
+</tr>
+<tr>
+<td style="text-align:center">82280 free</td>
+<td style="text-align:center">内存空闲量</td>
+</tr>
+<tr>
+<td style="text-align:center">233848 used</td>
+<td style="text-align:center">内存使用量</td>
+</tr>
+<tr>
+<td style="text-align:center">700788 buff/cache</td>
+<td style="text-align:center">缓存的内存量</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>内存使用率</p>
+</blockquote>
+<hr>
+<h3 id="第五行">第五行</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字符</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">KiB Swap: 0 total</td>
+<td style="text-align:center">交换区总量</td>
+</tr>
+<tr>
+<td style="text-align:center">0 free</td>
+<td style="text-align:center">交换区空闲量</td>
+</tr>
+<tr>
+<td style="text-align:center">0 used</td>
+<td style="text-align:center">交换区使用量</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>swap分区</p>
+</blockquote>
+<hr>
+<h3 id="第六行">第六行</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字符</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">PID</td>
+<td style="text-align:center">进程号</td>
+</tr>
+<tr>
+<td style="text-align:center">USER</td>
+<td style="text-align:center">进程创建者</td>
+</tr>
+<tr>
+<td style="text-align:center">PR</td>
+<td style="text-align:center">进程优先级</td>
+</tr>
+<tr>
+<td style="text-align:center">NI</td>
+<td style="text-align:center">nice值。越小优先级越高，最小-20，最大20（用户设置最大19）</td>
+</tr>
+<tr>
+<td style="text-align:center">VIRT</td>
+<td style="text-align:center">进程使用的虚拟内存总量，单位kb。VIRT=SWAP+RES</td>
+</tr>
+<tr>
+<td style="text-align:center">RES</td>
+<td style="text-align:center">进程使用的、未被换出的物理内存大小，单位kb。RES=CODE+DATA</td>
+</tr>
+<tr>
+<td style="text-align:center">SHR</td>
+<td style="text-align:center">共享内存大小，单位kb</td>
+</tr>
+<tr>
+<td style="text-align:center">S</td>
+<td style="text-align:center">进程状态。D=不可中断的睡眠状态 R=运行 S=睡眠 T=跟踪/停止 Z=僵尸进程</td>
+</tr>
+<tr>
+<td style="text-align:center">%CPU</td>
+<td style="text-align:center">进程占用cpu百分比</td>
+</tr>
+<tr>
+<td style="text-align:center">%MEM</td>
+<td style="text-align:center">进程占用内存百分比</td>
+</tr>
+<tr>
+<td style="text-align:center">TIME+</td>
+<td style="text-align:center">进程运行时间</td>
+</tr>
+<tr>
+<td style="text-align:center">COMMAND</td>
+<td style="text-align:center">进程名称</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>PR 越低优先级 越高，PRI(new)=PRI(old)+nice<br>
+PR中的rt为实时进程优先级即rt_priority，prio=MAX_RT_PRIO - 1- p-&gt;rt_priority<br>
+MAX_RT_PRIO = 99，prio大小决定最终优先级。这样意味着rt_priority值越大，优先级越高而内核提供的修改优先级的函数，是修改rt_priority的值，所以越大，优先级越高。<br>
+例：改变优先级：进入top后按“r”–&gt;输入进程PID–&gt;输入nice值</p>
+</blockquote>
+<h3 id="top命令（在进入top后使用）">top命令（在进入top后使用）</h3>
+<blockquote>
+<p>P：以占据CPU百分比排序<br>
+M：以占据内存百分比排序<br>
+T：以累积占用CPU时间排序<br>
+q：退出命令：按q键退出top查看页面<br>
+s：修改刷新时间间隔。按下s键，然后按下数字，即可修改刷新时间间隔为你输入的数字，单位为秒。例如：按下s键，在按数字1键，即可实现每秒刷新一次<br>
+k：终止指定的进程。按下k键–&gt;再输入要杀死的进程的pid–&gt;按enter键–&gt;(选择信号类型，以数字标示，默认15为杀死)本步可省略按enter键（常用为-9）</p>
+</blockquote>
+<h2 id="free命令">free命令</h2>
+<ul>
+<li><code>free</code></li>
+<li><code>free -m</code></li>
+<li><code>free -h</code></li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502171251931.png" alt=""></p>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux%E7%9F%A5%E8%AF%86/" rel="tag"># Linux知识</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/08/09/Linux%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" rel="prev" title="Linux常用命令">
+      <i class="fa fa-chevron-left"></i> Linux常用命令
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/08/09/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%88%E4%BA%8C%EF%BC%89/" rel="next" title="Linux学习（二）">
+      Linux学习（二） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">Linux操作系统</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B"><span class="nav-number">1.1.</span> <span class="nav-text">系统启动流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8%E7%BA%A7%E5%88%AB"><span class="nav-number">1.1.1.</span> <span class="nav-text">启动级别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GRUB%E5%8A%A0%E5%AF%86"><span class="nav-number">1.1.2.</span> <span class="nav-text">GRUB加密</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BIOS%E5%8A%A0%E5%AF%86"><span class="nav-number">1.1.3.</span> <span class="nav-text">BIOS加密</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="nav-number">1.2.</span> <span class="nav-text">目录结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%B6%E5%B1%82%E6%A0%B9%E7%9B%AE%E5%BD%95%E7%9A%84%E8%A1%A8%E7%A4%BA"><span class="nav-number">1.2.1.</span> <span class="nav-text">顶层根目录的表示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E7%89%B9%E6%AE%8A%E7%9B%AE%E5%BD%95"><span class="nav-number">1.2.2.</span> <span class="nav-text">文件系统中的特殊目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E4%BA%9B%E9%87%8D%E8%A6%81%E7%9B%AE%E5%BD%95"><span class="nav-number">1.2.3.</span> <span class="nav-text">一些重要目录</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%EF%BC%8C%E7%BE%A4%E7%BB%84%EF%BC%8C%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86"><span class="nav-number">1.3.</span> <span class="nav-text">用户，群组，权限管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#useradd%E5%91%BD%E4%BB%A4%E7%9A%84%E5%B8%B8%E7%94%A8%E9%80%89%E9%A1%B9"><span class="nav-number">1.3.1.</span> <span class="nav-text">useradd命令的常用选项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%9A%84%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86"><span class="nav-number">1.4.</span> <span class="nav-text">文件的权限管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E4%BA%8E%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%E7%9A%84%E8%BF%90%E8%A1%8C"><span class="nav-number">1.4.1.</span> <span class="nav-text">对于可执行文件的运行</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E7%9A%84%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86"><span class="nav-number">1.5.</span> <span class="nav-text">目录的权限管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E6%94%B9%E6%96%87%E4%BB%B6%E7%9A%84%E7%94%A8%E6%88%B7%E5%92%8C%E7%BB%84"><span class="nav-number">1.6.</span> <span class="nav-text">更改文件的用户和组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E5%90%88%E5%B9%B6"><span class="nav-number">1.7.</span> <span class="nav-text">文件合并</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%8E%8B%E5%92%8C%E5%8E%8B%E7%BC%A9%E5%91%BD%E4%BB%A4"><span class="nav-number">1.8.</span> <span class="nav-text">解压和压缩命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#vim%E4%B8%80%E4%BA%9B%E5%B8%B8%E8%A7%81%E6%8C%87%E4%BB%A4"><span class="nav-number">1.9.</span> <span class="nav-text">vim一些常见指令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#top%E5%91%BD%E4%BB%A4"><span class="nav-number">1.10.</span> <span class="nav-text">top命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E8%A1%8C"><span class="nav-number">1.10.1.</span> <span class="nav-text">第一行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E8%A1%8C"><span class="nav-number">1.10.2.</span> <span class="nav-text">第二行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E8%A1%8C"><span class="nav-number">1.10.3.</span> <span class="nav-text">第三行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E5%9B%9B%E8%A1%8C"><span class="nav-number">1.10.4.</span> <span class="nav-text">第四行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%94%E8%A1%8C"><span class="nav-number">1.10.5.</span> <span class="nav-text">第五行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E5%85%AD%E8%A1%8C"><span class="nav-number">1.10.6.</span> <span class="nav-text">第六行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#top%E5%91%BD%E4%BB%A4%EF%BC%88%E5%9C%A8%E8%BF%9B%E5%85%A5top%E5%90%8E%E4%BD%BF%E7%94%A8%EF%BC%89"><span class="nav-number">1.10.7.</span> <span class="nav-text">top命令（在进入top后使用）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#free%E5%91%BD%E4%BB%A4"><span class="nav-number">1.11.</span> <span class="nav-text">free命令</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/02/04/CMDB%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;02&#x2F;04&#x2F;CMDB介绍&#x2F;">CMDB 介绍</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/01/31/linux%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/" title="2023&#x2F;01&#x2F;31&#x2F;linux 网络模型&#x2F;">Linux 网络模型</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/01/31/GitOps%20%E5%8E%9F%E7%90%86/" title="2023&#x2F;01&#x2F;31&#x2F;GitOps 原理&#x2F;">GitOps 介绍</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2022/12/21/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/" title="2022&#x2F;12&#x2F;21&#x2F;k8s创建Pod历程&#x2F;">K8s的Pod创建历程</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2022/11/23/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/" title="2022&#x2F;11&#x2F;23&#x2F;golang代码风格指南&#x2F;">GO 代码风格指南</a>
+        </li>
+    </ul>
+  </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>

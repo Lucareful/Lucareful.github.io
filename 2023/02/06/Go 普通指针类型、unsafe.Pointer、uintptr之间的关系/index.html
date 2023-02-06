@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Golang指针  原文来自:https:&#x2F;&#x2F;www.cnblogs.com&#x2F;-wenli&#x2F;p&#x2F;12682477.html   *类型:普通指针类型，用于传递对象地址，不能进行指针运算。 unsafe.Pointer:通用指针类型，用于转换不同类型的指针，不能进行指针运算，不能读取内存存储的值（必须转换到某一类型的普通指针）。 uintptr:用于指针运算，GC 不把 uintptr 当指针，ui">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang指针详解">
+<meta property="og:url" content="https://luenci.me/2023/02/06/Go%20%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8B%E3%80%81unsafe.Pointer%E3%80%81uintptr%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="Golang指针  原文来自:https:&#x2F;&#x2F;www.cnblogs.com&#x2F;-wenli&#x2F;p&#x2F;12682477.html   *类型:普通指针类型，用于传递对象地址，不能进行指针运算。 unsafe.Pointer:通用指针类型，用于转换不同类型的指针，不能进行指针运算，不能读取内存存储的值（必须转换到某一类型的普通指针）。 uintptr:用于指针运算，GC 不把 uintptr 当指针，ui">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/Go%20%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8B%E3%80%81unsafe.Pointer%E3%80%81uintptr%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Golang指针详解 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/Go%20%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8B%E3%80%81unsafe.Pointer%E3%80%81uintptr%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Golang指针详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>Golang指针</h1>
+<blockquote>
+<p>原文来自:<a target="_blank" rel="noopener" href="https://www.cnblogs.com/-wenli/p/12682477.html">https://www.cnblogs.com/-wenli/p/12682477.html</a></p>
+</blockquote>
+<ul>
+<li><code>*</code>类型:普通指针类型，用于传递对象地址，不能进行指针运算。</li>
+<li><code>unsafe.Pointer</code>:通用指针类型，用于转换不同类型的指针，不能进行指针运算，不能读取内存存储的值（必须转换到某一类型的普通指针）。</li>
+<li><code>uintptr</code>:用于指针运算，GC 不把 uintptr 当指针，uintptr 无法持有对象。uintptr 类型的目标会被回收。</li>
+</ul>
+<p><strong><code>unsafe.Pointer</code> 是桥梁，可以让任意类型的指针实现相互转换，也可以将任意类型的指针转换为 uintptr 进行指针运算。</strong><br>
+<strong>unsafe.Pointer 不能参与指针运算</strong>，比如你要在某个指针地址上加上一个偏移量，Pointer是不能做这个运算的，那么谁可以呢?</p>
+<ul>
+<li>就是uintptr类型了，只要将Pointer类型转换成uintptr类型，做完加减法后，转换成Pointer，通过*操作，取值，修改值，随意。</li>
+</ul>
+<h2 id="小结">小结</h2>
+<p><code>unsafe.Pointer</code> 可以让你的变量在不同的普通指针类型转来转去，也就是表示为任意可寻址的指针类型。而 <code>uintptr</code> 常用于与 <code>unsafe.Pointer</code> 打配合，用于做指针运算。</p>
+<h2 id="unsafe-Pointer">unsafe.Pointer</h2>
+<blockquote>
+<p>unsafe 是关注 Go 程序操作类型安全的包。</p>
+</blockquote>
+<p><code>unsafe.Pointer</code> 可以让你无视 Go 的类型系统，完成任何类型与内建的 uintptr 类型之间的转化。</p>
+<p><code>unsafe.Pointer</code>称为通用指针，官方文档对该类型有四个重要描述：</p>
+<ul>
+<li>
+<p>（1）任何类型的指针都可以被转化为Pointer</p>
+</li>
+<li>
+<p>（2）Pointer可以被转化为任何类型的指针</p>
+</li>
+<li>
+<p>（3）uintptr可以被转化为Pointer</p>
+</li>
+<li>
+<p>（4）Pointer可以被转化为uintptr</p>
+<p><code>unsafe.Pointer</code>是特别定义的一种指针类型（译注：类似C语言中的void类型的指针），<strong>在golang中是用于各种指针相互转换的桥梁</strong>，它可以包含任意类型变量的地址。<br>
+当然，我们不可以直接通过*p来获取unsafe.Pointer指针指向的真实变量的值，因为我们并不知道变量的具体类型。<br>
+和普通指针一样，unsafe.Pointer指针也是可以比较的，并且支持和nil常量比较判断是否为空指针。</p>
+</li>
+</ul>
+<h2 id="uintptr">uintptr</h2>
+<p>uintptr是一个整数类型。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// uintptr is an integer type that is large enough to hold the bit pattern of</span></span><br><span class="line"><span class="comment">// any pointer.</span></span><br><span class="line"><span class="keyword">type</span> <span class="type">uintptr</span> <span class="type">uintptr</span></span><br></pre></td></tr></table></figure>
+<p>即使uintptr变量仍然有效，由uintptr变量表示的地址处的数据也可能被GC回收，这个需要注意！</p>
+<h2 id="unsafe包">unsafe包</h2>
+<p>unsafe包只有两个类型，三个函数，但是功能很强大。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ArbitraryType <span class="type">int</span></span><br><span class="line"><span class="keyword">type</span> Pointer *ArbitraryType</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Sizeof</span><span class="params">(x ArbitraryType)</span></span> <span class="type">uintptr</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Offsetof</span><span class="params">(x ArbitraryType)</span></span> <span class="type">uintptr</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Alignof</span><span class="params">(x ArbitraryType)</span></span> <span class="type">uintptr</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>ArbitraryType是int的一个别名，在Go中对ArbitraryType赋予特殊的意义。代表一个任意Go表达式类型。</li>
+<li>Pointer是int指针类型的一个别名，在Go中可以把Pointer类型，理解成任何指针的父类型。</li>
+</ul>
+<p>三个函数的参数均是ArbitraryType类型，就是接受任何类型的变量。</p>
+<ul>
+<li>unsafe.Sizeof 接受任意类型的值(表达式)，返回其占用的字节数,这和c语言里面不同，c语言里面sizeof函数的参数是类型，而这里是一个表达式，比如一个变量。</li>
+<li>unsafe.Offsetof：返回结构体中元素所在内存的偏移量。</li>
+<li>Alignof 返回变量对齐字节数量Offsetof返回变量指定属性的偏移量，这个函数虽然接收的是任何类型的变量，但是有一个前提，就是变量要是一个struct类型，且还不能直接将这个struct类型的变量当作参数，只能将这个struct类型变量的属性当作参数。</li>
+</ul>
+<span id="more"></span>
+<h3 id="巧妙用法">巧妙用法</h3>
+<p>在$GOPATH/src下建立poit包，并在poit下建立子包p，目录结构如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$</span><span class="language-bash">GOPATH/src</span></span><br><span class="line"></span><br><span class="line">----poit</span><br><span class="line"></span><br><span class="line">--------p</span><br><span class="line"></span><br><span class="line">------------v.go</span><br><span class="line"></span><br><span class="line">--------main.go</span><br></pre></td></tr></table></figure>
+<p>以下是v.go的代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> p</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"> </span><br><span class="line"><span class="keyword">type</span> V <span class="keyword">struct</span> &#123;</span><br><span class="line">    i <span class="type">int32</span></span><br><span class="line">    j <span class="type">int64</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(this V)</span></span> PutI() &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;i=%d\n&quot;</span>, this.i)</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(this V)</span></span> PutJ() &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;j=%d\n&quot;</span>, this.j)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>意图很明显，我是想通过unsafe包来实现对V的成员i和j赋值，然后通过PutI()和PutJ()来打印观察输出结果。</p>
+<p>以下是main.go源代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;poit/p&quot;</span></span><br><span class="line">    <span class="string">&quot;unsafe&quot;</span></span><br><span class="line">)</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> v *p.V = <span class="built_in">new</span>(p.V)</span><br><span class="line">    <span class="keyword">var</span> i *<span class="type">int32</span> = (*<span class="type">int32</span>)(unsafe.Pointer(v))</span><br><span class="line">    *i = <span class="type">int32</span>(<span class="number">98</span>)</span><br><span class="line">    <span class="keyword">var</span> j *<span class="type">int64</span> = (*<span class="type">int64</span>)(unsafe.Pointer(<span class="type">uintptr</span>(unsafe.Pointer(v)) + <span class="type">uintptr</span>(unsafe.Sizeof(<span class="type">int32</span>(<span class="number">0</span>)))))</span><br><span class="line">    *j = <span class="type">int64</span>(<span class="number">763</span>)</span><br><span class="line">    v.PutI()</span><br><span class="line">    v.PutJ()</span><br><span class="line">&#125;　</span><br></pre></td></tr></table></figure>
+<p>当然会有些限制，比如需要知道结构体V的成员布局，要修改的成员大小以及成员的偏移量。我们的核心思想就是：结构体的成员在内存中的分配是一段连续的内存，结构体中第一个成员的地址就是这个结构体的地址，您也可以认为是相对于这个结构体偏移了0。相同的，这个结构体中的任一成员都可以相对于这个结构体的偏移来计算出它在内存中的绝对地址。</p>
+<p>具体来讲解下main方法的实现：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> v *p.V = <span class="built_in">new</span>(p.V)</span><br></pre></td></tr></table></figure>
+<p>new是golang的内置方法，用来分配一段内存(会按类型的零值来清零)，并返回一个指针。所以v就是类型为p.V的一个指针。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> i *<span class="type">int32</span> = (*<span class="type">int32</span>)(unsafe.Pointer(v))</span><br></pre></td></tr></table></figure>
+<p>将指针v转成通用指针，再转成int32指针。这里就看到了unsafe.Pointer的作用了，您不能直接将v转成int32类型的指针，那样将会panic。刚才说了v的地址其实就是它的第一个成员的地址，所以这个i就很显然指向了v的成员i，通过给i赋值就相当于给v.i赋值了，但是别忘了i只是个指针，要赋值得解引用。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*i = <span class="type">int32</span>(<span class="number">98</span>)　</span><br></pre></td></tr></table></figure>
+<p>现在已经成功的改变了v的私有成员i的值，好开心^_^</p>
+<p>但是对于v.j来说，怎么来得到它在内存中的地址呢？其实我们可以获取它相对于v的偏移量(unsafe.Sizeof可以为我们做这个事)，但我上面的代码并没有这样去实现。各位别急，一步步来。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> j *<span class="type">int64</span> = (*<span class="type">int64</span>)(unsafe.Pointer(<span class="type">uintptr</span>(unsafe.Pointer(v)) + <span class="type">uintptr</span>(unsafe.Sizeof(<span class="type">int32</span>(<span class="number">0</span>)))))</span><br></pre></td></tr></table></figure>
+<p>其实我们已经知道v是有两个成员的，包括i和j，并且在定义中，i位于j的前面，而i是int32类型，也就是说i占4个字节。所以j是相对于v偏移了4个字节。您可以用uintptr(4)或uintptr(unsafe.Sizeof(int32(0)))来做这个事。unsafe.Sizeof方法用来得到一个值应该占用多少个字节空间。注意这里跟C的用法不一样，C是直接传入类型，而golang是传入值。之所以转成uintptr类型是因为需要做指针运算。v的地址加上j相对于v的偏移地址，也就得到了v.j在内存中的绝对地址，别忘了j的类型是int64，所以现在的j就是一个指向v.j的指针，接下来给它赋值：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*j = <span class="type">int64</span>(<span class="number">763</span>)</span><br></pre></td></tr></table></figure>
+<p>好吧，现在貌视一切就绪了，来打印下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">v.PutI()</span><br><span class="line">v.PutJ()</span><br></pre></td></tr></table></figure>
+<p>如果您看到了正确的输出，那就成功了！！！</p>
+<h3 id="内存对齐">内存对齐</h3>
+<p>但是，别忘了上面的代码其实是有一些问题的，您发现了吗？</p>
+<p>在p目录下新建w.go文件，代码如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> p</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">    <span class="string">&quot;unsafe&quot;</span></span><br><span class="line">)</span><br><span class="line"> </span><br><span class="line"><span class="keyword">type</span> W <span class="keyword">struct</span> &#123;</span><br><span class="line">    b <span class="type">byte</span></span><br><span class="line">    i <span class="type">int32</span></span><br><span class="line">    j <span class="type">int64</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> w *W = <span class="built_in">new</span>(W)</span><br><span class="line">    fmt.Printf(<span class="string">&quot;size=%d\n&quot;</span>, unsafe.Sizeof(*w))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>需要修改main.go的代码吗？不需要，我们只是来测试一下。w.go里定义了一个特殊方法init，它会在导入p包时自动执行，别忘了我们有在main.go里导入p包。每个包都可定义多个init方法，它们会在包被导入时自动执行(在执行main方法前被执行，通常用于初始化工作)，但是，最好在一个包中只定义一个init方法，否则您或许会很难预期它的行为)。我们来看下它的输出：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">size=<span class="number">16</span></span><br></pre></td></tr></table></figure>
+<p>等等，好像跟我们想像的不一致。来手动计算一下：b是byte类型，占1个字节；i是int32类型，占4个字节；j是int64类型，占8个字节，1+4+8=13。这是怎么回事呢？这是因为发生了对齐。在struct中，它的对齐值是它的成员中的最大对齐值。每个成员类型都有它的对齐值，可以用unsafe.Alignof方法来计算，比如unsafe.Alignof(w.b)就可以得到b在w中的对齐值。同理，我们可以计算出w.b的对齐值是1，w.i的对齐值是4，w.j的对齐值也是4。如果您认为w.j的对齐值是8那就错了，所以我们前面的代码能正确执行(试想一下，如果w.j的对齐值是8，那前面的赋值代码就有问题了。也就是说前面的赋值中，如果v.j的对齐值是8，那么v.i跟v.j之间应该有4个字节的填充。所以得到正确的对齐值是很重要的)。对齐值最小是1，这是因为存储单元是以字节为单位。所以b就在w的首地址，而i的对齐值是4，它的存储地址必须是4的倍数，因此，在b和i的中间有3个填充，同理j也需要对齐，但因为i和j之间不需要填充，所以w的Sizeof值应该是13+3=16。如果要通过unsafe来对w的三个私有成员赋值，b的赋值同前，而i的赋值则需要跳过3个字节，也就是计算偏移量的时候多跳过3个字节，同理j的偏移可以通过简单的数学运算就能得到。<br>
+比如也可以通过unsafe来灵活取值：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">    <span class="string">&quot;unsafe&quot;</span></span><br><span class="line">)</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> b []<span class="type">byte</span> = []<span class="type">byte</span>&#123;<span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>&#125;</span><br><span class="line">    <span class="keyword">var</span> c *<span class="type">byte</span> = &amp;b[<span class="number">0</span>]</span><br><span class="line">    fmt.Println(*(*<span class="type">byte</span>)(unsafe.Pointer(<span class="type">uintptr</span>(unsafe.Pointer(c)) + <span class="type">uintptr</span>(<span class="number">1</span>))))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="错误案例">错误案例</h3>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// <span class="doctag">NOTE:</span> subtly incorrect!</span></span><br><span class="line">tmp := <span class="type">uintptr</span>(unsafe.Pointer(&amp;x)) + unsafe.Offsetof(x.b)</span><br><span class="line">pb := (*<span class="type">int16</span>)(unsafe.Pointer(tmp))</span><br><span class="line">*pb = <span class="number">42</span></span><br></pre></td></tr></table></figure>
+<p>产生错误的原因很微妙。<strong>有时候垃圾回收器会移动一些变量以降低内存碎片等问题。这类垃圾回收器被称为移动GC。</strong></p>
+<p>​    当一个变量被移动，所有的保存改变量旧地址的指针必须同时被更新为变量移动后的新地址。</p>
+<p>​    从垃圾收集器的视角来看，一个unsafe.Pointer是一个指向变量的指针，因此当变量被移动是对应的指针也必须被更新；但是uintptr类型的临时变量只是一个普通的数字，所以其值不应该被改变。</p>
+<p>上面错误的代码因为引入一个非指针的临时变量tmp，导致垃圾收集器无法正确识别这个是一个指向变量x的指针。当第二个语句执行时，变量x可能已经被转移，这时候临时变量tmp也就不再是现在的&amp;x.b地址。**第三个向之前无效地址空间的赋值语句将彻底摧毁整个程序！</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/" rel="prev" title="Go Project Layout 最佳实践">
+      <i class="fa fa-chevron-left"></i> Go Project Layout 最佳实践
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/GitOps%20%E5%8E%9F%E7%90%86/" rel="next" title="GitOps 介绍">
+      GitOps 介绍 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">Golang指针</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">1.1.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#unsafe-Pointer"><span class="nav-number">1.2.</span> <span class="nav-text">unsafe.Pointer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#uintptr"><span class="nav-number">1.3.</span> <span class="nav-text">uintptr</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#unsafe%E5%8C%85"><span class="nav-number">1.4.</span> <span class="nav-text">unsafe包</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A7%E5%A6%99%E7%94%A8%E6%B3%95"><span class="nav-number">1.4.1.</span> <span class="nav-text">巧妙用法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90"><span class="nav-number">1.4.2.</span> <span class="nav-text">内存对齐</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E6%A1%88%E4%BE%8B"><span class="nav-number">1.4.3.</span> <span class="nav-text">错误案例</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

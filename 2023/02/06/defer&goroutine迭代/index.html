@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="defer 解析 作用域 向 defer 关键字传入的函数会在函数返回之前运行。假设我们在 for 循环中多次调用 defer 关键字： 123456789101112func main() &amp;#123;  for i :&#x3D; 0; i &lt; 5; i++ &amp;#123;    defer fmt.Println(i)  &amp;#125;&amp;#125;$ go run main.go43210 运行上述">
+<meta property="og:type" content="article">
+<meta property="og:title" content="golang常见错误之defer和迭代">
+<meta property="og:url" content="https://luenci.me/2023/02/06/defer&goroutine%E8%BF%AD%E4%BB%A3/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="defer 解析 作用域 向 defer 关键字传入的函数会在函数返回之前运行。假设我们在 for 循环中多次调用 defer 关键字： 123456789101112func main() &amp;#123;  for i :&#x3D; 0; i &lt; 5; i++ &amp;#123;    defer fmt.Println(i)  &amp;#125;&amp;#125;$ go run main.go43210 运行上述">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/defer&goroutine%E8%BF%AD%E4%BB%A3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>golang常见错误之defer和迭代 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/defer&goroutine%E8%BF%AD%E4%BB%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          golang常见错误之defer和迭代
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>defer 解析</h1>
+<h2 id="作用域">作用域</h2>
+<p>向 <code>defer</code> 关键字传入的函数会在函数返回之前运行。假设我们在 <code>for</code> 循环中多次调用 <code>defer</code> 关键字：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">5</span>; i++ &#123;</span><br><span class="line">    <span class="keyword">defer</span> fmt.Println(i)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$ <span class="keyword">go</span> run main.<span class="keyword">go</span></span><br><span class="line"><span class="number">4</span></span><br><span class="line"><span class="number">3</span></span><br><span class="line"><span class="number">2</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>运行上述代码会倒序执行传入 <code>defer</code> 关键字的所有表达式，因为最后一次调用 <code>defer</code> 时传入了 <code>fmt.Println(4)</code>，所以这段代码会优先打印 4。我们可以通过下面这个简单例子强化对 <code>defer</code> 执行时机的理解：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">defer</span> fmt.Println(<span class="string">&quot;defer runs&quot;</span>)</span><br><span class="line">        fmt.Println(<span class="string">&quot;block ends&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fmt.Println(<span class="string">&quot;main ends&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$ <span class="keyword">go</span> run main.<span class="keyword">go</span></span><br><span class="line">block ends</span><br><span class="line">main ends</span><br><span class="line"><span class="keyword">defer</span> runs</span><br></pre></td></tr></table></figure>
+<p>从上述代码的输出我们会发现，<code>defer</code> 传入的函数不是在退出代码块的作用域时执行的，它只会在当前函数和方法返回之前被调用。</p>
+<h2 id="预计算参数">预计算参数</h2>
+<p>Go 语言中所有的函数调用都是传值的，虽然 <code>defer</code> 是关键字，但是也继承了这个特性。假设我们想要计算 <code>main</code> 函数运行的时间，可能会写出以下的代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  startedAt := time.Now()</span><br><span class="line">  <span class="keyword">defer</span> fmt.Println(time.Since(startedAt))</span><br><span class="line"></span><br><span class="line">  time.Sleep(time.Second)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$ <span class="keyword">go</span> run main.<span class="keyword">go</span></span><br><span class="line"><span class="number">0</span>s</span><br></pre></td></tr></table></figure>
+<p>然而上述代码的运行结果并不符合我们的预期，这个现象背后的原因是什么呢？</p>
+<ul>
+<li>经过分析，我们会发现调用 <code>defer</code> 关键字会立刻拷贝函数中引用的外部参数，所以 <code>time.Since(startedAt)</code> 的结果不是在 <code>main</code> 函数退出之前计算的，而是在 <code>defer</code> 关键字调用时计算的，最终导致上述代码输出 0s。</li>
+</ul>
+<p>想要解决这个问题的方法非常简单，我们只需要向 <code>defer</code> 关键字传入匿名函数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  startedAt := time.Now()</span><br><span class="line">  <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; fmt.Println(time.Since(startedAt)) &#125;()</span><br><span class="line"></span><br><span class="line">  time.Sleep(time.Second)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$ <span class="keyword">go</span> run main.<span class="keyword">go</span></span><br><span class="line"><span class="number">1</span>s</span><br></pre></td></tr></table></figure>
+<p>虽然调用 <code>defer</code> 关键字时也使用值传递，但是因为拷贝的是函数指针，所以 <code>time.Since(startedAt)</code> 会在 <code>main</code> 函数返回前调用并打印出符合预期的结果。</p>
+<span id="more"></span>
+<h1>使用对循环迭代器变量的引用</h1>
+<p>在 Go 中，循环迭代器变量是一个在每次循环迭代中采用不同值的单个变量。这是非常有效的，但如果使用不当可能会导致意外行为。例如，请参阅以下程序：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> out []*<span class="type">int</span></span><br><span class="line">  <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">3</span>; i++ &#123;</span><br><span class="line">    out = <span class="built_in">append</span>(out, &amp;i)</span><br><span class="line">  &#125;</span><br><span class="line">  fmt.Println(<span class="string">&quot;Values:&quot;</span>, *out[<span class="number">0</span>], *out[<span class="number">1</span>], *out[<span class="number">2</span>])</span><br><span class="line">  fmt.Println(<span class="string">&quot;Addresses:&quot;</span>, out[<span class="number">0</span>], out[<span class="number">1</span>], out[<span class="number">2</span>])</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>它会输出意想不到的结果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Values: 3 3 3</span><br><span class="line">Addresses: 0x40e020 0x40e020 0x40e020</span><br></pre></td></tr></table></figure>
+<p>解释：在每次迭代中，我们将 i 的地址附加<code>i</code>到<code>out</code>切片，但由于它是相同的变量，因此我们附加了相同的地址，该地址最终包含分配给 的最后一个值<code>i</code>。解决方案之一是将循环变量复制到新变量中：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">3</span>; i++ &#123;</span><br><span class="line">i := i <span class="comment">// Copy i into a new variable.</span></span><br><span class="line">  out = <span class="built_in">append</span>(out, &amp;i)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>该程序的新输出是预期的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Values: 0 1 2</span><br><span class="line">Addresses: 0x40e020 0x40e024 0x40e028</span><br></pre></td></tr></table></figure>
+<p>说明：该行将<code>i := i</code>循环变量复制<code>i</code>到作用域为 for 循环体块的新变量中，也称为<code>i</code>. 新变量的地址是附加到数组的地址，这使得它比 for 循环体块更有效。在每次循环迭代中，都会创建一个新变量。</p>
+<p>虽然这个例子可能看起来有点明显，但在其他一些情况下，同样的意外行为可能更隐蔽。例如，循环变量可以是一个数组，而引用可以是一个切片：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> out [][]<span class="type">int</span></span><br><span class="line">  <span class="keyword">for</span> _, i := <span class="keyword">range</span> [][<span class="number">1</span>]<span class="type">int</span>&#123;&#123;<span class="number">1</span>&#125;, &#123;<span class="number">2</span>&#125;, &#123;<span class="number">3</span>&#125;&#125; &#123;</span><br><span class="line">    out = <span class="built_in">append</span>(out, i[:])</span><br><span class="line">  &#125;</span><br><span class="line">  fmt.Println(<span class="string">&quot;Values:&quot;</span>, out)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Values: [[3] [3] [3]]</span><br></pre></td></tr></table></figure>
+<p>当在 Goroutine 中使用循环变量时，也可以证明同样的问题（见下一节）。</p>
+<h1>在循环迭代器变量上使用 <code>goroutines</code></h1>
+<p>在 Go 中进行迭代时，可能会尝试使用 <code>goroutines</code> 并行处理数据。例如，您可以使用闭包编写如下内容：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> _, val := <span class="keyword">range</span> values &#123;</span><br><span class="line">  <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    fmt.Println(val)</span><br><span class="line">  &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的 for 循环可能不会像你期望的那样做，因为它们的<code>val</code>变量实际上是一个单一的变量，它接受每个切片元素的值。因为闭包都只绑定到那个变量，所以当你运行这段代码时，很有可能你会看到每次迭代打印的最后一个元素而不是按顺序打印的每个值，因为 <code>goroutines</code> 可能不会开始执行，直到循环后。</p>
+<p>编写该闭环的正确方法是：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> _, val := <span class="keyword">range</span> values &#123;</span><br><span class="line">  <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(val <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    fmt.Println(val)</span><br><span class="line">  &#125;(val)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过将 val 作为参数添加到闭包中，<code>val</code>在每次迭代时评估并放置在 goroutine 的堆栈中，因此每个切片元素在最终执行时对 goroutine 可用。</p>
+<p>同样重要的是要注意，在循环体中声明的变量在迭代之间不共享，因此可以在闭包中单独使用。下面的代码使用一个公共索引变量<code>i</code>来创建单独的<code>val</code>s，这会导致预期的行为：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i := <span class="keyword">range</span> valslice &#123;</span><br><span class="line">  val := valslice[i]</span><br><span class="line">  <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    fmt.Println(val)</span><br><span class="line">  &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请注意，如果没有将这个闭包作为 goroutine 执行，代码会按预期运行。以下示例打印出 1 到 10 之间的整数。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i := <span class="number">1</span>; i &lt;= <span class="number">10</span>; i++ &#123;</span><br><span class="line">  <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    fmt.Println(i)</span><br><span class="line">  &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>即使闭包仍然关闭同一个变量（在这种情况下，<code>i</code>），它们在变量更改之前执行，从而导致所需的行为。 <a target="_blank" rel="noopener" href="http://golang.org/doc/go_faq.html#closures_and_goroutines">http://golang.org/doc/go_faq.html#closures_and_goroutines</a></p>
+<p>您可能会发现另一种类似的情况，如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> _, val := <span class="keyword">range</span> values &#123;</span><br><span class="line">  <span class="keyword">go</span> val.MyMethod()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *val)</span></span> MyMethod() &#123;</span><br><span class="line">  fmt.Println(v)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的例子也将打印值的最后一个元素，原因与闭包相同。要解决此问题，请在循环内声明另一个变量。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> _, val := <span class="keyword">range</span> values &#123;</span><br><span class="line">  newVal := val</span><br><span class="line">  <span class="keyword">go</span> newVal.MyMethod()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *val)</span></span> MyMethod() &#123;</span><br><span class="line">  fmt.Println(v)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/django+nginx+uwsgi%E9%83%A8%E7%BD%B2%E6%BC%AB%E8%B0%88/" rel="prev" title="django+nginx+uwsgi部署漫谈">
+      <i class="fa fa-chevron-left"></i> django+nginx+uwsgi部署漫谈
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/c%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B03/" rel="next" title="c语言笔记（3）">
+      c语言笔记（3） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">defer 解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="nav-number">1.1.</span> <span class="nav-text">作用域</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E8%AE%A1%E7%AE%97%E5%8F%82%E6%95%B0"><span class="nav-number">1.2.</span> <span class="nav-text">预计算参数</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">使用对循环迭代器变量的引用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">在循环迭代器变量上使用 goroutines</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

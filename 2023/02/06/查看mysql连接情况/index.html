@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="使用mysql- uroot -p登录后   执行命令: show processlist;   查询当前数据库用户连接情况.   如果是root帐号,你能看到所有用户的当前连接.   如果是其它普通帐号,只能看到自己占用的连接.   只列出前100条  show processlist;    如果想全列出请使用  show full processlist;    12345mysql&gt;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="查看mysql连接状况">
+<meta property="og:url" content="https://luenci.me/2023/02/06/%E6%9F%A5%E7%9C%8Bmysql%E8%BF%9E%E6%8E%A5%E6%83%85%E5%86%B5/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="使用mysql- uroot -p登录后   执行命令: show processlist;   查询当前数据库用户连接情况.   如果是root帐号,你能看到所有用户的当前连接.   如果是其它普通帐号,只能看到自己占用的连接.   只列出前100条  show processlist;    如果想全列出请使用  show full processlist;    12345mysql&gt;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-06T14:25:45.728Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.728Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="SQL命令">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/%E6%9F%A5%E7%9C%8Bmysql%E8%BF%9E%E6%8E%A5%E6%83%85%E5%86%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>查看mysql连接状况 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/%E6%9F%A5%E7%9C%8Bmysql%E8%BF%9E%E6%8E%A5%E6%83%85%E5%86%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          查看mysql连接状况
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>561</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>使用<a target="_blank" rel="noopener" href="http://www.boke365.net/archives/tag/mysql">mysql</a>- uroot -p登录后</p>
+<ul>
+<li>
+<p>执行命令: show processlist;</p>
+</li>
+<li>
+<p>查询当前数据库用户连接情况.</p>
+</li>
+<li>
+<p>如果是root帐号,你能看到所有用户的当前连接.</p>
+</li>
+<li>
+<p>如果是其它普通帐号,只能看到自己占用的连接.</p>
+</li>
+<li>
+<p>只列出前100条</p>
+<ul>
+<li><code>show processlist;</code></li>
+</ul>
+</li>
+<li>
+<p>如果想全列出请使用</p>
+<ul>
+<li><code>show full processlist;</code></li>
+</ul>
+</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> processlist;</span><br><span class="line"></span><br><span class="line">命令： <span class="keyword">show</span> status;</span><br><span class="line"></span><br><span class="line">命令：<span class="keyword">show</span> status <span class="keyword">like</span> ‘<span class="operator">%</span>下面变量<span class="operator">%</span>’;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Aborted_clients	由于客户没有正确关闭连接已经死掉,已经放弃的连接数量.</li>
+<li>Aborted_connects	尝试已经失败的MySQL服务器的连接的次数.</li>
+<li>Connections	试图连接MySQL服务器的次数.</li>
+<li>Created_tmp_tables	当执行语句时,已经被创造了的隐含临时表的数量.</li>
+<li>Delayed_insert_threads	正在使用的延迟插入处理器线程的数量.</li>
+<li>Delayed_writes	用INSERT DELAYED写入的行数.</li>
+<li>Delayed_errors	用INSERT DELAYED写入的发生某些错误(可能重复键值)的行数.</li>
+<li>Flush_commands	执行FLUSH命令的次数.</li>
+<li>Handler_delete	请求从一张表中删除行的次数.</li>
+</ul>
+<span id="more"></span>
+<ul>
+<li>Handler_read_first	请求读入表中第一行的次数.</li>
+<li>Handler_read_key	请求数字基于键读行.</li>
+<li>Handler_read_next	请求读入基于一个键的一行的次数.</li>
+<li>Handler_read_rnd	请求读入基于一个固定位置的一行的次数.</li>
+<li>Handler_update	请求更新表中一行的次数.</li>
+<li>Handler_write	请求向表中插入一行的次数.</li>
+<li>Key_blocks_used	用于关键字缓存的块的数量.</li>
+<li>Key_read_requests	请求从缓存读入一个键值的次数.</li>
+<li>Key_reads	从磁盘物理读入一个键值的次数.</li>
+<li>Key_write_requests	请求将一个关键字块写入缓存次数.</li>
+<li>Key_writes	将一个键值块物理写入磁盘的次数.</li>
+<li>Max_used_connections	同时使用的连接的最大数目.</li>
+<li>Not_flushed_key_blocks	在键缓存中已经改变但是还没被清空到磁盘上的键块.</li>
+<li>Not_flushed_delayed_rows	在INSERT DELAY队列中等待写入的行的数量.</li>
+<li>Open_tables	打开表的数量.</li>
+<li>Open_files	打开文件的数量.</li>
+<li>Open_streams	打开流的数量(主要用于日志记载）</li>
+<li>Opened_tables	已经打开的表的数量.</li>
+<li>Questions	发往服务器的查询的数量.</li>
+<li>Slow_queries	要花超过long_query_time时间的查询数量.</li>
+<li>Threads_connected	当前打开的连接的数量.</li>
+<li>Threads_running	不在睡眠的线程数量.</li>
+<li>Uptime 服务器工作了多少秒.</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/SQL%E5%91%BD%E4%BB%A4/" rel="tag"># SQL命令</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/" rel="prev" title="常用的正则表达式">
+      <i class="fa fa-chevron-left"></i> 常用的正则表达式
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/%E6%96%97%E9%B1%BC%E5%BC%B9%E5%B9%95%E6%8A%93%E5%8F%96/" rel="next" title="socket网络编程实战-斗鱼弹幕获取">
+      socket网络编程实战-斗鱼弹幕获取 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

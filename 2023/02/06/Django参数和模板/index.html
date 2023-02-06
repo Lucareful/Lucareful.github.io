@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="render方法参数  request: 是一个固定参数。 template_name: templates 中定义的文件, 要注意路径名. 比如’templates\polls\index.html’, 参数就要写‘polls\index.html’ context: 要传入文件中用于渲染呈现的数据, 默认是字典格式 content_type: 生成的文档要使用的MIME 类型。默认为DEFAU">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django参数和模板">
+<meta property="og:url" content="https://luenci.me/2023/02/06/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="render方法参数  request: 是一个固定参数。 template_name: templates 中定义的文件, 要注意路径名. 比如’templates\polls\index.html’, 参数就要写‘polls\index.html’ context: 要传入文件中用于渲染呈现的数据, 默认是字典格式 content_type: 生成的文档要使用的MIME 类型。默认为DEFAU">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200614210257960.png">
+<meta property="article:published_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="Django">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200614210257960.png">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Django参数和模板 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Django参数和模板
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="render方法参数"><code>render</code>方法参数</h2>
+<ul>
+<li><code>request</code>: 是一个固定参数。</li>
+<li><code>template_name</code>: <code>templates</code> 中定义的文件, 要注意路径名. 比如<code>’templates\polls\index.html’</code>, 参数就要写<code>‘polls\index.html’</code></li>
+<li><code>context</code>: 要传入文件中用于渲染呈现的数据, 默认是字典格式</li>
+<li><code>content_type</code>: 生成的文档要使用的MIME 类型。默认为DEFAULT_CONTENT_TYPE 设置的值。</li>
+<li><code>status</code>: http的响应代码,默认是200.</li>
+<li><code>using</code>: 用于加载模板使用的模板引擎的名称。</li>
+</ul>
+<h2 id="request对象方法和属性"><code>request</code>对象方法和属性</h2>
+<ul>
+<li><code>request.scheme</code>   # 代表请求的方案,http或者https</li>
+<li><code>request.body</code># 原始HTTP请求主体为字节串。这对于以不同于常规HTML格式的方式处理数据很有用：二进制图像，XML有效负载等。对于处理常规格式的数据，请使用 <code>HttpRequest.POST</code>。</li>
+<li><code>request.path</code>   # 请求的路径,比如请求<code>127.0.0.1/org/list</code>,那这个值就是<code>/org/list</code></li>
+<li><code>request.get_full_path()</code> # 获取完整的请求路径</li>
+<li><code>request.method</code>  # 表示请求使用的http方法,GET或者POST请求</li>
+<li><code>request.encoding</code> # 表示提交数据的编码方式</li>
+<li><code>request.GET</code>     # 获取GET请求</li>
+<li><code>request.POST</code>    # 获取post的请求,比如前端提交的用户密码,可以通过<code>request.POST.get()</code>来获取</li>
+</ul>
+<blockquote>
+<p><strong>NOTICED：如果使用 POST 上传文件的话，文件信息将包含在 FILES 属性中</strong></p>
+</blockquote>
+<p><code>request.COOKIES</code> #包含所有的cookie</p>
+<p><code>request.META</code>   #一个标准的Python 字典，包含所有的HTTP 首部。具体的头部信息取决于客户端和服务器，下面是一些示例：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">CONTENT_LENGTH   —— 请求的正文的长度（是一个字符串）。</span><br><span class="line">CONTENT_TYPE   —— 请求的正文的MIME 类型。</span><br><span class="line">HTTP_ACCEPT   —— 响应可接收的Content-<span class="built_in">Type</span>。</span><br><span class="line">HTTP_ACCEPT_ENCODING —— 响应可接收的编码。</span><br><span class="line">HTTP_ACCEPT_LANGUAGE —— 响应可接收的语言。</span><br><span class="line">HTTP_HOST     —— 客服端发送的HTTP Host 头部。</span><br><span class="line">HTTP_REFERER   —— Referring 页面。</span><br><span class="line">HTTP_USER_AGENT —— 客户端的user-agent 字符串。</span><br><span class="line">QUERY_STRING   —— 单个字符串形式的查询字符串（未解析过的形式）。</span><br><span class="line">REMOTE_ADDR   —— 客户端的IP 地址。</span><br><span class="line">REMOTE_HOST   —— 客户端的主机名。</span><br><span class="line">REMOTE_USER   —— 服务器认证后的用户。</span><br><span class="line">REQUEST_METHOD  —— 一个字符串，例如&quot;GET&quot; 或&quot;POST&quot;。</span><br><span class="line">SERVER_NAME   —— 服务器的主机名。</span><br><span class="line">SERVER_PORT   —— 服务器的端口（是一个字符串）</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>request.user</code>   #一个 <code>AUTH_USER_MODEL</code> 类型的对象，表示当前登录的用户。
+<ul>
+<li>如果用户当前没有登录，user 将设置为 <code>django.contrib.auth.models.AnonymousUser</code> 的一个实例。你可以通过 <code>s_authenticated() </code>区分它们</li>
+<li>把<code>request</code>传给前端的时候,前端可以通过 <code> if request.user.is_authenticated</code>判断用户时候登录</li>
+</ul>
+</li>
+<li><code>request.session</code> #一个既可读又可写的类似于字典的对象，表示当前的会话</li>
+</ul>
+<span id="more"></span>
+<h2 id="response对象"><code>response</code>对象</h2>
+<ul>
+<li><code>Httpresponse</code>对象对于 <code>Httpreques</code>对象来说，是由<code> django</code>自动创建的，但是， <code>Httpresponse</code>对象就必须我们自己创建。每个<code>view</code>请求处理方法必须返回一个 <code>Httpresponse</code>对象。</li>
+</ul>
+<blockquote>
+<p><code>Httpresponse</code>类在<code>djangohttpHttprespons</code></p>
+</blockquote>
+<blockquote>
+<p>在 <code>Httpresponse</code>对象上扩展的常用方法：</p>
+</blockquote>
+<ul>
+<li>
+<p>页面渲染</p>
+<ul>
+<li><code>render() </code></li>
+<li><code>render to response()</code></li>
+</ul>
+</li>
+<li>
+<p>页面跳转：</p>
+<ul>
+<li><code>redirect(&quot;路径&quot;)</code></li>
+</ul>
+</li>
+<li>
+<p><code>locals()</code>：可以直接将函数中所有的变里传给模板</p>
+</li>
+</ul>
+<h2 id="内置变量过滤器filter">内置变量过滤器<code>filter</code></h2>
+<p>​    可以理解为python中的内置函数，过滤器是模板的特有语法，通过前端来过滤部分数据。注意filter只能传递一个参数(也可以说是两个参数，因为第一个个参数已经固定，就是被处理的那个)。<br>
+格式：</p>
+<figure class="highlight jinja"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="language-xml">`</span><span class="template-variable">&#123;&#123;` var|method:parameter`&#125;&#125;</span><span class="language-xml">`</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>method表示过滤器部分过滤器如下</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>过滤器</th>
+<th>说明</th>
+<th>举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>first</td>
+<td>取列表第一个元素</td>
+<td></td>
+</tr>
+<tr>
+<td>last</td>
+<td>取列表最后元素</td>
+<td></td>
+</tr>
+<tr>
+<td>capfirst</td>
+<td>首字母大写</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200614210257960.png" alt="filter"></p>
+<h2 id="logging配置"><code>logging</code>配置</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#下面就是logging的配置</span></span><br><span class="line">LOGGING = &#123;</span><br><span class="line">    <span class="string">&#x27;version&#x27;</span>: <span class="number">1</span>,  <span class="comment"># 指明dictConnfig的版本，目前就只有一个版本</span></span><br><span class="line">    <span class="string">&#x27;disable_existing_loggers&#x27;</span>: <span class="literal">False</span>,  <span class="comment"># 表示是否禁用所有的已经存在的日志配置</span></span><br><span class="line">    <span class="string">&#x27;formatters&#x27;</span>: &#123;  <span class="comment"># 格式器</span></span><br><span class="line">        <span class="string">&#x27;verbose&#x27;</span>: &#123;  <span class="comment"># 详细</span></span><br><span class="line">            <span class="string">&#x27;format&#x27;</span>: <span class="string">&#x27;%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s&#x27;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;standard&#x27;</span>: &#123;  <span class="comment"># 标准</span></span><br><span class="line">            <span class="string">&#x27;format&#x27;</span>: <span class="string">&#x27;[%(asctime)s] [%(levelname)s] %(message)s&#x27;</span></span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="comment"># handlers：用来定义具体处理日志的方式，可以定义多种，&quot;default&quot;就是默认方式，&quot;console&quot;就是打印到控制台方式。file是写入到文件的方式，注意使用的class不同</span></span><br><span class="line">    <span class="string">&#x27;handlers&#x27;</span>: &#123; <span class="comment"># 处理器，在这里定义了两个个处理器</span></span><br><span class="line">        <span class="string">&#x27;console&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;class&#x27;</span>: <span class="string">&#x27;logging.StreamHandler&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;stream&#x27;</span>: <span class="string">&#x27;ext://sys.stdout&#x27;</span>,   <span class="comment"># 文件重定向的配置，将打印到控制台的信息都重定向出去 python manage.py runserver &gt;&gt; /home/aea/log/test.log</span></span><br><span class="line">            <span class="comment"># &#x27;stream&#x27;: open(&#x27;/home/aea/log/test.log&#x27;,&#x27;a&#x27;),  #虽然成功了，但是并没有将所有内容全部写入文件，目前还不清楚为什么</span></span><br><span class="line">            <span class="string">&#x27;formatter&#x27;</span>: <span class="string">&#x27;standard&#x27;</span>   <span class="comment"># 制定输出的格式，注意 在上面的formatters配置里面选择一个，否则会报错</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;file&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;class&#x27;</span>: <span class="string">&#x27;logging.FileHandler&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;filename&#x27;</span>: os.path.join(BASE_DIR,<span class="string">&#x27;debug.log&#x27;</span>),  <span class="comment">#这是将普通日志写入到日志文件中的方法，</span></span><br><span class="line">            <span class="string">&#x27;formatter&#x27;</span>: <span class="string">&#x27;standard&#x27;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;default&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>:<span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;class&#x27;</span>:<span class="string">&#x27;logging.handlers.RotatingFileHandler&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;filename&#x27;</span>: os.path.join(BASE_DIR,<span class="string">&#x27;All.log&#x27;</span>),     <span class="comment">#日志输出文件</span></span><br><span class="line">            <span class="string">&#x27;maxBytes&#x27;</span>: <span class="number">1024</span>*<span class="number">1024</span>*<span class="number">5</span>,                  <span class="comment">#文件大小</span></span><br><span class="line">            <span class="string">&#x27;backupCount&#x27;</span>: <span class="number">5</span>,                         <span class="comment">#备份份数</span></span><br><span class="line">            <span class="string">&#x27;formatter&#x27;</span>:<span class="string">&#x27;standard&#x27;</span>,                   <span class="comment">#使用哪种formatters日志格式</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="comment"># 上面两种写入日志的方法是有区别的，前者是将控制台下输出的内容全部写入到文件中，这样做的好处就是我们在views代码中的所有print也会写在对应的位置</span></span><br><span class="line">        <span class="comment"># 第二种方法就是将系统内定的内容写入到文件，具体就是请求的地址、错误信息等，小伙伴也可以都使用一下然后查看两个文件的异同。</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;loggers&#x27;</span>: &#123;  <span class="comment"># log记录器，配置之后就会对应的输出日志</span></span><br><span class="line">        <span class="comment"># django 表示就是django本身默认的控制台输出，就是原本在控制台里面输出的内容，在这里的handlers里的file表示写入到上面配置的file-/home/aea/log/jwt_test.log文件里面</span></span><br><span class="line">        <span class="comment"># 在这里的handlers里的console表示写入到上面配置的console-/home/aea/log/test.log文件里面</span></span><br><span class="line">        <span class="string">&#x27;django&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;handlers&#x27;</span>: [<span class="string">&#x27;console&#x27;</span>,<span class="string">&#x27;file&#x27;</span>],</span><br><span class="line">            <span class="comment"># 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志</span></span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;propagate&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;django.request &#x27;</span>:&#123;</span><br><span class="line">            <span class="string">&#x27;handlers&#x27;</span>: [<span class="string">&#x27;console&#x27;</span>,<span class="string">&#x27;file&#x27;</span>],</span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;WARNING&#x27;</span>,  <span class="comment"># 配合上面的将警告log写入到另外一个文件</span></span><br><span class="line">            <span class="string">&#x27;propagate&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;django.db.backends&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;handlers&#x27;</span>: [<span class="string">&#x27;file&#x27;</span>], <span class="comment"># 指定file handler处理器，表示只写入到文件</span></span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>:<span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;propagate&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="ORM的增删改查"><code>ORM</code>的增删改查</h2>
+<ul>
+<li>增加数据</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#方式一创建记录</span></span><br><span class="line">b = Book(name=<span class="string">&quot;python基础&quot;</span>, price=<span class="number">99</span>, author=<span class="string">&quot;luenci&quot;</span>, pub_date=<span class="string">&quot;2020-06-14&quot;</span>)</span><br><span class="line">b.save()</span><br><span class="line"></span><br><span class="line"><span class="comment">#方法二创建数据</span></span><br><span class="line">Book.objects.create(name=<span class="string">&quot;python基础&quot;</span>, price=<span class="number">99</span>, author=<span class="string">&quot;luenci&quot;</span>, pub_date=<span class="string">&quot;2020-06-14&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 便捷方法</span></span><br><span class="line">dic = &#123;</span><br><span class="line"><span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;go基础&#x27;</span>,</span><br><span class="line"><span class="string">&#x27;price&#x27;</span>: <span class="number">99</span>,</span><br><span class="line"><span class="string">&#x27;author&#x27;</span>: <span class="string">&#x27;luenci&#x27;</span>,</span><br><span class="line"><span class="string">&#x27;pub_date&#x27;</span>: <span class="string">&#x27;2020-06-13&#x27;</span></span><br><span class="line">&#125;</span><br><span class="line">Book.objects.create(**dic)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>更新数据</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法一：(推荐用)</span></span><br><span class="line">Book.objects.<span class="built_in">filter</span>(author=<span class="string">&#x27;luenci&#x27;</span>).update(price=<span class="number">100</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法二</span></span><br><span class="line">b = Book.objects.get(name=<span class="string">&#x27;go基础&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(b) <span class="comment"># &lt;QuerySet [&lt;Book: Book object (3)&gt;]</span></span><br><span class="line">b.price = <span class="number">8.9</span></span><br><span class="line">b.save()</span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">type</span>(b)) <span class="comment"># &lt;class &#x27;app01.models.Book&#x27;&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> HttpResponse(<span class="string">&quot;修改成功&quot;</span>)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>删除数据</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Book.objects.<span class="built_in">filter</span>(name=<span class="string">&quot;go基础&quot;</span>).delete()</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查找数据</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 获取所有对象</span></span><br><span class="line">book_list = Book.objects.<span class="built_in">all</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 对name去重</span></span><br><span class="line">book_list = Book.objects.<span class="built_in">all</span>().values(<span class="string">&quot;name&quot;</span>).distinct()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计</span></span><br><span class="line">book_list = Book.objects.<span class="built_in">all</span>().values(<span class="string">&quot;name&quot;</span>).distinct().count()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询的是对象的集合，即使只有一个对象也是集合的形式</span></span><br><span class="line">book_list = Book.objects.<span class="built_in">filter</span>(author=<span class="string">&#x27;luenci&#x27;</span>) </span><br><span class="line"></span><br><span class="line">book_list = Book.objects.first()</span><br><span class="line">book_list = Book.objects.last()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定查询到一个对象</span></span><br><span class="line">book_list = Book.objects.get(<span class="built_in">id</span>=<span class="number">7</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询作者为luenci出版的书名.（字典的集合）</span></span><br><span class="line">book_list1 = Book.objects.<span class="built_in">filter</span>(author=<span class="string">&#x27;luenci&#x27;</span>).values(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;price&#x27;</span>) </span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询作者为luenci出版的书名.（列表的集合）</span></span><br><span class="line">book_list2 = Book.objects.<span class="built_in">filter</span>(author=<span class="string">&#x27;luenci&#x27;</span>).values_list(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;price&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># &lt;QuerySet [&#123;&#x27;name&#x27;: &#x27;go基础&#x27;, &#x27;price&#x27;: 99.0&#125;, &#123;&#x27;name&#x27;: &#x27;python基础&#x27;, &#x27;price&#x27;: 99.0&#125;, &#123;&#x27;name&#x27;: &#x27;python基础&#x27;, &#x27;price&#x27;: 66.0&#125;&gt;</span></span><br><span class="line"><span class="built_in">print</span>(book_list1) </span><br><span class="line"></span><br><span class="line"><span class="comment">#&lt;QuerySet [(&#x27;go基础&#x27;, 99.0), (&#x27;python基础&#x27;, 99.0), (&#x27;python基础&#x27;, 66.0), (&#x27;docker基础&#x27;, 8.9)]&gt;</span></span><br><span class="line"><span class="built_in">print</span>(book_list2)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Django/" rel="tag"># Django</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/" rel="prev" title="Python后端架构演进（转载）">
+      <i class="fa fa-chevron-left"></i> Python后端架构演进（转载）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Django%20%E9%87%8D%E5%AE%9A%E5%90%91%E7%BB%88%E6%9E%81%E6%8C%87%E5%8D%97/" rel="next" title="Django重定向指南（转载）">
+      Django重定向指南（转载） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#render%E6%96%B9%E6%B3%95%E5%8F%82%E6%95%B0"><span class="nav-number">1.</span> <span class="nav-text">render方法参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#request%E5%AF%B9%E8%B1%A1%E6%96%B9%E6%B3%95%E5%92%8C%E5%B1%9E%E6%80%A7"><span class="nav-number">2.</span> <span class="nav-text">request对象方法和属性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#response%E5%AF%B9%E8%B1%A1"><span class="nav-number">3.</span> <span class="nav-text">response对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E7%BD%AE%E5%8F%98%E9%87%8F%E8%BF%87%E6%BB%A4%E5%99%A8filter"><span class="nav-number">4.</span> <span class="nav-text">内置变量过滤器filter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#logging%E9%85%8D%E7%BD%AE"><span class="nav-number">5.</span> <span class="nav-text">logging配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ORM%E7%9A%84%E5%A2%9E%E5%88%A0%E6%94%B9%E6%9F%A5"><span class="nav-number">6.</span> <span class="nav-text">ORM的增删改查</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

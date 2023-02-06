@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Django日志配置 123456789101112131415161718192021222324252627282930313233LOGGING &#x3D; &amp;#123;    &amp;#x27;version&amp;#x27;: 1,    &amp;#x27;disable_existing_loggers&amp;#x27;: False,    &amp;#x27;formatters&amp;#x27;: &amp;#123;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django的logger配置">
+<meta property="og:url" content="https://luenci.me/2023/02/06/Django%E7%9A%84logger/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="Django日志配置 123456789101112131415161718192021222324252627282930313233LOGGING &#x3D; &amp;#123;    &amp;#x27;version&amp;#x27;: 1,    &amp;#x27;disable_existing_loggers&amp;#x27;: False,    &amp;#x27;formatters&amp;#x27;: &amp;#123;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="日志logger">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/Django%E7%9A%84logger/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Django的logger配置 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/Django%E7%9A%84logger/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Django的logger配置
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Django%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">Django框架</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>Django日志配置</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">LOGGING = &#123;</span><br><span class="line">    <span class="string">&#x27;version&#x27;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="string">&#x27;disable_existing_loggers&#x27;</span>: <span class="literal">False</span>,</span><br><span class="line">    <span class="string">&#x27;formatters&#x27;</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;verbose&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;format&#x27;</span>: <span class="string">&#x27;%(levelname)s %(asctime)s %(pathname)s %(module)s %(lineno)s %(process)d %(thread)d %(message)s&#x27;</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;loggers&#x27;</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;django&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;handlers&#x27;</span>: [<span class="string">&#x27;default&#x27;</span>],</span><br><span class="line">            <span class="string">&#x27;propagate&#x27;</span>: <span class="literal">True</span>,</span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;filters&#x27;</span>: [<span class="string">&#x27;special&#x27;</span>]</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;handlers&#x27;</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;default&#x27;</span>: &#123;</span><br><span class="line">            <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;class&#x27;</span>: <span class="string">&#x27;logging.handlers.RotatingFileHandler&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;filename&#x27;</span>: <span class="string">&#x27;/var/logs/django/default.log&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;maxBytes&#x27;</span>: <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">5</span>,</span><br><span class="line">            <span class="string">&#x27;backupCount&#x27;</span>: <span class="number">5</span>,</span><br><span class="line">            <span class="string">&#x27;formatter&#x27;</span>: <span class="string">&#x27;verbose&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;filters&#x27;</span>: [<span class="string">&#x27;special&#x27;</span>]</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;filters&#x27;</span>: &#123;  <span class="comment"># 过滤器</span></span><br><span class="line">        <span class="string">&#x27;special&#x27;</span>: &#123;  <span class="comment"># 使用自定义的web.my_logging.ContextFilter，别名special，可以接受其他的参数</span></span><br><span class="line">            <span class="string">&#x27;()&#x27;</span>: <span class="string">&#x27;web.my_logging.ContextFilter&#x27;</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="配置分析说明">配置分析说明</h2>
+<h3 id="version"><strong>version</strong></h3>
+<p>保留字。</p>
+<h3 id="disable-existing-loggers"><strong>disable_existing_loggers</strong></h3>
+<p>是否禁用已经存在的logger实例。</p>
+<ul>
+<li>
+<p>如果<code>LOGGING</code> 中的<code>disable_existing_loggers</code> 键为<code>True</code>（默认值），那么默认配置中的所有logger 都将禁用。</p>
+</li>
+<li>
+<p>Logger 的禁用与删除不同；logger 仍然存在，但是将默默丢弃任何传递给它的信息，也不会传播给上一级logger。所以，你应该非常小心使用<code>'disable_existing_loggers': True</code>；它可能不是你想要的。你可以设置<code>disable_existing_loggers</code> 为<code>False</code>，并重新定义部分或所有的默认loggers；或者你可以设置<code>LOGGING_CONFIG</code> 为 <code>None</code>，并 <em>自己处理logging 配置</em>。</p>
+</li>
+<li>
+<p>Logging 的配置属于Django <code>setup()</code> 函数的一部分。所以，你可以肯定在你的项目代码中logger 是永远可用的。</p>
+</li>
+</ul>
+<h3 id="formatters"><strong>formatters</strong></h3>
+<p>定义输出的日志格式。<br>
+常用的格式化属性：</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">%(name)</span>s <span class="title class_">Logger</span>的名字</span><br><span class="line"><span class="string">%(levelname)</span>s 文本形式的日志级别</span><br><span class="line"><span class="string">%(message)</span>s 用户输出的消息</span><br><span class="line"><span class="string">%(asctime)</span>s 字符串形式的当前时间。默认格式是 “<span class="number">2003</span>-<span class="number">07</span>-08 <span class="number">16</span><span class="symbol">:</span><span class="number">49</span><span class="symbol">:</span><span class="number">45</span>,<span class="number">896</span>”。逗号后面的是毫秒</span><br><span class="line"><span class="string">%(levelno)</span>s 数字形式的日志级别</span><br><span class="line"><span class="string">%(pathname)</span>s 调用日志输出函数的模块的完整路径名，可能没有</span><br><span class="line"><span class="string">%(filename)</span>s 调用日志输出函数的模块的文件名</span><br><span class="line"><span class="string">%(module)</span>s  调用日志输出函数的模块名</span><br><span class="line"><span class="string">%(funcName)</span>s 调用日志输出函数的函数名</span><br><span class="line"><span class="string">%(lineno)</span>d 调用日志输出函数的语句所在的代码行</span><br><span class="line"><span class="string">%(created)</span>f 当前时间，用<span class="variable constant_">UNIX</span>标准的表示时间的浮 点数表示</span><br><span class="line"><span class="string">%(relativeCreated)</span>d 输出日志信息时的，自<span class="title class_">Logger</span>创建以 来的毫秒数</span><br><span class="line"><span class="string">%(thread)</span>d 线程<span class="variable constant_">ID</span>。可能没有</span><br><span class="line"><span class="string">%(threadName)</span>s 线程名。可能没有</span><br><span class="line"><span class="string">%(process)</span>d 进程<span class="variable constant_">ID</span>。可能没有</span><br></pre></td></tr></table></figure>
+<p>其他格式化属性请参 <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/logging.html#logrecord-attributes">LogRecord attributes</a></p>
+<span id="more"></span>
+<h3 id="handlers"><strong>handlers</strong></h3>
+<p>处理器。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;handlers&#x27;</span>: &#123;</span><br><span class="line">    <span class="string">&#x27;default&#x27;</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;class&#x27;</span>: <span class="string">&#x27;logging.handlers.RotatingFileHandler&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;filename&#x27;</span>: <span class="string">&#x27;/var/logs/django/default.log&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;maxBytes&#x27;</span>: 1024 * 1024 * 5,</span><br><span class="line">        <span class="string">&#x27;backupCount&#x27;</span>: 5,</span><br><span class="line">        <span class="string">&#x27;formatter&#x27;</span>: <span class="string">&#x27;verbose&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;filters&#x27;</span>: [<span class="string">&#x27;special&#x27;</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>key为处理器名，values为处理器配置。</p>
+</li>
+<li>
+<p>level：日志处理级别。</p>
+</li>
+<li>
+<p>formatter： 这个参数对应<code>formatters</code>。</p>
+</li>
+<li>
+<p>filters： 对应后面的 <code>filters</code>。</p>
+</li>
+<li>
+<p>class：处理类。常用的有：<code>NullHandler</code>(无任何操作，相当于丢弃日志)，<code>FileHandler</code>(输出到磁盘文件)等。其他处理类请看 <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/logging.handlers.html">https://docs.python.org/3/library/logging.handlers.html</a></p>
+</li>
+<li>
+<p>filename：记录日志的文件名。</p>
+</li>
+<li>
+<p>maxBytes：文件最大字节数。</p>
+</li>
+<li>
+<p>backupCount：最大扩展数。这个是和maxBytes一起使用的。例如当日志文件 pro.log 达到最大字节数，那么就会扩展一个文件pro.log.1文件继续记录日志， 依次扩展，达到backupCount的设定值，例如为5，那么到pro.log.5后，后面的日志会再次记入 pro.log文件，相当于轮询。</p>
+</li>
+</ul>
+<h3 id="loggers"><strong>loggers</strong></h3>
+<p>定义logger实例。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;loggers&#x27;</span>: &#123;</span><br><span class="line">    <span class="string">&#x27;django&#x27;</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;handlers&#x27;</span>: [<span class="string">&#x27;default&#x27;</span>],</span><br><span class="line">        <span class="string">&#x27;propagate&#x27;</span>: True,</span><br><span class="line">        <span class="string">&#x27;level&#x27;</span>: <span class="string">&#x27;DEBUG&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;filters&#x27;</span>: [<span class="string">&#x27;special&#x27;</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>handlers：对应的handles对象列表。</p>
+</li>
+<li>
+<p>level：logger实例输出的日志级别，但是这个级别并不是最终输出日志的级别，还有根据handlers的级别进行判断，两个level中取级别高的。DEBUG &lt; INFO &lt; WARNING &lt; ERROR &lt; CRITICAL</p>
+</li>
+<li>
+<p>propagate：日志是否向上级传递。True 向上级传，False 不向上级传。默认为True。</p>
+</li>
+<li>
+<p>filters： 对应后面的 <code>filters</code>。<br>
+更详细说明请参照：<a target="_blank" rel="noopener" href="https://docs.python.org/3/library/logging.html#logrecord-attributes">https://docs.python.org/3/library/logging.html#logrecord-attributes</a></p>
+</li>
+</ul>
+<h3 id="filters"><strong>filters</strong></h3>
+<ul>
+<li>过滤器。过滤器用来对传递给 Logger 或者 Handler 的日志信息提供附加的控制。</li>
+<li>默认情况下，所有满足级别的日志信息都会被处理，但是我们可以通过 filter 来过滤掉 CRITICAL 级别的日志，然后仅允许 ERROR 级别的日志通过。</li>
+<li>filter 也可以被用来对前面被忽略掉的日志进行修改，例如，我们可以在一定条件下将 ERROR 日志降级为 WARNING 日志。</li>
+<li>过滤器可以安装在 logger 或者 handler 上，多个过滤器可以形成一个链来接连产生作用。</li>
+</ul>
+<p>配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;filters&#x27;</span>: &#123;  <span class="comment"># 过滤器</span></span><br><span class="line">    <span class="string">&#x27;special&#x27;</span>: &#123;  </span><br><span class="line">    <span class="comment"># 使用自定义的web.my_logging.ContextFilter，别名special，可以接受其他的参数</span></span><br><span class="line">        <span class="string">&#x27;()&#x27;</span>: <span class="string">&#x27;web.my_logging.ContextFilter&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>自定义Filter：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> logging</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> choice</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ContextFilter</span>(logging.Filter):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    This is a filter which injects contextual information into the log.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Rather than use actual contextual information, we just use random</span></span><br><span class="line"><span class="string">    data in this demo.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    USERS = [<span class="string">&#x27;jim&#x27;</span>, <span class="string">&#x27;fred&#x27;</span>, <span class="string">&#x27;sheila&#x27;</span>]</span><br><span class="line">    IPS = [<span class="string">&#x27;123.231.231.123&#x27;</span>, <span class="string">&#x27;127.0.0.1&#x27;</span>, <span class="string">&#x27;192.168.0.1&#x27;</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">filter</span>(<span class="params">self, record</span>):</span><br><span class="line">        record.ip = choice(ContextFilter.IPS)</span><br><span class="line">        record.user = choice(ContextFilter.USERS)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+<p>可以不定义类，直接定义函数，返回True表示</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%97%A5%E5%BF%97logger/" rel="tag"># 日志logger</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/GIL%E9%94%81/" rel="prev" title="python解释器的GIL锁">
+      <i class="fa fa-chevron-left"></i> python解释器的GIL锁
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/" rel="next" title="Django的ORM多表操作">
+      Django的ORM多表操作 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">Django日志配置</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%88%86%E6%9E%90%E8%AF%B4%E6%98%8E"><span class="nav-number">1.1.</span> <span class="nav-text">配置分析说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#version"><span class="nav-number">1.1.1.</span> <span class="nav-text">version</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#disable-existing-loggers"><span class="nav-number">1.1.2.</span> <span class="nav-text">disable_existing_loggers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#formatters"><span class="nav-number">1.1.3.</span> <span class="nav-text">formatters</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#handlers"><span class="nav-number">1.1.4.</span> <span class="nav-text">handlers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#loggers"><span class="nav-number">1.1.5.</span> <span class="nav-text">loggers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#filters"><span class="nav-number">1.1.6.</span> <span class="nav-text">filters</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

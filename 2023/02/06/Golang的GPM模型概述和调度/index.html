@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="G-P-M 模型概述  每一个OS线程都有一个固定大小的内存块(一般会是2MB)来做栈，这个栈会用来存储当前正在被调用或挂起(指在调用其它函数时)的函数的内部变量。 这个固定大小的栈同时很大又很小。因为2MB的栈对于一个小小的Goroutine来说是很大的内存浪费，而对于一些复杂的任务（如深度嵌套的递归）来说又显得太小。因此，Go语言做了它自己的『线程』。 在Go语言中，每一个Goroutine是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang的goroutine模型概述和调度">
+<meta property="og:url" content="https://luenci.me/2023/02/06/Golang%E7%9A%84GPM%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%BF%B0%E5%92%8C%E8%B0%83%E5%BA%A6/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="G-P-M 模型概述  每一个OS线程都有一个固定大小的内存块(一般会是2MB)来做栈，这个栈会用来存储当前正在被调用或挂起(指在调用其它函数时)的函数的内部变量。 这个固定大小的栈同时很大又很小。因为2MB的栈对于一个小小的Goroutine来说是很大的内存浪费，而对于一些复杂的任务（如深度嵌套的递归）来说又显得太小。因此，Go语言做了它自己的『线程』。 在Go语言中，每一个Goroutine是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/luenci/RepoImg/raw/master/img/202108091238404.png">
+<meta property="og:image" content="https://gitee.com/luenci/RepoImg/raw/master/img/202108091238161.png">
+<meta property="article:published_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.720Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="GPM调度器">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/luenci/RepoImg/raw/master/img/202108091238404.png">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/Golang%E7%9A%84GPM%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%BF%B0%E5%92%8C%E8%B0%83%E5%BA%A6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Golang的goroutine模型概述和调度 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/Golang%E7%9A%84GPM%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%BF%B0%E5%92%8C%E8%B0%83%E5%BA%A6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Golang的goroutine模型概述和调度
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>G-P-M 模型概述</h1>
+<ul>
+<li>每一个OS线程都有一个固定大小的内存块(一般会是<code>2MB</code>)来做栈，这个栈会用来存储当前正在被调用或挂起(指在调用其它函数时)的函数的内部变量。</li>
+<li>这个固定大小的栈同时很大又很小。因为<code>2MB</code>的栈对于一个小小的<code>Goroutine</code>来说是很大的内存浪费，而对于一些复杂的任务（如深度嵌套的递归）来说又显得太小。因此，Go语言做了它自己的『线程』。</li>
+<li>在Go语言中，每一个Goroutine是一个独立的执行单元，相较于每个OS线程固定分配<code>2M</code>内存的模式，Goroutine的栈采取了动态扩容方式， <strong>初始时仅为<code>2KB</code></strong>，随着任务执行按需增长，最大可达<code>1GB</code>（64位机器最大是<code>1G</code>，32位机器最大是<code>256M</code>），且完全由Golang自己的调度器 Go Scheduler 来调度。</li>
+<li>此外，<code>GC</code>还会周期性地将不再使用的内存回收，收缩栈空间。 因此，Go程序可以同时并发成千上万个Goroutine是得益于它<strong>强劲的调度器和高效的内存模型</strong>。</li>
+</ul>
+<blockquote>
+<p><strong>任何用户线程最终肯定都是要交由OS线程来执行</strong></p>
+</blockquote>
+<p>​    Goroutine（称为G）也不例外，但是G并不直接绑定OS线程运行，而是由Goroutine Scheduler中的 <code>P - Logical Processor </code>（逻辑处理器）来作为两者的<code>『中介』</code>。</p>
+<p>P 可以看作是一个抽象的资源或者一个上下文，一个P绑定一个OS线程，在Golang的实现里把OS线程抽象成一个数据结构。</p>
+<p><strong>M，G实际上是由M通过P来进行调度运行的</strong>，但是在G的层面来看，<strong>P提供了G运行所需的一切资源和环境</strong>，因此在G看来P就是运行它的 “CPU”，由 G、P、M 这三种由Go抽象出来的实现，最终形成了Go调度器的基本结构：</p>
+<h2 id="G-Goroutine">G: Goroutine</h2>
+<ul>
+<li>
+<p>G有以下状态</p>
+<ul>
+<li>
+<p>非<code>GC</code>状态</p>
+<ul>
+<li><code>idle</code>:<code>_Gidle for idle</code>，意思是这个goroutine刚被创建出来，还未被进行初始化。</li>
+<li><code>runnable</code>: <code>_Grunnable for runnable</code>意思是这个goroutine已经在运行队列，在这种情况下，goroutine还未执行用户代码，M的执行栈还不是goroutine自己的</li>
+<li><code>running</code>: <code>_Grunning for running</code>，意思是goroutine可能正在执行用户代码，M的执行栈已经由该goroutine所拥有，此时对象g不在运行队列中。这个状态值要待分配给M和P之后，交由M和P来设定</li>
+<li><code>syscall</code>, <code>waiting</code>, <code>dead</code>, <code>copystack</code></li>
+</ul>
+</li>
+<li>
+<p>对应的<code>GC</code>状态</p>
+<ul>
+<li><code>scan</code>, <code>scanrunnable</code>, <code>scan running</code>, <code>scansyscall</code>, <code>scanwaiting</code></li>
+<li><code>_Gscan</code>系列，用于标记正在被<code>GC</code>扫描的状态，这些状态是由<code>_Gscan=0x1000</code>再加上<code>_GRunnable</code>, <code>_Grunning</code>, <code>_Gsyscall</code>和<code>_Gwaiting</code>的枚举值所产生的，这么做的好处是直接通过简单的运算即可知道被Scan之前的状态。当被标记为这系列的状态时，这些<code>goroutine</code>都不会执行用户代码，并且它们的执行栈都是被做该<code>GC</code>的<code>goroutine</code>所拥有。不过<code>_Gscanrunning</code>状态有点特别，这个标记是为了阻止正在运行的<code>goroutine</code>切换成其它状态，并告诉这个G自己扫描自己的堆栈。正是这种巧妙的方式，使得<code>Go</code>语言的<code>GC</code>十分高效。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>每个Goroutine对应一个G结构体，G 存储 Goroutine的运行堆栈、状态以及任务函数，可重用。</p>
+</li>
+<li>
+<p>G并非执行体，每个G需要绑定到P才能被调度执行。</p>
+</li>
+</ul>
+<h2 id="P-Processor">P: Processor</h2>
+<ul>
+<li>表示逻辑处理器， 对G来说，P相当于CPU核，G只有绑定到P(<code>在P的local run中</code>)才能被调度。对M来说，<code>P</code>提供了相关的执行环境(<code>Context</code>)，如内存分配状态(<code>mcache</code>)，任务队列(<code>G</code>)等，<strong>P的数量决定了系统内最大可并行的G的数量（前提：物理CPU核数 &gt;= P的数量），P的数量由用户设置的<code>GoMAXPROCS</code>决定，但是不论<code>GoMAXPROCS</code>设置为多大，P的数量最大为256</strong>。</li>
+<li><code>golang runtime</code>是有个<code>sysmon</code>的协程，他会轮询的检测所有的<code>P上下文队列</code>，**只要 G-M 的线程长时间在阻塞状态，那么就重新创建一个线程去从runtime P队列里获取任务。先前的阻塞的线程会被游离出去了，当他完成阻塞操作后会触发相关的callback回调，并加入回线程组里。**简单说，如果你没有特意配置<code>runtime.SetMaxThreads</code>，那么在没有可复用的线程的情况下，会一直创建新线程。</li>
+</ul>
+<h2 id="M-Machine">M: Machine</h2>
+<p>​    OS线程抽象，<strong>代表着真正执行计算的资源</strong>。</p>
+<ul>
+<li>
+<p>在绑定有效的P后，进入schedule循环；而schedule循环的机制大致是从Global队列、P的Local队列以及wait队列中获取G，切换到G的执行栈上并执行G的函数，调用<code>Goexit</code>做清理工作并回到M，如此反复。</p>
+</li>
+<li>
+<p>M并不保留G状态，这是G可以跨M调度的基础，M的数量是不定的，由Go Runtime调整，为了防止创建过多OS线程导致系统调度不过来，目前默认最大限制为10000个。</p>
+</li>
+<li>
+<p>在绝大多数时候，其实<code>P</code>的数量和<code>M</code>的数量是相等。 每创建一个<code>p</code>, 就会创建一个对应的<code>M</code>只有少数情况下，<code>M</code>的数量会大于<code>P</code></p>
+</li>
+</ul>
+<h1><em><a target="_blank" rel="noopener" href="https://supertech.csail.mit.edu/papers/steal.pdf">work-stealing</a></em> 的调度算法</h1>
+<ul>
+<li>每个P维护一个G的本地队列；</li>
+<li>当一个G被创建出来，或者变为可执行状态时，就把他放到P的可执行队列中；</li>
+<li>当一个G在M里执行结束后，P会从队列中把该G取出；如果此时P的队列为空，即没有其他G可以执行， M就随机选择另外一个P，从其可执行的G队列中取走一半。</li>
+</ul>
+<p><img src="https://gitee.com/luenci/RepoImg/raw/master/img/202108091238404.png" alt="image-20210809113044316"></p>
+<span id="more"></span>
+<h1>G-P-M 模型调度</h1>
+<p>​    Go调度器工作时会维护两种用来保存G的任务队列：</p>
+<ul>
+<li>一种是一个Global任务队列</li>
+<li>一种是每个P维护的Local任务队列</li>
+</ul>
+<p>当通过Go关键字创建一个新的Goroutine的时候，它会优先被放入P的本地队列。</p>
+<p>​    为了运Goroutine，M需要持有（绑定）一个P，接着M会启动一个OS线程，循环从P的本地队列里取出一个Goroutine并执行。</p>
+<p>当然还有上文提及的 work-stealing调度算法:</p>
+<p>​    当M执行完了当前P的Local队列里的所有G后，P也不会就这么在那躺尸啥都不干，它会<strong>先尝试从Global队列寻找G</strong>来执行，如果Global队列为空，它会随机挑选另外一个P，从它的队列里中拿走一半的G到自己的队列中执行。</p>
+<h2 id="用户态阻塞-唤醒"><strong>用户态阻塞/唤醒</strong></h2>
+<p>​    当<code>Goroutine</code>因为<code>channel</code>操作或者<code>network I/O</code>而阻塞时（实际上<code>Golang</code>已经用<code>netpoller</code>实现了<code>Goroutine</code>网络<code>I/O</code>阻塞不会导致<code>M</code>被阻塞，仅阻塞<code>G</code>，这里仅仅是举个栗子），对应的<code>G</code>会被放置到某个<code>wait</code>队列(如<code>channel</code>的<code>waitq</code>)，该G的状态由<code>_Gruning</code>变为<code>_Gwaitting</code>，而M会跳过该G尝试获取并执行下一个G，如果此时没有<code>runnable</code>的<code>G</code>供<code>M</code>运行，那么M将解绑P，并进入<code>sleep</code>状态；</p>
+<p>当阻塞的<code>G</code>被另一端的<code>G2</code>唤醒时（比如<code>channel</code>的可读/写通知），G被标记为<code>runnable</code>，尝试加入<code>G2</code>所在P的<code>runnext</code>，然后再是P的<code>Local</code>队列和<code>Global</code>队列。</p>
+<h2 id="系统调用阻塞">系统调用阻塞</h2>
+<p>​    当G被阻塞在某个系统调用上时，此时G会阻塞在<code>_Gsyscall</code>状态，M也处于 <code>block on syscall</code> 状态，此时的M可被抢占调度：执行该G的M会与P解绑，而<code>P</code>则尝试与其它<code>idle</code>的M绑定，继续执行其它<code>G</code>。</p>
+<p>​    如果没有其它<code>idle</code>的M，但<code>P</code>的<code>Local</code>队列中仍然有<code>G</code>需要执行，则创建一个新的M；当系统调用完成后，<code>G</code>会重新尝试获取一个<code>idle</code>的<code>P</code>进入它的<code>Local</code>队列恢复执行，如果没有<code>idle</code>的<code>P</code>，<code>G</code>会被标记为<code>runnable</code>加入到<code>Global</code>队列。</p>
+<h2 id="管理协程">管理协程</h2>
+<p>​    上面说到go语言自己定义一个结构体，叫协程。自己在用户态控制多个协程（结构体）的调度和执行，那它是怎么实现的呢？</p>
+<ul>
+<li>
+<p>go引入了P(Processor)的概念。一个P表示一个逻辑处理器，用于调度G。称之为逻辑处理器，一般与物理处理器对应</p>
+</li>
+<li>
+<p>M(Machine)，可以理解成一个线程，真正执行P的线程。</p>
+</li>
+</ul>
+<p>G、P、M之间的关系如下图：</p>
+<p><img src="https://gitee.com/luenci/RepoImg/raw/master/img/202108091238161.png" alt="image-20210809113107322"></p>
+<p>每一个P都有一个对应的G队列，P绑定了线程<code>M0</code>正在执行协程<code>G0</code>，当遇到阻塞事件的时候，runtime会为P绑定一个新的线程<code>M1</code>，执行新的新的线程</p>
+<h1>参考链接</h1>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6927264515193045000#heading-10">Go协程管理</a></p>
+<p><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000022871460">Go 调度模型 GPM</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/GPM%E8%B0%83%E5%BA%A6%E5%99%A8/" rel="tag"># GPM调度器</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/" rel="prev" title="Go语言基础知识和语法">
+      <i class="fa fa-chevron-left"></i> Go语言基础知识和语法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/Golang%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" rel="next" title="Golang并发编程最佳实践">
+      Golang并发编程最佳实践 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">G-P-M 模型概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#G-Goroutine"><span class="nav-number">1.1.</span> <span class="nav-text">G: Goroutine</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#P-Processor"><span class="nav-number">1.2.</span> <span class="nav-text">P: Processor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#M-Machine"><span class="nav-number">1.3.</span> <span class="nav-text">M: Machine</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">work-stealing 的调度算法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">G-P-M 模型调度</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%80%81%E9%98%BB%E5%A1%9E-%E5%94%A4%E9%86%92"><span class="nav-number">3.1.</span> <span class="nav-text">用户态阻塞&#x2F;唤醒</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E9%98%BB%E5%A1%9E"><span class="nav-number">3.2.</span> <span class="nav-text">系统调用阻塞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E5%8D%8F%E7%A8%8B"><span class="nav-number">3.3.</span> <span class="nav-text">管理协程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

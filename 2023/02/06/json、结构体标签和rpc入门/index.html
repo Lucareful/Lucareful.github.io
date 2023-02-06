@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="json、结构体标签和rpc入门 json使用 12345678910111213141516171819202122232425262728293031323334353637383940414243444546package mainimport (   &quot;encoding&#x2F;json&quot;   &quot;fmt&quot;   &quot;reflect&quot;)&#x2F;&#x2F; 将">
+<meta property="og:type" content="article">
+<meta property="og:title" content="json、结构体标签和rpc入门">
+<meta property="og:url" content="https://luenci.me/2023/02/06/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="json、结构体标签和rpc入门 json使用 12345678910111213141516171819202122232425262728293031323334353637383940414243444546package mainimport (   &quot;encoding&#x2F;json&quot;   &quot;fmt&quot;   &quot;reflect&quot;)&#x2F;&#x2F; 将">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>json、结构体标签和rpc入门 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          json、结构体标签和rpc入门
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>767</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>json、结构体标签和rpc入门</h1>
+<h2 id="json使用">json使用</h2>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;encoding/json&quot;</span></span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将 结构体 --&gt; 字符串  编码</span></span><br><span class="line"><span class="comment">// 将 字符串 --&gt; 结构体  解码</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 结构体的成员须大写，不然不参与编码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">   Name  <span class="type">string</span></span><br><span class="line">   Sex   <span class="type">string</span></span><br><span class="line">   Age   <span class="type">int</span></span><br><span class="line">   Score <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   st1 := Student&#123;</span><br><span class="line">      Name:  <span class="string">&quot;luenci&quot;</span>,</span><br><span class="line">      Sex:   <span class="string">&quot;man&quot;</span>,</span><br><span class="line">      Age:   <span class="number">22</span>,</span><br><span class="line">      Score: <span class="number">99</span>,</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 编码 序列化</span></span><br><span class="line">   encodeInfo, err := json.Marshal(st1)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;序列化发生错误,error&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(reflect.TypeOf(encodeInfo))</span><br><span class="line">   fmt.Println(<span class="type">string</span>(encodeInfo))</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 解码 反序列化</span></span><br><span class="line">   <span class="keyword">var</span> st2 Student</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> err := json.Unmarshal([]<span class="type">byte</span>(encodeInfo), &amp;st2); err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;反序列化发生错误,&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(st2.Name)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h2 id="结构体标签">结构体标签</h2>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;encoding/json&quot;</span></span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 结构体标签由一个或多个键值对组成。</span></span><br><span class="line"><span class="comment">// 键与值使用冒号分隔，值用双引号括起来。键值对之间使用一个空格分隔。</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Teacher <span class="keyword">struct</span> &#123;</span><br><span class="line">   Name    <span class="type">string</span> <span class="string">`json:&quot;-&quot;`</span>                 <span class="comment">// 在使用json编码时候，这个字段不参与编码</span></span><br><span class="line">   Subject <span class="type">string</span> <span class="string">`json:&quot;subject_name&quot;`</span>      <span class="comment">// 在使用json编码时候，这个字段会编码成 subject_name</span></span><br><span class="line">   Age     <span class="type">int</span>    <span class="string">`json:&quot;age,string&quot;`</span>        <span class="comment">// 在使用json编码时候，这个字段类型会变成age and 类型会变为 string</span></span><br><span class="line">   Address <span class="type">string</span> <span class="string">`json:&quot;address,omitempty&quot;`</span> <span class="comment">// 在使用json编码时候，如果这个字段是空的,就会忽略掉不编码</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 小写的结构体成员在json编码时候会被忽略掉</span></span><br><span class="line">   gender <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   t1 := Teacher&#123;</span><br><span class="line">      Name:    <span class="string">&quot;lynn&quot;</span>,</span><br><span class="line">      Subject: <span class="string">&quot;math&quot;</span>,</span><br><span class="line">      Age:     <span class="number">0</span>,</span><br><span class="line">      Address: <span class="string">&quot;123&quot;</span>,</span><br><span class="line">      gender:  <span class="string">&quot;girl&quot;</span>,</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   marshal, err := json.Marshal(t1)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(<span class="string">&quot;编码后结果为:&quot;</span>, <span class="type">string</span>(marshal))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="rpc封装设计">rpc封装设计</h2>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;net/rpc&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> MyInterface <span class="keyword">interface</span> &#123;</span><br><span class="line">   HelloWorld(<span class="type">string</span>, *<span class="type">string</span>) <span class="type">error</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 服务端注册函数</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">RegisterName</span><span class="params">(i MyInterface)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">   err := rpc.RegisterName(<span class="string">&quot;Hello&quot;</span>, i)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> err</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> MyClient <span class="keyword">struct</span> &#123;</span><br><span class="line">   c *rpc.Client</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">InitClient</span><span class="params">(addr <span class="type">string</span>)</span></span> MyClient &#123;</span><br><span class="line">   conn, _ := rpc.Dial(<span class="string">&quot;tcp&quot;</span>, addr)</span><br><span class="line">   <span class="keyword">return</span> MyClient&#123;c: conn&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 实现函数参照interface实现</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(this *MyClient)</span></span> HelloWorld(name <span class="type">string</span>, resp *<span class="type">string</span>) <span class="type">error</span> &#123;</span><br><span class="line">   <span class="keyword">return</span> this.c.Call(<span class="string">&quot;Hello.HelloWorld&quot;</span>, name, resp)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="rpc-server">rpc-server</h2>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;net&quot;</span></span><br><span class="line">   <span class="string">&quot;net/rpc/jsonrpc&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Hello <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(this *Hello)</span></span> HelloWorld(name <span class="type">string</span>, resp *<span class="type">string</span>) <span class="type">error</span> &#123;</span><br><span class="line">   *resp = name + <span class="string">&quot; 你好！&quot;</span></span><br><span class="line">   <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   <span class="comment">// 1.注册服务</span></span><br><span class="line">   <span class="comment">//if err := rpc.RegisterName(&quot;luenci&quot;, new(Hello)); err != nil &#123;</span></span><br><span class="line">   <span class="comment">// fmt.Println(&quot;注册服务失败:&quot;, err)</span></span><br><span class="line">   <span class="comment">// return</span></span><br><span class="line">   <span class="comment">//&#125;</span></span><br><span class="line">   <span class="keyword">if</span> err := RegisterName(<span class="built_in">new</span>(Hello)); err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;服务注册失败,error&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 2.设置监听着</span></span><br><span class="line">   listenner, err := net.Listen(<span class="string">&quot;tcp&quot;</span>, <span class="string">&quot;127.0.0.1:8800&quot;</span>)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;设置监听者失败:&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">defer</span> listenner.Close()</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 3.建立链接</span></span><br><span class="line">   conn, err := listenner.Accept()</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;建立链接失败:&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">defer</span> conn.Close()</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 4.绑定服务 jsonrpc</span></span><br><span class="line">   <span class="comment">//rpc.ServeConn(conn)</span></span><br><span class="line">   jsonrpc.ServeConn(conn)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="rpc-client（go）">rpc-client（go）</h2>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;net/rpc&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   <span class="comment">/* --------------------- 方式一 ------------------*/</span></span><br><span class="line">   <span class="comment">// 通用的序列化和反序列化 -- json、protobuf</span></span><br><span class="line">   <span class="comment">// 使用 Dail 链接服务器 -- Dail()</span></span><br><span class="line">   <span class="comment">//conn, err := rpc.Dial(&quot;tcp&quot;, &quot;127.0.0.1:8800&quot;)</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">//conn, err := jsonrpc.Dial(&quot;tcp&quot;, &quot;127.0.0.1:8800&quot;)</span></span><br><span class="line">   <span class="comment">//if err != nil &#123;</span></span><br><span class="line">   <span class="comment">// fmt.Println(&quot;Dail error:&quot;, err)</span></span><br><span class="line">   <span class="comment">// return</span></span><br><span class="line">   <span class="comment">//&#125;</span></span><br><span class="line">   <span class="comment">//defer conn.Close()</span></span><br><span class="line">   <span class="comment">//</span></span><br><span class="line">   <span class="comment">//// 调用远程函数</span></span><br><span class="line">   <span class="comment">//var response string // 接收返回值 -- 传出参数</span></span><br><span class="line">   <span class="comment">//if err := conn.Call(&quot;luenci.HelloWorld&quot;, &quot;lynn&quot;, &amp;response); err != nil &#123;</span></span><br><span class="line">   <span class="comment">// fmt.Println(&quot;Call error&quot;, err)</span></span><br><span class="line">   <span class="comment">// return</span></span><br><span class="line">   <span class="comment">//&#125;</span></span><br><span class="line">   <span class="comment">//fmt.Println(&quot;response&quot;, response)</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">/* --------------------- 方式二 ------------------*/</span></span><br><span class="line"></span><br><span class="line">   MyClient := InitClient(<span class="string">&quot;127.0.0.1:8800&quot;</span>)</span><br><span class="line">   <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(c *rpc.Client)</span></span> &#123;</span><br><span class="line">      err := c.Close()</span><br><span class="line">      <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">         fmt.Println(<span class="string">&quot;关闭链接出错.error&quot;</span>, err)</span><br><span class="line">         <span class="keyword">return</span></span><br><span class="line">      &#125;</span><br><span class="line">   &#125;(MyClient.c)</span><br><span class="line"></span><br><span class="line">   <span class="keyword">var</span> resp <span class="type">string</span></span><br><span class="line">   err := MyClient.HelloWorld(<span class="string">&quot;luenci&quot;</span>, &amp;resp)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;出错了,error&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="rpc-client（python）">rpc-client（python）</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment"># -*- coding: UTF-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> socket               <span class="comment"># 导入 socket 模块</span></span><br><span class="line"></span><br><span class="line">s = socket.socket()         <span class="comment"># 创建 socket 对象</span></span><br><span class="line">host = <span class="string">&quot;127.0.0.1&quot;</span> <span class="comment"># 获取本地主机名</span></span><br><span class="line">port = <span class="number">8800</span>                <span class="comment"># 设置端口号</span></span><br><span class="line"></span><br><span class="line">s.connect((host, port))</span><br><span class="line">data = json.dumps(&#123;<span class="string">&quot;method&quot;</span>:<span class="string">&quot;luenci.HelloWorld&quot;</span>,<span class="string">&quot;params&quot;</span>:[<span class="string">&quot;lynn&quot;</span>],<span class="string">&quot;id&quot;</span>:<span class="number">0</span>&#125;)</span><br><span class="line"><span class="built_in">print</span>(data)</span><br><span class="line">s.send(data)</span><br><span class="line">res = s.recv(<span class="number">1024</span>)</span><br><span class="line"><span class="built_in">print</span>(res)</span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">type</span>(res))</span><br><span class="line">s.close()</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/" rel="prev" title="K8s的Pod创建历程">
+      <i class="fa fa-chevron-left"></i> K8s的Pod创建历程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/java%E7%AE%80%E4%BB%8B/" rel="next" title="Java语言概述">
+      Java语言概述 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">json、结构体标签和rpc入门</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#json%E4%BD%BF%E7%94%A8"><span class="nav-number">1.1.</span> <span class="nav-text">json使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE"><span class="nav-number">1.2.</span> <span class="nav-text">结构体标签</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rpc%E5%B0%81%E8%A3%85%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.3.</span> <span class="nav-text">rpc封装设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rpc-server"><span class="nav-number">1.4.</span> <span class="nav-text">rpc-server</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rpc-client%EF%BC%88go%EF%BC%89"><span class="nav-number">1.5.</span> <span class="nav-text">rpc-client（go）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rpc-client%EF%BC%88python%EF%BC%89"><span class="nav-number">1.6.</span> <span class="nav-text">rpc-client（python）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

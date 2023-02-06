@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="基本概念 1.静态资源 ​	一旦准备好资源，不在需要经常变化的资源.由于该资源不需要经常变化，所以可以提前准备.比如png&#x2F;jpg&#x2F;css&#x2F;js等文件 2.动态资源 ​	和静态资源相反，这种资源会经常变化.比如，我们要编写一个电商网站，我们无法预测用户在浏览商品时选择什么样的条件。 根据用户选择条件不同，我们给用户提供可供选择的商品就不同.这种资源无法提前准备。 3.模板文件 ​	在用户搜索各种商">
+<meta property="og:type" content="article">
+<meta property="og:title" content="flask框架学习">
+<meta property="og:url" content="https://luenci.me/2023/02/06/flask%E6%A1%86%E6%9E%B6/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="基本概念 1.静态资源 ​	一旦准备好资源，不在需要经常变化的资源.由于该资源不需要经常变化，所以可以提前准备.比如png&#x2F;jpg&#x2F;css&#x2F;js等文件 2.动态资源 ​	和静态资源相反，这种资源会经常变化.比如，我们要编写一个电商网站，我们无法预测用户在浏览商品时选择什么样的条件。 根据用户选择条件不同，我们给用户提供可供选择的商品就不同.这种资源无法提前准备。 3.模板文件 ​	在用户搜索各种商">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161314597.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161314597.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427160426403.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427154043162.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427160633257.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427160813513.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161032568.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161047472.png">
+<meta property="article:published_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:modified_time" content="2023-02-06T14:25:45.724Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="flask">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161314597.png">
+
+<link rel="canonical" href="https://luenci.me/2023/02/06/flask%E6%A1%86%E6%9E%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>flask框架学习 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/06/flask%E6%A1%86%E6%9E%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          flask框架学习
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-06 14:25:45" itemprop="dateCreated datePublished" datetime="2023-02-06T14:25:45+00:00">2023-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>基本概念</h1>
+<h2 id="1-静态资源">1.静态资源</h2>
+<p>​	一旦准备好资源，不在需要经常变化的资源.由于该资源不需要经常变化，所以可以提前准备.比如<code>png/jpg/css/js</code>等文件</p>
+<h2 id="2-动态资源">2.动态资源</h2>
+<p>​	和静态资源相反，这种资源会经常变化.比如，我们要编写一个电商网站，我们无法预测用户在浏览商品时选择什么样的条件。<br>
+根据用户选择条件不同，我们给用户提供可供选择的商品就不同.这种资源无法提前准备。</p>
+<h2 id="3-模板文件">3.模板文件</h2>
+<p>​	在用户搜索各种商品的时候，大家是否发现虽然大家的条件不同，但是显示商品的网页中除了那些商品信息整个网页的结构/布局几乎是一模一样的.<br>
+​	而模板文件就是网页中通用的结构构成的一个页面.这个页面中不含有任何用户需要查看的数据，当用户查询数据的时候会将最终的结果放到模板中形成用户真正需要的页面。<br>
+​	这就好比，生活中一个毛坯房可以装饰上不同的风格.我们把模板文件转化为用户真正看到的网页的过程就称为模板替换.</p>
+<h1>通信规范</h1>
+<p>服务器和浏览器之间通信使用HTTP协议<br>
+同理，框架和web服务器之间进行通信也需要一个协议为了简单明了，一个简单的协议（例子）：</p>
+<ul>
+<li>1、web服务器在接收到浏览器的动态套源请求的时候会将请求报文请求切割拆分为键值对放到一个字典中</li>
+<li>2、web服务器调用框架提供的方法执行框架的功能并且传给框架一个字典</li>
+<li>3、框架通过字典取出用户请求根据请求产生处理状态/响应头信息/响应体</li>
+<li>4、框架通过返回值将处理状态/响应头信息/响应体给服务器，完成一次动态资源请求的过程</li>
+</ul>
+<h1>Flask程序运行过程</h1>
+<ul>
+<li>
+<p>1.当客户端想要获取资源时，一般会通过浏览器发起HTTP请求。</p>
+</li>
+<li>
+<p>2.此时，<code>Web</code>服务器会把来自客户端的所有请求都交给Flask程序实例</p>
+</li>
+<li>
+<p>3.程序实例使用<code>Werkzeug</code>来做路由分发（<code>URL</code>请求和视图函数之间的对应关系）。</p>
+</li>
+<li>
+<p>4.根据每个<code>URL</code>请求，找到具体的视图函数并进行调用。</p>
+<ul>
+<li>在<code>Flask</code>程序中，路由的实现一般是通过程序实例的装饰器实现。</li>
+</ul>
+</li>
+<li>
+<p>5.<code>Flask</code>调用视图函数后，可以返回两种内容：</p>
+<ul>
+<li>字符串内容：将视图函数的返回值作为响应的内容，返回给客户端（浏览器）</li>
+<li><code>HTML</code>模版内容：获取到数据后，把数据传入<code>HTML</code>模板文件中，板引擎负责渲染<code>HTTP</code>响应数据，然后返回响应数据给客户端（浏览器）</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, render_template</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建flask应用实例</span></span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义路由及是视图函数（装饰器路由）</span></span><br><span class="line"><span class="comment"># 路由默认只支持GET请求方式，如需要支持别的请求需要添加</span></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/&#x27;</span>, methods=[<span class="string">&#x27;GET&#x27;</span>, <span class="string">&quot;POST&quot;</span>]</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">index</span>():</span><br><span class="line">    <span class="comment"># return &quot;Hello Flask&quot;z</span></span><br><span class="line">    <span class="keyword">return</span> render_template(<span class="string">&quot;index.html&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span></span><br><span class="line">    app.run()</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1>路由传参</h1>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用一个视图函数 来显示不同用户的订单信息</span></span><br><span class="line"><span class="comment"># &lt;&gt;路由定义的参数，&lt;&gt;内需要起个名字</span></span><br><span class="line"><span class="comment"># int：限定参数类型为int类型，其他的不解析</span></span><br><span class="line"><span class="comment">#   -大致原理是将参数强转为int，如果成功，则可以进行路由匹配</span></span><br><span class="line"><span class="comment">#   -如果参数无法转换成功，就无法匹配该路由</span></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/orders/&lt;int:order_id&gt;&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_order_id</span>(<span class="params">order_id</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="built_in">type</span>(order_id))</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&#x27;order_id %s&#x27;</span> % order_id</span><br></pre></td></tr></table></figure>
+  <span id="more"></span>
+<h1><code>Jinja2</code>模板引擎</h1>
+<h2 id="模板">模板</h2>
+<pre><code>在前面的示例中，视图函数的主要作用是生成请求的响应，这是最简单的请求。实际上，视图函数有两个作用：处理业务逻辑和返回响应内容。在大型应用中，把业务逻辑和表现内容放在一起，会增加代码的复杂度和维护成本。本节学到的模板，它的作用即是承担视图函数的另一个作用，即返回响应内容。
+</code></pre>
+<ul>
+<li>
+<p>模板其实是一个包含响应文本的文件，其中用占位符（变量）表示动态部分，告诉模板引擎其具体的值需要从使用的数据中获取</p>
+</li>
+<li>
+<p>使用真实值替换变量，再返回最终得到的字符串，这个过程称为“渲染”</p>
+</li>
+<li>
+<p><code>Flask</code>是使用<code>Jinja2</code>这个模板引擎来渲染模板</p>
+</li>
+</ul>
+<p>使用模板的好处：</p>
+<ul>
+<li>
+<p>视图函数只负责业务逻辑和数据处理（业务逻辑方面）</p>
+</li>
+<li>
+<p>而模板则取到视图函数的数据结果进行展示（视图展示方面）</p>
+</li>
+<li>
+<p>代码结构清晰，耦合度低</p>
+</li>
+</ul>
+<h2 id="JinJia2"><code>JinJia2</code></h2>
+<p>两个概念：</p>
+<ul>
+<li>
+<p><code>Jinja2</code>：是Python下一个被广泛应用的模板引擎，是由Python实现的模板语言，他的设计思想来源于<code>Django</code>的模板引擎，并扩展了其语法和一系列强大的功能，其是<code>Flask</code>内置的模板语言。</p>
+</li>
+<li>
+<p>模板语言：是一种被设计来自动生成文档的简单文本格式，在模板语言中，一般都会把一些变量传给模板，替换模板的特定位置上预先定义好的占位变量名。</p>
+</li>
+</ul>
+<p>渲染模版函数</p>
+<ul>
+<li>
+<p><code>Flask</code>提供的<code>render_template </code>函数封装了该模板引擎</p>
+</li>
+<li>
+<p><code>render_template</code>函数的第一个参数是模板的文件名，后面的参数都是键值对，表示模板中变量对应的真实值。</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/&#x27;</span>, methods=[<span class="string">&#x27;GET&#x27;</span>, <span class="string">&quot;POST&quot;</span>]</span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">index</span>():</span><br><span class="line">    name = <span class="string">&#x27;Luenci&#x27;</span></span><br><span class="line">    <span class="keyword">return</span> render_template(<span class="string">&quot;index.html&quot;</span>, name=name)</span><br></pre></td></tr></table></figure>
+<h2 id="使用方法">使用方法</h2>
+<h3 id="变量代码块">变量代码块</h3>
+<ul>
+<li>用<img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161314597.png" alt="">来表示变量名， 这种<img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161314597.png" alt="">语法叫做变量代码块</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427160426403.png" alt="image-20200427160426403">)</p>
+<ul>
+<li>字典和列表的使用</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427154043162.png" alt="image-20200427154043162"></p>
+<h3 id="控制代码块">控制代码块</h3>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427160633257.png" alt="img"></p>
+<h2 id="过滤器">过滤器</h2>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427160813513.png" alt="imgs"></p>
+<h1>Web表单</h1>
+<ul>
+<li>web表单是web应用程序的基本功能。</li>
+<li>它是HTML页面中负责数据采集的部件。表单有三个部分组成：表单标签、表单域、表单按钮。表单允许用户输入数据，负责HTML页面数据采集，通过表单将用户输入的数据提交给服务器。</li>
+<li>在Flask中，为了处理web表单，我们一般使用<code>Flask-WTF</code>扩展，它封装了<code>WTForms</code>，并且它有验证表单数据的功能</li>
+</ul>
+<div class="htmledit_views" id="content_views">
+                                            <div class="table-box"><table><thead><tr><th>字段对象</th>
+			<th>说明</th>
+		</tr></thead><tbody><tr><td>StringField</td>
+			<td>文本字段</td>
+		</tr><tr><td>TextAreaField</td>
+			<td>多行文本字段</td>
+		</tr><tr><td>PasswordField</td>
+			<td>密码文本字段</td>
+		</tr><tr><td>HiddenField</td>
+			<td>隐藏文件字段</td>
+		</tr><tr><td>DateField</td>
+			<td>文本字段，值为 datetime.date 文本格式</td>
+		</tr><tr><td>DateTimeField</td>
+			<td>文本字段，值为 datetime.datetime 文本格式</td>
+		</tr><tr><td>IntegerField</td>
+			<td>文本字段，值为整数</td>
+		</tr><tr><td>DecimalField</td>
+			<td>文本字段，值为decimal.Decimal</td>
+		</tr><tr><td>FloatField</td>
+			<td>文本字段，值为浮点数</td>
+		</tr><tr><td>BooleanField</td>
+			<td>复选框，值为True 和 False</td>
+		</tr><tr><td>RadioField</td>
+			<td>一组单选框</td>
+		</tr><tr><td>SelectField</td>
+			<td>下拉列表</td>
+		</tr><tr><td>SelectMutipleField</td>
+			<td>下拉列表，可选择多个值</td>
+		</tr><tr><td>FileField</td>
+			<td>文件上传字段</td>
+		</tr><tr><td>SubmitField</td>
+			<td>表单提交按钮</td>
+		</tr><tr><td>FormField</td>
+			<td>把表单作为字段嵌入另一个表单</td>
+		</tr><tr><td>FieldList</td>
+			<td>一组指定类型的字段</td>
+		</tr></tbody></table></div><h2 id="wtforms常用验证函数"><a name="t0"></a>WTForms常用验证函数</h2>
+<div class="table-box"><table><thead><tr><th>验证函数</th>
+			<th>说明</th>
+		</tr></thead><tbody><tr><td>DataRequired</td>
+			<td>确保字段中有数据</td>
+		</tr><tr><td>EqualTo</td>
+			<td>比较两个字段的值，常用于比较两次密码输入</td>
+		</tr><tr><td>Length</td>
+			<td>验证输入的字符串长度</td>
+		</tr><tr><td>NumberRange</td>
+			<td>验证输入的值在数字范围内</td>
+		</tr><tr><td>URL</td>
+			<td>验证URL</td>
+		</tr><tr><td>AnyOf</td>
+			<td>验证输入值在可选列表中</td>
+		</tr><tr><td>NoneOf</td>
+			<td>验证输入值不在可选列表中</td>
+		</tr></tbody></table>
+<ul>
+<li>
+<p>使用 <code>Flask-WTF </code>需要配置参数 <code>SECRET_KEY</code></p>
+</li>
+<li>
+<p>CSRF_ENABLED是为了CSRF（跨站请求伪造）保护。 <code>SECRET_KEY</code>用来生成加密令牌，当<code>CSRF</code>激活的时候，该设置会根据设置的密匙生成加密令牌。</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置密匙</span></span><br><span class="line">app.secret_key = <span class="string">&#x27;luenci&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/login.html&#x27;</span>, methods=[<span class="string">&#x27;GET&#x27;</span>, <span class="string">&#x27;POST&#x27;</span>]</span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">login</span>():</span><br><span class="line">    <span class="keyword">if</span> request.method == <span class="string">&quot;POST&quot;</span>:</span><br><span class="line">        <span class="comment"># 获取表单的数据</span></span><br><span class="line">        username = request.form.get(<span class="string">&#x27;username&#x27;</span>)</span><br><span class="line">        password = request.form.get(<span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">        <span class="built_in">print</span>(username, password)</span><br><span class="line">        <span class="keyword">if</span> username == <span class="string">&#x27;&#x27;</span>:</span><br><span class="line">            flash(<span class="string">&#x27;请填写邮箱&#x27;</span>)  </span><br><span class="line">        <span class="keyword">elif</span> password == <span class="string">&#x27;&#x27;</span>:</span><br><span class="line">            flash(<span class="string">&#x27;请设置密码&#x27;</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&#x27;sucess&#x27;</span></span><br><span class="line">    <span class="keyword">return</span> render_template(<span class="string">&quot;login_demo.html&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161032568.png" alt=""></p>
+<h2 id="Flask-WTF实现表单"><code>Flask-WTF</code>实现表单</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask_wtf <span class="keyword">import</span> FlaskForm</span><br><span class="line"><span class="comment"># 导入文本字段，密码字段，和提交按钮</span></span><br><span class="line"><span class="keyword">from</span> wtforms <span class="keyword">import</span> StringField, PasswordField, SubmitField</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建表单类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LoginFrom</span>(<span class="title class_ inherited__">FlaskForm</span>):</span><br><span class="line">    username = StringField(<span class="string">&quot;用户名&quot;</span>)</span><br><span class="line">    password1 = PasswordField(<span class="string">&quot;密码&quot;</span>)</span><br><span class="line">    password2 = PasswordField(<span class="string">&quot;确认密码&quot;</span>)</span><br><span class="line">    submit = SubmitField(<span class="string">&quot;提交&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/form&#x27;</span>, methods=[<span class="string">&quot;GET&quot;</span>, <span class="string">&quot;POST&quot;</span>]</span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">form_demo</span>():</span><br><span class="line">    <span class="comment"># 创建表单实例</span></span><br><span class="line">    form_login = LoginFrom()</span><br><span class="line">    <span class="keyword">return</span> render_template(<span class="string">&quot;login_demo.html&quot;</span>, form=form_login)</span><br></pre></td></tr></table></figure>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200427161047472.png" alt=""></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/flask/" rel="tag"># flask</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/06/git%E5%91%BD%E4%BB%A4/" rel="prev" title="Git命令集合">
+      <i class="fa fa-chevron-left"></i> Git命令集合
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/06/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" rel="next" title="docker相关知识学习">
+      docker相关知识学习 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E9%9D%99%E6%80%81%E8%B5%84%E6%BA%90"><span class="nav-number">1.1.</span> <span class="nav-text">1.静态资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%8A%A8%E6%80%81%E8%B5%84%E6%BA%90"><span class="nav-number">1.2.</span> <span class="nav-text">2.动态资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%A8%A1%E6%9D%BF%E6%96%87%E4%BB%B6"><span class="nav-number">1.3.</span> <span class="nav-text">3.模板文件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">通信规范</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">Flask程序运行过程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">路由传参</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">Jinja2模板引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E6%9D%BF"><span class="nav-number">5.1.</span> <span class="nav-text">模板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JinJia2"><span class="nav-number">5.2.</span> <span class="nav-text">JinJia2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"><span class="nav-number">5.3.</span> <span class="nav-text">使用方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E4%BB%A3%E7%A0%81%E5%9D%97"><span class="nav-number">5.3.1.</span> <span class="nav-text">变量代码块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E4%BB%A3%E7%A0%81%E5%9D%97"><span class="nav-number">5.3.2.</span> <span class="nav-text">控制代码块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E6%BB%A4%E5%99%A8"><span class="nav-number">5.4.</span> <span class="nav-text">过滤器</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">Web表单</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#wtforms%E5%B8%B8%E7%94%A8%E9%AA%8C%E8%AF%81%E5%87%BD%E6%95%B0"><span class="nav-number">6.1.</span> <span class="nav-text">WTForms常用验证函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Flask-WTF%E5%AE%9E%E7%8E%B0%E8%A1%A8%E5%8D%95"><span class="nav-number">6.2.</span> <span class="nav-text">Flask-WTF实现表单</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">274k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:37</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
