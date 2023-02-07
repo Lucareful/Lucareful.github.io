@@ -45,6 +45,39 @@
     lang   : 'zh-CN'
   };
 </script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '';
+      visible = '';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
 
   <title>Luenci</title>
   
@@ -198,237 +231,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/02/07/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/" class="post-title-link" itemprop="url">模块、迭代器，生成器和装饰器</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>module模块和包的介绍</h1>
-<h2 id="模块的介绍">模块的介绍</h2>
-<ul>
-<li><code>python</code>给我们提供了十分简单的方法去创建一个模块，我们只需要写一个<code>python</code>文件即可，也就是说写一个<code>.py</code>为后缀的文件。</li>
-</ul>
-<h2 id="包的介绍">包的介绍</h2>
-<ul>
-<li>简单来说，包就是多个模块的集合。当项目较大，模块较多时，我们就可以把模块放在包中，便于管理。</li>
-<li>我们在包中一般带有<code>__init__.py</code>文件，随你建包的时候就默认生成。</li>
-</ul>
-<h1>迭代器和生成器</h1>
-<h3 id="迭代器">迭代器</h3>
-<ul>
-<li>迭代器只不过是一个实现迭代器协议的容器对象。它基于两个方法：
-<ul>
-<li><code>next</code>  ：返回容器的下一个项目
-<ul>
-<li>在<code>3.x</code>的版本中为<code>__next__</code>或者<code>next(可迭代对象)</code></li>
-</ul>
-</li>
-<li><code>__iter__</code> : 返回迭代器本身</li>
-</ul>
-</li>
-<li>迭代器可以通过使用一个<code>iter</code>内建函数和一个序列来创建，示例如下。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">21</span>]: a = [<span class="string">&#x27;a&#x27;</span>,<span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>]</span><br><span class="line">In [<span class="number">22</span>]: a = <span class="built_in">iter</span>(a)</span><br><span class="line"></span><br><span class="line">In [<span class="number">23</span>]: <span class="built_in">next</span>(a)</span><br><span class="line">Out[<span class="number">23</span>]: <span class="string">&#x27;a&#x27;</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">24</span>]: a.__next__()</span><br><span class="line">Out[<span class="number">24</span>]: <span class="string">&#x27;b&#x27;</span></span><br></pre></td></tr></table></figure>
-<h3 id="生成器">生成器</h3>
-<ul>
-<li>生成器</li>
-<li>从<code>Python2.2</code>起，生成器提供了一种出色的方法，使得需要返回一系列元素的函数所需的代码更加简单、高效。基于yield指令，可以暂停一个函数并返回中间结果。该函数将保存执行环境并且可以在必要时恢复。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">25</span>]: <span class="keyword">def</span> <span class="title function_">fibonanci</span>():</span><br><span class="line">    ...:     a, b = <span class="number">0</span>, <span class="number">1</span></span><br><span class="line">    ...:     <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    ...:         <span class="keyword">yield</span> b</span><br><span class="line">    ...:         a, b = b, a + b</span><br><span class="line">    ...:</span><br><span class="line"></span><br><span class="line">In [<span class="number">26</span>]: fib = fibonanci()</span><br><span class="line"></span><br><span class="line">In [<span class="number">28</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">28</span>]: <span class="number">1</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">29</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">29</span>]: <span class="number">1</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">30</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">30</span>]: <span class="number">2</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">31</span>]: fib.__next__()</span><br></pre></td></tr></table></figure>
-<ul>
-<li><code>yield</code>可以理解为<code>return</code>,每次调用<code>next()</code>就<code>yield</code>值,下次<code>next()</code>从上次的yield处开始运行</li>
-<li>该函数将返回一个特殊的迭代器，也就是generator对象，它知道如何保存执行环境。对它的调用是不确定的，每次都将产生序列中的下一个元素。这种语法很简洁，算法的不确定特性并没有影响代码的可读性。不必提供使函数可停止的方法。实际上，这看上去像是用伪代码设计的序列一样。</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/02/07/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/02/07/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">Vue.js的基本知识</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%89%8D%E7%AB%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">前端学习</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1><code>Vue.js</code>概念</h1>
-<ul>
-<li><code>Vue.js </code>是目前最火的一个前端框架，<code>React</code>是最流行的一个前端框架（React除了开发网站，还可以开发手机<code>App</code>，<code>Vue</code>语法也是可以用于进行手机<code>App</code>开发的，需要借助于<code>Weex</code>）</li>
-<li><code>Vue.js</code> 是前端的主流框架之一，和<code>Angularjs</code>、<code>Reactjs</code>一起，并成为前端三大主流框架！·</li>
-<li><code>Vue.js</code> 是一套构建用户界面的框架，只关注视图层，它不仅易于上手，还便于与第三方库或既有项目整合。（<code>Vue</code>有配套的第三方类库，可以整合起来做大型项目的开发）</li>
-</ul>
-<h1>框架和库的区别</h1>
-<ul>
-<li>框架：是一套完整的解决方案；对项目的侵入性较大，项目如果需要更换框架，则需要重新架构整个项目。</li>
-<li>库（插件）：提供某一个小功能，对项目的侵入性较小，如果某个库无法完成某些需求，可以很容易切换到其它库实现需求。</li>
-</ul>
-<h1>后端中的<code>MVC</code>与前端中的<code>MVVM</code>之间的区别</h1>
-<ul>
-<li><code>MVC</code>是后端的分层开发概念；</li>
-<li><code>MVVM</code>是前端视图层的概念，主要关注于视图层分离，也就是说：<code>MVVM</code>把前端的视图层，分为了三部分<code>Model</code>，<code>View</code>，<code>VM</code> ,<code>ViewModel</code></li>
-</ul>
-<p><img src="https://upload.cc/i1/2019/12/25/XTm4Gf.png" alt="image-20191225111448702"></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/02/07/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -453,7 +255,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -592,7 +394,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -715,7 +517,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -835,7 +637,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -952,7 +754,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1108,7 +910,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1217,7 +1019,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1314,7 +1116,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:25:32" itemprop="dateCreated datePublished" datetime="2023-02-07T08:25:32+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1428,6 +1230,246 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2023/02/07/%E6%96%97%E9%B1%BC%E5%BC%B9%E5%B9%95%E6%8A%93%E5%8F%96/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/07/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/" class="post-title-link" itemprop="url">Python后端架构演进（转载）</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E5%90%8E%E7%AB%AF%E6%9E%B6%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">python后端架构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Python后端架构演进</h1>
+<p><em><strong>本文转自python社区：<a target="_blank" rel="noopener" href="https://www.pythontab.com/html/2018/pythonweb_0725/1329.html">https://www.pythontab.com/html/2018/pythonweb_0725/1329.html</a></strong></em></p>
+<h2 id="架构">架构</h2>
+<p>做了3年的后端开发, 经历一款SaaS产品从0到10(还没有到100, 哈哈哈)的过程, 3年间后端的架构逐步演变, 在微服务的实践过程中遇到的问题也越来越多, 在这里总结下.</p>
+<p>产品是一款服务于人力资源的SaaS在线服务, 面向HR有Web Android/iOS 小程序多个客户端, 后端采用RESTful风格API来提供服务. 主要使用Python语言, 方便快速迭代.</p>
+<p>架构的演进经历了4个大的阶段: 1. MVC 2. 服务拆分 3. 微服务架构 4. 领域驱动设计.</p>
+<h3 id="1-MVC">1. MVC</h3>
+<p>项目刚开始的时候, 后端同事不超过5个, 这个阶段主要的工作是实现产品的原型, 没有太多的考虑架构, 使用Django来快速实现功能, DB的表结构设计好之后, 抽象出功能View, 由于产品设计也很不完善, 后端需要很多的预留设计, 避免产品逻辑的变更带来整个表结构的变动, 在这个阶段代码上最重要的是确定适合团队的代码规范, 代码检查规则.</p>
+<p><img src="https://www.pythontab.com/uploadfile/other/90431532483907.jpg" alt="img"></p>
+<p>整体上架构如上图, Nginx负责负载均衡, 分发流量到多个Django服务, Django处理逻辑, 需要异步任务就交给Celery, 然后数据量比较大的地方使用Redis做缓存. 同时还有实时消息通知的需要使用了Nginx Push Module.</p>
+<p>问题与优化方式:</p>
+<p>Django并发性能差 使用uWSGI Master+Worker 配合 gevent 携程支持高并发</p>
+<p>Redis连接数过多 使用redis-py自带的连接池来实现连接复用</p>
+<p>MySQL连接数过多 使用djorm-ext-pool连接池复用连接</p>
+<p>Celery配置gevent支持并发任务</p>
+<p>随着开发的功能越来越多, Django下的app也越来越多, 这就带了发布上的不方便, 每次发布版本都需要重启所有的Django服务, 如果发布遇到问题, 只能加班解决了. 而且单个Django工程下的代码量也越来越多, 不好维护.</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/07/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/Django%E7%9A%84Cookie%E5%92%8CSession/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/07/Django%E7%9A%84Cookie%E5%92%8CSession/" class="post-title-link" itemprop="url">Cookie和Session知识</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Http%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">Http知识</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://juejin.im/post/5aa783b76fb9a028d663d70a">https://juejin.im/post/5aa783b76fb9a028d663d70a</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wj-1314/p/10496253.html">https://www.cnblogs.com/wj-1314/p/10496253.html</a></p>
+</blockquote>
+<ul>
+<li><strong>Session是存储在服务器端的，Cookie是存储在客户端的</strong></li>
+</ul>
+<h2 id="Cookie的概念">Cookie的概念</h2>
+<ul>
+<li>Cookie是客户端用户信息的一种机制，用来记录用户的一些信息，实际上Cookie是服务器在<strong>本地机器</strong>上存储的一小段文本，并随着每次请求发送到服务器。</li>
+</ul>
+<h2 id="Cookie与Session的区别">Cookie与Session的区别</h2>
+<ol>
+<li>cookie数据存放在客户的浏览器（客户端）上，session数据放在服务器上，但是服务端的session的实现对客户端的cookie有依赖关系的。</li>
+<li><strong>cookie不是很安全，别人可以分析存放在本地的COOKIE并进行COOKIE欺骗</strong>，考虑到安全应当使用session；</li>
+<li>session会在一定时间内保存在服务器上。当访问增多，会比较占用你服务器的性能。考虑到减轻服务器性能方面，应当使用COOKIE；</li>
+<li>一个服务器最多在客户端浏览器上保存20个Cookie；</li>
+<li>一个浏览器最多保存300个Cookie</li>
+<li>单个cookie在客户端的限制是3K，就是说一个站点在客户端存放的COOKIE不能超过3K；</li>
+</ol>
+<blockquote>
+<p>上面的数据只是HTTP的Cookie规范，但是在浏览器大战的今天，一些浏览器为了打败对手，为了展示自己的能力起见，可能对Cookie规范“扩展”了一些，例如每个Cookie的大小为8KB，最多可保存500个Cookie等！但也不会出现将你的硬盘占满的可能</p>
+</blockquote>
+<h2 id="Cookie与session的实现原理">Cookie与session的实现原理</h2>
+<p><img src="C:%5CUsers%5CLuenci%5CPictures%5C1226410-20190326171141383-1715230740.png" alt="img"></p>
+<p>上图很明显的展示了Django的session和cookie的实现原理。</p>
+<ul>
+<li>
+<p>服务器会生成两份相同的cookie字符串，一份保存在本地，一份发向请求的浏览器。</p>
+</li>
+<li>
+<p>浏览器将会受到的cookie字符串保存下来，当下次再发请求时，会将信息与这段cookie一同发送到服务器，服务器得到这段cookie会与本地保存的那份判断是否相同，如果相同就表示用户已经登录成功，保存用户登录成功的状态。</p>
+</li>
+<li>
+<p>Django的session保存在数据库中的数据相当于一个大字典，key为cookie的字符串，value仍是一个字典，字典的key和value为用户设置的相关信息，这样就可以方便的存取session里面的信息。</p>
+</li>
+</ul>
+<h2 id="cookie和session内容">cookie和session内容</h2>
+<ul>
+<li>cookie内容主要包括：key，value，过期时间，路径和域。路径和域一起构成了cookie的作用范围。</li>
+<li>cookie的使用由浏览器按照一定的规则在后台自动发送给服务器的，浏览器检查所在存储的cookie，如果某个cookie的作用范围大于等于将要请求的资源所在位置，将cookie附在请求资源的HTTP请求头上发给服务器。</li>
+<li>cookie的生命周期跟过期时间相关，如果不设置过期时间，成为会话cookie，保存在内存中，关闭浏览器窗口，cookie消失。如果设置过期时间，浏览器会把cookie写入硬盘，这些cookie仍然有效，知道超过设定的过期时间。</li>
+<li>存在硬盘上的cookie可以在同一个浏览器不同进程间共享，比如两个Chrome窗口。存在内存的，不同浏览器不同的处理方式</li>
+<li>session内容，服务器使用类似Python字典的key value 的形式存储，存储session方式很多，数据库，缓存，文件，加密cookie，数据库加缓存。</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/07/Django%E7%9A%84Cookie%E5%92%8CSession/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
