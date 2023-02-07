@@ -198,7 +198,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -212,7 +212,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Linux学习（一）</a>
+            <a href="/2023/02/07/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" class="post-title-link" itemprop="url">MySQL数据库引擎和数据类型</a>
         </h2>
 
         <div class="post-meta">
@@ -222,7 +222,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 01:49:07" itemprop="dateCreated datePublished" datetime="2023-02-07T01:49:07+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 01:53:41" itemprop="dateCreated datePublished" datetime="2023-02-07T01:53:41+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -230,11 +230,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">核心知识</span></a>
+                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
                 </span>
             </span>
 
@@ -246,14 +242,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.8k</span>
+              <span>3.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>14 分钟</span>
+              <span>12 分钟</span>
             </span>
 
         </div>
@@ -265,107 +261,93 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>Linux操作系统</h1>
+          <h2 id="数据库引擎介绍"><strong>数据库引擎介绍</strong></h2>
+<h3 id="前言">前言</h3>
 <ul>
-<li>“一切皆文件”</li>
+<li>1、存储引擎其实就是对于数据库文件的一种存取机制，如何实现存储数据，如何为存储的数据建立索引以及如何更新，查询数据等技术实现的方法。</li>
+<li>2、MySQL中的数据用各种不同的技术存储在文件（或内存）中，这些技术中的每一种技术都使用不同的存储机制，索引技巧，锁定水平并且最终提供广泛的不同功能和能力。在MySQL中将这些不同的技术及配套的相关功能称为存储引擎。</li>
+<li>3、根据需求可以在表中设置不同的存储引擎。</li>
 </ul>
-<h2 id="系统启动流程">系统启动流程</h2>
-<p>引导图</p>
-<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502160423268.png" alt="引导图"></p>
+<h3 id="查看mysql中的引擎">查看mysql中的引擎</h3>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200605131656597.png" alt="查看引擎"></p>
+<h3 id="MySQL中常用的几种存储引擎">MySQL中常用的几种存储引擎</h3>
+<h3 id="1．MyISAM存储引擎">1．<code>MyISAM</code>存储引擎</h3>
 <ul>
 <li>
-<p>最初始阶段<br>
-当我们打开计算机电源，计算机会自动从主板的<code>BlOS</code>（Basic Input/output System）读取其中所存储的程序。这一程序通常知道一些直接连接在主板上的硬件（硬盘，网络接口，键盘，串口，并口）。现在大部分的BIOS允许你从软盘、光盘或者硬盘中选择一个来启动计算机。</p>
-</li>
-<li>
-<p>下一步，计算机将从你所选择的存储设备中读取起始的512 bytes（比如光盘一开是的512 bytes，如果我们从光盘启动的话）。这<code>512bytes</code>叫做主引导记录<code>MBR</code>（master boot record）。<code>MBR</code>会告诉电脑从该设备的某一个分区（partition）来装载引导加载程序（boot loader）。<code>Boot loader</code>储存有操作系统（OS）的相关信息，比如操作系统名称，操作系统内核（kernel）所在位置等。常用的<code>boot loader</code>有<code>GRUB</code>和<code>LILO</code>。</p>
-</li>
-<li>
-<p>随后，<code>boot loade</code>r会帮助我们加载<code>kernel</code>。<code>kernel</code>实际上是一个用来操作计算机的程序，它是计算机操作系统的内核，主要的任务是管理计算机的硬件资源，充当软件和硬件的接口。操作系统上的任何操作都要通过<code>kernel</code>传达给硬件。<code>Windows</code>和<code>Linux</code>各自有自己<code>kernel</code>。</p>
-</li>
-<li>
-<p>狭义的操作系统就是指<code>kernel</code>，广义的操作系统包括<code>kernel</code>以及<code>kernel</code>之上的各种应用。</p>
-</li>
-<li>
-<p>（Linus Torvalds与其说是Linux之父，不如说是<code>Linux kernel</code>之父。他依然负责<code>Linux kernel</code>的开发和维护。至于<code>Ubuntu</code>，<code>Red Hat</code>，它们都是基于相同的<code>kernel</code>之上，囊括了不同的应用和界面构成的一个更加完整的操作系统版本。）实际上，我们可以在多个分区安装<code>boot loader</code>，每个<code>boot loader</code>对应不同的操作系统，在读取<code>MBR</code>的时候选择我们想要启动的boot loader。这就是多操作系统的原理。</p>
-</li>
-<li>
-<p>小结：<code>BlOS -&gt; MBR -&gt; boot loader -&gt; kernel</code></p>
-</li>
-<li>
-<p>kernel</p>
+<p>存放的位置</p>
 <ul>
-<li>如果我们加载的是Linux kernel，Linux kernel开始工作。kernel会首先预留自己运行所需的内存空间，然后通过驱动程序（driver）检测计算机硬件。这样，操作系统就可以知道自己有哪些硬件可用。随后，kernel会启动一个init进程。它是Linux系统中的1号进程（Linux系统没有0号进程）。到此，kernel就完成了在计算机启动阶段的工作，交接给init来管理。</li>
-<li>小结：<code>kernel -&gt; init process </code></li>
+<li>MySQL如果使用<code>MyISAM</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>.MYD</code>、<code>.MYI</code>，默认存放位置是<code>C:\Documentsand Settings\All Users\Application Data\MySQL\MySQL Server 5.1\data</code></li>
 </ul>
 </li>
 <li>
-<p><code>init process</code></p>
-<p>（根据boot loader的选项，Linux此时可以进入单用户模式（single user mode））。在此模式下，初始脚本还没有开始执行，我们可以检测并修复计算机可能存在的错误）随后，init会运行一系列的初始脚本（startup scripts），这些脚本是Linux中常见的shell scripts。这些脚本执行如下功能：</p>
+<p>存放的方式</p>
 <ul>
-<li>设置计算机名称，时区，检测文件系统，挂载硬盘，清空临时文件，设置网络等</li>
+<li><code>MyISAM</code> 这种存储引擎不支持事务，不支持行级锁，只支持并发插入的表锁，主要用于高负载的select。</li>
 </ul>
-<p>当这些初始脚本，操作系统已经完全准备好了，只是，还没有人可以登录！！！init会给出登录（login）对话框，或者是图形化的登录界面。</p>
 </li>
 <li>
-<p>输入用户名（比如说luenci）和密码，DONE！</p>
-</li>
-<li>
-<p>在此后的过程中，你将以用户（user）luenci的身份操作电脑。此外，根据你创建用户时的设定，Linux还会将你归到某个组（group）中，比如可以是stupid组，或者是luenci组。所以你将是用户luenci，同时是luenci组的组员。（注意，组luenci和用户luenci只是重名而已，就好想你可以叫Dell，同时还是Dell公司的老板一样。你完全也可以是用户luenci，同时为stupid组的组员）</p>
+<p>索引的方式</p>
+<ul>
+<li><code>MyISAM</code>也是使用B+tree索引但是和<code>Innodb</code>的在具体实现上有些不同。</li>
+</ul>
 </li>
 </ul>
-<h3 id="启动级别">启动级别</h3>
+<p>该引擎基于<code>ISAM</code>数据库引擎，除了提供<code>ISAM</code>里所没有的索引和字段管理等大量功能，<code>MyISAM</code>还使用一种表格锁定的机制来优化多个并发的读写操作，但是需要经常运行OPTIMIZE TABLE命令，来恢复被更新机制所浪费的空间，否则碎片也会随之增加，最终影响数据访问性能。<code>MyISAM</code>还有一些有用的扩展，例如用来修复数据库文件的<code>MyISAMChk</code>工具和用来恢复浪费空间的 <code>MyISAMPack</code>工具。<code>MyISAM</code>强调了快速读取操作，主要用于高负载的select，这可能也是MySQL深受Web开发的主要原因：在Web开发中进行的大量数据操作都是读取操作，所以大多数虚拟主机提供商和Internet平台提供商（Internet Presence Provider, <code>IPP</code>）只允许使用<code>MyISAM</code>格式。</p>
 <ul>
 <li>
-<p>7种运行级别</p>
-<p>运行级别（<code>Runlevel</code>）指的是Unix或者Linux等类Unix操作系统的运行模式，不同的运行模式下系统的功能也有所有不同。Linux 系统下通常分为<code>7</code>种运行级别，分别是从<code>0</code>到<code>6</code>。各级别介绍如下：</p>
+<p><code>MyISAM</code>类型的表支持三种不同的存储结构：静态型、动态型、压缩型。</p>
 </li>
 <li>
-<p><code>0</code>–停机模式</p>
+<p>静态型：指定义的表列的大小是固定（即不含有：<code>xblob</code>、<code>xtext</code>、<code>varchar</code>等长度可变的数据类型），这样MySQL就会自动使用静态<code>MyISAM</code>格式。使用静态格式的表的性能比较高，因为在维护和访问以预定格式存储数据时需要的开销很低；但这种高性能是以空间为代价换来的，因为在定义的时候是固定的，所以不管列中的值有多大，都会以最大值为准，占据了整个空间。</p>
+</li>
+<li>
+<p>动态型：如果列（即使只有一列）定义为动态的（<code>xblob</code>, <code>xtext</code>, <code>varchar</code>等数据类型），这时<code>MyISAM</code>就自动使用动态型，虽然动态型的表占用了比静态型表较少的空间，但带来了性能的降低，因为如果某个字段的内容发生改变则其位置很可能需要移动，这样就会导致碎片的产生，随着数据变化的增多，碎片也随之增加，数据访问性能会随之降低。<br>
+对于因碎片增加而降低数据访问性这个问题，有两种解决办法：</p>
 <ul>
-<li>在这种模式下，系统处于停机状态，系统默认运行级别不能设为<code>0</code>，否则将不能正常启动。这个运行级别主要用于关闭任务，在<code>/etc/rc0.d</code>目录下的各个连接命令都是此级别的命令，在关闭系统时，这些命令将被逐个执行。它 们会杀掉所有进程、关闭虚拟内存和交换文件、卸载文件系统和交换分区。</li>
+<li>a、尽可能使用静态数据类型；</li>
+<li>b、经常使用<code>optimize table table_name</code>语句整理表的碎片，恢复由于表数据的更新和删除导致的空间丢失。如果存储引擎不支持<code> optimize table table_name</code>则可以转储并 重新加载数据，这样也可以减少碎片；</li>
 </ul>
 </li>
 <li>
-<p><code>1</code>– 单用户模式。</p>
+<p>压缩型：如果在数据库中创建在整个生命周期内只读的表，则应该使用<code>MyISAM</code>的压缩型表来减少空间的占用。</p>
+</li>
+</ul>
+<blockquote>
+<p>优缺点：<code>MyISAM</code>的优势在于占用空间小，处理速度快。缺点是不支持事务的完整性和并发性。</p>
+</blockquote>
+<h3 id="2．innoDB存储引擎">2．<code>innoDB</code>存储引擎</h3>
 <ul>
-<li>在这种运行模下，系统处于单用户工作状态，登录用户具有root权限，文件系统被加载但是网络却没有被加载，因此也无法远程登陆。这个运行级别，只允一个用户从本地计算机上登录，<code>/etc/rc1.d</code>目录下的所有文件与此运行级别相关连，这个运行级别一般用于系统管理与维护。</li>
-</ul>
-</li>
 <li>
-<p><code>2</code> - -多用户模式。</p>
+<p>存储位置</p>
 <ul>
-<li>用户可以通过网络进行登录，但没有<code>NFS</code>（Network File System），即网络文件统。<code>/etc/rc2.d</code>目录下所有文件与此级别相连。</li>
+<li>MySQL如果使用<code>InnoDB</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>ibdata1</code>、<code>.ibd</code>，存放位置有两个，<code>.frm</code>文件默认存放位置是<code>C:\Documents and Settings\All Users\ApplicationData\MySQL\MySQL Server 5.1\data</code>，<code>ibdata1</code>、<code>.ibd</code>文件默认存放位置是MySQL安装目录下的data文件夹。</li>
 </ul>
 </li>
 <li>
-<p><code>3</code> - -完全多用户模式。</p>
+<p><code>innodb</code>存储引擎的mysql表提供了事务，回滚以及系统崩溃修复能力和多版本迸发控制的事务的安全。</p>
 </li>
 <li>
-<p>用户可以通过网络进行登录，且有<code>NFS</code>，用户登陆后会进入控制台命令行模式。这也是缺省的运行模式，在这种运行级别下所有网络服务程序会一起运行。<code>/etc/rc2.d</code>录下的文件与此级别相连</p>
+<p><code>innodb</code>支持自增长列（auto_increment）,自增长列的值不能为空，如果在使用的时候为空的话怎会进行自动存现有的值开始增值，如果有但是比现在的还大，则就保存这个值。</p>
 </li>
 <li>
-<p><code>4</code> - -自定义模式。</p>
-<ul>
-<li>这是一种系统未使用的保留模式，<code>/etc/rc4.d</code>目录与此级别相连。这一级别是用户自定义的运行级别，用户可以根自己的需要进行一些自定义设置。如果想要运行这一级别的话，必须在<code>rc3.d</code>目录下放入连接文件，就像其他<code>rc*.d</code>目录下的文件，并指明是启动还是终止进程。</li>
-</ul>
+<p><code>innodb</code>存储引擎支持外键（foreign key） ,外键所在的表称为子表而所依赖的表称为父表。</p>
 </li>
 <li>
-<p><code>5</code> - -图形化模式。</p>
-<ul>
-<li>在 Linux 下运行<code>X Window</code>就是使用这一运行级别，用户登录后将进入图形化的GUI界面。在这一级别下除了DNS的<code>named</code>与级别<code>3</code>不同，其余的都相同。</li>
-</ul>
+<p><code>innodb</code>存储引擎最重要的是支持事务，以及事务相关联功能。</p>
 </li>
 <li>
-<p><code>6</code> – 重启模式。</p>
-<ul>
-<li>系统正常关闭并重启，默认运行级别不能设为<code>5</code>，否则系统将不能正常启动。<code>/etc/rc6.d</code>目录与此级别相连。在这一运行级别下，不会关闭电源，<code>/etc/rc6.d</code>目录下的连接与<code>rc0.d</code>目录下的连接基本相同；不同之处在于，虽然它们都执行<code>halt</code>（关闭）命令，但是给<code>halt</code>传递的参数不同，所级别<code>6</code>会重新启动系统而<code>0</code>会关闭系统。</li>
-</ul>
+<p><code>innodb</code>存储引擎支持<code>mvcc</code>的行级锁。</p>
+</li>
+<li>
+<p><code>innodb</code>存储引擎索引使用的是B+Tree</p>
 </li>
 </ul>
+<blockquote>
+<p>优缺点：<code>InnoDB</code>的优势在于提供了良好的事务处理、崩溃修复能力和并发控制。缺点是读写效率较差，占用的数据空间相对较大。</p>
+</blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -511,19 +493,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
+          <a href="/2023/02/07/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;02&#x2F;07&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
+        </li>
+        <li class="links-of-recent-posts-item">
           <a href="/2023/02/07/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;02&#x2F;07&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/02/07/%E8%B7%9F%E8%B8%AA%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E9%93%BE/" title="2023&#x2F;02&#x2F;07&#x2F;跟踪函数调用链&#x2F;">defer的妙用之跟踪函数调用链</a>
+          <a href="/2023/02/07/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;02&#x2F;07&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/02/07/%E9%AB%98%E5%B9%B6%E5%8F%91%EF%BC%8C%E9%AB%98%E5%8F%AF%E7%94%A8%EF%BC%8C%E9%AB%98%E6%80%A7%E8%83%BD/" title="2023&#x2F;02&#x2F;07&#x2F;高并发，高可用，高性能&#x2F;">高并发,高可用,高性能</a>
+          <a href="/2023/02/07/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;02&#x2F;07&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/02/07/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/" title="2023&#x2F;02&#x2F;07&#x2F;进阶语法(管道和go程)&#x2F;">管道和go程</a>
-        </li>
-        <li class="links-of-recent-posts-item">
-          <a href="/2023/02/07/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" title="2023&#x2F;02&#x2F;07&#x2F;设计模式&#x2F;">设计模式</a>
+          <a href="/2023/02/07/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;02&#x2F;07&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
         </li>
     </ul>
   </div>
