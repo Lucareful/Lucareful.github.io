@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/" class="post-title-link" itemprop="url">Django参数和模板</a>
+            <a href="/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" class="post-title-link" itemprop="url">SQL性能调优</a>
         </h2>
 
         <div class="post-meta">
@@ -255,7 +255,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:35:14" itemprop="dateCreated datePublished" datetime="2023-02-07T08:35:14+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 10:18:35" itemprop="dateCreated datePublished" datetime="2023-02-07T10:18:35+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -263,7 +263,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
                 </span>
             </span>
 
@@ -275,14 +275,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.8k</span>
+              <span>2.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>6 分钟</span>
+              <span>8 分钟</span>
             </span>
 
         </div>
@@ -294,44 +294,37 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="render方法参数"><code>render</code>方法参数</h2>
+          <p><em><strong>原文链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/u010520146/article/details/81161762">https://blog.csdn.net/u010520146/article/details/81161762</a></strong></em></p>
+<h1>一.创建索引</h1>
 <ul>
-<li><code>request</code>: 是一个固定参数。</li>
-<li><code>template_name</code>: <code>templates</code> 中定义的文件, 要注意路径名. 比如<code>’templates\polls\index.html’</code>, 参数就要写<code>‘polls\index.html’</code></li>
-<li><code>context</code>: 要传入文件中用于渲染呈现的数据, 默认是字典格式</li>
-<li><code>content_type</code>: 生成的文档要使用的MIME 类型。默认为DEFAULT_CONTENT_TYPE 设置的值。</li>
-<li><code>status</code>: http的响应代码,默认是200.</li>
-<li><code>using</code>: 用于加载模板使用的模板引擎的名称。</li>
+<li>1.要尽量避免全表扫描，首先应考虑在 where 及 order by 涉及的列上建立索引</li>
+<li>2.1在经常需要进行检索的字段上创建索引，比如要按照表字段<code>username</code>进行检索，那么就应该在姓名字段上创建索引，如果经常要按照员工部门和员工岗位级别进行检索，那么就应该在员工部门和员工岗位级别这两个字段上创建索引。</li>
+<li>2.2创建索引给检索带来的性能提升往往是巨大的，因此在发现检索速度过慢的时候应该首先想到的就是创建索引。</li>
+<li>2.3一个表的索引数最好不要超过6个，若太多则应考虑一些不常使用到的列上建的索引是否有 必要。索引并不是越多越好，索引固然可以提高相应的 select 的效率，但同时也降低了 insert 及 update 的效率，因为 insert 或 update 时有可能会重建索引，所以怎样建索引需要慎重考虑，视具体情况而定。</li>
 </ul>
-<h2 id="request对象方法和属性"><code>request</code>对象方法和属性</h2>
+<h1>二.避免在索引上使用计算</h1>
 <ul>
-<li><code>request.scheme</code>   # 代表请求的方案,http或者https</li>
-<li><code>request.body</code># 原始HTTP请求主体为字节串。这对于以不同于常规HTML格式的方式处理数据很有用：二进制图像，XML有效负载等。对于处理常规格式的数据，请使用 <code>HttpRequest.POST</code>。</li>
-<li><code>request.path</code>   # 请求的路径,比如请求<code>127.0.0.1/org/list</code>,那这个值就是<code>/org/list</code></li>
-<li><code>request.get_full_path()</code> # 获取完整的请求路径</li>
-<li><code>request.method</code>  # 表示请求使用的http方法,GET或者POST请求</li>
-<li><code>request.encoding</code> # 表示提交数据的编码方式</li>
-<li><code>request.GET</code>     # 获取GET请求</li>
-<li><code>request.POST</code>    # 获取post的请求,比如前端提交的用户密码,可以通过<code>request.POST.get()</code>来获取</li>
+<li>在where字句中，如果索引列是计算或者函数的一部分，DBMS的优化器将不会使用索引而使用全表查询,函数<br>
+属于计算的一种,同时在in和exists中通常情况下使用EXISTS，因为in不走索引。</li>
+<li>效率低：</li>
 </ul>
-<blockquote>
-<p><strong>NOTICED：如果使用 POST 上传文件的话，文件信息将包含在 FILES 属性中</strong></p>
-</blockquote>
-<p><code>request.COOKIES</code> #包含所有的cookie</p>
-<p><code>request.META</code>   #一个标准的Python 字典，包含所有的HTTP 首部。具体的头部信息取决于客户端和服务器，下面是一些示例：</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">CONTENT_LENGTH   —— 请求的正文的长度（是一个字符串）。</span><br><span class="line">CONTENT_TYPE   —— 请求的正文的MIME 类型。</span><br><span class="line">HTTP_ACCEPT   —— 响应可接收的Content-<span class="built_in">Type</span>。</span><br><span class="line">HTTP_ACCEPT_ENCODING —— 响应可接收的编码。</span><br><span class="line">HTTP_ACCEPT_LANGUAGE —— 响应可接收的语言。</span><br><span class="line">HTTP_HOST     —— 客服端发送的HTTP Host 头部。</span><br><span class="line">HTTP_REFERER   —— Referring 页面。</span><br><span class="line">HTTP_USER_AGENT —— 客户端的user-agent 字符串。</span><br><span class="line">QUERY_STRING   —— 单个字符串形式的查询字符串（未解析过的形式）。</span><br><span class="line">REMOTE_ADDR   —— 客户端的IP 地址。</span><br><span class="line">REMOTE_HOST   —— 客户端的主机名。</span><br><span class="line">REMOTE_USER   —— 服务器认证后的用户。</span><br><span class="line">REQUEST_METHOD  —— 一个字符串，例如&quot;GET&quot; 或&quot;POST&quot;。</span><br><span class="line">SERVER_NAME   —— 服务器的主机名。</span><br><span class="line">SERVER_PORT   —— 服务器的端口（是一个字符串）</span><br></pre></td></tr></table></figure>
+<p><code> select * from user where salary*22 &gt; 11000 (salary是索引列)</code></p>
 <ul>
-<li><code>request.user</code>   #一个 <code>AUTH_USER_MODEL</code> 类型的对象，表示当前登录的用户。
-<ul>
-<li>如果用户当前没有登录，user 将设置为 <code>django.contrib.auth.models.AnonymousUser</code> 的一个实例。你可以通过 <code>s_authenticated() </code>区分它们</li>
-<li>把<code>request</code>传给前端的时候,前端可以通过 <code> if request.user.is_authenticated</code>判断用户时候登录</li>
+<li>效率高：</li>
 </ul>
-</li>
-<li><code>request.session</code> #一个既可读又可写的类似于字典的对象，表示当前的会话</li>
+<p><code>select * from user where salary &gt; 11000/22 (salary是索引列)</code></p>
+<h1>三.使用预编译查询</h1>
+<ul>
+<li>程序中通常是根据用户的输入来动态执行SQL，这时应该尽量使用参数化SQL,这样不仅可以避免SQL注入漏洞<br>
+攻击，最重要数据库会对这些参数化SQL进行预编译，这样第一次执行的时候DBMS会为这个SQL语句进行查询优化并且执行预编译，这样以后再执行这个SQL的时候就直接使用预编译的结果，这样可以大大提高执行的速度。</li>
+</ul>
+<h1>四.调整Where字句中的连接顺序</h1>
+<ul>
+<li>DBMS一般采用自下而上的顺序解析where字句，根据这个原理表连接最好写在其他where条件之前，那些可以过滤掉最大数量记录。</li>
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
