@@ -45,6 +45,39 @@
     lang   : 'zh-CN'
   };
 </script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '';
+      visible = '';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
 
   <title>Luenci</title>
   
@@ -198,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/python%E5%87%BD%E6%95%B0%E8%A1%A5%E5%85%85/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/django%E4%B9%8Burl%E8%A7%84%E5%88%99/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -212,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/python%E5%87%BD%E6%95%B0%E8%A1%A5%E5%85%85/" class="post-title-link" itemprop="url">python函数补充</a>
+            <a href="/2023/02/07/django%E4%B9%8Burl%E8%A7%84%E5%88%99/" class="post-title-link" itemprop="url">Django之编写URL</a>
         </h2>
 
         <div class="post-meta">
@@ -222,7 +255,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -230,7 +263,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E8%BF%9B%E9%98%B6/" itemprop="url" rel="index"><span itemprop="name">python进阶</span></a>
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
                 </span>
             </span>
 
@@ -242,14 +275,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>651</span>
+              <span>786</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
+              <span>3 分钟</span>
             </span>
 
         </div>
@@ -261,32 +294,12 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>递归函数</h1>
-<ul>
-<li>
-<p>递归特性</p>
-<ul>
-<li>1.必须有一个明确的结束条件</li>
-<li>2.每次进入更深一层递归时，问题规模相比上次递归都应有所减少</li>
-<li>3.递归效率不高，递归层次过多会导致栈溢出（在计算机中，函数调用是通过栈（stack）这种数据结构实现的，每当进入一个函数调用，栈就会加一层栈帧，每当函数返回，栈就会减一层栈帧。由于栈的大小不是无限的，所以，递归调用的次数过多，会导致栈溢出）</li>
-</ul>
-</li>
-<li>
-<p>代码演练</p>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">send</span>(<span class="params">student</span>):</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(student) == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;All student revice messges&#x27;</span></span><br><span class="line">    one = student.pop()</span><br><span class="line">    <span class="keyword">if</span> one == <span class="string">&#x27;luenci&#x27;</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;luenci get&#x27;</span>)</span><br><span class="line">        send(student)</span><br><span class="line">    <span class="keyword">elif</span> one == <span class="string">&#x27;jack&#x27;</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;jack get&#x27;</span>)</span><br><span class="line">        send(student)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;xiaoming get&#x27;</span>)</span><br><span class="line">        send(student)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    student_list = [<span class="string">&#x27;luenci&#x27;</span>, <span class="string">&#x27;jack&#x27;</span>, <span class="string">&#x27;xiaoming&#x27;</span>]</span><br><span class="line">    send(student_list)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1>函数作用域</h1>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">foo</span>():</span><br><span class="line">    name = <span class="string">&#x27;luenci&#x27;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">bar</span>():</span><br><span class="line">        name = <span class="string">&#x27;xiaoming&#x27;</span></span><br><span class="line">        <span class="keyword">def</span> <span class="title function_">tt</span>():</span><br><span class="line">            <span class="built_in">print</span>(name)</span><br><span class="line">        <span class="keyword">return</span> tt</span><br><span class="line">    <span class="keyword">return</span> bar</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(foo)</span><br><span class="line"><span class="built_in">print</span>(foo())</span><br><span class="line"><span class="built_in">print</span>(foo()())</span><br><span class="line"><span class="comment"># bar=foo()</span></span><br><span class="line"><span class="comment"># tt=bar()</span></span><br><span class="line"><span class="comment"># print(tt)</span></span><br><span class="line"><span class="comment"># tt()</span></span><br><span class="line">foo()()()</span><br><span class="line"></span><br><span class="line">out&gt;&gt;</span><br><span class="line"></span><br><span class="line">&lt;function foo at <span class="number">0x0000020655A92E18</span>&gt;</span><br><span class="line">&lt;function foo.&lt;<span class="built_in">locals</span>&gt;.bar at <span class="number">0x00000206577809D8</span>&gt;</span><br><span class="line">&lt;function foo.&lt;<span class="built_in">locals</span>&gt;.bar.&lt;<span class="built_in">locals</span>&gt;.tt at <span class="number">0x0000020657780A60</span>&gt;</span><br><span class="line">xiaoming</span><br></pre></td></tr></table></figure>
-<h1>函数式编程</h1>
-<h2 id="匿名函数">匿名函数</h2>
-<ul>
-<li>函数声明：<code>lambda 参数:表达式返回值</code></li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">test</span>(<span class="params">x</span>):</span><br><span class="line">    <span class="keyword">return</span> x+<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(test(<span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">fun = <span class="keyword">lambda</span> x:x+<span class="number">1</span></span><br><span class="line"><span class="built_in">print</span>(fun(<span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">out:</span><br><span class="line"><span class="number">11</span></span><br><span class="line"><span class="number">11</span></span><br></pre></td></tr></table></figure>
+          <h1>编写URL</h1>
+<h2 id="编写规则">编写规则</h2>
+<p>​	为了使其规范性，在每个新创建的App中设置独立的静态资源和模板文件夹并添加一个空白的<code>.py</code>文件，命为<code>urls.py</code>。如下是创建app中的文件结构：</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/python%E5%87%BD%E6%95%B0%E8%A1%A5%E5%85%85/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/django%E4%B9%8Burl%E8%A7%84%E5%88%99/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -310,7 +323,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/python%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9D%97%E7%9A%84%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/django%E7%9A%84querySet%E8%AF%A6%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -324,7 +337,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/python%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9D%97%E7%9A%84%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">一些核心模块的介绍</a>
+            <a href="/2023/02/07/django%E7%9A%84querySet%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">未命名</a>
         </h2>
 
         <div class="post-meta">
@@ -334,16 +347,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
-                </span>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
 
           
@@ -354,14 +358,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.7k</span>
+              <span>8.5k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
+              <span>31 分钟</span>
             </span>
 
         </div>
@@ -373,429 +377,783 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="sys模块">sys模块</h2>
-<table>
-<thead>
-<tr>
-<th>模块方法</th>
-<th>解释说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>sys.argv</td>
-<td>传递到Python脚本的命令行参数列表，第一个元素是程序本身路径</td>
-</tr>
-<tr>
-<td>sys.executable</td>
-<td>返回Python解释器在当前系统中的绝对路径</td>
-</tr>
-<tr>
-<td>sys.exit(arg)</td>
-<td>程序中间的退出，arg=0为正常退出</td>
-</tr>
-<tr>
-<td>sys.path</td>
-<td>返回模块的搜索路径，初始化时使用PYTHONPATH环境变量的值</td>
-</tr>
-<tr>
-<td>sys.platform</td>
-<td>返回操作系统平台名称，Linux是linux2，Windows是win32</td>
-</tr>
-<tr>
-<td>sys.stdout.write(str)</td>
-<td>输出的时候把换行符\n去掉</td>
-</tr>
-<tr>
-<td>val = sys.stdin.readline()[:-1]</td>
-<td>拿到的值去掉\n换行符</td>
-</tr>
-<tr>
-<td>sys.version</td>
-<td>获取Python解释程序的版本信息</td>
-</tr>
-</tbody>
-</table>
-<h2 id="os模块">os模块</h2>
-<table>
-<thead>
-<tr>
-<th style="text-align:center">方法</th>
-<th style="text-align:center">说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">os.mkdir()</td>
-<td style="text-align:center">创建目录</td>
-</tr>
-<tr>
-<td style="text-align:center">os.rmdir()</td>
-<td style="text-align:center">删除目录</td>
-</tr>
-<tr>
-<td style="text-align:center">os.rename()</td>
-<td style="text-align:center">重命名</td>
-</tr>
-<tr>
-<td style="text-align:center">os.remove()</td>
-<td style="text-align:center">删除文件</td>
-</tr>
-<tr>
-<td style="text-align:center">os.getcwd()</td>
-<td style="text-align:center">获取当前工作路径</td>
-</tr>
-<tr>
-<td style="text-align:center">os.walk()</td>
-<td style="text-align:center">遍历目录</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.join()</td>
-<td style="text-align:center">连接目录与文件名</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.split()</td>
-<td style="text-align:center">分割文件名与目录</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.abspath()</td>
-<td style="text-align:center">获取绝对路径</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.dirname()</td>
-<td style="text-align:center">获取路径</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.basename()</td>
-<td style="text-align:center">获取文件名或文件夹名</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.splitext()</td>
-<td style="text-align:center">分离文件名与扩展名</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.isfile()</td>
-<td style="text-align:center">判断给出的路径是否是一个文件</td>
-</tr>
-<tr>
-<td style="text-align:center">os.path.isdir()</td>
-<td style="text-align:center">判断给出的路径是否是一个目录</td>
-</tr>
-</tbody>
-</table>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/02/07/python%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9D%97%E7%9A%84%E4%BB%8B%E7%BB%8D/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/python%E7%88%AC%E8%99%AB/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/02/07/python%E7%88%AC%E8%99%AB/" class="post-title-link" itemprop="url">妹子图爬虫（爬取妹子图图片）</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>327</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>python实现妹子图爬虫（爬取妹子网图片）</h1>
+          <p>从数据库中查询出来的结果一般是一个集合，这个集合叫做 QuerySet。</p>
+<h1>一、QuerySet何时被提交</h1>
 <ul>
-<li>一个简单的小爬虫实现爬取妹子图网站上的图片。</li>
+<li>在内部，创建、过滤、切片和传递一个QuerySet不会真实操作数据库，在你对查询集提交之前，不会发生任何实际的数据库操作。可以使用下列方法对QuerySet提交查询操作：</li>
 </ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line">all_url = <span class="string">&#x27;http://www.mzitu.com&#x27;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#http请求头</span></span><br><span class="line">Hostreferer = &#123;</span><br><span class="line">    <span class="string">&#x27;User-Agent&#x27;</span>:<span class="string">&#x27;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Referer&#x27;</span>:<span class="string">&#x27;http://www.mzitu.com&#x27;</span></span><br><span class="line">               &#125;</span><br><span class="line">Picreferer = &#123;</span><br><span class="line">    <span class="string">&#x27;User-Agent&#x27;</span>:<span class="string">&#x27;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Referer&#x27;</span>:<span class="string">&#x27;http://i.meizitu.net&#x27;</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">#此请求头破解盗链</span></span><br><span class="line"></span><br><span class="line">start_html = requests.get(all_url,headers = Hostreferer)</span><br><span class="line"></span><br><span class="line"><span class="comment">#保存地址</span></span><br><span class="line">path = <span class="string">&quot;D:\\mzitu\\&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#找寻最大页数</span></span><br><span class="line">soup = BeautifulSoup(start_html.text,<span class="string">&quot;html.parser&quot;</span>)</span><br><span class="line">page = soup.find_all(<span class="string">&#x27;a&#x27;</span>,class_=<span class="string">&#x27;page-numbers&#x27;</span>)</span><br><span class="line">max_page = page[-<span class="number">2</span>].text</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">same_url = <span class="string">&#x27;http://www.mzitu.com/all/&#x27;</span></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="built_in">int</span>(max_page)+<span class="number">1</span>):</span><br><span class="line">    ul = same_url+<span class="built_in">str</span>(n)</span><br><span class="line">    start_html = requests.get(ul, headers = Hostreferer)</span><br><span class="line">    soup = BeautifulSoup(start_html.text,<span class="string">&quot;html.parser&quot;</span>)</span><br><span class="line">    all_a = soup.find(<span class="string">&#x27;div&#x27;</span>,class_=<span class="string">&#x27;all&#x27;</span>).find_all(<span class="string">&#x27;a&#x27;</span>,target=<span class="string">&#x27;_blank&#x27;</span>)</span><br><span class="line">    <span class="keyword">for</span> a <span class="keyword">in</span> all_a:</span><br><span class="line">        title = a.get_text() <span class="comment">#提取文本</span></span><br><span class="line">        <span class="keyword">if</span>(title != <span class="string">&#x27;&#x27;</span>):</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;准备扒取：&quot;</span>+title)</span><br><span class="line"></span><br><span class="line">            <span class="comment">#win不能创建带？的目录</span></span><br><span class="line">            <span class="keyword">if</span>(os.path.exists(path+title.strip().replace(<span class="string">&#x27;?&#x27;</span>,<span class="string">&#x27;&#x27;</span>))):</span><br><span class="line">                    <span class="comment">#print(&#x27;目录已存在&#x27;)</span></span><br><span class="line">                    flag=<span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                os.makedirs(path+title.strip().replace(<span class="string">&#x27;?&#x27;</span>,<span class="string">&#x27;&#x27;</span>).replace(<span class="string">&#x27;:&#x27;</span>, <span class="string">&#x27;&#x27;</span>))</span><br><span class="line">                flag=<span class="number">0</span></span><br><span class="line">            os.chdir(path + title.strip().replace(<span class="string">&#x27;?&#x27;</span>,<span class="string">&#x27;&#x27;</span>).replace(<span class="string">&#x27;:&#x27;</span>, <span class="string">&#x27;&#x27;</span>))</span><br><span class="line">            href = a[<span class="string">&#x27;href&#x27;</span>]</span><br><span class="line">            html = requests.get(href,headers = Hostreferer)</span><br><span class="line">            mess = BeautifulSoup(html.text,<span class="string">&quot;html.parser&quot;</span>)</span><br><span class="line">            pic_max = mess.find_all(<span class="string">&#x27;span&#x27;</span>)</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                pic_max = pic_max[<span class="number">9</span>].text <span class="comment">#最大页数</span></span><br><span class="line">                <span class="keyword">if</span>(flag == <span class="number">1</span> <span class="keyword">and</span> <span class="built_in">len</span>(os.listdir(path+title.strip().replace(<span class="string">&#x27;?&#x27;</span>,<span class="string">&#x27;&#x27;</span>))) &gt;= <span class="built_in">int</span>(pic_max)):</span><br><span class="line">                    <span class="built_in">print</span>(<span class="string">&#x27;已经保存完毕，跳过&#x27;</span>)</span><br><span class="line">                    <span class="keyword">continue</span></span><br><span class="line">                <span class="keyword">for</span> num <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, <span class="built_in">int</span>(pic_max)+<span class="number">1</span>):</span><br><span class="line">                    pic = href+<span class="string">&#x27;/&#x27;</span>+<span class="built_in">str</span>(num)</span><br><span class="line">                    html = requests.get(pic,headers = Hostreferer)</span><br><span class="line">                    mess = BeautifulSoup(html.text,<span class="string">&quot;html.parser&quot;</span>)</span><br><span class="line">                    pic_url = mess.find(<span class="string">&#x27;img&#x27;</span>,alt = title)</span><br><span class="line">                    <span class="built_in">print</span>(pic_url[<span class="string">&#x27;src&#x27;</span>])</span><br><span class="line">                    <span class="comment">#exit(0)</span></span><br><span class="line">                    html = requests.get(pic_url[<span class="string">&#x27;src&#x27;</span>],headers = Picreferer)</span><br><span class="line">                    file_name = pic_url[<span class="string">&#x27;src&#x27;</span>].split(<span class="string">r&#x27;/&#x27;</span>)[-<span class="number">1</span>]</span><br><span class="line">                    f = <span class="built_in">open</span>(file_name,<span class="string">&#x27;wb&#x27;</span>)</span><br><span class="line">                    f.write(html.content)</span><br><span class="line">                    f.close()</span><br><span class="line">            <span class="keyword">except</span> Exception:</span><br><span class="line">                <span class="keyword">pass</span></span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&#x27;完成   &#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;第&#x27;</span>,n,<span class="string">&#x27;页完成&#x27;</span>)</span><br><span class="line"></span><br><span class="line">原文参考：https://blog.csdn.net/baidu_35085676/article/details/<span class="number">68958267</span></span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/python%E7%B1%BB%E7%9A%84%E7%A7%81%E6%9C%89%E5%B1%9E%E6%80%A7%E5%92%8C%E7%A7%81%E6%9C%89%E6%96%B9%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/02/07/python%E7%B1%BB%E7%9A%84%E7%A7%81%E6%9C%89%E5%B1%9E%E6%80%A7%E5%92%8C%E7%A7%81%E6%9C%89%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">Python类中的 私有变量 和 私有方法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>Python中的类</h1>
-<p>原文转自：<a target="_blank" rel="noopener" href="https://blog.csdn.net/sxingming/article/details/52875125">https://blog.csdn.net/sxingming/article/details/52875125</a></p>
+<h2 id="迭代">迭代</h2>
+<ul>
+<li>QuerySet是可迭代的，在首次迭代查询集时执行实际的数据库查询。 例如， 下面的语句会将数据库中所有Entry的headline打印出来：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> Entry.objects.<span class="built_in">all</span>():</span><br><span class="line">  <span class="built_in">print</span>(e.headline)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>切片：如果使用切片的”step“参数，Django 将执行数据库查询并返回一个列表。</li>
+</ul>
+<h2 id="Pickling-缓存">Pickling/缓存</h2>
 <ul>
 <li>
-<p>默认情况下，Python中的成员函数和成员变量都是公开的(public),在python中没有类似public,private等关键词来修饰成员函数和成员变量。</p>
+<p>repr()</p>
 </li>
 <li>
-<p>在python中定义私有变量只需要在变量名或函数名前加上 <code>__</code>两个下划线，那么这个函数或变量就是私有的了。</p>
+<p>len()：当你对QuerySet调用len()时， 将提交数据库操作。</p>
 </li>
 <li>
-<p>在内部，python使用一种 name mangling 技术，将 <code>__membername</code>替换成<code> _classname__membername</code>，也就是说，类的内部定义中,所有以双下划线开始的名字都被&quot;翻译&quot;成前面加上单下划线和类名的形式。</p>
+<p>list()：对QuerySet调用list()将强制提交操作entry_list = list(Entry.objects.all())</p>
 </li>
 <li>
-<p>例如：为了保证不能在class之外访问私有变量，Python会在类的内部自动的把我们定义的<code>__spam</code>私有变量的名字替换成为<br>
-<code>_classname__spam</code>(注意，<code>classname</code>前面是一个下划线，<code>spam</code>前是两个下划线)，因此，用户在外部访问<code>__spam</code>的时候就会提示找不到相应的变量。</p>
+<p>bool()</p>
+<ul>
+<li>
+<p>测试布尔值，像这样：</p>
 </li>
 <li>
-<p>python中的私有变量和私有方法仍然是可以访问的</p>
+<pre><code class="language-python">if Entry.objects.filter(headline=&quot;Test&quot;):
+  print(&quot;There is at least one Entry with the headline Test&quot;)
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">注：如果你需要知道是否存在至少一条记录（而不需要真实的对象），使用exists() 将更加高效。</span><br><span class="line"></span><br><span class="line"># 二、QuerySet</span><br><span class="line"></span><br><span class="line">下面是对于QuerySet的正式定义：</span><br><span class="line"></span><br><span class="line">- class QuerySet(model=None, query=None, using=None)[source]</span><br><span class="line"></span><br><span class="line">QuerySet类具有两个公有属性用于内省：</span><br><span class="line"></span><br><span class="line">- ordered：如果QuerySet是排好序的则为True，否则为False。</span><br><span class="line"></span><br><span class="line">- db：如果现在执行，则返回使用的数据库。</span><br><span class="line"></span><br><span class="line"># 三、返回新QuerySets的API</span><br><span class="line"></span><br><span class="line">- 以下的方法都将返回一个新的QuerySets。重点是加粗的几个API，其它的使用场景很少。</span><br><span class="line"></span><br><span class="line">## **方法名 解释**</span><br><span class="line"></span><br><span class="line">- filter() 过滤查询对象。</span><br><span class="line"></span><br><span class="line">- exclude() 排除满足条件的对象</span><br><span class="line">- annotate() 使用聚合函数</span><br><span class="line">- order_by() 对查询集进行排序</span><br><span class="line">- reverse() 反向排序</span><br><span class="line">- distinct() 对查询集去重</span><br><span class="line">- values() 返回包含对象具体值的字典的QuerySet</span><br><span class="line">- values_list() 与values()类似，只是返回的是元组而不是字典。</span><br><span class="line">- dates() 根据日期获取查询集</span><br><span class="line">- datetimes() 根据时间获取查询集</span><br><span class="line">- none() 创建空的查询集</span><br><span class="line">- all() 获取所有的对象</span><br><span class="line">- union() 并集</span><br><span class="line">- intersection() 交集</span><br><span class="line">- difference() 差集</span><br><span class="line">- select_related() 附带查询关联对象</span><br><span class="line">- prefetch_related()预先查询</span><br><span class="line">- extra() 附加SQL查询</span><br><span class="line">- defer() 不加载指定字段</span><br><span class="line">- only() 只加载指定的字段</span><br><span class="line">- using() 选择数据库</span><br><span class="line">- select_for_update()锁住选择的对象，直到事务结束。</span><br><span class="line">- raw() 接收一个原始的SQL查询</span><br><span class="line"></span><br><span class="line">### 1. filter()</span><br><span class="line"></span><br><span class="line">`filter(**kwargs)`</span><br><span class="line"></span><br><span class="line">- 返回满足查询参数的对象集合。</span><br><span class="line"></span><br><span class="line">- 查找的参数（**kwargs）应该满足下文字段查找中的格式。多个参数之间是和AND的关系。</span><br><span class="line"></span><br><span class="line">### 2. exclude()</span><br><span class="line"></span><br><span class="line">`exclude(**kwargs)`</span><br><span class="line"></span><br><span class="line">- 返回一个新的`QuerySet`，它包含`不满足给定的查找参数的对象`。</span><br><span class="line"></span><br><span class="line">- 查找的参数（**kwargs）应该满足下文字段查找中的格式。多个参数通过`AND连接`，然后所有的内容放入`NOT() `中。</span><br><span class="line"></span><br><span class="line">```python</span><br><span class="line"># 下面的示例排除所有pub_date晚于2005-1-3且headline为“Hello” 的记录：</span><br><span class="line"></span><br><span class="line">Entry.objects.exclude(pub_date__gt=[datetime.date](2005, 1, 3), headline=&#x27;Hello&#x27;)</span><br><span class="line"></span><br><span class="line"># 下面的示例排除所有pub_date晚于2005-1-3或者headline 为“Hello” 的记录：</span><br><span class="line"></span><br><span class="line">Entry.objects.exclude(pub_date__gt=[datetime.date](2005, 1, 3)).exclude(headline=&#x27;Hello&#x27;)</span><br></pre></td></tr></table></figure>
+
+</code></pre>
 </li>
 </ul>
-<p>访问方法如下：<br>
-<code>私有变量:实例._类名__变量名</code><br>
-<code>私有方法:实例._类名__方法名()</code></p>
+</li>
+</ul>
+<h3 id="3-annotate">3. annotate()</h3>
+<p><code>annotate(args, *kwargs)</code></p>
 <ul>
-<li>其实，Python并没有真正的私有化支持，但可用下划线得到伪私有。</li>
+<li>
+<p>使用提供的聚合表达式查询对象。</p>
+</li>
+<li>
+<p>表达式可以是简单的值、对模型（或任何关联模型）上的字段的引用或者聚合表达式（<code>平均值、总和等</code>）。</p>
+</li>
+<li>
+<p>annotate()的每个参数都是一个annotation，它将添加到返回的QuerySet每个对象中。</p>
+</li>
+<li>
+<p>关键字参数指定的Annotation将使用关键字作为Annotation 的别名。 匿名参数的别名将基于聚合函数的名称和模型的字段生成。 只有引用单个字段的聚合表达式才可以使用匿名参数。 其它所有形式都必须用关键字参数。</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 例如，如果正在操作一个Blog列表，你可能想知道每个Blog有多少Entry：</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models <span class="keyword">import</span> Count</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q = Blog.objects.annotate(Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># The name of the first blog</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q[<span class="number">0</span>].name</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;Blogasaurus&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># The number of entries on the first blog</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q[<span class="number">0</span>].entry__count</span><br><span class="line"><span class="number">42</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Blog模型本身没有定义entry__count属性，但是通过使用一个关键字参数来指定聚合函数，可以控制Annotation的名称：</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q = Blog.objects.annotate(number_of_entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># The number of entries on the first blog, using the name provided</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q[<span class="number">0</span>].number_of_entries</span><br><span class="line"></span><br><span class="line"><span class="number">42</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-order-by">4. order_by()</h3>
+<p><code>order_by(*fields)</code></p>
+<ul>
+<li>默认情况下，根据模型的Meta类中的ordering属性对QuerySet中的对象进行排序</li>
+</ul>
+<p><code>Entry.objects.filter(pub_date__year=2005).order_by('-pub_date', 'headline')</code></p>
+<ul>
+<li>
+<p>上面的结果将按照pub_date降序排序，然后再按照headline升序排序。“-pub_date&quot;前面的负号表示降序顺序。 升序是默认的。 要随机排序，使用”?&quot;，如下所示：</p>
+</li>
+<li>
+<p>Entry.objects.order_by(‘?’)</p>
+</li>
 </ul>
 <blockquote>
-<p>尽量避免定义以下划线开头的变量！</p>
+<p>注：order_by(‘?’)可能耗费资源且很慢，这取决于使用的数据库。</p>
 </blockquote>
 <ul>
-<li>（1）<code>_xxx </code>   &quot;单下划线 &quot; 开始的成员变量叫做保护变量，意思是只有类实例和子类实例能访问到这些变量，<br>
-需通过类提供的接口进行访问；不能用’from module import *'导入</li>
-<li>（2）<code>__xxx </code>  类中的私有变量/方法名 （Python的函数也是对象，所以成员方法称为成员变量也行得通。）,<br>
-&quot; 双下划线 &quot; 开始的是私有成员，意思是只有类对象自己能访问，连子类对象也不能访问到这个数据。</li>
-<li>（3）<code>__xxx__ </code>系统定义名字，前后均有一个“双下划线” 代表python里特殊方法专用的标识，如 <code>__init__（）</code>代表类的构造函数。</li>
+<li>
+<p>若要按照另外一个模型中的字段排序，可以使用查询关联模型的语法。即通过字段的名称后面跟两个下划线（__），再加上新模型中的字段的名称，直到希望连接的模型。 像这样：</p>
+</li>
+<li>
+<p>Entry.objects.order_by(‘blog__name’, ‘headline’)</p>
+</li>
+<li>
+<p>如果排序的字段与另外一个模型关联，Django将使用关联的模型的默认排序，或者如果没有指定Meta.ordering将通过关联的模型的主键排序。 例如，因为Blog模型没有指定默认的排序：</p>
+</li>
+<li>
+<p>Entry.objects.order_by(‘blog’)</p>
+</li>
 </ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/02/07/python%E7%B1%BB%E7%9A%84%E7%A7%81%E6%9C%89%E5%B1%9E%E6%80%A7%E5%92%8C%E7%A7%81%E6%9C%89%E6%96%B9%E6%B3%95/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/python%E8%A7%A3%E9%87%8A%E5%99%A8%E4%BB%8B%E7%BB%8D/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/02/07/python%E8%A7%A3%E9%87%8A%E5%99%A8%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">python解释器介绍</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>400</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>CPython</h1>
+<p>与以下相同：</p>
+<p><code>Entry.objects.order_by('blog__id')</code></p>
 <ul>
 <li>
-<p>当我们从<a target="_blank" rel="noopener" href="https://www.python.org/">Python官方网站</a>下载并安装好Python 3.x后，我们就直接获得了一个官方版本的解释器：CPython。这个解释器是用C语言开发的，所以叫CPython。在命令行下运行<code>python</code>就是启动CPython解释器。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/02/07/python%E8%A7%A3%E9%87%8A%E5%99%A8%E4%BB%8B%E7%BB%8D/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
+<p>如果Blog设置了ordering = [‘name’]，那么第一个QuerySet将等同于：</p>
+</li>
+<li>
+<p>Entry.objects.order_by(‘blog__name’)</p>
+</li>
+<li>
+<p>还可以通过调用表达式的<code>desc()</code>或者<code>asc()</code>方法：</p>
+</li>
+<li>
+<p>Entry.objects.order_by(Coalesce(‘summary’, ‘headline’).desc())</p>
+</li>
+</ul>
+<p>考虑下面的情况，指定一个多值字段来排序（例如，一个ManyToManyField 字段或者ForeignKey 字段的反向关联）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Event</span>(<span class="title class_ inherited__">Model</span>):</span><br><span class="line"></span><br><span class="line">parent = models.ForeignKey(</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;self&#x27;</span>,</span><br><span class="line"></span><br><span class="line">on_delete=models.CASCADE,</span><br><span class="line"></span><br><span class="line">related_name=<span class="string">&#x27;children&#x27;</span>,</span><br><span class="line"></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">date = models.DateField()</span><br><span class="line"></span><br><span class="line">Event.objects.order_by(<span class="string">&#x27;children__date&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>在这里，每个Event可能有多个排序数据；具有多个children的每个Event将被多次返回到order_by()创建的新的QuerySet中。 换句话说，用order_by()方法对QuerySet对象进行操作会返回一个扩大版的新QuerySet对象。因此，使用多值字段对结果进行排序时要格外小心。</p>
+</li>
+<li>
+<p>没有方法指定排序是否考虑大小写。 对于大小写的敏感性，Django将根据数据库中的排序方式排序结果。</p>
+</li>
+<li>
+<p>可以通过Lower将一个字段转换为小写来排序，它将达到大小写一致的排序：</p>
+</li>
+<li>
+<p><code>Entry.objects.order_by(Lower('headline').desc())</code></p>
+</li>
+<li>
+<p>可以通过检查QuerySet.ordered属性来知道查询是否是排序的。</p>
+</li>
+<li>
+<p>每个<code>order_by()</code>都将清除前面的任何排序。 例如下面的查询将按照pub_date排序，而不是headline：</p>
+</li>
+<li>
+<p><code>Entry.objects.order_by('headline').order_by('pub_date')</code></p>
+</li>
+</ul>
+<h3 id="5-reverse">5. reverse()</h3>
+<p><code>reverse()</code></p>
+<ul>
+<li>
+<p>反向排序QuerySet中返回的元素。 第二次调用reverse()将恢复到原有的排序。</p>
+</li>
+<li>
+<p>如要获取QuerySet中最后五个元素，可以这样做：</p>
+</li>
+<li>
+<p>my_queryset.reverse()[:5]</p>
+</li>
+<li>
+<p>这与Python直接使用负索引有点不一样。 <code>Django不支持负索引，只能曲线救国</code>。</p>
+</li>
+</ul>
+<h3 id="6-distinct">6. distinct()</h3>
+<p><code>distinct(*fields)</code></p>
+<ul>
+<li>
+<p>去除查询结果中重复的行。</p>
+</li>
+<li>
+<p>默认情况下，QuerySet不会去除重复的行。当查询跨越多张表的数据时，QuerySet可能得到重复的结果，这时候可以使用<code>distinct()</code>进行去重。</p>
+</li>
+</ul>
+<h3 id="7-values">7. values()</h3>
+<p><code>values(fields, *expressions)</code></p>
+<ul>
+<li>
+<p>返回一个包含数据的字典的queryset，而不是模型实例。</p>
+</li>
+<li>
+<p>每个字典表示一个对象，键对应于模型对象的属性名称。</p>
+</li>
+</ul>
+<p>下面的例子将values() 与普通的模型对象进行比较：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 列表中包含的是Blog对象</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.<span class="built_in">filter</span>(name__startswith=<span class="string">&#x27;Beatles&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&lt;Blog: Beatles Blog&gt;]&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 列表中包含的是数据字典</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.<span class="built_in">filter</span>(name__startswith=<span class="string">&#x27;Beatles&#x27;</span>).values()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;Beatles Blog&#x27;</span>, <span class="string">&#x27;tagline&#x27;</span>: <span class="string">&#x27;All the latest Beatles news.&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line">该方法接收可选的位置参数*fields，它指定values()应该限制哪些字段。如果指定字段，每个字典将只包含指定的字段的键/值。如果没有指定字段，每个字典将包含数据库表中所有字段的键和值。</span><br><span class="line"></span><br><span class="line">例如：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;Beatles Blog&#x27;</span>, <span class="string">&#x27;tagline&#x27;</span>: <span class="string">&#x27;All the latest Beatles news.&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;id&#x27;</span>, <span class="string">&#x27;name&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;Beatles Blog&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">values()方法还有关键字参数**expressions，这些参数将传递给annotate()：</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models.functions <span class="keyword">import</span> Lower</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(lower_name=Lower(<span class="string">&#x27;name&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;lower_name&#x27;</span>: <span class="string">&#x27;beatles blog&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">在values()子句中的聚合应用于相同values()子句中的其他参数之前。 如果需要按另一个值分组，请将其添加到较早的values()子句中。 像这样：</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models <span class="keyword">import</span> Count</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;author&#x27;</span>, entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;author&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;entries&#x27;</span>: <span class="number">20</span>&#125;, &#123;<span class="string">&#x27;author&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;entries&#x27;</span>: <span class="number">13</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;author&#x27;</span>).annotate(entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;author&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;entries&#x27;</span>: <span class="number">33</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line">注意：</span><br><span class="line">如果你有一个字段foo是一个ForeignKey，默认的foo_id参数返回的字典中将有一个叫做foo 的键，因为这是保存实际值的那个隐藏的模型属性的名称。 当调用foo_id并传递字段的名称，传递foo 或values()都可以，得到的结果是相同的。像这样：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;blog_id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;headline&#x27;</span>: <span class="string">&#x27;First Entry&#x27;</span>, ...&#125;, ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values(<span class="string">&#x27;blog&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;blog&#x27;</span>: <span class="number">1</span>&#125;, ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values(<span class="string">&#x27;blog_id&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;blog_id&#x27;</span>: <span class="number">1</span>&#125;, ...]&gt;</span><br><span class="line"></span><br><span class="line">当values()与distinct()一起使用时，注意排序可能影响最终的结果。</span><br><span class="line">如果values()子句位于extra()调用之后，extra()中的select参数定义的字段必须显式包含在values()调用中。 values( 调用后面的extra( 调用将忽略选择的额外的字段。在values()之后调用only()和defer()不太合理，所以将引发一个NotImplementedError。可以通过ManyToManyField、ForeignKey 和 OneToOneFiel 属性反向引用关联的模型的字段：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;My blog&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>: <span class="string">&#x27;An entry&#x27;</span>&#125;,&#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;My blog&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>: <span class="string">&#x27;Another entry&#x27;</span>&#125;, ...]&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="8-values-list">8. values_list()</h3>
+<p><code>values_list(*fields, flat=False)</code></p>
+<ul>
+<li>与values()类似，只是在迭代时返回的是元组而不是字典。每个元组包含传递给values_list()调用的相应字段或表达式的值，因此第一个项目是第一个字段等。 像这样：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>, <span class="string">&#x27;headline&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="number">1</span>, <span class="string">&#x27;First entry&#x27;</span>), ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models.functions <span class="keyword">import</span> Lower</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>, Lower(<span class="string">&#x27;headline&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="number">1</span>, <span class="string">&#x27;first entry&#x27;</span>), ...]&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果只传递一个字段，还可以传递<code>flat</code>参数。 如果为True，它表示返回的结果为单个值而不是元组。 如下所示：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>).order_by(<span class="string">&#x27;id&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet[(<span class="number">1</span>,), (<span class="number">2</span>,), (<span class="number">3</span>,), ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>, flat=<span class="literal">True</span>).order_by(<span class="string">&#x27;id&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, ...]&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>如果有多个字段，传递flat将发生错误。</p>
+</li>
+<li>
+<p>如果不传递任何值给values_list()，它将返回模型中的所有字段，以在模型中定义的顺序。</p>
+</li>
+<li>
+<p>常见的情况是获取某个模型实例的特定字段值。可以使用values_list()，然后调用get()：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;headline&#x27;</span>, flat=<span class="literal">True</span>).get(pk=<span class="number">1</span>)</span><br><span class="line"><span class="string">&#x27;First entry&#x27;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>values()和values_list()都用于特定情况下的优化：检索数据子集，而无需创建模型实例。</li>
+<li>注意通过ManyToManyField进行查询时的行为：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Author.objects.values_list(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="string">&#x27;Noam Chomsky&#x27;</span>, <span class="string">&#x27;Impressions of Gaza&#x27;</span>),(<span class="string">&#x27;George Orwell&#x27;</span>, <span class="string">&#x27;Why Socialists Do Not Believe in Fun&#x27;</span>),</span><br><span class="line">(<span class="string">&#x27;George Orwell&#x27;</span>, <span class="string">&#x27;In Defence of English Cooking&#x27;</span>),(<span class="string">&#x27;Don Quixote&#x27;</span>, <span class="literal">None</span>)]&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 类似地，当查询反向外键时，对于没有任何作者的条目，返回None。</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;authors&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="string">&#x27;Noam Chomsky&#x27;</span>,), (<span class="string">&#x27;George Orwell&#x27;</span>,), (<span class="literal">None</span>,)]&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="9-dates">9. dates()</h3>
+<p><code>dates(field, kind, order='ASC')</code></p>
+<ul>
+<li>
+<p>返回一个QuerySet，表示QuerySet内容中特定类型的所有可用日期的datetime.date对象列表。</p>
+</li>
+<li>
+<p>field参数是模型的DateField的名称。 kind参数应为&quot;year&quot;，“month&quot;或&quot;day”。 结果列表中的每个datetime.date对象被截取为给定的类型。</p>
+</li>
+<li>
+<p>“year” 返回对应该field的所有不同年份值的列表。</p>
+</li>
+<li>
+<p>&quot;month&quot;返回字段的所有不同年/月值的列表。</p>
+</li>
+<li>
+<p>&quot;day&quot;返回字段的所有不同年/月/日值的列表。</p>
+</li>
+<li>
+<p>order参数默认为’ASC’，或者’DESC’。 它指定如何排序结果。</p>
+</li>
+</ul>
+<p>例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;year&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">1</span>, <span class="number">1</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;month&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">3</span>, <span class="number">1</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;day&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">3</span>, <span class="number">20</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;day&#x27;</span>, order=<span class="string">&#x27;DESC&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">2</span>, <span class="number">20</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">filter</span>(headline__contains=<span class="string">&#x27;Lennon&#x27;</span>).dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;day&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">3</span>, <span class="number">20</span>)]</span><br></pre></td></tr></table></figure>
+<h3 id="10-datetimes">10. datetimes()</h3>
+<p><code>datetimes(field_name, kind, order='ASC', tzinfo=None)</code></p>
+<ul>
+<li>
+<p>返回QuerySet，为datetime.datetime对象的列表，表示QuerySet内容中特定种类的所有可用日期。</p>
+</li>
+<li>
+<p>field_name应为模型的DateTimeField的名称。</p>
+</li>
+<li>
+<p>kind参数应为&quot;hour&quot;，“minute”，“month”，“year”，“second&quot;或&quot;day”。</p>
+</li>
+<li>
+<p>结果列表中的每个datetime.datetime对象被截取到给定的类型。</p>
+</li>
+<li>
+<p>order参数默认为’ASC’，或者’DESC’。 它指定如何排序结果。</p>
+</li>
+<li>
+<p>tzinfo参数定义在截取之前将数据时间转换到的时区。</p>
+</li>
+</ul>
+<h3 id="11-none">11. none()</h3>
+<p><code>none()</code></p>
+<ul>
+<li>调用none()将创建一个不返回任何对象的查询集，并且在访问结果时不会执行任何查询。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">例子：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.none()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet []&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models.query <span class="keyword">import</span> EmptyQuerySet</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">isinstance</span>(Entry.objects.none(), EmptyQuerySet)</span><br><span class="line"></span><br><span class="line"><span class="literal">True</span></span><br></pre></td></tr></table></figure>
+<h3 id="12-all">12. all()</h3>
+<p><code>all()</code></p>
+<ul>
+<li>返回当前QuerySet（或QuerySet子类）的副本。通常用于获取全部QuerySet对象。</li>
+</ul>
+<h3 id="13-union">13. union()</h3>
+<p><code>union(*other_qs, all=False)</code></p>
+<ul>
+<li>
+<p>Django中的新功能1.11。也就是集合中并集的概念！</p>
+</li>
+<li>
+<p>使用SQL的UNION运算符组合两个或更多个QuerySet的结果。例如：</p>
+</li>
+</ul>
+<p><code>qs1.union(qs2, qs3)</code></p>
+<ul>
+<li>默认情况下，UNION操作符仅选择不同的值。 要允许重复值，请使用all=True参数。</li>
+</ul>
+<h3 id="14-intersection">14. intersection()</h3>
+<ul>
+<li>
+<p>intersection(*other_qs)</p>
+</li>
+<li>
+<p>Django中的新功能1.11。也就是集合中<code>交集</code>的概念！</p>
+</li>
+<li>
+<p>使用SQL的INTERSECT运算符返回两个或更多个QuerySet的共有元素。例如：</p>
+</li>
+</ul>
+<p><code>qs1.intersection(qs2, qs3)</code></p>
+<h3 id="15-difference">15. difference()</h3>
+<p><code>difference(*other_qs)</code></p>
+<ul>
+<li>
+<p>Django中的新功能1.11。也就是集合中<code>差集</code>的概念！</p>
+</li>
+<li>
+<p>使用SQL的EXCEPT运算符只保留QuerySet中的元素，但不保留其他QuerySet中的元素。例如：</p>
+</li>
+</ul>
+<p><code>qs1.difference(qs2, qs3)</code></p>
+<h3 id="16-select-related">16. select_related()</h3>
+<p><code>select_related(*fields)</code></p>
+<ul>
+<li>
+<p>沿着外键关系查询关联的对象的数据。这会生成一个复杂的查询并引起性能的损耗，但是在以后使用外键关系时将不需要再次数据库查询。</p>
+</li>
+<li>
+<p>下面的例子解释了普通查询和select_related()查询的区别。 下面是一个标准的查询：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 访问数据库。</span></span><br><span class="line"></span><br><span class="line">e = Entry.objects.get(<span class="built_in">id</span>=<span class="number">5</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 再次访问数据库以得到关联的Blog对象。</span></span><br><span class="line"></span><br><span class="line">b = [e.blog]</span><br><span class="line"></span><br><span class="line">下面是一个select_related查询：</span><br><span class="line"></span><br><span class="line"><span class="comment"># 访问数据库。</span></span><br><span class="line"></span><br><span class="line">e = Entry.objects.select_related(<span class="string">&#x27;blog&#x27;</span>).get(<span class="built_in">id</span>=<span class="number">5</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 不会访问数据库，因为e.blog已经在前面的查询中获得了。</span></span><br><span class="line"></span><br><span class="line">b = [e.blog]</span><br><span class="line"></span><br><span class="line">select_related()可用于objects任何的查询集：</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> django.utils <span class="keyword">import</span> timezone</span><br><span class="line"></span><br><span class="line"><span class="comment"># Find all the blogs with entries scheduled to be published in the future.</span></span><br><span class="line"></span><br><span class="line">blogs = <span class="built_in">set</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> Entry.objects.<span class="built_in">filter</span>(pub_date__gt=[timezone.now]()).select_related(<span class="string">&#x27;blog&#x27;</span>):</span><br><span class="line"></span><br><span class="line"><span class="comment"># 没有select_related()，下面的语句将为每次循环迭代生成一个数据库查询,以获得每个entry关联的blog。</span></span><br><span class="line"></span><br><span class="line">blogs.add([e.blog])</span><br><span class="line"></span><br><span class="line"><span class="built_in">filter</span>()和select_related()的顺序不重要。 下面的查询集是等同的：</span><br><span class="line"></span><br><span class="line">Entry.objects.<span class="built_in">filter</span>(pub_date__gt=[timezone.now].select_related(<span class="string">&#x27;blog&#x27;</span>)</span><br><span class="line"></span><br><span class="line">Entry.objects.select_related(<span class="string">&#x27;blog&#x27;</span>).<span class="built_in">filter</span>(pub_date__gt=[timezone.now]())</span><br></pre></td></tr></table></figure>
+<p>可以沿着外键查询。 如果有以下模型：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">from django.db import models</span><br><span class="line">class City(models.Model):</span><br><span class="line">    # ...</span><br><span class="line">    pass</span><br><span class="line">class Person(models.Model):</span><br><span class="line">    # ...</span><br><span class="line">    hometown = models.ForeignKey(</span><br><span class="line">        City,</span><br><span class="line">        on_delete=models.SET_NULL,</span><br><span class="line">        blank=True,</span><br><span class="line">        null=True,</span><br><span class="line">    )</span><br><span class="line">class Book(models.Model):</span><br><span class="line">    # ...</span><br><span class="line">    author = models.ForeignKey(Person, on_delete=models.CASCADE)</span><br></pre></td></tr></table></figure>
+<p>调用Book.objects.select_related(‘author__hometown’).get(id=4)将缓存相关的Person 和相关的City：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">b = Book.objects.select_related(<span class="string">&#x27;author__hometown&#x27;</span>).get(<span class="built_in">id</span>=<span class="number">4</span>)</span><br><span class="line"></span><br><span class="line">p = [b.author] <span class="comment"># Doesn&#x27;t hit the database.</span></span><br><span class="line"></span><br><span class="line">c = p.hometown <span class="comment"># Doesn&#x27;t hit the database.</span></span><br><span class="line"></span><br><span class="line">b = Book.objects.get(<span class="built_in">id</span>=<span class="number">4</span>) <span class="comment"># No select_related() in this example.</span></span><br><span class="line"></span><br><span class="line">p = [b.author] <span class="comment"># Hits the database.</span></span><br><span class="line"></span><br><span class="line">c = p.hometown <span class="comment"># Hits the database.</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>在传递给select_related()的字段中，可以使用<code>任何ForeignKey</code>和<code>OneToOneField</code>。</p>
+</li>
+<li>
+<p>在传递给select_related()的字段中，还可以反向引用OneToOneField。也就是说，可以回溯到定义OneToOneField 的字段。 此时，可以使用关联对象字段的related_name，而不要指定字段的名称。</p>
+</li>
+</ul>
+<h3 id="17-prefetch-related">17. prefetch_related()</h3>
+<p><code>prefetch_related(*lookups)</code></p>
+<ul>
+<li>
+<p>在单个批处理中自动检索每个指定查找的相关对象。</p>
+</li>
+<li>
+<p>与select_related类似，但是策略是完全不同的。</p>
+</li>
+</ul>
+<p>假设有这些模型：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">from django.db import models</span><br><span class="line">class Topping(models.Model):</span><br><span class="line">    name = models.CharField(max_length=30)</span><br><span class="line">class Pizza(models.Model):</span><br><span class="line">    name = models.CharField(max_length=50)</span><br><span class="line">    toppings = models.ManyToManyField(Topping)</span><br><span class="line">    def __str__(self):              # __unicode__ on Python 2</span><br><span class="line">        return &quot;%s (%s)&quot; % (</span><br><span class="line">            self.name,</span><br><span class="line">            &quot;, &quot;.join(topping.name for topping in self.toppings.all()),</span><br><span class="line">        )</span><br></pre></td></tr></table></figure>
+<p>并运行：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza.objects.<span class="built_in">all</span>()</span><br><span class="line"></span><br><span class="line">[<span class="string">&quot;Hawaiian (ham, pineapple)&quot;</span>, <span class="string">&quot;Seafood (prawns, smoked salmon)&quot;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>问题是每次QuerySet要求Pizza.objects.all()查询数据库，因此<code>self.toppings.all()</code>将在<code>Pizza Pizza.__str__()</code>中的每个项目的<code>Toppings</code>表上运行查询。</p>
+</li>
+<li>
+<p>可以使用prefetch_related减少为只有两个查询：</p>
+</li>
+</ul>
+<p><code>Pizza.objects.all().prefetch_related('toppings')</code></p>
+<ul>
+<li>
+<p>这意味着现在每次<code>self.toppings.all()</code>被调用，不会再去数据库查找，而是在一个预取的QuerySet缓存中查找。</p>
+</li>
+<li>
+<p>还可以使用正常连接语法来执行相关字段的相关字段。 假设在上面的例子中增加一个额外的模型：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Restaurant</span>(models.Model):</span><br><span class="line"></span><br><span class="line">  pizzas = models.ManyToManyField(Pizza, related_name=<span class="string">&#x27;restaurants&#x27;</span>)</span><br><span class="line"></span><br><span class="line">  best_pizza = models.ForeignKey(Pizza, related_name=<span class="string">&#x27;championed_by&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>以下是合法的：</p>
+<p><code>Restaurant.objects.prefetch_related('pizzas__toppings')</code></p>
+<ul>
+<li>这将预取所有属于餐厅的比萨饼，和所有属于那些比萨饼的配料。 这将导致总共3个查询 - 一个用于餐馆，一个用于比萨饼，一个用于配料。</li>
+</ul>
+<p><code> Restaurant.objects.prefetch_related('best_pizza__toppings')</code></p>
+<ul>
+<li>
+<p>这将获取最好的比萨饼和每个餐厅最好的披萨的所有配料。 这将在3个表中查询 - 一个为餐厅，一个为“最佳比萨饼”，一个为配料。</p>
+</li>
+<li>
+<p>当然，也可以使用best_pizza来获取select_related关系，以将查询数减少为2：</p>
+</li>
+</ul>
+<p><code>Restaurant.objects.select_related('best_pizza').prefetch_related('best_pizza__toppings')</code></p>
+<h3 id="18-extra">18. extra()</h3>
+<p><code>extra(select=None, where=None, params=None, tables=None, order_by=None, select_params=None)</code></p>
+<ul>
+<li>有些情况下，Django的查询语法难以简单的表达复杂的WHERE子句，对于这种情况,可以在<code>extra()</code>生成的SQL从句中注入新子句。使用这种方法作为最后的手段，这是一个旧的API，在将来的某个时候可能被弃用。仅当无法使用其他查询方法表达查询时才使用它。</li>
+</ul>
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">qs.extra(</span><br><span class="line">  select=&#123;<span class="string">&#x27;val&#x27;</span>: <span class="string">&quot;select col from sometable where othercol = %s&quot;</span>&#125;,</span><br><span class="line">  select_params=(someparam,),</span><br><span class="line"> )</span><br></pre></td></tr></table></figure>
+<p>相当于：</p>
+<p><code>qs.annotate(val=RawSQL(&quot;select col from sometable where othercol = %s&quot;, (someparam,)))</code></p>
+<h3 id="19-defer">19. defer()</h3>
+<p><code>defer(*fields)</code></p>
+<ul>
+<li>
+<p>在一些复杂的数据建模情况下，模型可能包含大量字段，其中一些可能包含大尺寸数据（例如文本字段），将它们转换为Python对象需要花费很大的代价。</p>
+</li>
+<li>
+<p>当最初获取数据时不知道是否需要这些特定字段的情况下，如果正在使用查询集的结果，可以告诉Django不要从数据库中检索它们。</p>
+</li>
+<li>
+<p>通过传递字段名称到defer()实现不加载：</p>
+</li>
+</ul>
+<p><code>Entry.objects.defer(&quot;headline&quot;, &quot;body&quot;)</code></p>
+<ul>
+<li>
+<p>具有延迟加载字段的查询集仍将返回模型实例。</p>
+</li>
+<li>
+<p>每个延迟字段将在你访问该字段时从数据库中检索（每次只检索一个，而不是一次检索所有的延迟字段）。</p>
+</li>
+<li>
+<p>可以多次调用defer()。 每个调用都向延迟集添加新字段：</p>
+</li>
+</ul>
+<h4 id="延迟body和headline两个字段。">延迟body和headline两个字段。</h4>
+<p><code>Entry.objects.defer(&quot;body&quot;).filter(rating=5).defer(&quot;headline&quot;)</code></p>
+<ul>
+<li>
+<p>字段添加到延迟集的顺序无关紧要。对已经延迟的字段名称再次defer()没有问题（该字段仍将被延迟）。</p>
+</li>
+<li>
+<p>可以使用标准的双下划线符号来分隔关联的字段，从而加载关联模型中的字段：</p>
+</li>
+</ul>
+<p><code>Blog.objects.select_related().defer(&quot;entry__headline&quot;, &quot;entry__body&quot;)</code></p>
+<ul>
+<li>如果要清除延迟字段集，将None作为参数传递到defer()：</li>
+</ul>
+<h4 id="立即加载所有的字段。">立即加载所有的字段。</h4>
+<ul>
+<li>
+<p>my_queryset.defer(None)</p>
+</li>
+<li>
+<p>defer()方法（及其兄弟，only()）仅适用于高级用例，它们提供了数据加载的优化方法。</p>
+</li>
+</ul>
+<h3 id="20-only">20. only()</h3>
+<p><code>only(*fields)</code></p>
+<ul>
+<li>
+<p>only()方法与defer()相反。</p>
+</li>
+<li>
+<p>如果有一个模型几乎所有的字段需要延迟，使用only()指定补充的字段集可以使代码更简单。</p>
+</li>
+<li>
+<p>假设有一个包含字段biography、age和name的模型。 以下两个查询集是相同的，就延迟字段而言：</p>
+<ul>
+<li>Person.objects.defer(“age”, “biography”)</li>
+<li>Person.objects.only(“name”)</li>
+</ul>
+</li>
+</ul>
+<p>每当你调用only()时，它将替换立即加载的字段集。因此，对only()的连续调用的结果是只有最后一次调用的字段被考虑：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># This will defer all fields except the headline.</span></span><br><span class="line"></span><br><span class="line">Entry.objects.only(<span class="string">&quot;body&quot;</span>, <span class="string">&quot;rating&quot;</span>).only(<span class="string">&quot;headline&quot;</span>)</span><br><span class="line"></span><br><span class="line">由于defer()以递增方式动作（向延迟列表中添加字段），因此你可以结合only()和defer()调用：</span><br><span class="line"></span><br><span class="line"><span class="comment"># Final result is that everything except &quot;headline&quot; is deferred.</span></span><br><span class="line"></span><br><span class="line">Entry.objects.only(<span class="string">&quot;headline&quot;</span>, <span class="string">&quot;body&quot;</span>).defer(<span class="string">&quot;body&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Final result loads headline and body immediately (only() replaces any</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># existing set of fields).</span></span><br><span class="line"></span><br><span class="line">Entry.objects.defer(<span class="string">&quot;body&quot;</span>).only(<span class="string">&quot;headline&quot;</span>, <span class="string">&quot;body&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>当对具有延迟字段的实例调用save()时，仅保存加载的字段。</p>
+<h3 id="21-using">21. using()</h3>
+<p><code>using(alias)</code></p>
+<ul>
+<li>如果正在使用多个数据库，这个方法用于指定在哪个数据库上查询QuerySet。方法的唯一参数是数据库的别名，定义在DATABASES。</li>
+</ul>
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># queries the database with the &#x27;default&#x27; alias.</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">all</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># queries the database with the &#x27;backup&#x27; alias</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.using(<span class="string">&#x27;backup&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="22-select-for-update">22. select_for_update()</h3>
+<p><code>select_for_update(nowait=False, skip_locked=False)</code></p>
+<ul>
+<li>返回一个锁住行直到事务结束的查询集，如果数据库支持，它将生成一个SELECT … FOR UPDATE语句。</li>
+</ul>
+<p>例如：</p>
+<p><code>entries = Entry.objects.select_for_update().filter(author=request.user)</code></p>
+<ul>
+<li>
+<p>所有匹配的行将被锁定，直到事务结束。这意味着可以通过锁防止数据被其它事务修改。</p>
+</li>
+<li>
+<p>一般情况下如果其他事务锁定了相关行，那么本查询将被阻塞，直到锁被释放。使用select_for_update(nowait=True)将使查询不阻塞。如果其它事务持有冲突的锁,那么查询将引发DatabaseError异常。也可以使用select_for_update(skip_locked=True)忽略锁定的行。nowait和skip_locked是互斥的。</p>
+</li>
+<li>
+<p>目前，postgresql，oracle和mysql数据库后端支持select_for_update()。但是，MySQL不支持nowait和skip_locked参数。</p>
+</li>
+</ul>
+<h3 id="23-raw">23. raw()</h3>
+<p>raw(raw_query, params=None, translations=None)</p>
+<p>接收一个原始的SQL查询，执行它并返回一个django.db.models.query.RawQuerySet实例。</p>
+<p>这个RawQuerySet实例可以迭代，就像普通的QuerySet一样。</p>
+<h1>四、不返回QuerySets的API</h1>
+<ul>
+<li>以下的方法不会返回QuerySets，但是作用非常强大，尤其是粗体显示的方法，需要背下来。</li>
+</ul>
+<h2 id="方法名-解释"><strong>方法名 解释</strong></h2>
+<p>get() 获取单个对象</p>
+<p>create() 创建对象，无需save()</p>
+<p>get_or_create() 查询对象，如果没有找到就新建对象</p>
+<p>update_or_create() 更新对象，如果没有找到就创建对象</p>
+<p>bulk_create()</p>
+<p>批量创建对象</p>
+<p>count() 统计对象的个数</p>
+<p>in_bulk()</p>
+<p>根据主键值的列表，批量返回对象</p>
+<p>iterator()</p>
+<p>获取包含对象的迭代器</p>
+<p>latest() 获取最近的对象</p>
+<p>earliest() 获取最早的对象</p>
+<p>first() 获取第一个对象</p>
+<p>last() 获取最后一个对象</p>
+<p>aggregate() 聚合操作</p>
+<p>exists() 判断queryset中是否有对象</p>
+<p>update() 批量更新对象</p>
+<p>delete() 批量删除对象</p>
+<p>as_manager() 获取管理器</p>
+<h3 id="1-get">1. get()</h3>
+<p><code>get(**kwargs)</code></p>
+<ul>
+<li>
+<p>返回按照查询参数匹配到的单个对象，参数的格式应该符合Field lookups的要求。</p>
+</li>
+<li>
+<p>如果匹配到的对象个数不只一个的话，触发MultipleObjectsReturned异常</p>
+</li>
+<li>
+<p>如果根据给出的参数匹配不到对象的话，触发DoesNotExist异常。例如：</p>
+</li>
+</ul>
+<p><code>Entry.objects.get(id='foo') # raises Entry.DoesNotExist</code></p>
+<ul>
+<li>DoesNotExist异常从django.core.exceptions.ObjectDoesNotExist继承，可以定位多个DoesNotExist异常。 例如：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.core.exceptions <span class="keyword">import</span> ObjectDoesNotExist</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">  e = Entry.objects.get(<span class="built_in">id</span>=<span class="number">3</span>)</span><br><span class="line">  b = Blog.objects.get(<span class="built_in">id</span>=<span class="number">1</span>)</span><br><span class="line"><span class="keyword">except</span> ObjectDoesNotExist:</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;Either the entry or blog doesn&#x27;t exist.&quot;</span>)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果希望查询器只返回一行，则可以使用get()而不使用任何参数来返回该行的对象：</li>
+</ul>
+<p><code>entry = Entry.objects.filter(...).exclude(...).get()</code></p>
+<h3 id="2-create">2. create()</h3>
+<p><code>create(**kwargs)</code></p>
+<ul>
+<li>在一步操作中<code>同时创建</code>并且<code>保存对象</code>的便捷方法.</li>
+</ul>
+<p><code>p = Person.objects.create(first_name=&quot;Bruce&quot;, last_name=&quot;Springsteen&quot;)</code></p>
+<p>等于:</p>
+<p><code>p = Person(first_name=&quot;Bruce&quot;, last_name=&quot;Springsteen&quot;)</code></p>
+<p><code>p.save(force_insert=True)</code></p>
+<ul>
+<li>参数force_insert表示强制创建对象。如果model中有一个你手动设置的主键，并且这个值已经存在于数据库中, 调用create()将会失败并且触发IntegrityError因为主键必须是唯一的。如果你手动设置了主键，做好异常处理的准备。</li>
+</ul>
+<h3 id="3-get-or-create">3. get_or_create()</h3>
+<p><code>get_or_create(defaults=None, **kwargs)</code></p>
+<ul>
+<li>
+<p>通过kwargs来查询对象的便捷方法（如果模型中的所有字段都有默认值，可以为空），如果该对象不存在则创建一个新对象。</p>
+</li>
+<li>
+<p>该方法返回一个由(object, created)组成的元组，元组中的object 是一个查询到的或者是被创建的对象， created是一个表示是否创建了新的对象的布尔值。</p>
+</li>
+</ul>
+<p>对于下面的代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line"></span><br><span class="line">  obj = Person.objects.get(first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">except</span> Person.DoesNotExist:</span><br><span class="line"></span><br><span class="line">  obj = Person(first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>, birthday=date(<span class="number">1940</span>, <span class="number">10</span>, <span class="number">9</span>))</span><br><span class="line"></span><br><span class="line">  obj.save()</span><br></pre></td></tr></table></figure>
+<p>如果模型的字段数量较大的话，这种模式就变的非常不易用了。 上面的示例可以用get_or_create()重写 :</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">obj, created = Person.objects.get_or_create(</span><br><span class="line">  first_name=<span class="string">&#x27;John&#x27;</span>,</span><br><span class="line">  last_name=<span class="string">&#x27;Lennon&#x27;</span>,</span><br><span class="line">  defaults=&#123;<span class="string">&#x27;birthday&#x27;</span>: date(<span class="number">1940</span>, <span class="number">10</span>, <span class="number">9</span>)&#125;,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>任何传递给get_or_create()的关键字参数，除了一个可选的defaults，都将传递给get()调用。 如果查找到一个对象，返回一个包含匹配到的对象以及False 组成的元组。 如果查找到的对象超过一个以上，将引发MultipleObjectsReturned。如果查找不到对象，get_or_create()将会实例化并保存一个新的对象，返回一个由新的对象以及True组成的元组。新的对象将会按照以下的逻辑创建:</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">params = &#123;k: v <span class="keyword">for</span> k, v <span class="keyword">in</span> kwargs.items() <span class="keyword">if</span> <span class="string">&#x27;__&#x27;</span> <span class="keyword">not</span> <span class="keyword">in</span> k&#125;</span><br><span class="line"></span><br><span class="line">params.update(&#123;k: v() <span class="keyword">if</span> <span class="built_in">callable</span>(v) <span class="keyword">else</span> v <span class="keyword">for</span> k, v <span class="keyword">in</span> defaults.items()&#125;)</span><br><span class="line"></span><br><span class="line">obj = self.model(**params)</span><br><span class="line"></span><br><span class="line">obj.save()</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>它表示从非’defaults’ 且不包含双下划线的关键字参数开始。然后将defaults的内容添加进来，覆盖必要的键，并使用结果作为关键字参数传递给模型类。</p>
+</li>
+<li>
+<p>如果有一个名为defaults__exact的字段，并且想在get_or_create()时用它作为精确查询，只需要使用defaults，像这样：</p>
+</li>
+</ul>
+<p><code>Foo.objects.get_or_create(defaults__exact='bar', defaults=&#123;'defaults': 'baz'&#125;)</code></p>
+<ul>
+<li>
+<p>当你使用手动指定的主键时，get_or_create()方法与create()方法有相似的错误行为 。 如果需要创建一个对象而该对象的主键早已存在于数据库中，IntegrityError异常将会被触发。</p>
+</li>
+<li>
+<p>这个方法假设进行的是原子操作，并且正确地配置了数据库和正确的底层数据库行为。如果数据库级别没有对get_or_create中用到的kwargs强制要求唯一性（unique和unique_together），方法容易导致竞态条件，可能会有相同参数的多行同时插入。（简单理解，kwargs必须指定的是主键或者unique属性的字段才安全。）</p>
+</li>
+<li>
+<p>最后建议只在Django视图的POST请求中使用get_or_create()，因为这是一个具有修改性质的动作，不应该使用在GET请求中，那样不安全。</p>
+</li>
+<li>
+<p>可以通过ManyToManyField属性和反向关联使用get_or_create()。在这种情况下，应该限制查询在关联的上下文内部。 否则，可能导致完整性问题。</p>
+</li>
+</ul>
+<p>例如下面的模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Chapter</span>(models.Model):</span><br><span class="line"></span><br><span class="line">  title = models.CharField(max_length=<span class="number">255</span>, unique=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">class</span> <span class="title class_">Book</span>(models.Model):</span><br><span class="line"></span><br><span class="line">  title = models.CharField(max_length=<span class="number">256</span>)</span><br><span class="line"></span><br><span class="line">  chapters = models.ManyToManyField(Chapter)</span><br></pre></td></tr></table></figure>
+<p>可以通过Book的chapters字段使用get_or_create()，但是它只会获取该Book内部的上下文：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>book = Book.objects.create(title=<span class="string">&quot;Ulysses&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>book.chapters.get_or_create(title=<span class="string">&quot;Telemachus&quot;</span>)</span><br><span class="line"></span><br><span class="line">(&lt;Chapter: Telemachus&gt;, <span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>book.chapters.get_or_create(title=<span class="string">&quot;Telemachus&quot;</span>)</span><br><span class="line"></span><br><span class="line">(&lt;Chapter: Telemachus&gt;, <span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Chapter.objects.create(title=<span class="string">&quot;Chapter 1&quot;</span>)</span><br><span class="line"></span><br><span class="line">&lt;Chapter: Chapter <span class="number">1</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>book.chapters.get_or_create(title=<span class="string">&quot;Chapter 1&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Raises IntegrityError</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>发生这个错误是因为尝试通过Book “Ulysses”获取或者创建“Chapter 1”，但是它不能，因为它与这个book不关联，但因为title 字段是唯一的它仍然不能创建。</li>
+</ul>
+<p>在Django1.11在defaults中增加了对可调用值的支持。</p>
+<h3 id="4-update-or-create">4. update_or_create()</h3>
+<p><code>update_or_create(defaults=None, **kwargs)</code></p>
+<p>类似前面的get_or_create()。</p>
+<ul>
+<li>
+<p>通过给出的kwargs来更新对象的便捷方法， 如果没找到对象，则创建一个新的对象。defaults是一个由 (field, value)对组成的字典，用于更新对象。defaults中的值可以是可调用对象（也就是说函数等）。</p>
+</li>
+<li>
+<p>该方法返回一个由(object, created)组成的元组,元组中的object是一个创建的或者是被更新的对象， created是一个标示是否创建了新的对象的布尔值。</p>
+</li>
+<li>
+<p>update_or_create方法尝试通过给出的kwargs 去从数据库中获取匹配的对象。 如果找到匹配的对象，它将会依据defaults 字典给出的值更新字段。</p>
+</li>
+</ul>
+<p>像下面的代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">defaults = &#123;<span class="string">&#x27;first_name&#x27;</span>: <span class="string">&#x27;Bob&#x27;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line"></span><br><span class="line">  obj = Person.objects.get(first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> key, value <span class="keyword">in</span> defaults.items():</span><br><span class="line"></span><br><span class="line">  <span class="built_in">setattr</span>(obj, key, value)</span><br><span class="line"></span><br><span class="line">  obj.save()</span><br><span class="line"></span><br><span class="line"><span class="keyword">except</span> Person.DoesNotExist:</span><br><span class="line"></span><br><span class="line">  new_values = &#123;<span class="string">&#x27;first_name&#x27;</span>: <span class="string">&#x27;John&#x27;</span>, <span class="string">&#x27;last_name&#x27;</span>: <span class="string">&#x27;Lennon&#x27;</span>&#125;</span><br><span class="line"></span><br><span class="line">  new_values.update(defaults)</span><br><span class="line"></span><br><span class="line">  obj = Person(**new_values)</span><br><span class="line"></span><br><span class="line">  obj.save()</span><br></pre></td></tr></table></figure>
+<p>如果模型的字段数量较大的话，这种模式就变的非常不易用了。 上面的示例可以用update_or_create() 重写:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">obj, created = Person.objects.update_or_create(</span><br><span class="line"></span><br><span class="line">first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>,</span><br><span class="line"></span><br><span class="line">defaults=&#123;<span class="string">&#x27;first_name&#x27;</span>: <span class="string">&#x27;Bob&#x27;</span>&#125;,</span><br><span class="line"></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>kwargs中的名称如何解析的详细描述可以参见get_or_create()。</p>
+</li>
+<li>
+<p>和get_or_create()一样，这个方法也容易导致竞态条件，如果数据库层级没有前置唯一性会让多行同时插入。</p>
+</li>
+</ul>
+<p>在Django1.11在defaults中增加了对可调用值的支持。</p>
+<h3 id="5-bulk-create">5. bulk_create()</h3>
+<p><code>bulk_create(objs, batch_size=None)</code></p>
+<ul>
+<li>以高效的方式（通常只有1个查询，无论有多少对象）将提供的对象列表插入到数据库中：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.bulk_create([</span><br><span class="line"></span><br><span class="line"><span class="meta">... </span>Entry(headline=<span class="string">&#x27;This is a test&#x27;</span>),</span><br><span class="line"></span><br><span class="line"><span class="meta">... </span>Entry(headline=<span class="string">&#x27;This is only a test&#x27;</span>),</span><br><span class="line"></span><br><span class="line"><span class="meta">... </span>])</span><br></pre></td></tr></table></figure>
+<p>注意事项：</p>
+<ul>
+<li>
+<p>不会调用模型的save()方法，并且不会发送pre_save和post_save信号。</p>
+</li>
+<li>
+<p>不适用于多表继承场景中的子模型。</p>
+</li>
+<li>
+<p>如果模型的主键是AutoField，则不会像save()那样检索并设置主键属性，除非数据库后端支持。</p>
+</li>
+<li>
+<p>不适用于多对多关系。</p>
+</li>
+<li>
+<p>batch_size参数控制在单个查询中创建的对象数。</p>
+</li>
+</ul>
+<h3 id="6-count">6. count()</h3>
+<p><code>count()</code></p>
+<ul>
+<li>返回在数据库中对应的QuerySet对象的个数。count()永远不会引发异常。</li>
+</ul>
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 返回总个数.</span></span><br><span class="line"></span><br><span class="line">Entry.objects.count()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 返回包含有&#x27;Lennon&#x27;的对象的总数</span></span><br><span class="line"></span><br><span class="line">Entry.objects.<span class="built_in">filter</span>(headline__contains=<span class="string">&#x27;Lennon&#x27;</span>).count()</span><br></pre></td></tr></table></figure>
+<h3 id="7-in-bulk">7. in_bulk()</h3>
+<p><code>in_bulk(id_list=None)</code></p>
+<ul>
+<li>获取主键值的列表，并返回将每个主键值映射到具有给定ID的对象的实例的字典。 如果未提供列表，则会返回查询集中的所有对象。</li>
+</ul>
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk([<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">&#123;<span class="number">1</span>: &lt;Blog: Beatles Blog&gt;&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk([<span class="number">1</span>, <span class="number">2</span>])</span><br><span class="line"></span><br><span class="line">&#123;<span class="number">1</span>: &lt;Blog: Beatles Blog&gt;, <span class="number">2</span>: &lt;Blog: Cheddar Talk&gt;&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk([])</span><br><span class="line"></span><br><span class="line">&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk()</span><br><span class="line"></span><br><span class="line">&#123;<span class="number">1</span>: &lt;Blog: Beatles Blog&gt;, <span class="number">2</span>: &lt;Blog: Cheddar Talk&gt;, <span class="number">3</span>: &lt;Blog: Django Weblog&gt;&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>如果向in_bulk()传递一个空列表，会得到一个空的字典。</p>
+</li>
+<li>
+<p>在旧版本中，id_list是必需的参数，现在是一个可选参数。</p>
+</li>
+</ul>
+<h3 id="8-iterator">8. iterator()</h3>
+<p><code>iterator()</code></p>
+<ul>
+<li>
+<p>提交数据库操作，获取QuerySet，并返回一个迭代器。</p>
+</li>
+<li>
+<p>QuerySet通常会在内部缓存其结果，以便在重复计算时不会导致额外的查询。而iterator()将直接读取结果，不在QuerySet级别执行任何缓存。对于返回大量只需要访问一次的对象的QuerySet，这可以带来更好的性能，显著减少内存使用。</p>
+</li>
+</ul>
+<blockquote>
+<p>请注意，在已经提交了的iterator()上使用QuerySet会强制它再次提交数据库操作，进行重复查询。此外，使用iterator()会导致先前的prefetch_related()调用被忽略，因为这两个一起优化没有意义。</p>
+</blockquote>
+<h3 id="9-latest">9. latest()</h3>
+<p><code>latest(field_name=None)</code></p>
+<ul>
+<li>
+<p>使用日期字段field_name，按日期返回最新对象。</p>
+</li>
+<li>
+<p>下例根据Entry的’pub_date’字段返回最新发布的entry：</p>
+<p><code>Entry.objects.latest('pub_date')</code></p>
+</li>
+<li>
+<p>如果模型的Meta指定了get_latest_by，则可以将latest()参数留给earliest()或者field_name。 默认情况下，Django将使用get_latest_by中指定的字段。</p>
+</li>
+<li>
+<p>earliest()和latest()可能会返回空日期的实例,可能需要过滤掉空值：</p>
+</li>
+</ul>
+<p><code>Entry.objects.filter(pub_date__isnull=False).latest('pub_date')</code></p>
+<h3 id="10-earliest">10. earliest()</h3>
+<p>earliest(field_name=None)</p>
+<p>类同latest()。</p>
+<h3 id="11-first">11. first()</h3>
+<p><code>first()</code></p>
+<ul>
+<li>返回结果集的第一个对象, 当没有找到时返回None。如果QuerySet没有设置排序,则将会自动按主键进行排序。例如：</li>
+</ul>
+<p><code>p = Article.objects.order_by('title', 'pub_date').first()</code></p>
+<ul>
+<li>first()是一个简便方法，下面的例子和上面的代码效果是一样：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">  p = Article.objects.order_by(<span class="string">&#x27;title&#x27;</span>, <span class="string">&#x27;pub_date&#x27;</span>)[<span class="number">0</span>]</span><br><span class="line"><span class="keyword">except</span> IndexError:</span><br><span class="line">  p = <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+<h3 id="12-last">12. last()</h3>
+<p><code>last()</code></p>
+<p>工作方式类似first()，只是返回的是查询集中最后一个对象。</p>
+<h3 id="13-aggregate">13. aggregate()</h3>
+<p><code>aggregate(args, *kwargs)</code></p>
+<ul>
+<li>
+<p>返回汇总值的字典（平均值，总和等）,通过QuerySet进行计算。每个参数指定返回的字典中将要包含的值。</p>
+</li>
+<li>
+<p>使用关键字参数指定的聚合将使用关键字参数的名称作为Annotation 的名称。 匿名参数的名称将基于聚合函数的名称和模型字段生成。 复杂的聚合不可以使用匿名参数，必须指定一个关键字参数作为别名。</p>
+</li>
+</ul>
+<p>例如，想知道Blog Entry 的数目：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.models <span class="keyword">import</span> Count</span><br><span class="line"></span><br><span class="line">q = Blog.objects.aggregate(Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line">&#123;<span class="string">&#x27;entry__count&#x27;</span>: <span class="number">16</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>通过使用关键字参数来指定聚合函数，可以控制返回的聚合的值的名称：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">q = Blog.objects.aggregate(number_of_entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&#123;<span class="string">&#x27;number_of_entries&#x27;</span>: <span class="number">16</span>&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="14-exists">14. exists()</h3>
+<p>exists()</p>
+<ul>
+<li>
+<p>如果QuerySet包含任何结果，则返回True，否则返回False。</p>
+</li>
+<li>
+<p>查找具有唯一性字段（例如primary_key）的模型是否在一个QuerySet中的最高效的方法是：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">entry = Entry.objects.get(pk=<span class="number">123</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> some_queryset.<span class="built_in">filter</span>(pk=entry.pk).exists():</span><br><span class="line"></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;Entry contained in queryset&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>它将比下面的方法快很多，这个方法要求对QuerySet求值并迭代整个QuerySet：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> entry <span class="keyword">in</span> some_queryset:</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;Entry contained in QuerySet&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>若要查找一个QuerySet是否包含任何元素：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> some_queryset.exists():</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;There is at least one object in some_queryset&quot;</span>)</span><br><span class="line">将快于：</span><br><span class="line"><span class="keyword">if</span> some_queryset:</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;There is at least one object in some_queryset&quot;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="15-update">15. update()</h3>
+<p><code>update(**kwargs)</code></p>
+<ul>
+<li>
+<p>对指定的字段执行批量更新操作，并返回匹配的行数（如果某些行已具有新值，则可能不等于已更新的行数）。</p>
+</li>
+<li>
+<p>例如，要对2010年发布的所有博客条目启用评论，可以执行以下操作：</p>
+</li>
+</ul>
+<p><code>Entry.objects.filter(pub_date__year=2010).update(comments_on=False)</code></p>
+<ul>
+<li>可以同时更新多个字段 （没有多少字段的限制）。 例如同时更新comments_on和headline字段：</li>
+</ul>
+<p><code>Entry.objects.filter(pub_date__year=2010).update(comments_on=False, headline='This is old')</code></p>
+<p>update()方法<code>无需save</code>操作。唯一限制是它只能更新模型主表中的列，而不是关联的模型，例如不能这样做：</p>
+<p><code>Entry.objects.update(blog__name='foo') 	# Won't work!</code></p>
+<p>仍然可以根据相关字段进行过滤：</p>
+<p><code>Entry.objects.filter(blog__id=1).update(comments_on=True)</code></p>
+<p>update()方法返回受影响的行数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.<span class="built_in">filter</span>(<span class="built_in">id</span>=<span class="number">64</span>).update(comments_on=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">filter</span>(slug=<span class="string">&#x27;nonexistent-slug&#x27;</span>).update(comments_on=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">filter</span>(pub_date__year=<span class="number">2010</span>).update(comments_on=<span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line"><span class="number">132</span></span><br></pre></td></tr></table></figure>
+<p>如果你只是更新一下对象，不需要为对象做别的事情，最有效的方法是调用update()，而不是将模型对象加载到内存中。 例如，不要这样做：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">e = Entry.objects.get(<span class="built_in">id</span>=<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">e.comments_on = <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">e.save()</span><br></pre></td></tr></table></figure>
+<p>建议如下操作：</p>
+<p><code>Entry.objects.filter(id=10).update(comments_on=False)</code></p>
+<p>用update()还可以防止在加载对象和调用save()之间的短时间内数据库中某些内容可能发生更改的竞争条件。</p>
+<p>如果想更新一个具有自定义save()方法的模型的记录，请循环遍历它们并调用save()，如下所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> Entry.objects.<span class="built_in">filter</span>(pub_date__year=<span class="number">2010</span>):</span><br><span class="line">  e.comments_on = <span class="literal">False</span></span><br><span class="line">  e.save()</span><br></pre></td></tr></table></figure>
+<h3 id="16-delete">16. delete()</h3>
+<p><code>delete()</code></p>
+<ul>
+<li>
+<p>批量删除QuerySet中的所有对象，并返回删除的对象个数和每个对象类型的删除次数的字典。</p>
+</li>
+<li>
+<p>delete()动作是立即执行的。</p>
+</li>
+<li>
+<p>不能在QuerySet上调用delete()。</p>
+</li>
+<li>
+<p>例如，要删除特定博客中的所有条目：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">b = Blog.objects.get(pk=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Delete all the entries belonging to this Blog.</span></span><br><span class="line">Entry.objects.<span class="built_in">filter</span>(blog=b).delete()</span><br><span class="line">(<span class="number">4</span>, &#123;<span class="string">&#x27;weblog.Entry&#x27;</span>: <span class="number">2</span>, <span class="string">&#x27;weblog.Entry_authors&#x27;</span>: <span class="number">2</span>&#125;)</span><br></pre></td></tr></table></figure>
+<p>默认情况下，Django的ForeignKey使用SQL约束ON DELETE CASCADE，任何具有指向要删除的对象的外键的对象将与它们一起被删除。 像这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">blogs = Blog.objects.<span class="built_in">all</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># This will delete all Blogs and all of their Entry objects.</span></span><br><span class="line">blogs.delete()</span><br><span class="line">(<span class="number">5</span>, &#123;<span class="string">&#x27;weblog.Blog&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;weblog.Entry&#x27;</span>: <span class="number">2</span>, <span class="string">&#x27;weblog.Entry_authors&#x27;</span>: <span class="number">2</span>&#125;)</span><br></pre></td></tr></table></figure>
+<p>这种级联的行为可以通过的ForeignKey的on_delete参数自定义。（什么时候要改变这种行为呢？比如日志数据，就不能和它关联的主体一并被删除！）</p>
+<p>delete()会为所有已删除的对象（包括级联删除）发出<code>pre_delete</code>和<code>post_delete</code>信号。</p>
+<h3 id="17-as-manager">17. as_manager()</h3>
+<p><code>classmethod as_manager()</code></p>
+<ul>
+<li>一个类方法，返回Manager的实例与QuerySet的方法的副本</li>
+</ul>
+
       
     </div>
 
@@ -814,7 +1172,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -828,7 +1186,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/" class="post-title-link" itemprop="url">模块、迭代器，生成器和装饰器</a>
+            <a href="/2023/02/07/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/" class="post-title-link" itemprop="url">Django简介</a>
         </h2>
 
         <div class="post-meta">
@@ -838,7 +1196,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -846,7 +1204,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
                 </span>
             </span>
 
@@ -858,14 +1216,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1k</span>
+              <span>3.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
+              <span>12 分钟</span>
             </span>
 
         </div>
@@ -877,45 +1235,40 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>module模块和包的介绍</h1>
-<h2 id="模块的介绍">模块的介绍</h2>
+          <h1>Django简介</h1>
+<h2 id="背景">背景</h2>
 <ul>
-<li><code>python</code>给我们提供了十分简单的方法去创建一个模块，我们只需要写一个<code>python</code>文件即可，也就是说写一个<code>.py</code>为后缀的文件。</li>
+<li>2003诞生 它最初是被开发来用于管理劳伦斯出版集团旗下的一些以新闻内容为主的网站的</li>
 </ul>
-<h2 id="包的介绍">包的介绍</h2>
+<h2 id="MVT（框架）">MVT（框架）</h2>
 <ul>
-<li>简单来说，包就是多个模块的集合。当项目较大，模块较多时，我们就可以把模块放在包中，便于管理。</li>
-<li>我们在包中一般带有<code>__init__.py</code>文件，随你建包的时候就默认生成。</li>
-</ul>
-<h1>迭代器和生成器</h1>
-<h3 id="迭代器">迭代器</h3>
+<li>
+<p>Models 模型 数据库</p>
+</li>
+<li>
+<p>Views 视图 放和拿</p>
+</li>
+<li>
+<p>Template 模板 前端</p>
 <ul>
-<li>迭代器只不过是一个实现迭代器协议的容器对象。它基于两个方法：
-<ul>
-<li><code>next</code>  ：返回容器的下一个项目
-<ul>
-<li>在<code>3.x</code>的版本中为<code>__next__</code>或者<code>next(可迭代对象)</code></li>
+<li>From 表单 <code>django</code> 会根据你后台数据库字段及表单层的设计对应的给你创建HTML关于表单的代码</li>
 </ul>
 </li>
-<li><code>__iter__</code> : 返回迭代器本身</li>
 </ul>
-</li>
-<li>迭代器可以通过使用一个<code>iter</code>内建函数和一个序列来创建，示例如下。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">21</span>]: a = [<span class="string">&#x27;a&#x27;</span>,<span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>]</span><br><span class="line">In [<span class="number">22</span>]: a = <span class="built_in">iter</span>(a)</span><br><span class="line"></span><br><span class="line">In [<span class="number">23</span>]: <span class="built_in">next</span>(a)</span><br><span class="line">Out[<span class="number">23</span>]: <span class="string">&#x27;a&#x27;</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">24</span>]: a.__next__()</span><br><span class="line">Out[<span class="number">24</span>]: <span class="string">&#x27;b&#x27;</span></span><br></pre></td></tr></table></figure>
-<h3 id="生成器">生成器</h3>
+<h2 id="Django优点">Django优点</h2>
 <ul>
-<li>生成器</li>
-<li>从<code>Python2.2</code>起，生成器提供了一种出色的方法，使得需要返回一系列元素的函数所需的代码更加简单、高效。基于yield指令，可以暂停一个函数并返回中间结果。该函数将保存执行环境并且可以在必要时恢复。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">25</span>]: <span class="keyword">def</span> <span class="title function_">fibonanci</span>():</span><br><span class="line">    ...:     a, b = <span class="number">0</span>, <span class="number">1</span></span><br><span class="line">    ...:     <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    ...:         <span class="keyword">yield</span> b</span><br><span class="line">    ...:         a, b = b, a + b</span><br><span class="line">    ...:</span><br><span class="line"></span><br><span class="line">In [<span class="number">26</span>]: fib = fibonanci()</span><br><span class="line"></span><br><span class="line">In [<span class="number">28</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">28</span>]: <span class="number">1</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">29</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">29</span>]: <span class="number">1</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">30</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">30</span>]: <span class="number">2</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">31</span>]: fib.__next__()</span><br></pre></td></tr></table></figure>
-<ul>
-<li><code>yield</code>可以理解为<code>return</code>,每次调用<code>next()</code>就<code>yield</code>值,下次<code>next()</code>从上次的yield处开始运行</li>
-<li>该函数将返回一个特殊的迭代器，也就是generator对象，它知道如何保存执行环境。对它的调用是不确定的，每次都将产生序列中的下一个元素。这种语法很简洁，算法的不确定特性并没有影响代码的可读性。不必提供使函数可停止的方法。实际上，这看上去像是用伪代码设计的序列一样。</li>
+<li>对象关系映射（Object Relational Mapping ORM）：通过定义映射类来构建数据模型，将模型与关系型数据库连接起来，使用ORM框架内置的数据库接口可实现复杂的数据操作。（简单来说就是把数据库的语句换成了python可识别的语言）</li>
+<li>URL设计：开发者可以设计任意的URL（网站地址）， 而且支持使用正则表达式设计。</li>
+<li>模板系统：提供可扩展的模板语言，模板之间具有可继承性。</li>
+<li>表单处理：可以生成各种表单模型，而且表单具有有效性检验功能。</li>
+<li>Cache系统：完善的缓存系统，可支持多种缓存方式</li>
+<li>用户管理系统：提供用户认证，权限设置和用户组功能，功能扩展性强。</li>
+<li>国际化：内置国际化系统，方便开发出多语言的网站。</li>
+<li>admin管理系统：内置admin管理系统，系统的扩展性强。</li>
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -939,7 +1292,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -953,7 +1306,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">Vue.js的基本知识</a>
+            <a href="/2023/02/07/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">docker相关知识学习</a>
         </h2>
 
         <div class="post-meta">
@@ -963,7 +1316,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -971,7 +1324,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%89%8D%E7%AB%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">前端学习</span></a>
+                  <a href="/categories/docker/" itemprop="url" rel="index"><span itemprop="name">docker</span></a>
                 </span>
             </span>
 
@@ -983,14 +1336,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>4k</span>
+              <span>3.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
+              <span>12 分钟</span>
             </span>
 
         </div>
@@ -1002,26 +1355,63 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1><code>Vue.js</code>概念</h1>
+          <h1><code>IaaS</code>、<code>PaaS</code>、<code>SaaS</code> 的区别</h1>
 <ul>
-<li><code>Vue.js </code>是目前最火的一个前端框架，<code>React</code>是最流行的一个前端框架（React除了开发网站，还可以开发手机<code>App</code>，<code>Vue</code>语法也是可以用于进行手机<code>App</code>开发的，需要借助于<code>Weex</code>）</li>
-<li><code>Vue.js</code> 是前端的主流框架之一，和<code>Angularjs</code>、<code>Reactjs</code>一起，并成为前端三大主流框架！·</li>
-<li><code>Vue.js</code> 是一套构建用户界面的框架，只关注视图层，它不仅易于上手，还便于与第三方库或既有项目整合。（<code>Vue</code>有配套的第三方类库，可以整合起来做大型项目的开发）</li>
+<li>
+<p><strong>基础设施(infrastructure)、平台(platform)和软件(software)</strong></p>
+</li>
+<li>
+<p>其实就是云计算的三个分层，基础设施在最下端，平台在中间，软件在顶端，分别是分别是<strong>Infrastructure-as-a-Service</strong>(<code>IaaS</code>)，<strong>Platform-as-a-Service</strong>(<code>PaaS</code>)，<strong>Software-as-a-Service</strong>(<code>SaaS</code>)</p>
+</li>
 </ul>
-<h1>框架和库的区别</h1>
+<h2 id="IaaS-Infrastructure-as-a-Service-基础设施即服务"><strong>IaaS:</strong> Infrastructure-as-a-Service(基础设施即服务)</h2>
 <ul>
-<li>框架：是一套完整的解决方案；对项目的侵入性较大，项目如果需要更换框架，则需要重新架构整个项目。</li>
-<li>库（插件）：提供某一个小功能，对项目的侵入性较小，如果某个库无法完成某些需求，可以很容易切换到其它库实现需求。</li>
+<li>
+<p>有了IaaS，你可以将硬件外包到别的地方去。IaaS公司会提供场外服务器，存储和网络硬件，你可以租用。节省了维护成本和办公场地，公司可以在任何时候利用这些硬件来运行其应用。</p>
+</li>
+<li>
+<p>一些大的IaaS公司包括Amazon, Microsoft, VMWare, Rackspace和Red Hat.不过这些公司又都有自己的专长，比如Amazon和微软给你提供的不只是IaaS，他们还会将其计算能力出租给你来host你的网站。</p>
+</li>
 </ul>
-<h1>后端中的<code>MVC</code>与前端中的<code>MVVM</code>之间的区别</h1>
+<h2 id="PaaS-Platform-as-a-Service-平台即服务"><strong>PaaS:</strong> Platform-as-a-Service(平台即服务)</h2>
 <ul>
-<li><code>MVC</code>是后端的分层开发概念；</li>
-<li><code>MVVM</code>是前端视图层的概念，主要关注于视图层分离，也就是说：<code>MVVM</code>把前端的视图层，分为了三部分<code>Model</code>，<code>View</code>，<code>VM</code> ,<code>ViewModel</code></li>
+<li>
+<p>第二层就是所谓的PaaS，某些时候也叫做中间件。你公司所有的开发都可以在这一层进行，节省了时间和资源。PaaS公司在网上提供各种开发和分发应用的解决方案，比如虚拟服务器和操作系统。这节省了你在硬件上的费用，也让分散的工作室之间的合作变得更加容易。网页应用管理，应用设计，应用虚拟主机，存储，安全以及应用开发协作工具等。</p>
+</li>
+<li>
+<p>一些大的PaaS提供者有Google App Engine,Microsoft Azure，<a target="_blank" rel="noopener" href="http://Force.com">Force.com</a>,Heroku，Engine Yard。最近兴起的公司有AppFog,Mendix和Standing Cloud.</p>
+</li>
 </ul>
-<p><img src="https://upload.cc/i1/2019/12/25/XTm4Gf.png" alt="image-20191225111448702"></p>
+<h2 id="SaaS-Software-as-a-Service-软件即服务"><strong>SaaS:</strong> Software-as-a-Service(软件即服务)</h2>
+<ul>
+<li>第三层也就是所谓SaaS。这一层是和你的生活每天接触的一层，大多是通过网页浏览器来接入。任何一个远程服务器上的应用都可以通过网络来运行，就是SaaS了。</li>
+</ul>
+<h1>docker知识</h1>
+<ul>
+<li>Docker 是世界领先的软件容器平台</li>
+<li>Docker 使用 Google 公司推出的 Go 语言 进行开发实现，基于 Linux 内核 的<code>cgroup</code>，<code>namespace</code>，以及<code>AUFS</code>类的<code>UnionFS</code>等技术，对进程进行封装隔离，属于操作系统层面的虚拟化技术。 由于隔离的进程独立于宿主和其它的隔离的进 程，因此也称其为容器。Docker最初实现是基于 <code>LXC.</code></li>
+<li>Docker 能够自动执行重复性任务，例如搭建和配置开发环境，从而解放了开发人员以便他们专注在真正重要的事情上：构建杰出的软件。</li>
+<li>用户可以方便地创建和使用容器，把自己的应用放入容器。容器还可以进行版本管理、复制、分享、修改，就像管理普通的代码一样。</li>
+</ul>
+<h2 id="物理机">物理机</h2>
+<ul>
+<li>物理机，对应采购的服务器设备，又叫裸设备，bare metal，比如普通的主机。笔记本电脑，台式电脑都可以叫物理机。</li>
+</ul>
+<h2 id="虚拟机">虚拟机</h2>
+<ul>
+<li>虚拟机，与现在流行的“云计算”的概念的有着紧密联系，虚拟机的概念在<code>IaaS</code>层，即基础设施即服务部分，可以自行学习一下。为了让全人类能够像使用自来水、电一样使用计算资源，我们需要在几百上千台物理机上部署虚拟化软件，如vmware等等，使得他们的表现就像一台巨大的计算机。同时它还具有灵活性和解耦性，你可以在一台物理机上部署10台虚拟机，使得一台物理机的表现就像10台性能略差的服务器，当你不需要他们时，你又可以随时的回收资源重新分配。</li>
+</ul>
+<h2 id="容器">容器</h2>
+<p><strong>一句话概括容器：容器就是将软件打包成标准化单元，以用于开发、交付和部署。</strong></p>
+<ul>
+<li><strong>容器镜像是轻量的、可执行的独立软件包</strong> ，包含软件运行所需的所有内容：代码、运行时环境、系统工具、系统库和设置。</li>
+<li><strong>容器化软件适用于基于Linux和Windows的应用，在任何环境中都能够始终如一地运行。</strong></li>
+<li><strong>容器赋予了软件独立性</strong> ，使其免受外在环境差异（例如，开发和预演环境的差异）的影响，从而有助于减少团队间在相同基础设施上运行不同软件时的冲突。</li>
+</ul>
+<p><strong>容器虚拟化的是操作系统而不是硬件，容器之间是共享同一套操作系统资源的。虚拟机技术是虚拟出一套硬件后，在其上运行一个完整操作系统。因此容器的隔离级别会稍低一些。</strong></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1045,7 +1435,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/flask%E6%A1%86%E6%9E%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1059,7 +1449,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" class="post-title-link" itemprop="url">windows 配置同时使用 Gitlab、Github、Gitee(码云) 共存的开发环境（转载）</a>
+            <a href="/2023/02/07/flask%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">flask框架学习</a>
         </h2>
 
         <div class="post-meta">
@@ -1069,7 +1459,143 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>基本概念</h1>
+<h2 id="1-静态资源">1.静态资源</h2>
+<p>​	一旦准备好资源，不在需要经常变化的资源.由于该资源不需要经常变化，所以可以提前准备.比如<code>png/jpg/css/js</code>等文件</p>
+<h2 id="2-动态资源">2.动态资源</h2>
+<p>​	和静态资源相反，这种资源会经常变化.比如，我们要编写一个电商网站，我们无法预测用户在浏览商品时选择什么样的条件。<br>
+根据用户选择条件不同，我们给用户提供可供选择的商品就不同.这种资源无法提前准备。</p>
+<h2 id="3-模板文件">3.模板文件</h2>
+<p>​	在用户搜索各种商品的时候，大家是否发现虽然大家的条件不同，但是显示商品的网页中除了那些商品信息整个网页的结构/布局几乎是一模一样的.<br>
+​	而模板文件就是网页中通用的结构构成的一个页面.这个页面中不含有任何用户需要查看的数据，当用户查询数据的时候会将最终的结果放到模板中形成用户真正需要的页面。<br>
+​	这就好比，生活中一个毛坯房可以装饰上不同的风格.我们把模板文件转化为用户真正看到的网页的过程就称为模板替换.</p>
+<h1>通信规范</h1>
+<p>服务器和浏览器之间通信使用HTTP协议<br>
+同理，框架和web服务器之间进行通信也需要一个协议为了简单明了，一个简单的协议（例子）：</p>
+<ul>
+<li>1、web服务器在接收到浏览器的动态套源请求的时候会将请求报文请求切割拆分为键值对放到一个字典中</li>
+<li>2、web服务器调用框架提供的方法执行框架的功能并且传给框架一个字典</li>
+<li>3、框架通过字典取出用户请求根据请求产生处理状态/响应头信息/响应体</li>
+<li>4、框架通过返回值将处理状态/响应头信息/响应体给服务器，完成一次动态资源请求的过程</li>
+</ul>
+<h1>Flask程序运行过程</h1>
+<ul>
+<li>
+<p>1.当客户端想要获取资源时，一般会通过浏览器发起HTTP请求。</p>
+</li>
+<li>
+<p>2.此时，<code>Web</code>服务器会把来自客户端的所有请求都交给Flask程序实例</p>
+</li>
+<li>
+<p>3.程序实例使用<code>Werkzeug</code>来做路由分发（<code>URL</code>请求和视图函数之间的对应关系）。</p>
+</li>
+<li>
+<p>4.根据每个<code>URL</code>请求，找到具体的视图函数并进行调用。</p>
+<ul>
+<li>在<code>Flask</code>程序中，路由的实现一般是通过程序实例的装饰器实现。</li>
+</ul>
+</li>
+<li>
+<p>5.<code>Flask</code>调用视图函数后，可以返回两种内容：</p>
+<ul>
+<li>字符串内容：将视图函数的返回值作为响应的内容，返回给客户端（浏览器）</li>
+<li><code>HTML</code>模版内容：获取到数据后，把数据传入<code>HTML</code>模板文件中，板引擎负责渲染<code>HTTP</code>响应数据，然后返回响应数据给客户端（浏览器）</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, render_template</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建flask应用实例</span></span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义路由及是视图函数（装饰器路由）</span></span><br><span class="line"><span class="comment"># 路由默认只支持GET请求方式，如需要支持别的请求需要添加</span></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/&#x27;</span>, methods=[<span class="string">&#x27;GET&#x27;</span>, <span class="string">&quot;POST&quot;</span>]</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">index</span>():</span><br><span class="line">    <span class="comment"># return &quot;Hello Flask&quot;z</span></span><br><span class="line">    <span class="keyword">return</span> render_template(<span class="string">&quot;index.html&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span></span><br><span class="line">    app.run()</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1>路由传参</h1>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用一个视图函数 来显示不同用户的订单信息</span></span><br><span class="line"><span class="comment"># &lt;&gt;路由定义的参数，&lt;&gt;内需要起个名字</span></span><br><span class="line"><span class="comment"># int：限定参数类型为int类型，其他的不解析</span></span><br><span class="line"><span class="comment">#   -大致原理是将参数强转为int，如果成功，则可以进行路由匹配</span></span><br><span class="line"><span class="comment">#   -如果参数无法转换成功，就无法匹配该路由</span></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/orders/&lt;int:order_id&gt;&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_order_id</span>(<span class="params">order_id</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="built_in">type</span>(order_id))</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&#x27;order_id %s&#x27;</span> % order_id</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/07/flask%E6%A1%86%E6%9E%B6/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/git%E5%91%BD%E4%BB%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/07/git%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">Git命令集合</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1089,14 +1615,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.1k</span>
+              <span>2.6k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
+              <span>10 分钟</span>
             </span>
 
         </div>
@@ -1108,59 +1634,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <blockquote>
-<p>原文链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/flowerspring/article/details/104962002">https://blog.csdn.net/flowerspring/article/details/104962002</a></p>
-</blockquote>
-<h1>清除 git 的全局设置（针对已安装 git）</h1>
-<ul>
-<li>
-<p>新安装 git 跳过。</p>
-</li>
-<li>
-<p>若之前对 git 设置过全局的 <a target="_blank" rel="noopener" href="http://user.name">user.name</a> 和 user.email。<br>
-类似 (用 git config --global --list 进行查看你是否设置)</p>
-</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global user.name <span class="string">&quot;你的名字&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global user.email  <span class="string">&quot;你的邮箱&quot;</span></span></span><br></pre></td></tr></table></figure>
-<p>必须删除该设置</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global --<span class="built_in">unset</span> user.name <span class="string">&quot;你的名字&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global --<span class="built_in">unset</span> user.email <span class="string">&quot;你的邮箱&quot;</span></span></span><br></pre></td></tr></table></figure>
-<h1>生成新的 SSH keys</h1>
-<h2 id="1）Gitee-密钥">1）Gitee 密钥</h2>
-<ul>
-<li>
-<p>跳转到keygen目录，git bash here。</p>
-</li>
-<li>
-<p>先键入第二行命令</p>
-</li>
-<li>
-<p>第四行 指定 id 文件名称为id_rsa_gitee</p>
-</li>
-<li>
-<p>第五、六行 设置无密码，直接回车两次。</p>
-</li>
-<li>
-<p>会在keygen目录下生成文件  id_rsa_gitee 和 id_rsa_gitee.pub。</p>
-</li>
-<li>
-<p>id_rsa_gitee.pub中存放的是公钥。</p>
-</li>
-<li>
-<p>把公钥保存到gitee网页密钥中。</p>
-</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">honey@honey MINGW64 /d/keygen</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ssh-keygen -t rsa -C yourmail@.com</span></span><br><span class="line">Generating public/private rsa key pair.</span><br><span class="line">Enter file in which to save the key (/c/Users/honey/.ssh/id_rsa): id_rsa_gitee</span><br><span class="line">Enter passphrase (empty for no passphrase):</span><br><span class="line">Enter same passphrase again:</span><br><span class="line">Your identification has been saved in id_rsa_gitee.</span><br><span class="line">Your public key has been saved in id_rsa_gitee.pub.</span><br><span class="line">The key fingerprint is:</span><br><span class="line">...</span><br><span class="line">The key&#x27;s randomart image is:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-<ul>
-<li>也可指定文件路径，方便后面操作：<code>~/.ssh/id_rsa.gitlab </code></li>
-</ul>
-<p><code>ssh-keygen -t rsa -f ~/.ssh/id_rsa.gitee -C &quot;yourmail@.com&quot;</code></p>
-<ul>
-<li>直接回车3下，什么也不要输入，就是默认没有密码。</li>
-<li>注意 gitee 和 gitlab 的文件名是不同的。</li>
-</ul>
+          <h2 id="git-config">git config</h2>
+<p>配置 Git 的相关参数。</p>
+<p>Git 一共有3个配置文件：</p>
+<ol>
+<li>仓库级的配置文件：在仓库的 <code>.git/.gitconfig</code>，该配置文件只对所在的仓库有效。</li>
+<li>全局配置文件：Mac 系统在 <code>~/.gitconfig</code>，Windows 系统在 <code>C:\Users\&lt;用户名&gt;\.gitconfig</code>。</li>
+<li>系统级的配置文件：在 Git 的安装目录下（Mac 系统下安装目录在 <code>/usr/local/git</code>）的 <code>etc</code> 文件夹中的 <code>gitconfig</code>。</li>
+</ol>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看配置信息</span></span><br><span class="line"><span class="comment"># --local：仓库级，--global：全局级，--system：系统级</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; -l</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看当前生效的配置信息</span></span><br><span class="line"><span class="variable">$ </span>git config -l</span><br><span class="line"></span><br><span class="line"><span class="comment"># 编辑配置文件</span></span><br><span class="line"><span class="comment"># --local：仓库级，--global：全局级，--system：系统级</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; -e</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加配置项</span></span><br><span class="line"><span class="comment"># --local：仓库级，--global：全局级，--system：系统级</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; --add &lt;name&gt; &lt;value&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取配置项</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; --get &lt;name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除配置项</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; --unset &lt;name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置提交记录中的用户信息</span></span><br><span class="line"><span class="variable">$ </span>git config --global user.name &lt;用户名&gt;</span><br><span class="line"><span class="variable">$ </span>git config --global user.email &lt;邮箱地址&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更改Git缓存区的大小</span></span><br><span class="line"><span class="comment"># 如果提交的内容较大，默认缓存较小，提交会失败</span></span><br><span class="line"><span class="comment"># 缓存大小单位：B，例如：524288000（500MB）</span></span><br><span class="line"><span class="variable">$ </span>git config --global http.postBuffer &lt;缓存大小&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调用 git status/git diff 命令时以高亮或彩色方式显示改动状态</span></span><br><span class="line"><span class="variable">$ </span>git config --global color.ui <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置可以缓存密码，默认缓存时间15分钟</span></span><br><span class="line"><span class="variable">$ </span>git config --global credential.helper cache</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置密码的缓存时间</span></span><br><span class="line"><span class="comment"># 缓存时间单位：秒</span></span><br><span class="line"><span class="variable">$ </span>git config --global credential.helper <span class="string">&#x27;cache --timeout=&lt;缓存时间&gt;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置长期存储密码</span></span><br><span class="line"><span class="variable">$ </span>git config --global credential.helper store</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/git%E5%91%BD%E4%BB%A4/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1184,7 +1669,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1198,7 +1683,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/" class="post-title-link" itemprop="url">京东全网爬虫</a>
+            <a href="/2023/02/07/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/" class="post-title-link" itemprop="url">未命名</a>
         </h2>
 
         <div class="post-meta">
@@ -1208,16 +1693,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
-                </span>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
 
           
@@ -1228,14 +1704,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.2k</span>
+              <span>939</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
+              <span>3 分钟</span>
             </span>
 
         </div>
@@ -1247,43 +1723,33 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>完整代码见： <a target="_blank" rel="noopener" href="https://github.com/Lucareful/JingDongSpider">https://github.com/Lucareful/JingDongSpider</a></p>
-<p>写在前面：</p>
+          <h1>Golang 的值传递</h1>
 <blockquote>
-<p>折腾了很久的用python做爬虫项目到现在也该告一段落了，看视频学，遇到bug自己查找，代码思路不对重新写，环境不对自己配置…一路上跌跌撞撞，过程很艰苦，所幸结果为好。</p>
-<p>代码就像一面明镜，照见我自身的不足。继续加油</p>
+<p>先导文章：<a target="_blank" rel="noopener" href="https://juejin.cn/post/6888117219213967368">（正经版）面试官：切片作为函数参数是传值还是传引用？</a></p>
 </blockquote>
-<h2 id="需求">需求</h2>
+<p>Go语言中的 new 和 make 主要区别如下：</p>
 <ul>
-<li>抓取首页的分类信息
+<li>make 只能用来分配及初始化类型为 slice、map、chan 的数据。new 可以分配任意类型的数据；</li>
+<li>new 分配返回的是指针，即类型 *Type。make 返回引用，即 Type；</li>
+<li>new 分配的空间被清零。make 分配空间后，会进行初始化；</li>
+</ul>
+<h2 id="传入参数和传出参数">传入参数和传出参数</h2>
 <ul>
-<li>大分类的url</li>
-<li>中分类的url</li>
-<li>小分类的url</li>
+<li>传入参数为本身有值，传入函数让函数使用；传出参数本身没值，从函数中带出值（相当于函数的返回值）。</li>
 </ul>
-</li>
-<li>抓取商品信息
-<ul>
-<li>商品名称</li>
-<li>价格</li>
-<li>评论信息</li>
-<li>店铺</li>
-<li>促销</li>
-<li>选项</li>
-<li>图片</li>
-</ul>
-</li>
-</ul>
-<h2 id="开发环境和技术">开发环境和技术</h2>
-<ul>
-<li>技术选择：</li>
-<li>由于全网爬虫，抓取页面非常多，为了提高抓的速度，选择使用<code>scrapy</code>框架+<code>scrapy_redis</code>分布式组件</li>
-<li>由于京东全网的数据量达到了亿级，存储又是结构化数据，</li>
-<li>数据库，选择使用MongoDB；</li>
-</ul>
+<h2 id="函数参数为指针">函数参数为指针</h2>
+<p>将指针作为参数传入某个函数时，函数内部会复制指针，也就是会同时出现两个指针指向原有的内存空间，所以 Go 语言中传指针也是传值。</p>
+<h2 id="传值">传值</h2>
+<p>当我们验证了 Go 语言中大多数常见的数据结构之后，其实能够推测出 Go 语言在传递参数时使用了传值的方式，接收方收到参数时会对这些参数进行复制；了解到这一点之后，<strong>在传递数组或者内存占用非常大的结构体时，我们应该尽量使用指针作为参数类型来避免发生数据拷贝进而影响性能</strong>。</p>
+<h2 id="函数小结">函数小结</h2>
+<ol>
+<li>通过堆栈传递参数，入栈的顺序是从右到左，而参数的计算是从左到右；</li>
+<li>函数返回值通过堆栈传递并由调用者预先分配内存空间；</li>
+<li>调用函数时都是传值，接收方会对入参进行复制再计算；</li>
+</ol>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1307,7 +1773,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/IP%E4%BB%A3%E7%90%86%E6%B1%A0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1321,7 +1787,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/IP%E4%BB%A3%E7%90%86%E6%B1%A0/" class="post-title-link" itemprop="url">基于Python语言的IP代理池</a>
+            <a href="/2023/02/07/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">大数据之Hadoop</a>
         </h2>
 
         <div class="post-meta">
@@ -1331,7 +1797,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1339,7 +1805,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
+                  <a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a>
                 </span>
             </span>
 
@@ -1351,14 +1817,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>4.1k</span>
+              <span>2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
+              <span>7 分钟</span>
             </span>
 
         </div>
@@ -1370,53 +1836,334 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>环境：python3.6</p>
-<p>MongoDB</p>
-<p>flask</p>
-<p>requests等第三方库</p>
-<p>完整代码见： <a target="_blank" rel="noopener" href="https://github.com/Lucareful/IPProxyPool">https://github.com/Lucareful/IPProxyPool</a></p>
-<h1>代理池概述</h1>
-<h2 id="什么是代理池">什么是代理池</h2>
+          <h1>Hadoop介绍</h1>
+<h2 id="组成部分">组成部分</h2>
 <ul>
-<li>代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP</li>
+<li>Hadoop主要由3部分组成：
+<ul>
+<li>Mapreduce编程模型</li>
+<li>HDFS分布式文件存储</li>
+<li>YARN</li>
 </ul>
-<h2 id="为什么要实现代理池">为什么要实现代理池</h2>
-<p>我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；</p>
-<ul>
-<li>使用IP代理池是其中一个比较常用的方案</li>
-<li>免费代理都是非常不稳定的，有10%是可用就很不错了</li>
-<li>一些收费代理稳定性也不好</li>
-</ul>
-<p>目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用</p>
-<h1>代理池开发环境</h1>
-<ul>
-<li>
-<p>python3开发语言</p>
 </li>
-<li>
-<p>requests：发送请求，获取页面数据</p>
-</li>
-<li>
-<p>lxml：使用XPATH从页面提取我们想要的书籍</p>
-</li>
-<li>
-<p>pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用</p>
-</li>
-<li>
-<p>Flask：用于提供WEB服务</p>
-</li>
-</ul>
-<h1>代理池工作流程</h1>
-<p><img src="https://i.ibb.co/b7YyrM5/image-20191024195902163.png" alt="image-20191024195902163"></p>
-<p>1.代理池工作渡程描述：</p>
-<ul>
-<li>代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中</li>
-<li>代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库</li>
-<li>代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；</li>
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/IP%E4%BB%A3%E7%90%86%E6%B1%A0/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/07/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Java基本知识</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>21 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>方法</h1>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义方法的格式</span></span><br><span class="line">修饰符  返回值类型	方法名称(参数类型 参数名称，....)&#123;</span><br><span class="line">  方法体;</span><br><span class="line">  <span class="keyword">return</span> 返回值;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>修饰符：现阶段的固定方法，<code>public static</code></li>
+<li>返回值类型：也就是方法最终产生的数据结果是什么类型</li>
+<li>方法名称：方法的名字，规则和变量一样，小驼峰</li>
+<li>参数类型：进入方法的数据对应的变量名称</li>
+<li>方法体：方法需要做的事情，若干行代码</li>
+<li><code>return</code>：两个作用。
+<ul>
+<li>停止当前方法</li>
+<li>将后面的结果数据返回值返还给调用处</li>
+</ul>
+</li>
+<li>返回值：也就是方法执行后最终产生的数据结果</li>
+</ul>
+<blockquote>
+<p>return后面的“返回值”，必须和方法名称前面的“返回值类型”，保持对应</p>
+</blockquote>
+<h2 id="注意事项">注意事项</h2>
+<ul>
+<li>方法应该定义在类中，但是不能在方法 在定义方法。不能嵌套</li>
+<li>方法定义的前后顺序无所谓</li>
+<li>方法定义之后不会执行，若要执行，必须调用：单独调用，打印调用，赋值调用</li>
+<li>如果方法有返回值，那么必须写上“return 返回值”，不能缺失</li>
+<li>return后面的返回值类型必须和方法的返回值类型相同，对应。</li>
+<li>对于一个<code>void</code>没有返回值的方法，没有返回值。</li>
+<li>一个方法中可以含有多个<code>return</code>语句，但是必须保证同时只有一个会被执行到。</li>
+</ul>
+<h1>方法重载</h1>
+<ul>
+<li>多个方法的名称一样，但是参数列表不一样</li>
+<li>优点：只需要记住唯一一个方法名称，就可以实现类似的多个功能</li>
+</ul>
+<h2 id="相关因素">相关因素</h2>
+<ul>
+<li>参数个数不同</li>
+<li>参数类型不同</li>
+<li>参数的多类型顺序不同</li>
+</ul>
+<h2 id="无关因素">无关因素</h2>
+<ul>
+<li>与参数的名称无关</li>
+<li>与方法的返回值类型无关</li>
+</ul>
+<h1>数组</h1>
+<p>数组的概念：是一种容器，可以同时存放多个数据值。<br>
+数组的特点：</p>
+<ul>
+<li>1.数组是一种引用数据类型</li>
+<li>2.数组当中的多个数据，类型必须统一</li>
+<li>3.数组的长度在程序运行期间不可改变</li>
+</ul>
+<h2 id="数组声明">数组声明</h2>
+<ul>
+<li>
+<p>数组的初始化：在内存当中创建一个数组，并且向其中赋予一些默认值。<br>
+两种常见的初始化方式：</p>
+</li>
+<li>
+<p>1.动态初始化（指定长度）</p>
+</li>
+<li>
+<p>2.静态初始化（指定内容）</p>
+</li>
+</ul>
+<p>动态初始化数组的格式：</p>
+<ul>
+<li>声明格式：<code>数据类型[]数组名称=new数据类型[数组长度]；</code></li>
+</ul>
+<p>静态初始化数组的格式：</p>
+<ul>
+<li>声明格式(标准)：<code>数据类型[] 数组名称 = new 数据类型[] &#123;元素1，元素2，...&#125;</code></li>
+<li>省略格式：<code>数据类型[] 数组名称 = &#123;元素1，元素2，...&#125;</code></li>
+</ul>
+<blockquote>
+<p>注意事项：<br>
+1.静态初始化没有直接指定长度，但是仍然会自动推算得到长度。</p>
+<p>2.静态初始化标准格式可以拆分成为两个步骤。</p>
+<p>3.动态初始化也可以拆分成为两个步骤。</p>
+<p>4.静态初始化一旦使用省略格式，就不能拆分成为两个步骤了。</p>
+</blockquote>
+<blockquote>
+<p>如果不确定数组当中的具体内容，用动态初始化；否则，已经确定了具体的内容，用静态初始化</p>
+</blockquote>
+<p>使用动态初始化数组的时候，其中的元素将会自动拥有一个默认值。</p>
+<p>规则如下：</p>
+<ul>
+<li>如果是整数类型，那么默认为<code>0</code></li>
+<li>如果是浮点类型，那么默认为<code>0.0</code></li>
+<li>如果是字符类型，那么默认为<code>'\u0000'</code></li>
+<li>如果是布尔类型，那么默认为<code>false</code></li>
+<li>如果是引用类型，那么默认为<code>null</code></li>
+</ul>
+<blockquote>
+<p><strong>静态初始化其实也有默认值的过程，只不过系统自动马上将默认值替换成为了大括号当中的具体数值。</strong></p>
+<p><em>数组的长度一旦创建，程序运行期间，长度不可变</em></p>
+</blockquote>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/07/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/java%E7%AE%80%E4%BB%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/07/java%E7%AE%80%E4%BB%8B/" class="post-title-link" itemprop="url">Java语言概述</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Java语言简史">Java语言简史</h2>
+<ul>
+<li>Java语言是美国Sun公司（Stanford University Network），在1995年推出的高级编程语言。所谓编程语言，是计算机的语言，人们可以使用编程语言对计算机下达命令，让计算机完成人们需要的功能。</li>
+</ul>
+<p>Java语言发展历史</p>
+<ul>
+<li>1995年Sun公司发布Java1.0版本</li>
+<li>1997年发布Java1.1版本</li>
+<li>1998年发布Java1.2版本</li>
+<li>2000年发布Java1.3版本</li>
+<li>2002年发布Java1.4版本</li>
+<li>2004年发布Java5版本（更新频率较大）</li>
+<li>2006年发布Java6版本</li>
+<li>2009年Oracle甲骨文公司收购Sun公司，并于2011发布Java7版本</li>
+<li>2014年发布Java8版本（更新频率较大，市场占有率最大）</li>
+<li>2017年9月发布Java9版本</li>
+<li>2018年3月发布Java10版本</li>
+</ul>
+<h2 id="Java-平台的三个版本">Java 平台的三个版本</h2>
+<p>作用：</p>
+<ul>
+<li>这使软件开发人员、服务提供商和设备生产商可以针对特定的市场进行开发：</li>
+</ul>
+<h3 id="Java-SE（Java-Platform，Standard-Edition）">Java SE（Java Platform，Standard Edition）</h3>
+<ul>
+<li>Java SE 以前称为 J2SE。它允许开发和部署在桌面、服务器、嵌入式环境和实时环境中使用的 Java 应用程序。Java SE 包含了支持 Java Web 服务开发的类，并为 Java Platform，Enterprise Edition（Java EE）提供基础。</li>
+</ul>
+<h3 id="Java-EE（Java-Platform，Enterprise-Edition）">Java EE（Java Platform，Enterprise Edition）</h3>
+<ul>
+<li>这个版本以前称为 J2EE。企业版本帮助开发和部署可移植、健壮、可伸缩且安全的服务器端 Java 应用程序。Java EE 是在 Java SE 的基础上构建的，它提供 Web 服务、组件模型、管理和通信 API，可以用来实现企业级的面向服务体系结构（service-oriented architecture，SOA）和 Web 2.0 应用程序。</li>
+</ul>
+<h3 id="Java-ME（Java-Platform，Micro-Edition）">Java ME（Java Platform，Micro Edition）</h3>
+<ul>
+<li>这个版本以前称为 J2ME。Java ME 为在移动设备和嵌入式设备（比如手机、PDA、电视机顶盒和打印机）上运行的应用程序提供一个健壮且灵活的环境。Java ME 包括灵活的用户界面、健壮的安全模型、许多内置的网络协议以及对可以动态下载的连网和离线应用程序的丰富支持。基于 Java ME 规范的应用程序只需编写一次，就可以用于许多设备，而且可以利用每个设备的本机功能。</li>
+</ul>
+<blockquote>
+<p>开发环境，推荐Eclipse,NetBeans,这两个IDE可以挂接对应的插件，进行开发。还有一点，那就是这三个应用，se,标准应用，以学习为主，由于界面，开发成本，速度等问题，很少用来做程序，但不是说，他不能做程序，Eclipse,NetBeans,都是javase写起来的。Me,移动设备应用，对于一些中高端应用还好了！以前用他做过手机游戏，呵呵呵！EE,企业级解决方案，开发套件全部免费，可控性好，安全性高，乃是当前B2B的规范。再者，这三个应用，都需要虚拟机的支持。</p>
+</blockquote>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/07/java%E7%AE%80%E4%BB%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>

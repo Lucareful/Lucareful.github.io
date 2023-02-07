@@ -45,6 +45,39 @@
     lang   : 'zh-CN'
   };
 </script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '';
+      visible = '';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
 
   <title>Luenci</title>
   
@@ -198,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/GIL%E9%94%81/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -212,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/GIL%E9%94%81/" class="post-title-link" itemprop="url">python解释器的GIL锁</a>
+            <a href="/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" class="post-title-link" itemprop="url">SQL性能调优</a>
         </h2>
 
         <div class="post-meta">
@@ -222,7 +255,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 08:12:56" itemprop="dateCreated datePublished" datetime="2023-02-07T08:12:56+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 08:19:24" itemprop="dateCreated datePublished" datetime="2023-02-07T08:19:24+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -230,7 +263,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
+                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
                 </span>
             </span>
 
@@ -242,14 +275,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.4k</span>
+              <span>2.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
+              <span>8 分钟</span>
             </span>
 
         </div>
@@ -261,31 +294,37 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="GlL锁定义">GlL锁定义</h2>
-<p>Gll锁：Global Interpreter Lock，又称：全局解释器锁</p>
-<blockquote>
-<p>任何Python线程执行前，必须先获得GlL锁，然后，每执行100条字节码，解释器就自动释放GL锁，让别的线程有机会执行。这个GlL全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在Python中只能交替执行，即使100个线程跑在100核CPU上，也只能用到1个核。</p>
-</blockquote>
-<h2 id="GlL不是Python特性">GlL不是Python特性</h2>
-<p>GlL是Pythn解释器（Cpython）时引入的概念，在JPython、PyPy中没有GlL。GIL并不是Python的语言缺陷。是解释器层级的锁，跟Python语言特性无关</p>
-<blockquote>
-<p>言外之意，就是全局解释器就是为了锁定整个解释器内部的全局资源，每个线程想要运行首先获取GlL，而GlL本身又是一把互斥锁，造成所有线程只能一个一个one-by-one-并发-交替的执行。</p>
-</blockquote>
-<h2 id="GlL存在的原因">GlL存在的原因</h2>
+          <p><em><strong>原文链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/u010520146/article/details/81161762">https://blog.csdn.net/u010520146/article/details/81161762</a></strong></em></p>
+<h1>一.创建索引</h1>
 <ul>
-<li>
-<p>早期计算机都是单核设计</p>
-</li>
-<li>
-<p>CPython在执行多线程的时候并不是线程安全的，所以为了程序的稳定性，加一把全局解释锁，能够确保任何时候都只有一个Python线程执行</p>
-</li>
+<li>1.要尽量避免全表扫描，首先应考虑在 where 及 order by 涉及的列上建立索引</li>
+<li>2.1在经常需要进行检索的字段上创建索引，比如要按照表字段<code>username</code>进行检索，那么就应该在姓名字段上创建索引，如果经常要按照员工部门和员工岗位级别进行检索，那么就应该在员工部门和员工岗位级别这两个字段上创建索引。</li>
+<li>2.2创建索引给检索带来的性能提升往往是巨大的，因此在发现检索速度过慢的时候应该首先想到的就是创建索引。</li>
+<li>2.3一个表的索引数最好不要超过6个，若太多则应考虑一些不常使用到的列上建的索引是否有 必要。索引并不是越多越好，索引固然可以提高相应的 select 的效率，但同时也降低了 insert 及 update 的效率，因为 insert 或 update 时有可能会重建索引，所以怎样建索引需要慎重考虑，视具体情况而定。</li>
 </ul>
-<blockquote>
-<p>GlL产生的背景在CPython解释内部运行多个线程的时候，每个线程都需要解释器内部申请相应的全局资源，由于C语言本身比较底层造成CPython在管理所有全局资源的时候并不能应对所有线程同时的资源请求，因此为了防止资源竞争而发生错误，对所有线程申请全局资源增加了限制-全局解释器锁。</p>
-</blockquote>
+<h1>二.避免在索引上使用计算</h1>
+<ul>
+<li>在where字句中，如果索引列是计算或者函数的一部分，DBMS的优化器将不会使用索引而使用全表查询,函数<br>
+属于计算的一种,同时在in和exists中通常情况下使用EXISTS，因为in不走索引。</li>
+<li>效率低：</li>
+</ul>
+<p><code> select * from user where salary*22 &gt; 11000 (salary是索引列)</code></p>
+<ul>
+<li>效率高：</li>
+</ul>
+<p><code>select * from user where salary &gt; 11000/22 (salary是索引列)</code></p>
+<h1>三.使用预编译查询</h1>
+<ul>
+<li>程序中通常是根据用户的输入来动态执行SQL，这时应该尽量使用参数化SQL,这样不仅可以避免SQL注入漏洞<br>
+攻击，最重要数据库会对这些参数化SQL进行预编译，这样第一次执行的时候DBMS会为这个SQL语句进行查询优化并且执行预编译，这样以后再执行这个SQL的时候就直接使用预编译的结果，这样可以大大提高执行的速度。</li>
+</ul>
+<h1>四.调整Where字句中的连接顺序</h1>
+<ul>
+<li>DBMS一般采用自下而上的顺序解析where字句，根据这个原理表连接最好写在其他where条件之前，那些可以过滤掉最大数量记录。</li>
+</ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/GIL%E9%94%81/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
