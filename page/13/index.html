@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/02/07/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" class="post-title-link" itemprop="url">SQL性能调优</a>
+            <a href="/2023/02/07/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Linux学习（一）</a>
         </h2>
 
         <div class="post-meta">
@@ -255,7 +255,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-02-07 10:18:35" itemprop="dateCreated datePublished" datetime="2023-02-07T10:18:35+00:00">2023-02-07</time>
+              <time title="创建时间：2023-02-07 10:22:01" itemprop="dateCreated datePublished" datetime="2023-02-07T10:22:01+00:00">2023-02-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -263,7 +263,11 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
+                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">核心知识</span></a>
                 </span>
             </span>
 
@@ -275,14 +279,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.2k</span>
+              <span>3.8k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
+              <span>14 分钟</span>
             </span>
 
         </div>
@@ -294,37 +298,107 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p><em><strong>原文链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/u010520146/article/details/81161762">https://blog.csdn.net/u010520146/article/details/81161762</a></strong></em></p>
-<h1>一.创建索引</h1>
+          <h1>Linux操作系统</h1>
 <ul>
-<li>1.要尽量避免全表扫描，首先应考虑在 where 及 order by 涉及的列上建立索引</li>
-<li>2.1在经常需要进行检索的字段上创建索引，比如要按照表字段<code>username</code>进行检索，那么就应该在姓名字段上创建索引，如果经常要按照员工部门和员工岗位级别进行检索，那么就应该在员工部门和员工岗位级别这两个字段上创建索引。</li>
-<li>2.2创建索引给检索带来的性能提升往往是巨大的，因此在发现检索速度过慢的时候应该首先想到的就是创建索引。</li>
-<li>2.3一个表的索引数最好不要超过6个，若太多则应考虑一些不常使用到的列上建的索引是否有 必要。索引并不是越多越好，索引固然可以提高相应的 select 的效率，但同时也降低了 insert 及 update 的效率，因为 insert 或 update 时有可能会重建索引，所以怎样建索引需要慎重考虑，视具体情况而定。</li>
+<li>“一切皆文件”</li>
 </ul>
-<h1>二.避免在索引上使用计算</h1>
+<h2 id="系统启动流程">系统启动流程</h2>
+<p>引导图</p>
+<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502160423268.png" alt="引导图"></p>
 <ul>
-<li>在where字句中，如果索引列是计算或者函数的一部分，DBMS的优化器将不会使用索引而使用全表查询,函数<br>
-属于计算的一种,同时在in和exists中通常情况下使用EXISTS，因为in不走索引。</li>
-<li>效率低：</li>
+<li>
+<p>最初始阶段<br>
+当我们打开计算机电源，计算机会自动从主板的<code>BlOS</code>（Basic Input/output System）读取其中所存储的程序。这一程序通常知道一些直接连接在主板上的硬件（硬盘，网络接口，键盘，串口，并口）。现在大部分的BIOS允许你从软盘、光盘或者硬盘中选择一个来启动计算机。</p>
+</li>
+<li>
+<p>下一步，计算机将从你所选择的存储设备中读取起始的512 bytes（比如光盘一开是的512 bytes，如果我们从光盘启动的话）。这<code>512bytes</code>叫做主引导记录<code>MBR</code>（master boot record）。<code>MBR</code>会告诉电脑从该设备的某一个分区（partition）来装载引导加载程序（boot loader）。<code>Boot loader</code>储存有操作系统（OS）的相关信息，比如操作系统名称，操作系统内核（kernel）所在位置等。常用的<code>boot loader</code>有<code>GRUB</code>和<code>LILO</code>。</p>
+</li>
+<li>
+<p>随后，<code>boot loade</code>r会帮助我们加载<code>kernel</code>。<code>kernel</code>实际上是一个用来操作计算机的程序，它是计算机操作系统的内核，主要的任务是管理计算机的硬件资源，充当软件和硬件的接口。操作系统上的任何操作都要通过<code>kernel</code>传达给硬件。<code>Windows</code>和<code>Linux</code>各自有自己<code>kernel</code>。</p>
+</li>
+<li>
+<p>狭义的操作系统就是指<code>kernel</code>，广义的操作系统包括<code>kernel</code>以及<code>kernel</code>之上的各种应用。</p>
+</li>
+<li>
+<p>（Linus Torvalds与其说是Linux之父，不如说是<code>Linux kernel</code>之父。他依然负责<code>Linux kernel</code>的开发和维护。至于<code>Ubuntu</code>，<code>Red Hat</code>，它们都是基于相同的<code>kernel</code>之上，囊括了不同的应用和界面构成的一个更加完整的操作系统版本。）实际上，我们可以在多个分区安装<code>boot loader</code>，每个<code>boot loader</code>对应不同的操作系统，在读取<code>MBR</code>的时候选择我们想要启动的boot loader。这就是多操作系统的原理。</p>
+</li>
+<li>
+<p>小结：<code>BlOS -&gt; MBR -&gt; boot loader -&gt; kernel</code></p>
+</li>
+<li>
+<p>kernel</p>
+<ul>
+<li>如果我们加载的是Linux kernel，Linux kernel开始工作。kernel会首先预留自己运行所需的内存空间，然后通过驱动程序（driver）检测计算机硬件。这样，操作系统就可以知道自己有哪些硬件可用。随后，kernel会启动一个init进程。它是Linux系统中的1号进程（Linux系统没有0号进程）。到此，kernel就完成了在计算机启动阶段的工作，交接给init来管理。</li>
+<li>小结：<code>kernel -&gt; init process </code></li>
 </ul>
-<p><code> select * from user where salary*22 &gt; 11000 (salary是索引列)</code></p>
+</li>
+<li>
+<p><code>init process</code></p>
+<p>（根据boot loader的选项，Linux此时可以进入单用户模式（single user mode））。在此模式下，初始脚本还没有开始执行，我们可以检测并修复计算机可能存在的错误）随后，init会运行一系列的初始脚本（startup scripts），这些脚本是Linux中常见的shell scripts。这些脚本执行如下功能：</p>
 <ul>
-<li>效率高：</li>
+<li>设置计算机名称，时区，检测文件系统，挂载硬盘，清空临时文件，设置网络等</li>
 </ul>
-<p><code>select * from user where salary &gt; 11000/22 (salary是索引列)</code></p>
-<h1>三.使用预编译查询</h1>
-<ul>
-<li>程序中通常是根据用户的输入来动态执行SQL，这时应该尽量使用参数化SQL,这样不仅可以避免SQL注入漏洞<br>
-攻击，最重要数据库会对这些参数化SQL进行预编译，这样第一次执行的时候DBMS会为这个SQL语句进行查询优化并且执行预编译，这样以后再执行这个SQL的时候就直接使用预编译的结果，这样可以大大提高执行的速度。</li>
+<p>当这些初始脚本，操作系统已经完全准备好了，只是，还没有人可以登录！！！init会给出登录（login）对话框，或者是图形化的登录界面。</p>
+</li>
+<li>
+<p>输入用户名（比如说luenci）和密码，DONE！</p>
+</li>
+<li>
+<p>在此后的过程中，你将以用户（user）luenci的身份操作电脑。此外，根据你创建用户时的设定，Linux还会将你归到某个组（group）中，比如可以是stupid组，或者是luenci组。所以你将是用户luenci，同时是luenci组的组员。（注意，组luenci和用户luenci只是重名而已，就好想你可以叫Dell，同时还是Dell公司的老板一样。你完全也可以是用户luenci，同时为stupid组的组员）</p>
+</li>
 </ul>
-<h1>四.调整Where字句中的连接顺序</h1>
+<h3 id="启动级别">启动级别</h3>
 <ul>
-<li>DBMS一般采用自下而上的顺序解析where字句，根据这个原理表连接最好写在其他where条件之前，那些可以过滤掉最大数量记录。</li>
+<li>
+<p>7种运行级别</p>
+<p>运行级别（<code>Runlevel</code>）指的是Unix或者Linux等类Unix操作系统的运行模式，不同的运行模式下系统的功能也有所有不同。Linux 系统下通常分为<code>7</code>种运行级别，分别是从<code>0</code>到<code>6</code>。各级别介绍如下：</p>
+</li>
+<li>
+<p><code>0</code>–停机模式</p>
+<ul>
+<li>在这种模式下，系统处于停机状态，系统默认运行级别不能设为<code>0</code>，否则将不能正常启动。这个运行级别主要用于关闭任务，在<code>/etc/rc0.d</code>目录下的各个连接命令都是此级别的命令，在关闭系统时，这些命令将被逐个执行。它 们会杀掉所有进程、关闭虚拟内存和交换文件、卸载文件系统和交换分区。</li>
+</ul>
+</li>
+<li>
+<p><code>1</code>– 单用户模式。</p>
+<ul>
+<li>在这种运行模下，系统处于单用户工作状态，登录用户具有root权限，文件系统被加载但是网络却没有被加载，因此也无法远程登陆。这个运行级别，只允一个用户从本地计算机上登录，<code>/etc/rc1.d</code>目录下的所有文件与此运行级别相关连，这个运行级别一般用于系统管理与维护。</li>
+</ul>
+</li>
+<li>
+<p><code>2</code> - -多用户模式。</p>
+<ul>
+<li>用户可以通过网络进行登录，但没有<code>NFS</code>（Network File System），即网络文件统。<code>/etc/rc2.d</code>目录下所有文件与此级别相连。</li>
+</ul>
+</li>
+<li>
+<p><code>3</code> - -完全多用户模式。</p>
+</li>
+<li>
+<p>用户可以通过网络进行登录，且有<code>NFS</code>，用户登陆后会进入控制台命令行模式。这也是缺省的运行模式，在这种运行级别下所有网络服务程序会一起运行。<code>/etc/rc2.d</code>录下的文件与此级别相连</p>
+</li>
+<li>
+<p><code>4</code> - -自定义模式。</p>
+<ul>
+<li>这是一种系统未使用的保留模式，<code>/etc/rc4.d</code>目录与此级别相连。这一级别是用户自定义的运行级别，用户可以根自己的需要进行一些自定义设置。如果想要运行这一级别的话，必须在<code>rc3.d</code>目录下放入连接文件，就像其他<code>rc*.d</code>目录下的文件，并指明是启动还是终止进程。</li>
+</ul>
+</li>
+<li>
+<p><code>5</code> - -图形化模式。</p>
+<ul>
+<li>在 Linux 下运行<code>X Window</code>就是使用这一运行级别，用户登录后将进入图形化的GUI界面。在这一级别下除了DNS的<code>named</code>与级别<code>3</code>不同，其余的都相同。</li>
+</ul>
+</li>
+<li>
+<p><code>6</code> – 重启模式。</p>
+<ul>
+<li>系统正常关闭并重启，默认运行级别不能设为<code>5</code>，否则系统将不能正常启动。<code>/etc/rc6.d</code>目录与此级别相连。在这一运行级别下，不会关闭电源，<code>/etc/rc6.d</code>目录下的连接与<code>rc0.d</code>目录下的连接基本相同；不同之处在于，虽然它们都执行<code>halt</code>（关闭）命令，但是给<code>halt</code>传递的参数不同，所级别<code>6</code>会重新启动系统而<code>0</code>会关闭系统。</li>
+</ul>
+</li>
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/02/07/SQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/#more" rel="contents">
+              <a class="btn" href="/2023/02/07/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -470,6 +544,9 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
+          <a href="/2023/02/07/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/" title="2023&#x2F;02&#x2F;07&#x2F;鸭子类型&#x2F;">鸭子类型介绍</a>
+        </li>
+        <li class="links-of-recent-posts-item">
           <a href="/2023/02/07/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;02&#x2F;07&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
         </li>
         <li class="links-of-recent-posts-item">
@@ -480,9 +557,6 @@
         </li>
         <li class="links-of-recent-posts-item">
           <a href="/2023/02/07/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;02&#x2F;07&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
-        </li>
-        <li class="links-of-recent-posts-item">
-          <a href="/2023/02/07/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;02&#x2F;07&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
         </li>
     </ul>
   </div>
