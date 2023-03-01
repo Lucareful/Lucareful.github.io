@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/01/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" class="post-title-link" itemprop="url">MySQL数据库引擎和数据类型</a>
+            <a href="/2023/03/01/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/" class="post-title-link" itemprop="url">Python后端架构演进（转载）</a>
         </h2>
 
         <div class="post-meta">
@@ -255,7 +255,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-01 10:40:32" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:32+00:00">2023-03-01</time>
+              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -263,7 +263,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
+                  <a href="/categories/python%E5%90%8E%E7%AB%AF%E6%9E%B6%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">python后端架构</span></a>
                 </span>
             </span>
 
@@ -275,14 +275,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.2k</span>
+              <span>1.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
+              <span>6 分钟</span>
             </span>
 
         </div>
@@ -294,93 +294,25 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="数据库引擎介绍"><strong>数据库引擎介绍</strong></h2>
-<h3 id="前言">前言</h3>
-<ul>
-<li>1、存储引擎其实就是对于数据库文件的一种存取机制，如何实现存储数据，如何为存储的数据建立索引以及如何更新，查询数据等技术实现的方法。</li>
-<li>2、MySQL中的数据用各种不同的技术存储在文件（或内存）中，这些技术中的每一种技术都使用不同的存储机制，索引技巧，锁定水平并且最终提供广泛的不同功能和能力。在MySQL中将这些不同的技术及配套的相关功能称为存储引擎。</li>
-<li>3、根据需求可以在表中设置不同的存储引擎。</li>
-</ul>
-<h3 id="查看mysql中的引擎">查看mysql中的引擎</h3>
-<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200605131656597.png" alt="查看引擎"></p>
-<h3 id="MySQL中常用的几种存储引擎">MySQL中常用的几种存储引擎</h3>
-<h3 id="1．MyISAM存储引擎">1．<code>MyISAM</code>存储引擎</h3>
-<ul>
-<li>
-<p>存放的位置</p>
-<ul>
-<li>MySQL如果使用<code>MyISAM</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>.MYD</code>、<code>.MYI</code>，默认存放位置是<code>C:\Documentsand Settings\All Users\Application Data\MySQL\MySQL Server 5.1\data</code></li>
-</ul>
-</li>
-<li>
-<p>存放的方式</p>
-<ul>
-<li><code>MyISAM</code> 这种存储引擎不支持事务，不支持行级锁，只支持并发插入的表锁，主要用于高负载的select。</li>
-</ul>
-</li>
-<li>
-<p>索引的方式</p>
-<ul>
-<li><code>MyISAM</code>也是使用B+tree索引但是和<code>Innodb</code>的在具体实现上有些不同。</li>
-</ul>
-</li>
-</ul>
-<p>该引擎基于<code>ISAM</code>数据库引擎，除了提供<code>ISAM</code>里所没有的索引和字段管理等大量功能，<code>MyISAM</code>还使用一种表格锁定的机制来优化多个并发的读写操作，但是需要经常运行OPTIMIZE TABLE命令，来恢复被更新机制所浪费的空间，否则碎片也会随之增加，最终影响数据访问性能。<code>MyISAM</code>还有一些有用的扩展，例如用来修复数据库文件的<code>MyISAMChk</code>工具和用来恢复浪费空间的 <code>MyISAMPack</code>工具。<code>MyISAM</code>强调了快速读取操作，主要用于高负载的select，这可能也是MySQL深受Web开发的主要原因：在Web开发中进行的大量数据操作都是读取操作，所以大多数虚拟主机提供商和Internet平台提供商（Internet Presence Provider, <code>IPP</code>）只允许使用<code>MyISAM</code>格式。</p>
-<ul>
-<li>
-<p><code>MyISAM</code>类型的表支持三种不同的存储结构：静态型、动态型、压缩型。</p>
-</li>
-<li>
-<p>静态型：指定义的表列的大小是固定（即不含有：<code>xblob</code>、<code>xtext</code>、<code>varchar</code>等长度可变的数据类型），这样MySQL就会自动使用静态<code>MyISAM</code>格式。使用静态格式的表的性能比较高，因为在维护和访问以预定格式存储数据时需要的开销很低；但这种高性能是以空间为代价换来的，因为在定义的时候是固定的，所以不管列中的值有多大，都会以最大值为准，占据了整个空间。</p>
-</li>
-<li>
-<p>动态型：如果列（即使只有一列）定义为动态的（<code>xblob</code>, <code>xtext</code>, <code>varchar</code>等数据类型），这时<code>MyISAM</code>就自动使用动态型，虽然动态型的表占用了比静态型表较少的空间，但带来了性能的降低，因为如果某个字段的内容发生改变则其位置很可能需要移动，这样就会导致碎片的产生，随着数据变化的增多，碎片也随之增加，数据访问性能会随之降低。<br>
-对于因碎片增加而降低数据访问性这个问题，有两种解决办法：</p>
-<ul>
-<li>a、尽可能使用静态数据类型；</li>
-<li>b、经常使用<code>optimize table table_name</code>语句整理表的碎片，恢复由于表数据的更新和删除导致的空间丢失。如果存储引擎不支持<code> optimize table table_name</code>则可以转储并 重新加载数据，这样也可以减少碎片；</li>
-</ul>
-</li>
-<li>
-<p>压缩型：如果在数据库中创建在整个生命周期内只读的表，则应该使用<code>MyISAM</code>的压缩型表来减少空间的占用。</p>
-</li>
-</ul>
-<blockquote>
-<p>优缺点：<code>MyISAM</code>的优势在于占用空间小，处理速度快。缺点是不支持事务的完整性和并发性。</p>
-</blockquote>
-<h3 id="2．innoDB存储引擎">2．<code>innoDB</code>存储引擎</h3>
-<ul>
-<li>
-<p>存储位置</p>
-<ul>
-<li>MySQL如果使用<code>InnoDB</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>ibdata1</code>、<code>.ibd</code>，存放位置有两个，<code>.frm</code>文件默认存放位置是<code>C:\Documents and Settings\All Users\ApplicationData\MySQL\MySQL Server 5.1\data</code>，<code>ibdata1</code>、<code>.ibd</code>文件默认存放位置是MySQL安装目录下的data文件夹。</li>
-</ul>
-</li>
-<li>
-<p><code>innodb</code>存储引擎的mysql表提供了事务，回滚以及系统崩溃修复能力和多版本迸发控制的事务的安全。</p>
-</li>
-<li>
-<p><code>innodb</code>支持自增长列（auto_increment）,自增长列的值不能为空，如果在使用的时候为空的话怎会进行自动存现有的值开始增值，如果有但是比现在的还大，则就保存这个值。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎支持外键（foreign key） ,外键所在的表称为子表而所依赖的表称为父表。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎最重要的是支持事务，以及事务相关联功能。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎支持<code>mvcc</code>的行级锁。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎索引使用的是B+Tree</p>
-</li>
-</ul>
-<blockquote>
-<p>优缺点：<code>InnoDB</code>的优势在于提供了良好的事务处理、崩溃修复能力和并发控制。缺点是读写效率较差，占用的数据空间相对较大。</p>
-</blockquote>
+          <h1>Python后端架构演进</h1>
+<p><em><strong>本文转自python社区：<a target="_blank" rel="noopener" href="https://www.pythontab.com/html/2018/pythonweb_0725/1329.html">https://www.pythontab.com/html/2018/pythonweb_0725/1329.html</a></strong></em></p>
+<h2 id="架构">架构</h2>
+<p>做了3年的后端开发, 经历一款SaaS产品从0到10(还没有到100, 哈哈哈)的过程, 3年间后端的架构逐步演变, 在微服务的实践过程中遇到的问题也越来越多, 在这里总结下.</p>
+<p>产品是一款服务于人力资源的SaaS在线服务, 面向HR有Web Android/iOS 小程序多个客户端, 后端采用RESTful风格API来提供服务. 主要使用Python语言, 方便快速迭代.</p>
+<p>架构的演进经历了4个大的阶段: 1. MVC 2. 服务拆分 3. 微服务架构 4. 领域驱动设计.</p>
+<h3 id="1-MVC">1. MVC</h3>
+<p>项目刚开始的时候, 后端同事不超过5个, 这个阶段主要的工作是实现产品的原型, 没有太多的考虑架构, 使用Django来快速实现功能, DB的表结构设计好之后, 抽象出功能View, 由于产品设计也很不完善, 后端需要很多的预留设计, 避免产品逻辑的变更带来整个表结构的变动, 在这个阶段代码上最重要的是确定适合团队的代码规范, 代码检查规则.</p>
+<p><img src="https://www.pythontab.com/uploadfile/other/90431532483907.jpg" alt="img"></p>
+<p>整体上架构如上图, Nginx负责负载均衡, 分发流量到多个Django服务, Django处理逻辑, 需要异步任务就交给Celery, 然后数据量比较大的地方使用Redis做缓存. 同时还有实时消息通知的需要使用了Nginx Push Module.</p>
+<p>问题与优化方式:</p>
+<p>Django并发性能差 使用uWSGI Master+Worker 配合 gevent 携程支持高并发</p>
+<p>Redis连接数过多 使用redis-py自带的连接池来实现连接复用</p>
+<p>MySQL连接数过多 使用djorm-ext-pool连接池复用连接</p>
+<p>Celery配置gevent支持并发任务</p>
+<p>随着开发的功能越来越多, Django下的app也越来越多, 这就带了发布上的不方便, 每次发布版本都需要重启所有的Django服务, 如果发布遇到问题, 只能加班解决了. 而且单个Django工程下的代码量也越来越多, 不好维护.</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/01/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/#more" rel="contents">
+              <a class="btn" href="/2023/03/01/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -404,7 +336,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%87%BD%E6%95%B0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Django%E7%9A%84Cookie%E5%92%8CSession/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -418,7 +350,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/01/Mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%87%BD%E6%95%B0/" class="post-title-link" itemprop="url">MySQL数据库函数</a>
+            <a href="/2023/03/01/Django%E7%9A%84Cookie%E5%92%8CSession/" class="post-title-link" itemprop="url">Cookie和Session知识</a>
         </h2>
 
         <div class="post-meta">
@@ -428,7 +360,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-01 10:40:32" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:32+00:00">2023-03-01</time>
+              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -436,7 +368,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
+                  <a href="/categories/Http%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">Http知识</span></a>
                 </span>
             </span>
 
@@ -448,14 +380,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
+              <span>2.1k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
+              <span>8 分钟</span>
             </span>
 
         </div>
@@ -467,258 +399,150 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>MySQL数据库函数</h1>
+          <blockquote>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://juejin.im/post/5aa783b76fb9a028d663d70a">https://juejin.im/post/5aa783b76fb9a028d663d70a</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wj-1314/p/10496253.html">https://www.cnblogs.com/wj-1314/p/10496253.html</a></p>
+</blockquote>
 <ul>
-<li>MySQL函数是数据库提供的内置函数，可以帮助用户更加方便地处理表中的数据。MySQL的内置函数，不但可以在SELECT查询语句中使用，同样可以在INSERT、UPDATE、DELETE等语句中使用。</li>
+<li><strong>Session是存储在服务器端的，Cookie是存储在客户端的</strong></li>
 </ul>
-<h2 id="1-数学函数："><strong>1.数学函数：</strong></h2>
-<p>MySQL中内置的数学函数见下表：</p>
-<table>
-<thead>
-<tr>
-<th>函数</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ABS(x)</td>
-<td>返回x的绝对值</td>
-</tr>
-<tr>
-<td>CEIL9x),CEILIN(x)</td>
-<td>返回不小于x的最小整数值</td>
-</tr>
-<tr>
-<td>FLOOR(x)</td>
-<td>返回不大于x的最大整数值</td>
-</tr>
-<tr>
-<td>RAND()</td>
-<td>返回0~1的随机数</td>
-</tr>
-<tr>
-<td>RAND(x)</td>
-<td>返回0~1的随机数，x值相同时返回的随机数相同</td>
-</tr>
-<tr>
-<td>SIGN(x)</td>
-<td>返回参数作为-1、0、1的符号，该符号取决于x值的负、零、正</td>
-</tr>
-<tr>
-<td>PI()</td>
-<td>返回圆周率的值，默认是7位，内部使用完全双精度值</td>
-</tr>
-<tr>
-<td>TRUNCATE(x,y)</td>
-<td>返回数值x保留到小数点y位的值</td>
-</tr>
-<tr>
-<td>ROUND(x)</td>
-<td>返回离x最近的整数</td>
-</tr>
-<tr>
-<td>ROUND(x,y)</td>
-<td>保留x小数点后y位的值，但截断时要进行四舍五入</td>
-</tr>
-<tr>
-<td>POW(x,y),POWER(x,y)</td>
-<td>返回x的y乘方的结果值</td>
-</tr>
-<tr>
-<td>SQRT(x)</td>
-<td>返回非负数x的二次方根</td>
-</tr>
-<tr>
-<td>EXP(x)</td>
-<td>返回e的x乘方后的值（自然对数的底）</td>
-</tr>
-<tr>
-<td>MOD(x,y)</td>
-<td>返回x除以y后的余数</td>
-</tr>
-<tr>
-<td>LOG(x)</td>
-<td>返回x的基数为2的对数</td>
-</tr>
-<tr>
-<td>LOG10(x)</td>
-<td>返回x的基数为10的对数</td>
-</tr>
-<tr>
-<td>RADIANS(x)</td>
-<td>将角度转换为弧度</td>
-</tr>
-<tr>
-<td>DEGREES(x)</td>
-<td>将弧度转化为角度</td>
-</tr>
-<tr>
-<td>SIN(x)</td>
-<td>返回x的正弦，其中x使用弧度</td>
-</tr>
-<tr>
-<td>ASIN(x,y)</td>
-<td>返回x的反正弦，若x不在-1到1范围内则返回NULL</td>
-</tr>
-<tr>
-<td>COS(x)</td>
-<td>返回x的余弦，其中x为弧度</td>
-</tr>
-<tr>
-<td>ACOS(x,y)</td>
-<td>返回x的反余弦，若x不在-1到1范围内则返回NULL</td>
-</tr>
-<tr>
-<td>TAN(x,y)</td>
-<td>返回x的正切，其中x为弧度</td>
-</tr>
-<tr>
-<td>ATAN(x),ATAN2(x)</td>
-<td>返回x的反正切，y确定结果所在象限</td>
-</tr>
-<tr>
-<td>COT(x,y)</td>
-<td>返回x的余切</td>
-</tr>
-</tbody>
-</table>
-<h2 id="2-字符串函数："><strong>2.字符串函数：</strong></h2>
-<p>字符串函数是MySQL中最常用的的一类函数，主要用于处理表中的字符串。见下表：</p>
-<table>
-<thead>
-<tr>
-<th>函数</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CHAR_LENGTH(s)</td>
-<td>返回字符串s的字符数</td>
-</tr>
-<tr>
-<td>LENGTH(s)</td>
-<td>返回字符串的字节长度，一个多字节字符算作多字节</td>
-</tr>
-<tr>
-<td>CONCAT(s)</td>
-<td>返回结果为连接参数产生的字符串。为了避免将数字参数转化为二进制字符串使用SELECT CONCAT(CAST(int_col AS CHAR),char_col)</td>
-</tr>
-<tr>
-<td>CONCAT_WS(x,s1,s2,…)</td>
-<td>同CONCAT()函数，但每个字符串都要加上x</td>
-</tr>
-<tr>
-<td>INSERT(s1,x,len,s2)</td>
-<td>将字符串s2替换为s1的x位置开始长度为len的字符串</td>
-</tr>
-<tr>
-<td>UPPER(s),UCASE(s)</td>
-<td>将字符串s的所有字母都变成大写字母</td>
-</tr>
-<tr>
-<td>LOWER(s),LCASE(s)</td>
-<td>将字符串s的所有字母都变成小写字母</td>
-</tr>
-<tr>
-<td>LEFT(s,n)</td>
-<td>返回从字符串s开始的最左边n个字符</td>
-</tr>
-<tr>
-<td>RIGHT(s,n)</td>
-<td>返回从字符串s开始的最右边n个字符</td>
-</tr>
-<tr>
-<td>LPAD(s1,len,s2)</td>
-<td>返回字符串s1，其左边由字符串s2填补到len字符长度</td>
-</tr>
-<tr>
-<td>RPAD(s1,len,s2)</td>
-<td>返回字符串s1，其右边被字符串s2填补至len字符长度</td>
-</tr>
-<tr>
-<td>LTRIM(s)</td>
-<td>返回字符串s，其引导空格字符被删除</td>
-</tr>
-<tr>
-<td>RTRIM(s)</td>
-<td>返回字符串s，结尾空格字符被删去</td>
-</tr>
-<tr>
-<td>TRIM(s)</td>
-<td>去掉字符串s开始和结尾处的空格</td>
-</tr>
-<tr>
-<td>TRIM(s1 FROM s)</td>
-<td>去掉字符串s中开始处和结尾处的字符串s1</td>
-</tr>
-<tr>
-<td>REPEAT(s,n)</td>
-<td>将字符串s重复n次</td>
-</tr>
-<tr>
-<td>SPACE(n)</td>
-<td>返回n个空格</td>
-</tr>
-<tr>
-<td>REPLACE(s,s1,s2)</td>
-<td>用字符串s2替代字符串s中的字符串s1</td>
-</tr>
-<tr>
-<td>STRCMP(s1,s2)</td>
-<td>比较字符串s1和s2</td>
-</tr>
-<tr>
-<td>SUBSTRING(s,n,len)</td>
-<td>获取从字符串s第n个位置开始长度为len的字符串</td>
-</tr>
-<tr>
-<td>MID(s,n,len)</td>
-<td>同SUBSTRING()</td>
-</tr>
-<tr>
-<td>LOCATE(s1,s) POSITION(s1 IN s)</td>
-<td>从字符串s中获取s1的开始位置</td>
-</tr>
-<tr>
-<td>INSTR(s,s1)</td>
-<td>从字符串s中获取s1的开始位置</td>
-</tr>
-<tr>
-<td>REVERSE(s)</td>
-<td>将字符串s的顺序反过来</td>
-</tr>
-<tr>
-<td>ELT(n,s1,s2)</td>
-<td>返回第n个字符串</td>
-</tr>
-<tr>
-<td>EXPORT_SET(bits,on,off[, separator[,number_of_bits]])</td>
-<td>返回一个字符串，生成规则为：针对bits的二进制格式，如果位为1则返回一个on值，如果为0则返回一个off值。每个字符串用separator分隔，默认逗号；number_of_bits指定bits的可用位数，默认64位。示例 selectEXPORT_SET(182,‘Y’,‘N’,‘@’,6);</td>
-</tr>
-<tr>
-<td>FIELD(s,s1,s2)</td>
-<td>返回第一个与字符串s匹配的字符串的位置</td>
-</tr>
-<tr>
-<td>FIND_IN_SET(s,s2)</td>
-<td>返回在字符串s2中与s1匹配的字符串的位置</td>
-</tr>
-<tr>
-<td>MAKE_SET(x,s1,s2,…)</td>
-<td>按x的二进制数从s1,s2,…,sn中选取字符串</td>
-</tr>
-</tbody>
-</table>
+<h2 id="Cookie的概念">Cookie的概念</h2>
+<ul>
+<li>Cookie是客户端用户信息的一种机制，用来记录用户的一些信息，实际上Cookie是服务器在<strong>本地机器</strong>上存储的一小段文本，并随着每次请求发送到服务器。</li>
+</ul>
+<h2 id="Cookie与Session的区别">Cookie与Session的区别</h2>
+<ol>
+<li>cookie数据存放在客户的浏览器（客户端）上，session数据放在服务器上，但是服务端的session的实现对客户端的cookie有依赖关系的。</li>
+<li><strong>cookie不是很安全，别人可以分析存放在本地的COOKIE并进行COOKIE欺骗</strong>，考虑到安全应当使用session；</li>
+<li>session会在一定时间内保存在服务器上。当访问增多，会比较占用你服务器的性能。考虑到减轻服务器性能方面，应当使用COOKIE；</li>
+<li>一个服务器最多在客户端浏览器上保存20个Cookie；</li>
+<li>一个浏览器最多保存300个Cookie</li>
+<li>单个cookie在客户端的限制是3K，就是说一个站点在客户端存放的COOKIE不能超过3K；</li>
+</ol>
+<blockquote>
+<p>上面的数据只是HTTP的Cookie规范，但是在浏览器大战的今天，一些浏览器为了打败对手，为了展示自己的能力起见，可能对Cookie规范“扩展”了一些，例如每个Cookie的大小为8KB，最多可保存500个Cookie等！但也不会出现将你的硬盘占满的可能</p>
+</blockquote>
+<h2 id="Cookie与session的实现原理">Cookie与session的实现原理</h2>
+<p><img src="C:%5CUsers%5CLuenci%5CPictures%5C1226410-20190326171141383-1715230740.png" alt="img"></p>
+<p>上图很明显的展示了Django的session和cookie的实现原理。</p>
+<ul>
+<li>
+<p>服务器会生成两份相同的cookie字符串，一份保存在本地，一份发向请求的浏览器。</p>
+</li>
+<li>
+<p>浏览器将会受到的cookie字符串保存下来，当下次再发请求时，会将信息与这段cookie一同发送到服务器，服务器得到这段cookie会与本地保存的那份判断是否相同，如果相同就表示用户已经登录成功，保存用户登录成功的状态。</p>
+</li>
+<li>
+<p>Django的session保存在数据库中的数据相当于一个大字典，key为cookie的字符串，value仍是一个字典，字典的key和value为用户设置的相关信息，这样就可以方便的存取session里面的信息。</p>
+</li>
+</ul>
+<h2 id="cookie和session内容">cookie和session内容</h2>
+<ul>
+<li>cookie内容主要包括：key，value，过期时间，路径和域。路径和域一起构成了cookie的作用范围。</li>
+<li>cookie的使用由浏览器按照一定的规则在后台自动发送给服务器的，浏览器检查所在存储的cookie，如果某个cookie的作用范围大于等于将要请求的资源所在位置，将cookie附在请求资源的HTTP请求头上发给服务器。</li>
+<li>cookie的生命周期跟过期时间相关，如果不设置过期时间，成为会话cookie，保存在内存中，关闭浏览器窗口，cookie消失。如果设置过期时间，浏览器会把cookie写入硬盘，这些cookie仍然有效，知道超过设定的过期时间。</li>
+<li>存在硬盘上的cookie可以在同一个浏览器不同进程间共享，比如两个Chrome窗口。存在内存的，不同浏览器不同的处理方式</li>
+<li>session内容，服务器使用类似Python字典的key value 的形式存储，存储session方式很多，数据库，缓存，文件，加密cookie，数据库加缓存。</li>
+</ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/01/Mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%87%BD%E6%95%B0/#more" rel="contents">
+              <a class="btn" href="/2023/03/01/Django%E7%9A%84Cookie%E5%92%8CSession/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
         
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/01/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Django的ORM字段介绍</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>595</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Django的Field详解（转载）</h1>
+<blockquote>
+<p>本文转载于：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/ellisonzhang/p/10679054.html">https://www.cnblogs.com/ellisonzhang/p/10679054.html</a></p>
+</blockquote>
+<h2 id="字段">字段</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>、models.AutoField　　自增列 = <span class="built_in">int</span>(<span class="number">11</span>)</span><br><span class="line">　　如果没有的话，默认会生成一个名称为 <span class="built_in">id</span> 的列，如果要显示的自定义一个自增列，必须将给列设置为主键 primary_key=<span class="literal">True</span>。</span><br><span class="line"><span class="number">2</span>、models.CharField　　字符串字段</span><br><span class="line">　　必须 max_length 参数</span><br><span class="line"><span class="number">3</span>、models.BooleanField　　布尔类型=tinyint(<span class="number">1</span>)</span><br><span class="line">　　不能为空，Blank=<span class="literal">True</span></span><br><span class="line"><span class="number">4</span>、models.ComaSeparatedIntegerField　　用逗号分割的数字=varchar</span><br><span class="line">　　继承CharField，所以必须 max_lenght 参数</span><br><span class="line"><span class="number">5</span>、models.DateField　　日期类型 date</span><br><span class="line">　　对于参数，auto_now = <span class="literal">True</span> 则每次更新都会更新这个时间；auto_now_add 则只是第一次创建添加，之后的更新不再改变。</span><br><span class="line"><span class="number">6</span>、models.DateTimeField　　日期类型 datetime</span><br><span class="line">　　同DateField的参数</span><br><span class="line"><span class="number">7</span>、models.Decimal　　十进制小数类型 = decimal</span><br><span class="line">　　必须指定整数位max_digits和小数位decimal_places</span><br><span class="line"><span class="number">8</span>、models.EmailField　　字符串类型（正则表达式邮箱） =varchar</span><br><span class="line">　　对字符串进行正则表达式</span><br><span class="line"><span class="number">9</span>、models.FloatField　　浮点类型 = double</span><br><span class="line"><span class="number">10</span>、models.IntegerField　　整形</span><br><span class="line"><span class="number">11</span>、models.BigIntegerField　　长整形</span><br><span class="line">　　integer_field_ranges = &#123;</span><br><span class="line">　　　　<span class="string">&#x27;SmallIntegerField&#x27;</span>: (-<span class="number">32768</span>, <span class="number">32767</span>),</span><br><span class="line">　　　　<span class="string">&#x27;IntegerField&#x27;</span>: (-<span class="number">2147483648</span>, <span class="number">2147483647</span>),</span><br><span class="line">　　　　<span class="string">&#x27;BigIntegerField&#x27;</span>: (-<span class="number">9223372036854775808</span>, <span class="number">9223372036854775807</span>),</span><br><span class="line">　　　　<span class="string">&#x27;PositiveSmallIntegerField&#x27;</span>: (<span class="number">0</span>, <span class="number">32767</span>),</span><br><span class="line">　　　　<span class="string">&#x27;PositiveIntegerField&#x27;</span>: (<span class="number">0</span>, <span class="number">2147483647</span>),</span><br><span class="line">　　&#125;</span><br><span class="line"><span class="number">12</span>、models.IPAddressField　　字符串类型（ip4正则表达式）</span><br><span class="line"><span class="number">13</span>、models.GenericIPAddressField　　字符串类型（ip4和ip6是可选的）</span><br><span class="line">　　参数protocol可以是：both、ipv4、ipv6</span><br><span class="line">　　验证时，会根据设置报错</span><br><span class="line"><span class="number">14</span>、models.NullBooleanField　　允许为空的布尔类型</span><br><span class="line"><span class="number">15</span>、models.PositiveIntegerFiel　　正Integer</span><br><span class="line"><span class="number">16</span>、models.PositiveSmallIntegerField　　正smallInteger</span><br><span class="line"><span class="number">17</span>、models.SlugField　　减号、下划线、字母、数字</span><br><span class="line"><span class="number">18</span>、models.SmallIntegerField　　数字</span><br><span class="line">　　数据库中的字段有：tinyint、smallint、<span class="built_in">int</span>、bigint</span><br><span class="line"><span class="number">19</span>、models.TextField　　字符串=longtext</span><br><span class="line"><span class="number">20</span>、models.TimeField　　时间 HH:MM[:ss[.uuuuuu]]</span><br><span class="line"><span class="number">21</span>、models.URLField　　字符串，地址正则表达式</span><br><span class="line"><span class="number">22</span>、models.BinaryField　　二进制</span><br><span class="line"><span class="number">23</span>、models.ImageField   图片</span><br><span class="line"><span class="number">24</span>、models.FilePathField 文件</span><br></pre></td></tr></table></figure>
+<h2 id="参数">参数</h2>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>、null=True</span><br><span class="line">　　数据库中字段是否可以为空</span><br><span class="line"><span class="number">2</span>、blank=True</span><br><span class="line">　　django的 Admin 中添加数据时是否可允许空值</span><br><span class="line"><span class="number">3</span>、primary_key = False</span><br><span class="line">　　主键，对AutoField设置主键后，就会代替原来的自增 id 列</span><br><span class="line"><span class="number">4</span>、auto_now 和 auto_now_add</span><br><span class="line">　　auto_now   自动创建---无论添加或修改，都是当前操作的时间</span><br><span class="line">　　auto_now_add  自动创建---永远是创建时的时间</span><br><span class="line"><span class="number">5</span>、choices</span><br><span class="line">    sex_choice=((“F”,“FEMAL”),(“M”,’Male’),)　　　　#admin专用下拉选项    </span><br><span class="line">    gender=models.CharFiled(max_length=<span class="number">2</span>,choice=sex_choice)</span><br><span class="line"><span class="number">6</span>、max_length</span><br><span class="line"><span class="number">7</span>、default　　默认值</span><br><span class="line"><span class="number">8</span>、verbose_name　　Admin中字段的显示名称</span><br><span class="line"><span class="number">9</span>、name|db_column　　数据库中的字段名称</span><br><span class="line"><span class="number">10</span>、unique=True　　不允许重复</span><br><span class="line"><span class="number">11</span>、db_index = True　　数据库索引</span><br><span class="line"><span class="number">12</span>、editable=True　　在Admin里是否可编辑</span><br><span class="line"><span class="number">13</span>、error_messages=None　　错误提示</span><br><span class="line"><span class="number">14</span>、auto_created=False　　自动创建</span><br><span class="line"><span class="number">15</span>、help_text　　在Admin中提示帮助信息</span><br><span class="line"><span class="number">16</span>、validators=[]</span><br><span class="line"><span class="number">17</span>、upload-to</span><br></pre></td></tr></table></figure>
+
       
     </div>
 
@@ -804,7 +628,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">122</span>
+          <span class="site-state-item-count">123</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -817,7 +641,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">88</span>
+        <span class="site-state-item-count">89</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -859,12 +683,6 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/01/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/" title="2023&#x2F;03&#x2F;01&#x2F;鸭子类型&#x2F;">鸭子类型介绍</a>
-        </li>
-        <li class="links-of-recent-posts-item">
-          <a href="/2023/03/01/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/" title="2023&#x2F;03&#x2F;01&#x2F;分布式12问&#x2F;">分布式12问</a>
-        </li>
-        <li class="links-of-recent-posts-item">
           <a href="/2023/03/01/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;03&#x2F;01&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
         </li>
         <li class="links-of-recent-posts-item">
@@ -872,6 +690,12 @@
         </li>
         <li class="links-of-recent-posts-item">
           <a href="/2023/03/01/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;03&#x2F;01&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/03/01/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;03&#x2F;01&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/03/01/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;03&#x2F;01&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
         </li>
     </ul>
   </div>
@@ -903,12 +727,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">283k</span>
+    <span title="站点总字数">284k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">17:08</span>
+    <span title="站点阅读时长">17:12</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
