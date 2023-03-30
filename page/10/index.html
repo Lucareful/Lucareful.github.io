@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/GIL%E9%94%81/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/01/GIL%E9%94%81/" class="post-title-link" itemprop="url">python解释器的GIL锁</a>
+            <a href="/2023/03/30/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/" class="post-title-link" itemprop="url">未命名</a>
         </h2>
 
         <div class="post-meta">
@@ -255,16 +255,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
-                </span>
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
             </span>
 
           
@@ -275,14 +266,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.4k</span>
+              <span>939</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
+              <span>3 分钟</span>
             </span>
 
         </div>
@@ -294,31 +285,33 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="GlL锁定义">GlL锁定义</h2>
-<p>Gll锁：Global Interpreter Lock，又称：全局解释器锁</p>
+          <h1>Golang 的值传递</h1>
 <blockquote>
-<p>任何Python线程执行前，必须先获得GlL锁，然后，每执行100条字节码，解释器就自动释放GL锁，让别的线程有机会执行。这个GlL全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在Python中只能交替执行，即使100个线程跑在100核CPU上，也只能用到1个核。</p>
+<p>先导文章：<a target="_blank" rel="noopener" href="https://juejin.cn/post/6888117219213967368">（正经版）面试官：切片作为函数参数是传值还是传引用？</a></p>
 </blockquote>
-<h2 id="GlL不是Python特性">GlL不是Python特性</h2>
-<p>GlL是Pythn解释器（Cpython）时引入的概念，在JPython、PyPy中没有GlL。GIL并不是Python的语言缺陷。是解释器层级的锁，跟Python语言特性无关</p>
-<blockquote>
-<p>言外之意，就是全局解释器就是为了锁定整个解释器内部的全局资源，每个线程想要运行首先获取GlL，而GlL本身又是一把互斥锁，造成所有线程只能一个一个one-by-one-并发-交替的执行。</p>
-</blockquote>
-<h2 id="GlL存在的原因">GlL存在的原因</h2>
+<p>Go语言中的 new 和 make 主要区别如下：</p>
 <ul>
-<li>
-<p>早期计算机都是单核设计</p>
-</li>
-<li>
-<p>CPython在执行多线程的时候并不是线程安全的，所以为了程序的稳定性，加一把全局解释锁，能够确保任何时候都只有一个Python线程执行</p>
-</li>
+<li>make 只能用来分配及初始化类型为 slice、map、chan 的数据。new 可以分配任意类型的数据；</li>
+<li>new 分配返回的是指针，即类型 *Type。make 返回引用，即 Type；</li>
+<li>new 分配的空间被清零。make 分配空间后，会进行初始化；</li>
 </ul>
-<blockquote>
-<p>GlL产生的背景在CPython解释内部运行多个线程的时候，每个线程都需要解释器内部申请相应的全局资源，由于C语言本身比较底层造成CPython在管理所有全局资源的时候并不能应对所有线程同时的资源请求，因此为了防止资源竞争而发生错误，对所有线程申请全局资源增加了限制-全局解释器锁。</p>
-</blockquote>
+<h2 id="传入参数和传出参数">传入参数和传出参数</h2>
+<ul>
+<li>传入参数为本身有值，传入函数让函数使用；传出参数本身没值，从函数中带出值（相当于函数的返回值）。</li>
+</ul>
+<h2 id="函数参数为指针">函数参数为指针</h2>
+<p>将指针作为参数传入某个函数时，函数内部会复制指针，也就是会同时出现两个指针指向原有的内存空间，所以 Go 语言中传指针也是传值。</p>
+<h2 id="传值">传值</h2>
+<p>当我们验证了 Go 语言中大多数常见的数据结构之后，其实能够推测出 Go 语言在传递参数时使用了传值的方式，接收方收到参数时会对这些参数进行复制；了解到这一点之后，<strong>在传递数组或者内存占用非常大的结构体时，我们应该尽量使用指针作为参数类型来避免发生数据拷贝进而影响性能</strong>。</p>
+<h2 id="函数小结">函数小结</h2>
+<ol>
+<li>通过堆栈传递参数，入栈的顺序是从右到左，而参数的计算是从左到右；</li>
+<li>函数返回值通过堆栈传递并由调用者预先分配内存空间；</li>
+<li>调用函数时都是传值，接收方会对入参进行复制再计算；</li>
+</ol>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/01/GIL%E9%94%81/#more" rel="contents">
+              <a class="btn" href="/2023/03/30/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -342,7 +335,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/IP%E4%BB%A3%E7%90%86%E6%B1%A0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -356,7 +349,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/01/IP%E4%BB%A3%E7%90%86%E6%B1%A0/" class="post-title-link" itemprop="url">基于Python语言的IP代理池</a>
+            <a href="/2023/03/30/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">大数据之Hadoop</a>
         </h2>
 
         <div class="post-meta">
@@ -366,7 +359,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -374,140 +367,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>环境：python3.6</p>
-<p>MongoDB</p>
-<p>flask</p>
-<p>requests等第三方库</p>
-<p>完整代码见： <a target="_blank" rel="noopener" href="https://github.com/Lucareful/IPProxyPool">https://github.com/Lucareful/IPProxyPool</a></p>
-<h1>代理池概述</h1>
-<h2 id="什么是代理池">什么是代理池</h2>
-<ul>
-<li>代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP</li>
-</ul>
-<h2 id="为什么要实现代理池">为什么要实现代理池</h2>
-<p>我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；</p>
-<ul>
-<li>使用IP代理池是其中一个比较常用的方案</li>
-<li>免费代理都是非常不稳定的，有10%是可用就很不错了</li>
-<li>一些收费代理稳定性也不好</li>
-</ul>
-<p>目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用</p>
-<h1>代理池开发环境</h1>
-<ul>
-<li>
-<p>python3开发语言</p>
-</li>
-<li>
-<p>requests：发送请求，获取页面数据</p>
-</li>
-<li>
-<p>lxml：使用XPATH从页面提取我们想要的书籍</p>
-</li>
-<li>
-<p>pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用</p>
-</li>
-<li>
-<p>Flask：用于提供WEB服务</p>
-</li>
-</ul>
-<h1>代理池工作流程</h1>
-<p><img src="https://i.ibb.co/b7YyrM5/image-20191024195902163.png" alt="image-20191024195902163"></p>
-<p>1.代理池工作渡程描述：</p>
-<ul>
-<li>代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中</li>
-<li>代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库</li>
-<li>代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/03/01/IP%E4%BB%A3%E7%90%86%E6%B1%A0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/JavaScript%E7%9A%84%E7%AE%80%E4%BB%8B%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/01/JavaScript%E7%9A%84%E7%AE%80%E4%BB%8B%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">JavaScript基本知识</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JavaScript/" itemprop="url" rel="index"><span itemprop="name">JavaScript</span></a>
+                  <a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a>
                 </span>
             </span>
 
@@ -538,64 +398,20 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>JavaScript作用</h1>
+          <h1>Hadoop介绍</h1>
+<h2 id="组成部分">组成部分</h2>
 <ul>
-<li>表单动态检验（密码强度检测）</li>
-<li>网页特效</li>
-<li>服务端开发（Node.js）</li>
-<li>桌面程序（Electron）</li>
-<li>APP（Cordova）</li>
-<li>控制硬件 - 物联网（Ruff）</li>
-<li>游戏小程序（cocos2d-js）</li>
-</ul>
-<h1>HTML/CSS/JS的关系</h1>
+<li>Hadoop主要由3部分组成：
 <ul>
-<li>HTML/CSS标记语言–描述类语言
-<ul>
-<li>HTML决定网页结构和内容（决定看到什么），相当于人的身体</li>
-<li>CSS决定网页呈现给用户的模样（决定好不好看），相当于给人穿衣服、化妆</li>
+<li>Mapreduce编程模型</li>
+<li>HDFS分布式文件存储</li>
+<li>YARN</li>
 </ul>
 </li>
-<li>JS脚本语言-编程类语言
-<ul>
-<li>实现业务逻辑和页面控制（决定功能），相当于人的各种动作</li>
-</ul>
-</li>
-</ul>
-<h1>浏览器执行js</h1>
-<p>浏览器分成两部分：渲染引擎和JS引擎</p>
-<ul>
-<li>
-<p>渲染引擎：用来解析HTML与CSS，俗称内核，比如chrome浏览器的blink，老版本的webkit</p>
-</li>
-<li>
-<p>JS引擎：也称为JS解释器。用来读取网页中的JavaScript代码，对其处理后运行，比如chrome浏览器的V8</p>
-</li>
-</ul>
-<blockquote>
-<p>浏览器本身并不会执行JS代码，而是通过内置JavaScript引擎（解释器）来执行JS代码。JS引擎执行代码时<em><strong>逐行解释每一句源码（转换为机器语言），然后由计算机去执行</strong></em>，所以JavaScript语言归为脚本语言，会逐行解释执行。</p>
-</blockquote>
-<h1>JS组成</h1>
-<h2 id="1-ECMAScript">1.ECMAScript</h2>
-<ul>
-<li>ECMAScript是由ECMA国际（原欧洲计算机制造商协会）进行标准化的一门编程语言，这种语言在万维网上应用广泛，它往往被称为JavaScript或JScript，但实际上后两者是ECMAScript语言的实现和扩展。</li>
-</ul>
-<blockquote>
-<p>ECMAScript:ECMAScript规定了JS的编程语法和基础核心知识，是所有浏览器厂商共同遵守的一套JS语法工业标准。</p>
-</blockquote>
-<h2 id="2-DOM——文档对象模型">2.DOM——文档对象模型</h2>
-<ul>
-<li>文档对象模型（Document Object Model，简称DOM），是W3C组织推荐的处理可扩展标记语言的标准编程接口。</li>
-<li>通过DOM提供的接口可以对页面上的各种元素进行操作（大小、位置、颜色等）。</li>
-</ul>
-<h2 id="3-BOM——浏览器对象模型">3.BOM——浏览器对象模型</h2>
-<ul>
-<li>BOM（Browser Object Model，简称BOM）是指浏览器对象模型，它提供了独立于内容的、可以与浏览器窗口进行互动的对象结构。</li>
-<li>通过BOM可以操作浏览器窗口，比如弹出框、控制浏览器跳转、获取分辨率等。</li>
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/01/JavaScript%E7%9A%84%E7%AE%80%E4%BB%8B%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/#more" rel="contents">
+              <a class="btn" href="/2023/03/30/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -619,7 +435,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Java%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -633,7 +449,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/01/Java%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/" class="post-title-link" itemprop="url">Java面向对象</a>
+            <a href="/2023/03/30/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Java基本知识</a>
         </h2>
 
         <div class="post-meta">
@@ -643,7 +459,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -663,14 +479,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
+              <span>5.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
+              <span>21 分钟</span>
             </span>
 
         </div>
@@ -682,465 +498,107 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>面向对象</h1>
+          <h1>方法</h1>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义方法的格式</span></span><br><span class="line">修饰符  返回值类型	方法名称(参数类型 参数名称，....)&#123;</span><br><span class="line">  方法体;</span><br><span class="line">  <span class="keyword">return</span> 返回值;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <ul>
-<li>三大特征：封装性，继承性，多态性。</li>
-<li>继承是多态的前提，如果没有继承，就没有多态</li>
-<li>继承主要解决的问题是：<strong>共性抽取</strong></li>
+<li>修饰符：现阶段的固定方法，<code>public static</code></li>
+<li>返回值类型：也就是方法最终产生的数据结果是什么类型</li>
+<li>方法名称：方法的名字，规则和变量一样，小驼峰</li>
+<li>参数类型：进入方法的数据对应的变量名称</li>
+<li>方法体：方法需要做的事情，若干行代码</li>
+<li><code>return</code>：两个作用。
+<ul>
+<li>停止当前方法</li>
+<li>将后面的结果数据返回值返还给调用处</li>
 </ul>
-<h2 id="继承">继承</h2>
-<ul>
-<li>
-<p>父类也可以叫基类，超类</p>
 </li>
-<li>
-<p>子类也可以叫派生类</p>
-</li>
-<li>
-<p>子类可以访问父类的属性和方法，反之父类不能访问子类的属性和方法</p>
-</li>
-</ul>
-<p>直接通过子类对象访问成员变量：</p>
-<ul>
-<li>等号左边是谁，就优先用谁，没有则向上找。</li>
-</ul>
-<p>间接通过成员方法访问成员变量：</p>
-<ul>
-<li>该方法属于谁，就优先用谁，没有则向上找。</li>
-</ul>
-<h2 id="成员变量方法">成员变量方法</h2>
-<ul>
-<li>局部变量：直接写成员变量名</li>
-<li>本类的成员变量：this.成员变量名</li>
-<li>父类的成员变量：super.成员变量名</li>
-</ul>
-<h2 id="成员方法的访问">成员方法的访问</h2>
-<ul>
-<li>在父子类的继承关系当中，创建子类对象，访问成员方法的规则：</li>
-<li>创建的对象是谁，就优先用谁，如果没有则向上找。</li>
+<li>返回值：也就是方法执行后最终产生的数据结果</li>
 </ul>
 <blockquote>
-<p>注意事项：<br>
-无论是成员方法还是成员变量，如果没有都是向上找父类，绝对不会向下找子类。</p>
+<p>return后面的“返回值”，必须和方法名称前面的“返回值类型”，保持对应</p>
 </blockquote>
-<h2 id="方法的重载和重写">方法的重载和重写</h2>
-<ul>
-<li>重写（Override）概念：在继承关系当中，方法的名称一样，参数列表也一样。</li>
-</ul>
-<h3 id="对比">对比</h3>
-<ul>
-<li>
-<p>重写（Override）：方法的名称一样，参数列表<code>【也一样】</code>。也称覆盖、覆写。</p>
-</li>
-<li>
-<p>重载（Overload）：方法的名称一样，参数列表<code>【不一样】</code>。</p>
-</li>
-<li>
-<p>方法的覆盖重写特点：创建的是子类对象，则优先用子类方法。</p>
-</li>
-</ul>
-<p>方法覆盖重写的注意事项：</p>
-<ul>
-<li>
-<p>1.必须保证父子类之间方法的名称相同，参数列表也相同。</p>
-<blockquote>
-<p>@Override：写在方法前面，用来检测是不是有效的正确覆盖重写。<br>
-这个注解就算不写，只要满足要求，也是正确的方法覆盖重写。</p>
-</blockquote>
-</li>
-<li>
-<p>2.子类方法的返回值必须【小于等于】父类方法的返回值范围。</p>
-</li>
-<li>
-<blockquote>
-<p>提示：<code>java.Lang.Object</code>类是所有类的公共最高父类（祖宗类），<code>java.Lang.String</code>就是<code>object</code>的子类。</p>
-</blockquote>
-</li>
-<li>
-<p>3.子类方法的权限必须【大于等于】父类方法的权限修饰符。</p>
-<blockquote>
-<p>提示：<code>public &gt; protected &gt;（default）&gt; private</code>备注：<code>（default）</code>不是关键字<code>default</code>，而是什么都不写，留空</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="例子图">例子图</h3>
-<p><img src="https://upload.cc/i1/2019/12/14/kIQvGN.png" alt="image-20191214160412148"></p>
-<h2 id="继承关系中，父子类构造方法的访问特点">继承关系中，父子类构造方法的访问特点</h2>
-<ul>
-<li>1.子类构造方法当中有一个默认隐含的“<code>super（）</code>”调用，所以一定是先调用的父类构造，后执行的子类构造。</li>
-<li>2.子类构造可以通过<code>super</code>关键字来调用父类重载构造。</li>
-<li>3.<code>supe</code>r的父类构造调用，必须是子类构造方法的第一个语句。不能一个子类构造调用多次super构造。</li>
-<li>总结：<br>
-子类必须调用父类构造方法，不写则系统会自动分配一个<code>super（）</code>；写了则用写的指定的<code>super</code>调用，<code>super</code>只能有一个，还必须是第一个。</li>
-</ul>
-<h2 id="super关键字的用法">super关键字的用法</h2>
-<ul>
-<li>1.在子类的成员方法中，访问父类的成员变量。</li>
-<li>2.在子类的成员方法中，访问父类的成员方法。</li>
-<li>3.在子类的构造方法中，访问父类的构造方法。</li>
-</ul>
-<h2 id="This关键字的用法">This关键字的用法</h2>
-<ul>
-<li>
-<p>1.在本类的成员方法中，访问本类的成员变量。</p>
-</li>
-<li>
-<p>2.在本类的成员方法中，访问本类的另一个成员方法。</p>
-</li>
-<li>
-<p>3.在本类的构造方法中，访问本类的另一个构造方法。</p>
-</li>
-</ul>
-<blockquote>
-<p>在第三种用法当中要注意：<br>
-A.<code>this（…）</code>调用也必须是构造方法的第一个语句，唯一一个。<br>
-B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用。</p>
-</blockquote>
-<h2 id="关键字图解">关键字图解</h2>
-<p><img src="https://upload.cc/i1/2019/12/14/wbWsh2.png" alt="image-20191214175159192"></p>
-<h2 id="Java继承的特点">Java继承的特点</h2>
-<ul>
-<li>单继承：一个类的直接父类只能有唯一个</li>
-<li>多级继承</li>
-</ul>
-<p><img src="https://upload.cc/i1/2019/12/15/VDmdbk.png" alt="image-20191215121245751"></p>
-<h1>抽象方法</h1>
-<ul>
-<li>抽象方法：就是加上<code>abstract</code>关键字，然后去掉大括号，直接分号结束。</li>
-<li>抽象类：抽象方法所在的类，必须是抽象类才行。在<code>class</code>之前写上<code>abstract</code>即可。</li>
-</ul>
-<p>使用抽象类和抽象方法：</p>
-<ul>
-<li>
-<p>1.不能直接创建<code>new</code>抽象类对象。</p>
-</li>
-<li>
-<p>2.必须用一个子类来继承抽象父类。</p>
-</li>
-<li>
-<p>3.子类必须覆盖重写抽象父类当中所有的抽象方法。</p>
-<blockquote>
-<p>覆盖重写（实现）：子类去掉抽象方法的<code>abstract</code>关键字，然后补上厉法体大括号了</p>
-</blockquote>
-</li>
-<li>
-<p>4.创建子类对象进行使用。</p>
-</li>
-</ul>
 <h2 id="注意事项">注意事项</h2>
 <ul>
-<li>1.抽象类不能创建对象，如果创建，偏译无法通过而报错。只能创建其非抽象子类的对象。</li>
+<li>方法应该定义在类中，但是不能在方法 在定义方法。不能嵌套</li>
+<li>方法定义的前后顺序无所谓</li>
+<li>方法定义之后不会执行，若要执行，必须调用：单独调用，打印调用，赋值调用</li>
+<li>如果方法有返回值，那么必须写上“return 返回值”，不能缺失</li>
+<li>return后面的返回值类型必须和方法的返回值类型相同，对应。</li>
+<li>对于一个<code>void</code>没有返回值的方法，没有返回值。</li>
+<li>一个方法中可以含有多个<code>return</code>语句，但是必须保证同时只有一个会被执行到。</li>
 </ul>
-<blockquote>
-<p>理解：假设创建了抽象类的对象，调用抽象的方法，而抽象方法没有具体的方法体，没有意义。</p>
-</blockquote>
+<h1>方法重载</h1>
 <ul>
-<li>2.抽象类中，可以有构造方法，是供子类创建对象时，初始化父类成员使用的。</li>
+<li>多个方法的名称一样，但是参数列表不一样</li>
+<li>优点：只需要记住唯一一个方法名称，就可以实现类似的多个功能</li>
 </ul>
-<blockquote>
-<p>理解：子类的构造方法中，有默认的super（），需要访问父类构造方法。</p>
-</blockquote>
+<h2 id="相关因素">相关因素</h2>
 <ul>
-<li>3.抽象类中，不一定包含抽象方法，但是有抽象方法的类必定是抽象类。</li>
+<li>参数个数不同</li>
+<li>参数类型不同</li>
+<li>参数的多类型顺序不同</li>
 </ul>
-<blockquote>
-<p>理解：未包含抽象方法的抽象类，目的就是不想让调用者创建该类对象，通常用于某些特殊的类结构设计。</p>
-</blockquote>
+<h2 id="无关因素">无关因素</h2>
 <ul>
-<li>4.抽象类的子类，必须<strong>重写抽象父类中所有的抽象方法</strong>，否则，编译无法通过而报错。除非该子类也是抽象类。</li>
+<li>与参数的名称无关</li>
+<li>与方法的返回值类型无关</li>
 </ul>
-<blockquote>
-<p>理解：假设不重写所有抽象方法，则类中可能包含抽象方法。那么创建对象后，调用抽象的方法，没有意义。</p>
-</blockquote>
-<h1>接口</h1>
+<h1>数组</h1>
+<p>数组的概念：是一种容器，可以同时存放多个数据值。<br>
+数组的特点：</p>
 <ul>
-<li><strong>接口就是一种公共的规范标准</strong></li>
+<li>1.数组是一种引用数据类型</li>
+<li>2.数组当中的多个数据，类型必须统一</li>
+<li>3.数组的长度在程序运行期间不可改变</li>
 </ul>
-<h2 id="基本定义格式">基本定义格式</h2>
-<ul>
-<li>接口是一种引用数据类型，最重要的内容就是其中的：抽象方法。</li>
-<li><code>public interface 接口名称&#123;  //接口内容    &#125;</code></li>
-<li>备注：换成了关键字<code>interface</code>之后，编译生成的字节码文件仍然是：<code>Java--&gt;.class</code>。</li>
-<li>如果是<code>Java 7</code>，那么接口中可以包含的内容有：
-<ul>
-<li>1.常量</li>
-<li>2.抽象方法</li>
-</ul>
-</li>
-<li>如果是<code>Java 8</code>，还可以额外包含有：
-<ul>
-<li>3.默认方法</li>
-<li>4.静态方法</li>
-</ul>
-</li>
-<li>如果是<code>Java 9</code>，还可以额外包含有：
-<ul>
-<li>5.私有方法</li>
-</ul>
-</li>
-</ul>
-<h2 id="接口使用步骤">接口使用步骤</h2>
+<h2 id="数组声明">数组声明</h2>
 <ul>
 <li>
-<p>1.接口不能直接使用，必须有一个&quot;<strong>实现类</strong>”来实现该接口。<br>
-格式：<br>
-<code>public class 实现类名称 implements 接口名称&#123;//…&#125;</code></p>
+<p>数组的初始化：在内存当中创建一个数组，并且向其中赋予一些默认值。<br>
+两种常见的初始化方式：</p>
 </li>
 <li>
-<p>2.接口的实现类必须覆盖重写（实现）接口中所有的抽象方法。<br>
-实现：去掉abstract关键字，加上方法体大括号.</p>
+<p>1.动态初始化（指定长度）</p>
 </li>
 <li>
-<p>3.创建实现类的对象，进行使用。</p>
-<blockquote>
-<p>注意事项：<br>
-如果实现类并没有覆盖重写接口中所有的抽象方法，那么这个实现类自己就必须是抽象类。</p>
-</blockquote>
+<p>2.静态初始化（指定内容）</p>
 </li>
 </ul>
-<h2 id="接口的默认方法">接口的默认方法</h2>
+<p>动态初始化数组的格式：</p>
 <ul>
-<li>
-<p>从<code>Java 8</code>开始，接口里允许定义默认方法。<br>
-格式：<code>public default 返回值类型 方法名称（参数列表）&#123;方法体....&#125;</code></p>
-<blockquote>
-<p>备注：接口当中的默认方法，可以解决接口升级的问题。</p>
-</blockquote>
-</li>
-<li>
-<p>1.接口的默认方法，可以通过接口实现类对象，直接调用。</p>
-</li>
-<li>
-<p>2.接口的默认方法，也可以被接口实现类进行覆盖重写。</p>
-</li>
+<li>声明格式：<code>数据类型[]数组名称=new数据类型[数组长度]；</code></li>
 </ul>
-<h2 id="接口的私有方法">接口的私有方法</h2>
+<p>静态初始化数组的格式：</p>
 <ul>
-<li>从<code>Java 9</code>开始，接口当中允许定义私有方法。</li>
-<li>1.普通私有方法，解决多个默认方法之间重复代码问题格式：<br>
-<code>private 返回值类型 方法名称（参数列表）&#123;方法体....&#125;</code></li>
-<li>2.静态私有方法，解决多个静态方法之间重复代码问题格式：<br>
-<code>private static 返回值类型 方法名称（参数列表）&#123;方法体&#125;</code></li>
-</ul>
-<h2 id="接口的常量定义和使用">接口的常量定义和使用</h2>
-<ul>
-<li>
-<p>接口当中也可以定义**“成员变量**”，但是必须使用<code>public static final</code>三个关键字进行修饰。<br>
-从效果上看，这其实就是接口的<code>【常量】</code>。<br>
-格式：<br>
-<code>public static final 数据类型 常量名称 = 数据值；</code></p>
-</li>
-<li>
-<p>备注：一旦使用final关键字进行修饰，说明不可改变。</p>
-</li>
+<li>声明格式(标准)：<code>数据类型[] 数组名称 = new 数据类型[] &#123;元素1，元素2，...&#125;</code></li>
+<li>省略格式：<code>数据类型[] 数组名称 = &#123;元素1，元素2，...&#125;</code></li>
 </ul>
 <blockquote>
 <p>注意事项：<br>
-1.接口当中的常量，可以省略<code>public static final</code>，注意：不写也照样是这样。<br>
-2.接口当中的常量，必须进行赋值；不能不赋值。<br>
-3.接口中常量的名称，使用完全大写的字母，用下划线进行分隔。（推荐命名规则则</p>
+1.静态初始化没有直接指定长度，但是仍然会自动推算得到长度。</p>
+<p>2.静态初始化标准格式可以拆分成为两个步骤。</p>
+<p>3.动态初始化也可以拆分成为两个步骤。</p>
+<p>4.静态初始化一旦使用省略格式，就不能拆分成为两个步骤了。</p>
 </blockquote>
-<h2 id="注意事项-2">注意事项</h2>
-<p>使用接囗的时候，需要注意：</p>
+<blockquote>
+<p>如果不确定数组当中的具体内容，用动态初始化；否则，已经确定了具体的内容，用静态初始化</p>
+</blockquote>
+<p>使用动态初始化数组的时候，其中的元素将会自动拥有一个默认值。</p>
+<p>规则如下：</p>
 <ul>
-<li>1.接口是没有静态代码块或者构造方法的。</li>
-<li>2.一个类的直接父类是唯一的，但是一个类可以同时实现多个接口。<br>
-格式：<br>
-<code>public class MyInterfaceImpl implements MyInterfaceA，MyInterfaceBf&#123;//覆盖重写所有抽象方法&#125;</code></li>
-<li>3.如果实现类所实现的多个接口当中，存在重复的抽象方法，那么只需要覆盖重写一次即可。</li>
-<li>4.如果实现类没有覆盖重写所有接口当中的所有抽象方法，那么实现类就必须是一个抽象类。</li>
-<li>5.如果实现类锁实现的多个接口当中，存在重复的默认方法，那么实现类一定要对冲突的默认方法进行覆盖重写。</li>
-<li>6.一个类如果父类当中的方法和接口当中的默认方法产生了冲突，优先用父类当中的方法。</li>
-</ul>
-<h2 id="接口间的多继承">接口间的多继承</h2>
-<ul>
-<li>
-<p>1.类与类之间是单继承的。直接父类只有一个。</p>
-</li>
-<li>
-<p>2.类与接口之间是多实现的。一个类可以实现多个接口。</p>
-</li>
-<li>
-<p>3.接口与接口之间是多继承的。</p>
-</li>
+<li>如果是整数类型，那么默认为<code>0</code></li>
+<li>如果是浮点类型，那么默认为<code>0.0</code></li>
+<li>如果是字符类型，那么默认为<code>'\u0000'</code></li>
+<li>如果是布尔类型，那么默认为<code>false</code></li>
+<li>如果是引用类型，那么默认为<code>null</code></li>
 </ul>
 <blockquote>
-<p>注意事项：<br>
-1.多个父接口当中的抽象方法如果重复，没关系。<br>
-2.多个父接口当中的默认方法如果重复，那么子接口必须进行默认方法的覆盖重写，【而且带着<code>default</code>关键字】</p>
+<p><strong>静态初始化其实也有默认值的过程，只不过系统自动马上将默认值替换成为了大括号当中的具体数值。</strong></p>
+<p><em>数组的长度一旦创建，程序运行期间，长度不可变</em></p>
 </blockquote>
-<h1>多态</h1>
-<h2 id="多态格式">多态格式</h2>
-<ul>
-<li>代码当中体现多态性，其实就是一句话：父类引用指向子类对象。</li>
-<li>格式：</li>
-<li><code>父类名称 对象名 = new 子类名称();</code></li>
-<li><code>接口名称 对象名 = new 实现类名称();</code></li>
-</ul>
-<h2 id="多态中的成员变量">多态中的成员变量</h2>
-<ul>
-<li>1.直接通过对象名称访问成员变量：看等号左边是谁，优先用谁，没有则向上找。</li>
-<li>2.间接通过成员方法访问成员变量：看该方法属于谁，优先用谁，没有则向上找。</li>
-</ul>
-<h2 id="多态中的成员方法">多态中的成员方法</h2>
-<ul>
-<li>
-<p>在多态的代码当中，成员方法的访问规则是：看<code>new</code>的是谁，就优先用谁，没有则向上找。</p>
-<blockquote>
-<p>口诀：编译看左边，运行看右边。<br>
-成员变量：编译看左边，运行还看左边。</p>
-<p>成员方法：编译看左边，运行看右边。</p>
-</blockquote>
-</li>
-</ul>
-<h2 id="对象的向上和向下转型">对象的向上和向下转型</h2>
-<p><img src="https://upload.cc/i1/2019/12/17/Dw7Fh3.png" alt="image-20191217152136035"></p>
-<blockquote>
-<p>说明：如何才能知道一个父类引用的对象，本来是什么子类<br>
-格式：<br>
-<code>对象 instanceof 类名称</code><br>
-这将会得到一个boolean值结果，也就是判断前面的对象能不能当做后面类型的实例。</p>
-</blockquote>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Linux%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/01/Linux%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">Linux常用命令</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" itemprop="url" rel="index"><span itemprop="name">常用命令</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1.6k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>6 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Linux管理文件和目录的命令">Linux管理文件和目录的命令</h2>
-<table>
-<thead>
-<tr>
-<th>命令</th>
-<th>功能</th>
-<th>命令</th>
-<th>功能</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>pwd</td>
-<td>显示当前目录</td>
-<td>ls</td>
-<td>查看目录下的内容</td>
-</tr>
-<tr>
-<td>cd</td>
-<td>改变所在目录</td>
-<td>cat</td>
-<td>显示文件的内容</td>
-</tr>
-<tr>
-<td>grep</td>
-<td>在文件中查找某字符</td>
-<td>cp</td>
-<td>复制文件</td>
-</tr>
-<tr>
-<td>touch</td>
-<td>创建文件</td>
-<td>mv</td>
-<td>移动文件</td>
-</tr>
-<tr>
-<td>rm</td>
-<td>删除文件</td>
-<td>rmdir</td>
-<td>删除目录</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li>
-<p>pwd命令</p>
-<p>该命令的英文解释为print working directory(打印工作目录)。输入pwd命令，Linux会输出当前目录。</p>
-</li>
-<li>
-<p>cd命令</p>
-<p>cd命令用来改变所在目录。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/01/Linux%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/#more" rel="contents">
+              <a class="btn" href="/2023/03/30/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1164,7 +622,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/java%E7%AE%80%E4%BB%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1178,7 +636,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/01/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Linux学习（一）</a>
+            <a href="/2023/03/30/java%E7%AE%80%E4%BB%8B/" class="post-title-link" itemprop="url">Java语言概述</a>
         </h2>
 
         <div class="post-meta">
@@ -1188,7 +646,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1196,11 +654,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">核心知识</span></a>
+                  <a href="/categories/Java%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a>
                 </span>
             </span>
 
@@ -1212,542 +666,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.8k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>14 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>Linux操作系统</h1>
-<ul>
-<li>“一切皆文件”</li>
-</ul>
-<h2 id="系统启动流程">系统启动流程</h2>
-<p>引导图</p>
-<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502160423268.png" alt="引导图"></p>
-<ul>
-<li>
-<p>最初始阶段<br>
-当我们打开计算机电源，计算机会自动从主板的<code>BlOS</code>（Basic Input/output System）读取其中所存储的程序。这一程序通常知道一些直接连接在主板上的硬件（硬盘，网络接口，键盘，串口，并口）。现在大部分的BIOS允许你从软盘、光盘或者硬盘中选择一个来启动计算机。</p>
-</li>
-<li>
-<p>下一步，计算机将从你所选择的存储设备中读取起始的512 bytes（比如光盘一开是的512 bytes，如果我们从光盘启动的话）。这<code>512bytes</code>叫做主引导记录<code>MBR</code>（master boot record）。<code>MBR</code>会告诉电脑从该设备的某一个分区（partition）来装载引导加载程序（boot loader）。<code>Boot loader</code>储存有操作系统（OS）的相关信息，比如操作系统名称，操作系统内核（kernel）所在位置等。常用的<code>boot loader</code>有<code>GRUB</code>和<code>LILO</code>。</p>
-</li>
-<li>
-<p>随后，<code>boot loade</code>r会帮助我们加载<code>kernel</code>。<code>kernel</code>实际上是一个用来操作计算机的程序，它是计算机操作系统的内核，主要的任务是管理计算机的硬件资源，充当软件和硬件的接口。操作系统上的任何操作都要通过<code>kernel</code>传达给硬件。<code>Windows</code>和<code>Linux</code>各自有自己<code>kernel</code>。</p>
-</li>
-<li>
-<p>狭义的操作系统就是指<code>kernel</code>，广义的操作系统包括<code>kernel</code>以及<code>kernel</code>之上的各种应用。</p>
-</li>
-<li>
-<p>（Linus Torvalds与其说是Linux之父，不如说是<code>Linux kernel</code>之父。他依然负责<code>Linux kernel</code>的开发和维护。至于<code>Ubuntu</code>，<code>Red Hat</code>，它们都是基于相同的<code>kernel</code>之上，囊括了不同的应用和界面构成的一个更加完整的操作系统版本。）实际上，我们可以在多个分区安装<code>boot loader</code>，每个<code>boot loader</code>对应不同的操作系统，在读取<code>MBR</code>的时候选择我们想要启动的boot loader。这就是多操作系统的原理。</p>
-</li>
-<li>
-<p>小结：<code>BlOS -&gt; MBR -&gt; boot loader -&gt; kernel</code></p>
-</li>
-<li>
-<p>kernel</p>
-<ul>
-<li>如果我们加载的是Linux kernel，Linux kernel开始工作。kernel会首先预留自己运行所需的内存空间，然后通过驱动程序（driver）检测计算机硬件。这样，操作系统就可以知道自己有哪些硬件可用。随后，kernel会启动一个init进程。它是Linux系统中的1号进程（Linux系统没有0号进程）。到此，kernel就完成了在计算机启动阶段的工作，交接给init来管理。</li>
-<li>小结：<code>kernel -&gt; init process </code></li>
-</ul>
-</li>
-<li>
-<p><code>init process</code></p>
-<p>（根据boot loader的选项，Linux此时可以进入单用户模式（single user mode））。在此模式下，初始脚本还没有开始执行，我们可以检测并修复计算机可能存在的错误）随后，init会运行一系列的初始脚本（startup scripts），这些脚本是Linux中常见的shell scripts。这些脚本执行如下功能：</p>
-<ul>
-<li>设置计算机名称，时区，检测文件系统，挂载硬盘，清空临时文件，设置网络等</li>
-</ul>
-<p>当这些初始脚本，操作系统已经完全准备好了，只是，还没有人可以登录！！！init会给出登录（login）对话框，或者是图形化的登录界面。</p>
-</li>
-<li>
-<p>输入用户名（比如说luenci）和密码，DONE！</p>
-</li>
-<li>
-<p>在此后的过程中，你将以用户（user）luenci的身份操作电脑。此外，根据你创建用户时的设定，Linux还会将你归到某个组（group）中，比如可以是stupid组，或者是luenci组。所以你将是用户luenci，同时是luenci组的组员。（注意，组luenci和用户luenci只是重名而已，就好想你可以叫Dell，同时还是Dell公司的老板一样。你完全也可以是用户luenci，同时为stupid组的组员）</p>
-</li>
-</ul>
-<h3 id="启动级别">启动级别</h3>
-<ul>
-<li>
-<p>7种运行级别</p>
-<p>运行级别（<code>Runlevel</code>）指的是Unix或者Linux等类Unix操作系统的运行模式，不同的运行模式下系统的功能也有所有不同。Linux 系统下通常分为<code>7</code>种运行级别，分别是从<code>0</code>到<code>6</code>。各级别介绍如下：</p>
-</li>
-<li>
-<p><code>0</code>–停机模式</p>
-<ul>
-<li>在这种模式下，系统处于停机状态，系统默认运行级别不能设为<code>0</code>，否则将不能正常启动。这个运行级别主要用于关闭任务，在<code>/etc/rc0.d</code>目录下的各个连接命令都是此级别的命令，在关闭系统时，这些命令将被逐个执行。它 们会杀掉所有进程、关闭虚拟内存和交换文件、卸载文件系统和交换分区。</li>
-</ul>
-</li>
-<li>
-<p><code>1</code>– 单用户模式。</p>
-<ul>
-<li>在这种运行模下，系统处于单用户工作状态，登录用户具有root权限，文件系统被加载但是网络却没有被加载，因此也无法远程登陆。这个运行级别，只允一个用户从本地计算机上登录，<code>/etc/rc1.d</code>目录下的所有文件与此运行级别相关连，这个运行级别一般用于系统管理与维护。</li>
-</ul>
-</li>
-<li>
-<p><code>2</code> - -多用户模式。</p>
-<ul>
-<li>用户可以通过网络进行登录，但没有<code>NFS</code>（Network File System），即网络文件统。<code>/etc/rc2.d</code>目录下所有文件与此级别相连。</li>
-</ul>
-</li>
-<li>
-<p><code>3</code> - -完全多用户模式。</p>
-</li>
-<li>
-<p>用户可以通过网络进行登录，且有<code>NFS</code>，用户登陆后会进入控制台命令行模式。这也是缺省的运行模式，在这种运行级别下所有网络服务程序会一起运行。<code>/etc/rc2.d</code>录下的文件与此级别相连</p>
-</li>
-<li>
-<p><code>4</code> - -自定义模式。</p>
-<ul>
-<li>这是一种系统未使用的保留模式，<code>/etc/rc4.d</code>目录与此级别相连。这一级别是用户自定义的运行级别，用户可以根自己的需要进行一些自定义设置。如果想要运行这一级别的话，必须在<code>rc3.d</code>目录下放入连接文件，就像其他<code>rc*.d</code>目录下的文件，并指明是启动还是终止进程。</li>
-</ul>
-</li>
-<li>
-<p><code>5</code> - -图形化模式。</p>
-<ul>
-<li>在 Linux 下运行<code>X Window</code>就是使用这一运行级别，用户登录后将进入图形化的GUI界面。在这一级别下除了DNS的<code>named</code>与级别<code>3</code>不同，其余的都相同。</li>
-</ul>
-</li>
-<li>
-<p><code>6</code> – 重启模式。</p>
-<ul>
-<li>系统正常关闭并重启，默认运行级别不能设为<code>5</code>，否则系统将不能正常启动。<code>/etc/rc6.d</code>目录与此级别相连。在这一运行级别下，不会关闭电源，<code>/etc/rc6.d</code>目录下的连接与<code>rc0.d</code>目录下的连接基本相同；不同之处在于，虽然它们都执行<code>halt</code>（关闭）命令，但是给<code>halt</code>传递的参数不同，所级别<code>6</code>会重新启动系统而<code>0</code>会关闭系统。</li>
-</ul>
-</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/03/01/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%88%E4%BA%8C%EF%BC%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/01/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%88%E4%BA%8C%EF%BC%89/" class="post-title-link" itemprop="url">Linux学习（二）</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">核心知识</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.2k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>Linux操作系统（二）</h1>
-<h2 id="进程命令">进程命令</h2>
-<ul>
-<li><code>ps aux</code>  显示所有进程</li>
-<li><code>ps aux | grep ''</code> 筛选出相关进程</li>
-</ul>
-<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502204505096.png" alt=""></p>
-<ul>
-<li><code>kill  pid</code> 杀死相关的pid进程</li>
-<li><code>kill - 9 pid</code> 强制杀死进程</li>
-</ul>
-<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502204832777.png" alt=""></p>
-<ul>
-<li><code>jobs</code>查看进程的工作号</li>
-<li><code>fg %工作号</code>后台程序调到前台运行</li>
-</ul>
-<h2 id="硬盘分区">硬盘分区</h2>
-<ul>
-<li><code>fdisk -l /dev/磁盘名</code>查看对应磁盘名的详细信息</li>
-</ul>
-<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200502212407780.png" alt=""></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/03/01/Linux%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%88%E4%BA%8C%EF%BC%89/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/MQ%E7%AC%94%E8%AE%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/01/MQ%E7%AC%94%E8%AE%B0/" class="post-title-link" itemprop="url">消息队列笔记</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" itemprop="url" rel="index"><span itemprop="name">消息队列</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>消息队列介绍</h1>
-<h2 id="概念">概念</h2>
-<ul>
-<li>MQ（Message Queue，消息队列），是基础数据结构中“先进先出”的一种数据结构，是在消息的传输工程中保存消息的容器。多用于分布式系统之间进行通信等。</li>
-</ul>
-<h2 id="MQ优势">MQ优势</h2>
-<h3 id="应用解耦">应用解耦</h3>
-<p><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225748.png" alt="image-20201129132737572"></p>
-<h3 id="异步提速">异步提速</h3>
-<p><img src="https://b3logfile.com/file/2020/12/image-9d8dcb68.png?imageView2/2/interlace/1/format/webp" alt="image.png"></p>
-<h3 id="削峰填谷">削峰填谷</h3>
-<p><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225756.png" alt="image-20201129132952802"></p>
-<p><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225806.png" alt="image-20201129133010842"></p>
-<h2 id="MQ的带来的问题">MQ的带来的问题</h2>
-<h4 id="系统的可用性降低">系统的可用性降低</h4>
-<ul>
-<li>系统引入的外部依赖越多，系统的稳定性就越差。如果MQ宕机，整个业务就会受到影响。如何保证MQ的高可用？</li>
-</ul>
-<h4 id="系统的复杂度提高">系统的复杂度提高</h4>
-<ul>
-<li>MQ的加入大大增加了系统的复杂度，以前系统间是同步调用的，现在通过MQ进行一步调用。如何保证消息没有被重复消费？怎么处理消息地丢失情况？怎么保证消息传递的顺序性</li>
-</ul>
-<h4 id="一致性问题">一致性问题</h4>
-<ul>
-<li>A系统处理完业务，通过MQ给B、C、D三个系统发消息，如果B、C系统成功，D系统处理失败。如何保证消息数据的一致性？</li>
-</ul>
-<h2 id="使用MQ的场景">使用MQ的场景</h2>
-<ul>
-<li>生产者不需要从消费者处获得反馈。
-<ul>
-<li>引入消息队列之前的直接调用，其接口的返回值应该为空，即上层的请求不依赖下层返回的结果，这样也才能使异步成为可能</li>
-</ul>
-</li>
-<li>容许短暂的不一致性</li>
-<li>收益性高
-<ul>
-<li>引入MQ后系统解耦、提速、削峰等方面的收益大于管理使用MQ的成本</li>
-</ul>
-</li>
-</ul>
-<h1>RabbitMQ介绍</h1>
-<p><code>AMQP</code>，即（Advanced Message Queuing Protocal）（高级消息队列），是一个<code>网络协议</code>，是应用层协议的一个开放标准，为面向消息的中间件设计。基于此协议的客户端和消息中间件可传递消息，并不受客户端/中间件不同产品，不同的开发语言等条件的限制。</p>
-<p><img src="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png" alt="Publish path from publisher to consumer via exchange and queue"></p>
-<h2 id="RabbitMQ基础架构和组件信息">RabbitMQ基础架构和组件信息</h2>
-<p><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225820.png" alt="image-20201129161016285"></p>
-<ul>
-<li>
-<p>Broker：标识消息队列服务器实体.</p>
-</li>
-<li>
-<p>Virtual Host：虚拟主机。标识一批交换机、消息队列和相关对象。虚拟主机是共享相同的身份认证和加密环境的独立服务器域。每个vhost本质上就是一个mini版的RabbitMQ服务器，拥有自己的队列、交换器、绑定和权限机制。vhost是AMQP概念的基础，必须在链接时指定，RabbitMQ默认的vhost是 /。</p>
-</li>
-<li>
-<p>Exchange：交换器，用来接收生产者发送的消息并将这些消息路由给服务器中的队列。</p>
-</li>
-<li>
-<p>Queue：消息队列，用来保存消息直到发送给消费者。它是消息的容器，也是消息的终点。一个消息可投入一个或多个队列。消息一直在队列里面，等待消费者连接到这个队列将其取走。</p>
-</li>
-<li>
-<p>Banding：绑定，用于消息队列和交换机之间的关联。一个绑定就是基于路由键将交换机和消息队列连接起来的路由规则，所以可以将交换器理解成一个由绑定构成的路由表。</p>
-</li>
-<li>
-<p>Channel：信道，多路复用连接中的一条独立的双向数据流通道。信道是建立在真实的TCP连接内地虚拟链接，AMQP命令都是通过信道发出去的，不管是发布消息、订阅队列还是接收消息，这些动作都是通过信道完成。因为对于操作系统来说，建立和销毁TCP都是非常昂贵的开销，所以引入了信道的概念，以复用一条TCP连接。</p>
-</li>
-<li>
-<p>Connection：网络连接，比如一个TCP连接。</p>
-</li>
-<li>
-<p>Publisher：消息的生产者，也是一个向交换器发布消息的客户端应用程序。</p>
-</li>
-<li>
-<p>Consumer：消息的消费者，表示一个从一个消息队列中取得消息的客户端应用程序。</p>
-</li>
-<li>
-<p>Message：消息，消息是不具名的，它是由消息头和消息体组成。消息体是不透明的，而消息头则是由一系列的可选属性组成，这些属性包括routing-key(路由键)、priority(优先级)、delivery-mode(消息可能需要持久性存储[消息的路由模式])等。</p>
-</li>
-</ul>
-<h2 id="RabbitMQ的工作模式">RabbitMQ的工作模式</h2>
-<blockquote>
-<p>原文链接：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/Jeely/p/10784013.html">https://www.cnblogs.com/Jeely/p/10784013.html</a></p>
-</blockquote>
-<h3 id="1-1simple简单模式">1.1simple简单模式</h3>
-<p><img src="https://img-blog.csdnimg.cn/20181221114009759.png" alt="在这里插入图片描述"></p>
-<ol>
-<li>消息产生着and将消息放入队列</li>
-<li>消息的消费者(consumer) 监听(while) 消息队列,如果队列中有消息,就消费掉,消息被拿走后,自动从队列中删除(隐患 消息可能没有被消费者正确处理,已经从队列中消失了,造成消息的丢失)应用场景:聊天(中间有一个过度的服务器;p端,c端)</li>
-</ol>
-<h4 id="生产者代码样例">生产者代码样例</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line"></span><br><span class="line">channel = connection.channel()</span><br><span class="line"><span class="comment"># 设置消息队列</span></span><br><span class="line">channel.queue_declare(queue=<span class="string">&#x27;TEST01&#x27;</span>)</span><br><span class="line"><span class="comment"># 向消息队列中发消息</span></span><br><span class="line">channel.basic_publish(exchange=<span class="string">&#x27;&#x27;</span>,</span><br><span class="line">                      routing_key=<span class="string">&#x27;TEST01&#x27;</span>,</span><br><span class="line">                      body=<span class="string">&#x27;Hello World I am Luenci&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot; [x] Sent &#x27;Hello World!&#x27;&quot;</span>)</span><br><span class="line">connection.close()</span><br></pre></td></tr></table></figure>
-<h4 id="消费者代码样例">消费者代码样例</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line"></span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.queue_declare(queue=<span class="string">&#x27;TEST01&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">callback</span>(<span class="params">ch, method, properties, body</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot; [x] Received %r&quot;</span> % body)</span><br><span class="line"></span><br><span class="line">channel.basic_consume(on_message_callback=callback,</span><br><span class="line">                      queue=<span class="string">&#x27;TEST01&#x27;</span>,</span><br><span class="line">                      auto_ack=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27; [*] Waiting for messages. To exit press CTRL+C&#x27;</span>)</span><br><span class="line">channel.start_consuming()</span><br></pre></td></tr></table></figure>
-<h3 id="1-2-work工作模式-资源的竞争">1.2 work工作模式(资源的竞争)</h3>
-<p><img src="https://img-blog.csdnimg.cn/20181221114036231.png" alt="在这里插入图片描述"></p>
-<ol>
-<li>
-<p>**说明：**一对多模式，一个生产者，多个消费者，一个队列，每个消费者从队列中获取唯一的消息。</p>
-<p>有两种消息分发机制，轮询分发和公平分发：</p>
-<p>轮询分发的特点是将消息轮流发送给每个消费者，在实际情况中，多个消费者，难免有的处理得快，有的处理得慢，如果都要等到一个消费者处理完，才把消息发送给下一个消费者，效率就大大降低了。</p>
-<p>而公平分发的特点是，只要有消费者处理完，就会把消息发送给目前空闲的消费者，这样就提高消费效率了。</p>
-</li>
-<li>
-<p>消息产生者将消息放入队列消费者可以有多个,消费者1,消费者2,同时监听同一个队列,消息被消费? C1 C2共同争抢当前的消息队列内容,谁先拿到谁负责消费消息(隐患,高并发情况下,默认会产生某一个消息被多个消费者共同使用,可以设置一个开关(syncronize,与同步锁的性能不一样) 保证一条消息只能被一个消费者使用)</p>
-</li>
-<li>
-<p>应用场景:红包;大项目中的资源调度(任务分配系统不需知道哪一个任务执行系统在空闲,直接将任务扔到消息队列中,空闲的系统自动争抢)</p>
-</li>
-</ol>
-<h4 id="生产者">生产者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.queue_declare(queue=<span class="string">&#x27;task_queue&#x27;</span>, durable=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">message = <span class="string">&#x27; &#x27;</span>.join(sys.argv[<span class="number">1</span>:]) <span class="keyword">or</span> <span class="string">&quot;Hello World!&quot;</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="number">10</span>):</span><br><span class="line">    channel.basic_publish(</span><br><span class="line">        exchange=<span class="string">&#x27;&#x27;</span>,</span><br><span class="line">        routing_key=<span class="string">&#x27;task_queue&#x27;</span>,</span><br><span class="line">        body=message,</span><br><span class="line">        properties=pika.BasicProperties(</span><br><span class="line">            delivery_mode=<span class="number">2</span>,  <span class="comment"># make message persistent</span></span><br><span class="line">        ))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot; [x] Sent %r&quot;</span> % message)</span><br><span class="line">connection.close()</span><br></pre></td></tr></table></figure>
-<h4 id="消费者">消费者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.queue_declare(queue=<span class="string">&#x27;task_queue&#x27;</span>, durable=<span class="literal">True</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27; [*] Waiting for messages. To exit press CTRL+C&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">callback</span>(<span class="params">ch, method, properties, body</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot; [x] Received %r&quot;</span> % body)</span><br><span class="line">    time.sleep(body.count(<span class="string">b&#x27;.&#x27;</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot; [x] Done&quot;</span>)</span><br><span class="line">    ch.basic_ack(delivery_tag=method.delivery_tag)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 公平分发</span></span><br><span class="line">channel.basic_qos(prefetch_count=<span class="number">1</span>)</span><br><span class="line">channel.basic_consume(queue=<span class="string">&#x27;task_queue&#x27;</span>, on_message_callback=callback)</span><br><span class="line"></span><br><span class="line">channel.start_consuming()</span><br></pre></td></tr></table></figure>
-<h3 id="1-3-publish-subscribe发布订阅-共享资源">1.3 publish/subscribe发布订阅(共享资源)</h3>
-<p><img src="https://img-blog.csdnimg.cn/20181221114050657.png" alt="在这里插入图片描述"></p>
-<ol>
-<li>X代表交换机rabbitMQ内部组件,erlang 消息产生者是代码完成,代码的执行效率不高,消息产生者将消息放入交换机,交换机发布订阅把消息发送到所有消息队列中,对应消息队列的消费者拿到消息进行消费</li>
-<li>相关场景:邮件群发,群聊天,广播(广告)</li>
-</ol>
-<h4 id="生产者-2">生产者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.exchange_declare(exchange=<span class="string">&#x27;logs&#x27;</span>, exchange_type=<span class="string">&#x27;fanout&#x27;</span>)</span><br><span class="line"></span><br><span class="line">message = <span class="string">&#x27; &#x27;</span>.join(sys.argv[<span class="number">1</span>:]) <span class="keyword">or</span> <span class="string">&quot;info: Hello World!&quot;</span></span><br><span class="line">channel.basic_publish(exchange=<span class="string">&#x27;logs&#x27;</span>, routing_key=<span class="string">&#x27;&#x27;</span>, body=message)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot; [x] Sent %r&quot;</span> % message)</span><br><span class="line">connection.close()</span><br></pre></td></tr></table></figure>
-<h4 id="消费者-2">消费者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.exchange_declare(exchange=<span class="string">&#x27;logs&#x27;</span>, exchange_type=<span class="string">&#x27;fanout&#x27;</span>)</span><br><span class="line"></span><br><span class="line">result = channel.queue_declare(queue=<span class="string">&#x27;&#x27;</span>, exclusive=<span class="literal">True</span>)</span><br><span class="line">queue_name = result.method.queue</span><br><span class="line"></span><br><span class="line">channel.queue_bind(exchange=<span class="string">&#x27;logs&#x27;</span>, queue=queue_name)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27; [*] Waiting for logs. To exit press CTRL+C&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">callback</span>(<span class="params">ch, method, properties, body</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot; [x] %r&quot;</span> % body)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">channel.basic_consume(</span><br><span class="line">    queue=queue_name, on_message_callback=callback, auto_ack=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">channel.start_consuming()</span><br></pre></td></tr></table></figure>
-<h3 id="1-4-routing路由模式">1.4 routing路由模式</h3>
-<p><img src="https://img-blog.csdnimg.cn/20181221114420299.png" alt="在这里插入图片描述"></p>
-<ol>
-<li>消息生产者将消息发送给交换机按照路由判断,路由是字符串(info) 当前产生的消息携带路由字符(对象的方法),交换机根据路由的key,只能匹配上路由key对应的消息队列,对应的消费者才能消费消息;</li>
-<li>根据业务功能定义路由字符串</li>
-<li>从系统的代码逻辑中获取对应的功能字符串,将消息任务扔到对应的队列中业务场景:error 通知;EXCEPTION;错误通知的功能;传统意义的错误通知;客户通知;利用key路由,可以将程序中的错误封装成消息传入到消息队列中,开发者可以自定义消费者,实时接收错误;</li>
-</ol>
-<h4 id="生产者-3">生产者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.exchange_declare(exchange=<span class="string">&#x27;direct_logs&#x27;</span>, exchange_type=<span class="string">&#x27;direct&#x27;</span>)</span><br><span class="line"></span><br><span class="line">severity = sys.argv[<span class="number">1</span>] <span class="keyword">if</span> <span class="built_in">len</span>(sys.argv) &gt; <span class="number">1</span> <span class="keyword">else</span> <span class="string">&#x27;info&#x27;</span></span><br><span class="line">message = <span class="string">&#x27; &#x27;</span>.join(sys.argv[<span class="number">2</span>:]) <span class="keyword">or</span> <span class="string">&#x27;Hello World!&#x27;</span></span><br><span class="line"></span><br><span class="line">channel.basic_publish(</span><br><span class="line">    exchange=<span class="string">&#x27;direct_logs&#x27;</span>, routing_key=severity, body=message)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot; [x] Sent %r:%r&quot;</span> % (severity, message))</span><br><span class="line"></span><br><span class="line">connection.close()</span><br></pre></td></tr></table></figure>
-<h4 id="消费者-3">消费者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.exchange_declare(exchange=<span class="string">&#x27;logs&#x27;</span>, exchange_type=<span class="string">&#x27;fanout&#x27;</span>)</span><br><span class="line"></span><br><span class="line">result = channel.queue_declare(queue=<span class="string">&#x27;&#x27;</span>, exclusive=<span class="literal">True</span>)</span><br><span class="line">queue_name = result.method.queue</span><br><span class="line"></span><br><span class="line">channel.queue_bind(exchange=<span class="string">&#x27;logs&#x27;</span>, queue=queue_name)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27; [*] Waiting for logs. To exit press CTRL+C&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">callback</span>(<span class="params">ch, method, properties, body</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot; [x] %r&quot;</span> % body)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">channel.basic_consume(</span><br><span class="line">    queue=queue_name, on_message_callback=callback, auto_ack=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">channel.start_consuming()</span><br></pre></td></tr></table></figure>
-<h3 id="1-5-topic-主题模式-路由模式的一种">1.5 topic 主题模式(路由模式的一种)</h3>
-<p><img src="https://img-blog.csdnimg.cn/20181221114208408.png" alt="在这里插入图片描述"></p>
-<ol>
-<li>星号井号代表通配符</li>
-<li>星号代表多个单词,井号代表一个单词</li>
-<li>路由功能添加模糊匹配</li>
-<li>消息产生者产生消息,把消息交给交换机</li>
-<li>交换机根据key的规则模糊匹配到对应的队列,由队列的监听消费者接收消息消费</li>
-</ol>
-<h4 id="生产者-4">生产者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.exchange_declare(exchange=<span class="string">&#x27;topic_logs&#x27;</span>, exchange_type=<span class="string">&#x27;topic&#x27;</span>)</span><br><span class="line"></span><br><span class="line">routing_key = sys.argv[<span class="number">1</span>] <span class="keyword">if</span> <span class="built_in">len</span>(sys.argv) &gt; <span class="number">2</span> <span class="keyword">else</span> <span class="string">&#x27;anonymous.info&#x27;</span></span><br><span class="line">message = <span class="string">&#x27; &#x27;</span>.join(sys.argv[<span class="number">2</span>:]) <span class="keyword">or</span> <span class="string">&#x27;Hello World!&#x27;</span></span><br><span class="line"></span><br><span class="line">channel.basic_publish(</span><br><span class="line">    exchange=<span class="string">&#x27;topic_logs&#x27;</span>, routing_key=routing_key, body=message)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot; [x] Sent %r:%r&quot;</span> % (routing_key, message))</span><br><span class="line"></span><br><span class="line">connection.close()</span><br></pre></td></tr></table></figure>
-<h4 id="消费者-4">消费者</h4>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="keyword">import</span> pika</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line">auth = pika.PlainCredentials(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;password&#x27;</span>)</span><br><span class="line">connection = pika.BlockingConnection(pika.ConnectionParameters(<span class="string">&#x27;主机名&#x27;</span>, <span class="string">&#x27;5672&#x27;</span>, <span class="string">&#x27;/&#x27;</span>, auth))</span><br><span class="line">channel = connection.channel()</span><br><span class="line"></span><br><span class="line">channel.exchange_declare(exchange=<span class="string">&#x27;topic_logs&#x27;</span>, exchange_type=<span class="string">&#x27;topic&#x27;</span>)</span><br><span class="line"></span><br><span class="line">result = channel.queue_declare(<span class="string">&#x27;&#x27;</span>, exclusive=<span class="literal">True</span>)</span><br><span class="line">queue_name = result.method.queue</span><br><span class="line"></span><br><span class="line">binding_keys = sys.argv[<span class="number">1</span>:]</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> binding_keys:</span><br><span class="line">    sys.stderr.write(<span class="string">&quot;Usage: %s [binding_key]...\n&quot;</span> % sys.argv[<span class="number">0</span>])</span><br><span class="line">    sys.exit(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> binding_key <span class="keyword">in</span> binding_keys:</span><br><span class="line">    channel.queue_bind(</span><br><span class="line">        exchange=<span class="string">&#x27;topic_logs&#x27;</span>, queue=queue_name, routing_key=binding_key)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27; [*] Waiting for logs. To exit press CTRL+C&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">callback</span>(<span class="params">ch, method, properties, body</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot; [x] %r:%r&quot;</span> % (method.routing_key, body))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">channel.basic_consume(</span><br><span class="line">    queue=queue_name, on_message_callback=callback, auto_ack=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">channel.start_consuming()</span><br></pre></td></tr></table></figure>
-<h1>RabbitMQ速度提升</h1>
-<ul>
-<li>消息消费速度主要受到发送消息时间、消费者处理时间、消息Ack时间这几个时间的影响</li>
-</ul>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/bossma/p/practices-on-improving-the-speed-of-rabbitmq-consumption.html">https://www.cnblogs.com/bossma/p/practices-on-improving-the-speed-of-rabbitmq-consumption.html</a></p>
-</blockquote>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/01/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" class="post-title-link" itemprop="url">MySQL数据库引擎和数据类型</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>3.2k</span>
+              <span>3.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -1766,93 +685,47 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="数据库引擎介绍"><strong>数据库引擎介绍</strong></h2>
-<h3 id="前言">前言</h3>
+          <h2 id="Java语言简史">Java语言简史</h2>
 <ul>
-<li>1、存储引擎其实就是对于数据库文件的一种存取机制，如何实现存储数据，如何为存储的数据建立索引以及如何更新，查询数据等技术实现的方法。</li>
-<li>2、MySQL中的数据用各种不同的技术存储在文件（或内存）中，这些技术中的每一种技术都使用不同的存储机制，索引技巧，锁定水平并且最终提供广泛的不同功能和能力。在MySQL中将这些不同的技术及配套的相关功能称为存储引擎。</li>
-<li>3、根据需求可以在表中设置不同的存储引擎。</li>
+<li>Java语言是美国Sun公司（Stanford University Network），在1995年推出的高级编程语言。所谓编程语言，是计算机的语言，人们可以使用编程语言对计算机下达命令，让计算机完成人们需要的功能。</li>
 </ul>
-<h3 id="查看mysql中的引擎">查看mysql中的引擎</h3>
-<p><img src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200605131656597.png" alt="查看引擎"></p>
-<h3 id="MySQL中常用的几种存储引擎">MySQL中常用的几种存储引擎</h3>
-<h3 id="1．MyISAM存储引擎">1．<code>MyISAM</code>存储引擎</h3>
+<p>Java语言发展历史</p>
 <ul>
-<li>
-<p>存放的位置</p>
-<ul>
-<li>MySQL如果使用<code>MyISAM</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>.MYD</code>、<code>.MYI</code>，默认存放位置是<code>C:\Documentsand Settings\All Users\Application Data\MySQL\MySQL Server 5.1\data</code></li>
+<li>1995年Sun公司发布Java1.0版本</li>
+<li>1997年发布Java1.1版本</li>
+<li>1998年发布Java1.2版本</li>
+<li>2000年发布Java1.3版本</li>
+<li>2002年发布Java1.4版本</li>
+<li>2004年发布Java5版本（更新频率较大）</li>
+<li>2006年发布Java6版本</li>
+<li>2009年Oracle甲骨文公司收购Sun公司，并于2011发布Java7版本</li>
+<li>2014年发布Java8版本（更新频率较大，市场占有率最大）</li>
+<li>2017年9月发布Java9版本</li>
+<li>2018年3月发布Java10版本</li>
 </ul>
-</li>
-<li>
-<p>存放的方式</p>
+<h2 id="Java-平台的三个版本">Java 平台的三个版本</h2>
+<p>作用：</p>
 <ul>
-<li><code>MyISAM</code> 这种存储引擎不支持事务，不支持行级锁，只支持并发插入的表锁，主要用于高负载的select。</li>
+<li>这使软件开发人员、服务提供商和设备生产商可以针对特定的市场进行开发：</li>
 </ul>
-</li>
-<li>
-<p>索引的方式</p>
+<h3 id="Java-SE（Java-Platform，Standard-Edition）">Java SE（Java Platform，Standard Edition）</h3>
 <ul>
-<li><code>MyISAM</code>也是使用B+tree索引但是和<code>Innodb</code>的在具体实现上有些不同。</li>
+<li>Java SE 以前称为 J2SE。它允许开发和部署在桌面、服务器、嵌入式环境和实时环境中使用的 Java 应用程序。Java SE 包含了支持 Java Web 服务开发的类，并为 Java Platform，Enterprise Edition（Java EE）提供基础。</li>
 </ul>
-</li>
-</ul>
-<p>该引擎基于<code>ISAM</code>数据库引擎，除了提供<code>ISAM</code>里所没有的索引和字段管理等大量功能，<code>MyISAM</code>还使用一种表格锁定的机制来优化多个并发的读写操作，但是需要经常运行OPTIMIZE TABLE命令，来恢复被更新机制所浪费的空间，否则碎片也会随之增加，最终影响数据访问性能。<code>MyISAM</code>还有一些有用的扩展，例如用来修复数据库文件的<code>MyISAMChk</code>工具和用来恢复浪费空间的 <code>MyISAMPack</code>工具。<code>MyISAM</code>强调了快速读取操作，主要用于高负载的select，这可能也是MySQL深受Web开发的主要原因：在Web开发中进行的大量数据操作都是读取操作，所以大多数虚拟主机提供商和Internet平台提供商（Internet Presence Provider, <code>IPP</code>）只允许使用<code>MyISAM</code>格式。</p>
+<h3 id="Java-EE（Java-Platform，Enterprise-Edition）">Java EE（Java Platform，Enterprise Edition）</h3>
 <ul>
-<li>
-<p><code>MyISAM</code>类型的表支持三种不同的存储结构：静态型、动态型、压缩型。</p>
-</li>
-<li>
-<p>静态型：指定义的表列的大小是固定（即不含有：<code>xblob</code>、<code>xtext</code>、<code>varchar</code>等长度可变的数据类型），这样MySQL就会自动使用静态<code>MyISAM</code>格式。使用静态格式的表的性能比较高，因为在维护和访问以预定格式存储数据时需要的开销很低；但这种高性能是以空间为代价换来的，因为在定义的时候是固定的，所以不管列中的值有多大，都会以最大值为准，占据了整个空间。</p>
-</li>
-<li>
-<p>动态型：如果列（即使只有一列）定义为动态的（<code>xblob</code>, <code>xtext</code>, <code>varchar</code>等数据类型），这时<code>MyISAM</code>就自动使用动态型，虽然动态型的表占用了比静态型表较少的空间，但带来了性能的降低，因为如果某个字段的内容发生改变则其位置很可能需要移动，这样就会导致碎片的产生，随着数据变化的增多，碎片也随之增加，数据访问性能会随之降低。<br>
-对于因碎片增加而降低数据访问性这个问题，有两种解决办法：</p>
-<ul>
-<li>a、尽可能使用静态数据类型；</li>
-<li>b、经常使用<code>optimize table table_name</code>语句整理表的碎片，恢复由于表数据的更新和删除导致的空间丢失。如果存储引擎不支持<code> optimize table table_name</code>则可以转储并 重新加载数据，这样也可以减少碎片；</li>
+<li>这个版本以前称为 J2EE。企业版本帮助开发和部署可移植、健壮、可伸缩且安全的服务器端 Java 应用程序。Java EE 是在 Java SE 的基础上构建的，它提供 Web 服务、组件模型、管理和通信 API，可以用来实现企业级的面向服务体系结构（service-oriented architecture，SOA）和 Web 2.0 应用程序。</li>
 </ul>
-</li>
-<li>
-<p>压缩型：如果在数据库中创建在整个生命周期内只读的表，则应该使用<code>MyISAM</code>的压缩型表来减少空间的占用。</p>
-</li>
+<h3 id="Java-ME（Java-Platform，Micro-Edition）">Java ME（Java Platform，Micro Edition）</h3>
+<ul>
+<li>这个版本以前称为 J2ME。Java ME 为在移动设备和嵌入式设备（比如手机、PDA、电视机顶盒和打印机）上运行的应用程序提供一个健壮且灵活的环境。Java ME 包括灵活的用户界面、健壮的安全模型、许多内置的网络协议以及对可以动态下载的连网和离线应用程序的丰富支持。基于 Java ME 规范的应用程序只需编写一次，就可以用于许多设备，而且可以利用每个设备的本机功能。</li>
 </ul>
 <blockquote>
-<p>优缺点：<code>MyISAM</code>的优势在于占用空间小，处理速度快。缺点是不支持事务的完整性和并发性。</p>
-</blockquote>
-<h3 id="2．innoDB存储引擎">2．<code>innoDB</code>存储引擎</h3>
-<ul>
-<li>
-<p>存储位置</p>
-<ul>
-<li>MySQL如果使用<code>InnoDB</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>ibdata1</code>、<code>.ibd</code>，存放位置有两个，<code>.frm</code>文件默认存放位置是<code>C:\Documents and Settings\All Users\ApplicationData\MySQL\MySQL Server 5.1\data</code>，<code>ibdata1</code>、<code>.ibd</code>文件默认存放位置是MySQL安装目录下的data文件夹。</li>
-</ul>
-</li>
-<li>
-<p><code>innodb</code>存储引擎的mysql表提供了事务，回滚以及系统崩溃修复能力和多版本迸发控制的事务的安全。</p>
-</li>
-<li>
-<p><code>innodb</code>支持自增长列（auto_increment）,自增长列的值不能为空，如果在使用的时候为空的话怎会进行自动存现有的值开始增值，如果有但是比现在的还大，则就保存这个值。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎支持外键（foreign key） ,外键所在的表称为子表而所依赖的表称为父表。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎最重要的是支持事务，以及事务相关联功能。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎支持<code>mvcc</code>的行级锁。</p>
-</li>
-<li>
-<p><code>innodb</code>存储引擎索引使用的是B+Tree</p>
-</li>
-</ul>
-<blockquote>
-<p>优缺点：<code>InnoDB</code>的优势在于提供了良好的事务处理、崩溃修复能力和并发控制。缺点是读写效率较差，占用的数据空间相对较大。</p>
+<p>开发环境，推荐Eclipse,NetBeans,这两个IDE可以挂接对应的插件，进行开发。还有一点，那就是这三个应用，se,标准应用，以学习为主，由于界面，开发成本，速度等问题，很少用来做程序，但不是说，他不能做程序，Eclipse,NetBeans,都是javase写起来的。Me,移动设备应用，对于一些中高端应用还好了！以前用他做过手机游戏，呵呵呵！EE,企业级解决方案，开发套件全部免费，可控性好，安全性高，乃是当前B2B的规范。再者，这三个应用，都需要虚拟机的支持。</p>
 </blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/01/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/#more" rel="contents">
+              <a class="btn" href="/2023/03/30/java%E7%AE%80%E4%BB%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1876,7 +749,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/01/Mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%87%BD%E6%95%B0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/pandas%E5%87%BD%E6%95%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1890,7 +763,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/01/Mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%87%BD%E6%95%B0/" class="post-title-link" itemprop="url">MySQL数据库函数</a>
+            <a href="/2023/03/30/pandas%E5%87%BD%E6%95%B0/" class="post-title-link" itemprop="url">Pandas函数</a>
         </h2>
 
         <div class="post-meta">
@@ -1900,7 +773,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-01 10:40:53" itemprop="dateCreated datePublished" datetime="2023-03-01T10:40:53+00:00">2023-03-01</time>
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1908,7 +781,7 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
+                  <a href="/categories/python%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/" itemprop="url" rel="index"><span itemprop="name">python数据挖掘</span></a>
                 </span>
             </span>
 
@@ -1920,7 +793,344 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
+              <span>2.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>【python】Pandas中DataFrame基本函数整理</h1>
+<h5 id="构造函数">构造函数</h5>
+<ul>
+<li>DataFrame([data, index, columns, dtype, copy]) 	#构造数据框1</li>
+</ul>
+<h5 id="属性和数据">属性和数据</h5>
+<p>DataFrame.axes                                #index: 行标签；columns: 列标签<br>
+DataFrame.as_matrix([columns])                #转换为矩阵<br>
+DataFrame.dtypes                              #返回数据的类型<br>
+DataFrame.ftypes                              #返回每一列的 数据类型float64:dense<br>
+DataFrame.get_dtype_counts()                  #返回数据框数据类型的个数<br>
+DataFrame.get_ftype_counts()                  #返回数据框数据类型float64:dense的个数<br>
+DataFrame.select_dtypes([include, include])   #根据数据类型选取子数据框<br>
+DataFrame.values                              #Numpy的展示方式<br>
+DataFrame.axes                                #返回横纵坐标的标签名<br>
+DataFrame.ndim                                #返回数据框的纬度<br>
+DataFrame.size                                #返回数据框元素的个数<br>
+DataFrame.shape                               #返回数据框的形状<br>
+DataFrame.memory_usage()                      #每一列的存储12345678910111213</p>
+<h5 id="类型转换">类型转换</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.astype(dtype[, copy, errors])       <span class="comment">#转换数据类型</span></span><br><span class="line">DataFrame.copy([deep])                        <span class="comment">#deep深度复制数据</span></span><br><span class="line">DataFrame.isnull()                            <span class="comment">#以布尔的方式返回空值</span></span><br><span class="line">DataFrame.notnull()                           <span class="comment">#以布尔的方式返回非空值1234</span></span><br></pre></td></tr></table></figure>
+<h5 id="索引和迭代">索引和迭代</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.head([n])                           <span class="comment">#返回前n行数据</span></span><br><span class="line">DataFrame.at                                  <span class="comment">#快速标签常量访问器</span></span><br><span class="line">DataFrame.iat                                 <span class="comment">#快速整型常量访问器</span></span><br><span class="line">DataFrame.loc                                 <span class="comment">#标签定位，使用名称</span></span><br><span class="line">DataFrame.iloc                                <span class="comment">#整型定位，使用数字</span></span><br><span class="line">DataFrame.insert(loc, column, value)          <span class="comment">#在特殊地点loc[数字]插入column[列名]某列数据</span></span><br><span class="line">DataFrame.<span class="built_in">iter</span>()                              <span class="comment">#Iterate over infor axis</span></span><br><span class="line">DataFrame.iteritems()                         <span class="comment">#返回列名和序列的迭代器</span></span><br><span class="line">DataFrame.iterrows()                          <span class="comment">#返回索引和序列的迭代器</span></span><br><span class="line">DataFrame.itertuples([index, name])           <span class="comment">#Iterate over DataFrame rows as namedtuples, with index value as first element of the tuple.</span></span><br><span class="line">DataFrame.lookup(row_labels, col_labels)      <span class="comment">#Label-based “fancy indexing” function for DataFrame.</span></span><br><span class="line">DataFrame.pop(item)                           <span class="comment">#返回删除的项目</span></span><br><span class="line">DataFrame.tail([n])                           <span class="comment">#返回最后n行</span></span><br><span class="line">DataFrame.xs(key[, axis, level, drop_level])  <span class="comment">#Returns a cross-section (row(s) or column(s)) from the Series/DataFrame.</span></span><br><span class="line">DataFrame.isin(values)                        <span class="comment">#是否包含数据框中的元素</span></span><br><span class="line">DataFrame.where(cond[, other, inplace, …])    <span class="comment">#条件筛选</span></span><br><span class="line">DataFrame.mask(cond[, other, inplace, …])     <span class="comment">#Return an object of same shape as self and whose corresponding entries are from self where cond is False and otherwise are from other.</span></span><br><span class="line">DataFrame.query(expr[, inplace])              <span class="comment">#Query the columns of a frame with a boolean expression.123456789101112131415161718</span></span><br></pre></td></tr></table></figure>
+<h5 id="二元运算">二元运算</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.add(other[,axis,fill_value])        <span class="comment">#加法，元素指向</span></span><br><span class="line">DataFrame.sub(other[,axis,fill_value])        <span class="comment">#减法，元素指向</span></span><br><span class="line">DataFrame.mul(other[, axis,fill_value])       <span class="comment">#乘法，元素指向</span></span><br><span class="line">DataFrame.div(other[, axis,fill_value])       <span class="comment">#小数除法，元素指向</span></span><br><span class="line">DataFrame.truediv(other[, axis, level, …])    <span class="comment">#真除法，元素指向</span></span><br><span class="line">DataFrame.floordiv(other[, axis, level, …])   <span class="comment">#向下取整除法，元素指向</span></span><br><span class="line">DataFrame.mod(other[, axis,fill_value])       <span class="comment">#模运算，元素指向</span></span><br><span class="line">DataFrame.<span class="built_in">pow</span>(other[, axis,fill_value])       <span class="comment">#幂运算，元素指向</span></span><br><span class="line">DataFrame.radd(other[, axis,fill_value])      <span class="comment">#右侧加法，元素指向</span></span><br><span class="line">DataFrame.rsub(other[, axis,fill_value])      <span class="comment">#右侧减法，元素指向</span></span><br><span class="line">DataFrame.rmul(other[, axis,fill_value])      <span class="comment">#右侧乘法，元素指向</span></span><br><span class="line">DataFrame.rdiv(other[, axis,fill_value])      <span class="comment">#右侧小数除法，元素指向</span></span><br><span class="line">DataFrame.rtruediv(other[, axis, …])          <span class="comment">#右侧真除法，元素指向</span></span><br><span class="line">DataFrame.rfloordiv(other[, axis, …])         <span class="comment">#右侧向下取整除法，元素指向</span></span><br><span class="line">DataFrame.rmod(other[, axis,fill_value])      <span class="comment">#右侧模运算，元素指向</span></span><br><span class="line">DataFrame.rpow(other[, axis,fill_value])      <span class="comment">#右侧幂运算，元素指向</span></span><br><span class="line">DataFrame.lt(other[, axis, level])            <span class="comment">#类似Array.lt</span></span><br><span class="line">DataFrame.gt(other[, axis, level])            <span class="comment">#类似Array.gt</span></span><br><span class="line">DataFrame.le(other[, axis, level])            <span class="comment">#类似Array.le</span></span><br><span class="line">DataFrame.ge(other[, axis, level])            <span class="comment">#类似Array.ge</span></span><br><span class="line">DataFrame.ne(other[, axis, level])            <span class="comment">#类似Array.ne</span></span><br><span class="line">DataFrame.eq(other[, axis, level])            <span class="comment">#类似Array.eq</span></span><br><span class="line">DataFrame.combine(other,func[,fill_value, …]) <span class="comment">#Add two DataFrame objects and do not propagate NaN values, so if for a</span></span><br><span class="line">DataFrame.combine_first(other)                <span class="comment">#Combine two DataFrame objects and default to non-null values in frame calling the method.123456789101112131415161718192021222324</span></span><br></pre></td></tr></table></figure>
+<h5 id="函数应用-分组-窗口">函数应用&amp;分组&amp;窗口</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.apply(func[, axis, broadcast, …])   <span class="comment">#应用函数</span></span><br><span class="line">DataFrame.applymap(func)                      <span class="comment">#Apply a function to a DataFrame that is intended to operate elementwise, i.e.</span></span><br><span class="line">DataFrame.aggregate(func[, axis])             <span class="comment">#Aggregate using callable, string, dict, or list of string/callables</span></span><br><span class="line">DataFrame.transform(func, *args, **kwargs)    <span class="comment">#Call function producing a like-indexed NDFrame</span></span><br><span class="line">DataFrame.groupby([by, axis, level, …])       <span class="comment">#分组</span></span><br><span class="line">DataFrame.rolling(window[, min_periods, …])   <span class="comment">#滚动窗口</span></span><br><span class="line">DataFrame.expanding([min_periods, freq, …])   <span class="comment">#拓展窗口</span></span><br><span class="line">DataFrame.ewm([com, span, halflife,  …])      <span class="comment">#指数权重窗口12345678</span></span><br></pre></td></tr></table></figure>
+<h5 id="描述统计学">描述统计学</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.<span class="built_in">abs</span>()                               <span class="comment">#返回绝对值</span></span><br><span class="line">DataFrame.<span class="built_in">all</span>([axis, bool_only, skipna])      <span class="comment">#Return whether all elements are True over requested axis</span></span><br><span class="line">DataFrame.<span class="built_in">any</span>([axis, bool_only, skipna])      <span class="comment">#Return whether any element is True over requested axis</span></span><br><span class="line">DataFrame.clip([lower, upper, axis])          <span class="comment">#Trim values at input threshold(s).</span></span><br><span class="line">DataFrame.clip_lower(threshold[, axis])       <span class="comment">#Return copy of the input with values below given value(s) truncated.</span></span><br><span class="line">DataFrame.clip_upper(threshold[, axis])       <span class="comment">#Return copy of input with values above given value(s) truncated.</span></span><br><span class="line">DataFrame.corr([method, min_periods])         <span class="comment">#返回本数据框成对列的相关性系数</span></span><br><span class="line">DataFrame.corrwith(other[, axis, drop])       <span class="comment">#返回不同数据框的相关性</span></span><br><span class="line">DataFrame.count([axis, level, numeric_only])  <span class="comment">#返回非空元素的个数</span></span><br><span class="line">DataFrame.cov([min_periods])                  <span class="comment">#计算协方差</span></span><br><span class="line">DataFrame.cummax([axis, skipna])              <span class="comment">#Return cumulative max over requested axis.</span></span><br><span class="line">DataFrame.cummin([axis, skipna])              <span class="comment">#Return cumulative minimum over requested axis.</span></span><br><span class="line">DataFrame.cumprod([axis, skipna])             <span class="comment">#返回累积</span></span><br><span class="line">DataFrame.cumsum([axis, skipna])              <span class="comment">#返回累和</span></span><br><span class="line">DataFrame.describe([percentiles,include, …])  <span class="comment">#整体描述数据框</span></span><br><span class="line">DataFrame.diff([periods, axis])               <span class="comment">#1st discrete difference of object</span></span><br><span class="line">DataFrame.<span class="built_in">eval</span>(expr[, inplace])               <span class="comment">#Evaluate an expression in the context of the calling DataFrame instance.</span></span><br><span class="line">DataFrame.kurt([axis, skipna, level, …])      <span class="comment">#返回无偏峰度Fisher’s  (kurtosis of normal == 0.0).</span></span><br><span class="line">DataFrame.mad([axis, skipna, level])          <span class="comment">#返回偏差</span></span><br><span class="line">DataFrame.<span class="built_in">max</span>([axis, skipna, level, …])       <span class="comment">#返回最大值</span></span><br><span class="line">DataFrame.mean([axis, skipna, level, …])      <span class="comment">#返回均值</span></span><br><span class="line">DataFrame.median([axis, skipna, level, …])    <span class="comment">#返回中位数</span></span><br><span class="line">DataFrame.<span class="built_in">min</span>([axis, skipna, level, …])       <span class="comment">#返回最小值</span></span><br><span class="line">DataFrame.mode([axis, numeric_only])          <span class="comment">#返回众数</span></span><br><span class="line">DataFrame.pct_change([periods, fill_method])  <span class="comment">#返回百分比变化</span></span><br><span class="line">DataFrame.prod([axis, skipna, level, …])      <span class="comment">#返回连乘积</span></span><br><span class="line">DataFrame.quantile([q, axis, numeric_only])   <span class="comment">#返回分位数</span></span><br><span class="line">DataFrame.rank([axis, method, numeric_only])  <span class="comment">#返回数字的排序</span></span><br><span class="line">DataFrame.<span class="built_in">round</span>([decimals])                   <span class="comment">#Round a DataFrame to a variable number of decimal places.</span></span><br><span class="line">DataFrame.sem([axis, skipna, level, ddof])    <span class="comment">#返回无偏标准误</span></span><br><span class="line">DataFrame.skew([axis, skipna, level, …])      <span class="comment">#返回无偏偏度</span></span><br><span class="line">DataFrame.<span class="built_in">sum</span>([axis, skipna, level, …])       <span class="comment">#求和</span></span><br><span class="line">DataFrame.std([axis, skipna, level, ddof])    <span class="comment">#返回标准误差</span></span><br><span class="line">DataFrame.var([axis, skipna, level, ddof])    <span class="comment">#返回无偏误差 12345678910111213141516171819202122232425262728293031323334</span></span><br></pre></td></tr></table></figure>
+<h5 id="从新索引-选取-标签操作">从新索引&amp;选取&amp;标签操作</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.add_prefix(prefix)                  <span class="comment">#添加前缀</span></span><br><span class="line">DataFrame.add_suffix(suffix)                  <span class="comment">#添加后缀</span></span><br><span class="line">DataFrame.align(other[, join, axis, level])   <span class="comment">#Align two object on their axes with the</span></span><br><span class="line">DataFrame.drop(labels[, axis, level, …])      <span class="comment">#返回删除的列</span></span><br><span class="line">DataFrame.drop_duplicates([subset, keep, …])  <span class="comment">#Return DataFrame with duplicate rows removed, optionally only</span></span><br><span class="line">DataFrame.duplicated([subset, keep])          <span class="comment">#Return boolean Series denoting duplicate rows, optionally only</span></span><br><span class="line">DataFrame.equals(other)                       <span class="comment">#两个数据框是否相同</span></span><br><span class="line">DataFrame.<span class="built_in">filter</span>([items, like, regex, axis])  <span class="comment">#过滤特定的子数据框</span></span><br><span class="line">DataFrame.first(offset)                       <span class="comment">#Convenience method for subsetting initial periods of time series data based on a date offset.</span></span><br><span class="line">DataFrame.head([n])                           <span class="comment">#返回前n行</span></span><br><span class="line">DataFrame.idxmax([axis, skipna])              <span class="comment">#Return index of first occurrence of maximum over requested axis.</span></span><br><span class="line">DataFrame.idxmin([axis, skipna])              <span class="comment">#Return index of first occurrence of minimum over requested axis.</span></span><br><span class="line">DataFrame.last(offset)                        <span class="comment">#Convenience method for subsetting final periods of time series data based on a date offset.</span></span><br><span class="line">DataFrame.reindex([index, columns])           <span class="comment">#Conform DataFrame to new index with optional filling logic, placing NA/NaN in locations having no value in the previous index.</span></span><br><span class="line">DataFrame.reindex_axis(labels[, axis, …])     <span class="comment">#Conform input object to new index with optional filling logic, placing NA/NaN in locations having no value in the previous index.</span></span><br><span class="line">DataFrame.reindex_like(other[, method, …])    <span class="comment">#Return an object with matching indices to myself.</span></span><br><span class="line">DataFrame.rename([index, columns])            <span class="comment">#Alter axes input function or functions.</span></span><br><span class="line">DataFrame.rename_axis(mapper[, axis, copy])   <span class="comment">#Alter index and / or columns using input function or functions.</span></span><br><span class="line">DataFrame.reset_index([level, drop, …])       <span class="comment">#For DataFrame with multi-level index, return new DataFrame with labeling information in the columns under the index names, defaulting to ‘level_0’, ‘level_1’, etc.</span></span><br><span class="line">DataFrame.sample([n, frac, replace, …])       <span class="comment">#返回随机抽样</span></span><br><span class="line">DataFrame.select(crit[, axis])                <span class="comment">#Return data corresponding to axis labels matching criteria</span></span><br><span class="line">DataFrame.set_index(keys[, drop, append ])    <span class="comment">#Set the DataFrame index (row labels) using one or more existing columns.</span></span><br><span class="line">DataFrame.tail([n])                           <span class="comment">#返回最后几行</span></span><br><span class="line">DataFrame.take(indices[, axis, convert])      <span class="comment">#Analogous to ndarray.take</span></span><br><span class="line">DataFrame.truncate([before, after, axis ])    <span class="comment">#Truncates a sorted NDFrame before and/or after some particular index value.12345678910111213141516171819202122232425</span></span><br></pre></td></tr></table></figure>
+<h5 id="处理缺失值">处理缺失值</h5>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.dropna([axis, how, thresh, …])      #Return object with labels on given axis omitted where alternately any</span><br><span class="line">DataFrame.fillna([value, method, axis, …])    #填充空值</span><br><span class="line">DataFrame.replace([to_replace, value, …])     #Replace values given in ‘to_replace’ with ‘value’.123</span><br></pre></td></tr></table></figure>
+<h5 id="从新定型-排序-转变形态">从新定型&amp;排序&amp;转变形态</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.pivot([index, columns, values])     <span class="comment">#Reshape data (produce a “pivot” table) based on column values.</span></span><br><span class="line">DataFrame.reorder_levels(order[, axis])       <span class="comment">#Rearrange index levels using input order.</span></span><br><span class="line">DataFrame.sort_values(by[, axis, ascending])  <span class="comment">#Sort by the values along either axis</span></span><br><span class="line">DataFrame.sort_index([axis, level, …])        <span class="comment">#Sort object by labels (along an axis)</span></span><br><span class="line">DataFrame.nlargest(n, columns[, keep])        <span class="comment">#Get the rows of a DataFrame sorted by the n largest values of columns.</span></span><br><span class="line">DataFrame.nsmallest(n, columns[, keep])       <span class="comment">#Get the rows of a DataFrame sorted by the n smallest values of columns.</span></span><br><span class="line">DataFrame.swaplevel([i, j, axis])             <span class="comment">#Swap levels i and j in a MultiIndex on a particular axis</span></span><br><span class="line">DataFrame.stack([level, dropna])              <span class="comment">#Pivot a level of the (possibly hierarchical) column labels, returning a DataFrame (or Series in the case of an object with a single level of column labels) having a hierarchical index with a new inner-most level of row labels.</span></span><br><span class="line">DataFrame.unstack([level, fill_value])        <span class="comment">#Pivot a level of the (necessarily hierarchical) index labels, returning a DataFrame having a new level of column labels whose inner-most level consists of the pivoted index labels.</span></span><br><span class="line">DataFrame.melt([id_vars, value_vars, …])      <span class="comment">#“Unpivots” a DataFrame from wide format to long format, optionally</span></span><br><span class="line">DataFrame.T                                   <span class="comment">#Transpose index and columns</span></span><br><span class="line">DataFrame.to_panel()                          <span class="comment">#Transform long (stacked) format (DataFrame) into wide (3D, Panel) format.</span></span><br><span class="line">DataFrame.to_xarray()                         <span class="comment">#Return an xarray object from the pandas object.</span></span><br><span class="line">DataFrame.transpose(*args, **kwargs)          <span class="comment">#Transpose index and columns1234567891011121314</span></span><br></pre></td></tr></table></figure>
+<h5 id="Combining-joining-merging">Combining&amp; joining&amp;merging</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.append(other[, ignore_index, …])    <span class="comment">#追加数据</span></span><br><span class="line">DataFrame.assign(**kwargs)                    <span class="comment">#Assign new columns to a DataFrame, returning a new object (a copy) with all the original columns in addition to the new ones.</span></span><br><span class="line">DataFrame.join(other[, on, how, lsuffix, …])  <span class="comment">#Join columns with other DataFrame either on index or on a key column.</span></span><br><span class="line">DataFrame.merge(right[, how, on, left_on, …]) <span class="comment">#Merge DataFrame objects by performing a database-style join operation by columns or indexes.</span></span><br><span class="line">DataFrame.update(other[, join, overwrite, …]) <span class="comment">#Modify DataFrame in place using non-NA values from passed DataFrame.12345</span></span><br></pre></td></tr></table></figure>
+<h5 id="时间序列">时间序列</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.asfreq(freq[, method, how, …])      <span class="comment">#将时间序列转换为特定的频次</span></span><br><span class="line">DataFrame.asof(where[, subset])               <span class="comment">#The last row without any NaN is taken (or the last row without</span></span><br><span class="line">DataFrame.shift([periods, freq, axis])        <span class="comment">#Shift index by desired number of periods with an optional time freq</span></span><br><span class="line">DataFrame.first_valid_index()                 <span class="comment">#Return label for first non-NA/null value</span></span><br><span class="line">DataFrame.last_valid_index()                  <span class="comment">#Return label for last non-NA/null value</span></span><br><span class="line">DataFrame.resample(rule[, how, axis, …])      <span class="comment">#Convenience method for frequency conversion and resampling of time series.</span></span><br><span class="line">DataFrame.to_period([freq, axis, copy])       <span class="comment">#Convert DataFrame from DatetimeIndex to PeriodIndex with desired</span></span><br><span class="line">DataFrame.to_timestamp([freq, how, axis])     <span class="comment">#Cast to DatetimeIndex of timestamps, at beginning of period</span></span><br><span class="line">DataFrame.tz_convert(tz[, axis, level, copy]) <span class="comment">#Convert tz-aware axis to target time zone.</span></span><br><span class="line">DataFrame.tz_localize(tz[, axis, level, …])   <span class="comment">#Localize tz-naive TimeSeries to target time zone.12345678910</span></span><br></pre></td></tr></table></figure>
+<h5 id="作图">作图</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.plot([x, y, kind, ax, ….])          <span class="comment">#DataFrame plotting accessor and method</span></span><br><span class="line">DataFrame.plot.area([x, y])                   <span class="comment">#面积图Area plot</span></span><br><span class="line">DataFrame.plot.bar([x, y])                    <span class="comment">#垂直条形图Vertical bar plot</span></span><br><span class="line">DataFrame.plot.barh([x, y])                   <span class="comment">#水平条形图Horizontal bar plot</span></span><br><span class="line">DataFrame.plot.box([by])                      <span class="comment">#箱图Boxplot</span></span><br><span class="line">DataFrame.plot.density(**kwds)                <span class="comment">#核密度Kernel Density Estimate plot</span></span><br><span class="line">DataFrame.plot.hexbin(x, y[, C, …])           <span class="comment">#Hexbin plot</span></span><br><span class="line">DataFrame.plot.hist([by, bins])               <span class="comment">#直方图Histogram</span></span><br><span class="line">DataFrame.plot.kde(**kwds)                    <span class="comment">#核密度Kernel Density Estimate plot</span></span><br><span class="line">DataFrame.plot.line([x, y])                   <span class="comment">#线图Line plot</span></span><br><span class="line">DataFrame.plot.pie([y])                       <span class="comment">#饼图Pie chart</span></span><br><span class="line">DataFrame.plot.scatter(x, y[, s, c])          <span class="comment">#散点图Scatter plot</span></span><br><span class="line">DataFrame.boxplot([column, by, ax, …])        <span class="comment">#Make a box plot from DataFrame column optionally grouped by some columns or</span></span><br><span class="line">DataFrame.hist(data[, column, by, grid, …])   <span class="comment">#Draw histogram of the DataFrame’s series using matplotlib / pylab.1234567891011121314</span></span><br></pre></td></tr></table></figure>
+<h5 id="转换为其他格式">转换为其他格式</h5>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.from_csv(path[, header, sep, …])    <span class="comment">#Read CSV file (DEPRECATED, please use pandas.read_csv() instead).</span></span><br><span class="line">DataFrame.from_dict(data[, orient, dtype])    <span class="comment">#Construct DataFrame from dict of array-like or dicts</span></span><br><span class="line">DataFrame.from_items(items[,columns,orient])  <span class="comment">#Convert (key, value) pairs to DataFrame.</span></span><br><span class="line">DataFrame.from_records(data[, index, …])      <span class="comment">#Convert structured or record ndarray to DataFrame</span></span><br><span class="line">DataFrame.info([verbose, buf, max_cols, …])   <span class="comment">#Concise summary of a DataFrame.</span></span><br><span class="line">DataFrame.to_pickle(path[, compression, …])   <span class="comment">#Pickle (serialize) object to input file path.</span></span><br><span class="line">DataFrame.to_csv([path_or_buf, sep, na_rep])  <span class="comment">#Write DataFrame to a comma-separated values (csv) file</span></span><br><span class="line">DataFrame.to_hdf(path_or_buf, key, **kwargs)  <span class="comment">#Write the contained data to an HDF5 file using HDFStore.</span></span><br><span class="line">DataFrame.to_sql(name, con[, flavor, …])      <span class="comment">#Write records stored in a DataFrame to a SQL database.</span></span><br><span class="line">DataFrame.to_dict([orient, into])             <span class="comment">#Convert DataFrame to dictionary.</span></span><br><span class="line">DataFrame.to_excel(excel_writer[, …])         <span class="comment">#Write DataFrame to an excel sheet</span></span><br><span class="line">DataFrame.to_json([path_or_buf, orient, …])   <span class="comment">#Convert the object to a JSON string.</span></span><br><span class="line">DataFrame.to_html([buf, columns, col_space])  <span class="comment">#Render a DataFrame as an HTML table.</span></span><br><span class="line">DataFrame.to_feather(fname)                   <span class="comment">#write out the binary feather-format for DataFrames</span></span><br><span class="line">DataFrame.to_latex([buf, columns, …])         <span class="comment">#Render an object to a tabular environment table.</span></span><br><span class="line">DataFrame.to_stata(fname[, convert_dates, …]) <span class="comment">#A class for writing Stata binary dta files from array-like objects</span></span><br><span class="line">DataFrame.to_msgpack([path_or_buf, encoding]) <span class="comment">#msgpack (serialize) object to input file path</span></span><br><span class="line">DataFrame.to_sparse([fill_value, kind])       <span class="comment">#Convert to SparseDataFrame</span></span><br><span class="line">DataFrame.to_dense()                          <span class="comment">#Return dense representation of NDFrame (as opposed to sparse)</span></span><br><span class="line">DataFrame.to_string([buf, columns, …])        <span class="comment">#Render a DataFrame to a console-friendly tabular output.</span></span><br><span class="line">DataFrame.to_clipboard([excel, sep])          <span class="comment">#Attempt to write text representation of object to the system cli</span></span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/python%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%E5%92%8C%E8%BF%94%E5%9B%9E%E5%80%BC%E6%8E%A2%E7%A9%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/30/python%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%E5%92%8C%E8%BF%94%E5%9B%9E%E5%80%BC%E6%8E%A2%E7%A9%B6/" class="post-title-link" itemprop="url">python的值传递和引用传递</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E8%BF%9B%E9%98%B6/" itemprop="url" rel="index"><span itemprop="name">python进阶</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>757</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="函数的传参">函数的传参</h2>
+<p>函数参数传递机制问题在本质上是调用函数（过程）和被调用函数（过程）在调用发生时进行通信的方法问题。基本的参数传递机制有两种：<code>值传递</code>和<code>引用传递</code>。</p>
+<ul>
+<li><code>值传递（pass-by-value）</code>过程中，被调函数的形式参数作为被调函数的局部变量处理，即在堆栈中开辟了内存空间以存放由主调函数放进来的实参的值，从而成为了实参的一个副本。值传递的特点是被调函数对形式参数的任何操作都是作为局部变量进行，不会影响主调函数的实参变量的值。</li>
+<li><code>引用传递(pass-by-reference)</code>过程中，被调函数的形式参数虽然也作为局部变量在堆栈中开辟了内存空间，但是这时存放的是由主调函数放进来的实参变量的地址。被调函数对形参的任何操作都被处理成间接寻址，即通过堆栈中存放的地址访问主调函数中的实参变量。正因为如此，被调函数对形参做的任何操作都影响了主调函数中的实参变量。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">1</span>]: <span class="keyword">from</span> ctypes <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">In [<span class="number">2</span>]: <span class="keyword">import</span> os.path</span><br><span class="line"></span><br><span class="line">In [<span class="number">3</span>]: <span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line">\<span class="comment"># 传入不可变类型</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">4</span>]: <span class="keyword">def</span> <span class="title function_">test</span>(<span class="params">x</span>):</span><br><span class="line"></span><br><span class="line">  ...:   <span class="built_in">print</span>(<span class="string">&quot;test before&quot;</span>)</span><br><span class="line"></span><br><span class="line">  ...:   <span class="built_in">print</span>(<span class="built_in">id</span>(c))</span><br><span class="line"></span><br><span class="line">  ...:   c+=<span class="number">2</span></span><br><span class="line"></span><br><span class="line">  ...:   <span class="built_in">print</span>(<span class="string">&quot;test add&quot;</span>)</span><br><span class="line"></span><br><span class="line">  ...:   <span class="built_in">print</span>(<span class="built_in">id</span>(c))</span><br><span class="line"></span><br><span class="line">  ...:   <span class="keyword">return</span> c</span><br><span class="line"></span><br><span class="line">In [<span class="number">5</span>]: a = <span class="number">2</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">6</span>]: <span class="built_in">id</span>(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">Out[<span class="number">6</span>]: <span class="number">11496672</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">7</span>]: n = test(a)</span><br><span class="line"></span><br><span class="line">test before</span><br><span class="line"></span><br><span class="line"><span class="number">11496672</span></span><br><span class="line"></span><br><span class="line">test add</span><br><span class="line"></span><br><span class="line"><span class="number">11496736</span></span><br><span class="line"></span><br><span class="line">\<span class="comment"># 传入可变类型</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">17</span>]: <span class="keyword">def</span> <span class="title function_">test2</span>(<span class="params">x</span>):</span><br><span class="line"></span><br><span class="line">   ...:   <span class="built_in">print</span>(<span class="string">&quot;test before&quot;</span>)</span><br><span class="line"></span><br><span class="line">   ...:   <span class="built_in">print</span>(<span class="built_in">id</span>(x))</span><br><span class="line"></span><br><span class="line">   ...:   x[<span class="number">0</span>] = <span class="number">45</span></span><br><span class="line"></span><br><span class="line">   ...:   <span class="built_in">print</span>(<span class="string">&quot;test after&quot;</span>)</span><br><span class="line"></span><br><span class="line">   ...:   <span class="built_in">print</span>(<span class="built_in">id</span>(x))</span><br><span class="line"></span><br><span class="line">   ...:   <span class="keyword">return</span> x</span><br><span class="line"></span><br><span class="line">   ...:</span><br><span class="line"></span><br><span class="line">In [<span class="number">18</span>]: e = [<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>]</span><br><span class="line"></span><br><span class="line">In [<span class="number">19</span>]: <span class="built_in">id</span>(e)</span><br><span class="line"></span><br><span class="line">Out[<span class="number">19</span>]: <span class="number">140323019352896</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">20</span>]: g = test2(e)</span><br><span class="line"></span><br><span class="line">test before</span><br><span class="line"></span><br><span class="line"><span class="number">140323019352896</span></span><br><span class="line"></span><br><span class="line">test after</span><br><span class="line"></span><br><span class="line"><span class="number">140323019352896</span></span><br></pre></td></tr></table></figure>
+<p>结论：<strong>python不允许程序员选择采用传值还是传引用</strong>。Python参数传递采用的肯定是<code>“传对象引用”</code>的方式。<strong>这种方式相当于传值和传引用的一种综合</strong>。</p>
+<ul>
+<li>如果函数收到的是一个可变对象（比如字典或者列表）的引用，就能修改对象的原始值－－相当于通过“传引用”来传递对象。</li>
+<li>如果函数收到的是一个不可变对象（比如数字、字符或者元组）的引用，就不能直接修改原始对象－－相当于通过“传值’来传递对象。</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/30/python%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%E5%92%8C%E8%BF%94%E5%9B%9E%E5%80%BC%E6%8E%A2%E7%A9%B6/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/python%E5%87%BD%E6%95%B0%E8%A1%A5%E5%85%85/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/30/python%E5%87%BD%E6%95%B0%E8%A1%A5%E5%85%85/" class="post-title-link" itemprop="url">python函数补充</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E8%BF%9B%E9%98%B6/" itemprop="url" rel="index"><span itemprop="name">python进阶</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>651</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>递归函数</h1>
+<ul>
+<li>
+<p>递归特性</p>
+<ul>
+<li>1.必须有一个明确的结束条件</li>
+<li>2.每次进入更深一层递归时，问题规模相比上次递归都应有所减少</li>
+<li>3.递归效率不高，递归层次过多会导致栈溢出（在计算机中，函数调用是通过栈（stack）这种数据结构实现的，每当进入一个函数调用，栈就会加一层栈帧，每当函数返回，栈就会减一层栈帧。由于栈的大小不是无限的，所以，递归调用的次数过多，会导致栈溢出）</li>
+</ul>
+</li>
+<li>
+<p>代码演练</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">send</span>(<span class="params">student</span>):</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(student) == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;All student revice messges&#x27;</span></span><br><span class="line">    one = student.pop()</span><br><span class="line">    <span class="keyword">if</span> one == <span class="string">&#x27;luenci&#x27;</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;luenci get&#x27;</span>)</span><br><span class="line">        send(student)</span><br><span class="line">    <span class="keyword">elif</span> one == <span class="string">&#x27;jack&#x27;</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;jack get&#x27;</span>)</span><br><span class="line">        send(student)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;xiaoming get&#x27;</span>)</span><br><span class="line">        send(student)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    student_list = [<span class="string">&#x27;luenci&#x27;</span>, <span class="string">&#x27;jack&#x27;</span>, <span class="string">&#x27;xiaoming&#x27;</span>]</span><br><span class="line">    send(student_list)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1>函数作用域</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">foo</span>():</span><br><span class="line">    name = <span class="string">&#x27;luenci&#x27;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">bar</span>():</span><br><span class="line">        name = <span class="string">&#x27;xiaoming&#x27;</span></span><br><span class="line">        <span class="keyword">def</span> <span class="title function_">tt</span>():</span><br><span class="line">            <span class="built_in">print</span>(name)</span><br><span class="line">        <span class="keyword">return</span> tt</span><br><span class="line">    <span class="keyword">return</span> bar</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(foo)</span><br><span class="line"><span class="built_in">print</span>(foo())</span><br><span class="line"><span class="built_in">print</span>(foo()())</span><br><span class="line"><span class="comment"># bar=foo()</span></span><br><span class="line"><span class="comment"># tt=bar()</span></span><br><span class="line"><span class="comment"># print(tt)</span></span><br><span class="line"><span class="comment"># tt()</span></span><br><span class="line">foo()()()</span><br><span class="line"></span><br><span class="line">out&gt;&gt;</span><br><span class="line"></span><br><span class="line">&lt;function foo at <span class="number">0x0000020655A92E18</span>&gt;</span><br><span class="line">&lt;function foo.&lt;<span class="built_in">locals</span>&gt;.bar at <span class="number">0x00000206577809D8</span>&gt;</span><br><span class="line">&lt;function foo.&lt;<span class="built_in">locals</span>&gt;.bar.&lt;<span class="built_in">locals</span>&gt;.tt at <span class="number">0x0000020657780A60</span>&gt;</span><br><span class="line">xiaoming</span><br></pre></td></tr></table></figure>
+<h1>函数式编程</h1>
+<h2 id="匿名函数">匿名函数</h2>
+<ul>
+<li>函数声明：<code>lambda 参数:表达式返回值</code></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">test</span>(<span class="params">x</span>):</span><br><span class="line">    <span class="keyword">return</span> x+<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(test(<span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">fun = <span class="keyword">lambda</span> x:x+<span class="number">1</span></span><br><span class="line"><span class="built_in">print</span>(fun(<span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">out:</span><br><span class="line"><span class="number">11</span></span><br><span class="line"><span class="number">11</span></span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/30/python%E5%87%BD%E6%95%B0%E8%A1%A5%E5%85%85/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/python%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9D%97%E7%9A%84%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/30/python%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9D%97%E7%9A%84%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">一些核心模块的介绍</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -1939,253 +1149,387 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>MySQL数据库函数</h1>
-<ul>
-<li>MySQL函数是数据库提供的内置函数，可以帮助用户更加方便地处理表中的数据。MySQL的内置函数，不但可以在SELECT查询语句中使用，同样可以在INSERT、UPDATE、DELETE等语句中使用。</li>
-</ul>
-<h2 id="1-数学函数："><strong>1.数学函数：</strong></h2>
-<p>MySQL中内置的数学函数见下表：</p>
+          <h2 id="sys模块">sys模块</h2>
 <table>
 <thead>
 <tr>
-<th>函数</th>
-<th>作用</th>
+<th>模块方法</th>
+<th>解释说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>ABS(x)</td>
-<td>返回x的绝对值</td>
+<td>sys.argv</td>
+<td>传递到Python脚本的命令行参数列表，第一个元素是程序本身路径</td>
 </tr>
 <tr>
-<td>CEIL9x),CEILIN(x)</td>
-<td>返回不小于x的最小整数值</td>
+<td>sys.executable</td>
+<td>返回Python解释器在当前系统中的绝对路径</td>
 </tr>
 <tr>
-<td>FLOOR(x)</td>
-<td>返回不大于x的最大整数值</td>
+<td>sys.exit(arg)</td>
+<td>程序中间的退出，arg=0为正常退出</td>
 </tr>
 <tr>
-<td>RAND()</td>
-<td>返回0~1的随机数</td>
+<td>sys.path</td>
+<td>返回模块的搜索路径，初始化时使用PYTHONPATH环境变量的值</td>
 </tr>
 <tr>
-<td>RAND(x)</td>
-<td>返回0~1的随机数，x值相同时返回的随机数相同</td>
+<td>sys.platform</td>
+<td>返回操作系统平台名称，Linux是linux2，Windows是win32</td>
 </tr>
 <tr>
-<td>SIGN(x)</td>
-<td>返回参数作为-1、0、1的符号，该符号取决于x值的负、零、正</td>
+<td>sys.stdout.write(str)</td>
+<td>输出的时候把换行符\n去掉</td>
 </tr>
 <tr>
-<td>PI()</td>
-<td>返回圆周率的值，默认是7位，内部使用完全双精度值</td>
+<td>val = sys.stdin.readline()[:-1]</td>
+<td>拿到的值去掉\n换行符</td>
 </tr>
 <tr>
-<td>TRUNCATE(x,y)</td>
-<td>返回数值x保留到小数点y位的值</td>
-</tr>
-<tr>
-<td>ROUND(x)</td>
-<td>返回离x最近的整数</td>
-</tr>
-<tr>
-<td>ROUND(x,y)</td>
-<td>保留x小数点后y位的值，但截断时要进行四舍五入</td>
-</tr>
-<tr>
-<td>POW(x,y),POWER(x,y)</td>
-<td>返回x的y乘方的结果值</td>
-</tr>
-<tr>
-<td>SQRT(x)</td>
-<td>返回非负数x的二次方根</td>
-</tr>
-<tr>
-<td>EXP(x)</td>
-<td>返回e的x乘方后的值（自然对数的底）</td>
-</tr>
-<tr>
-<td>MOD(x,y)</td>
-<td>返回x除以y后的余数</td>
-</tr>
-<tr>
-<td>LOG(x)</td>
-<td>返回x的基数为2的对数</td>
-</tr>
-<tr>
-<td>LOG10(x)</td>
-<td>返回x的基数为10的对数</td>
-</tr>
-<tr>
-<td>RADIANS(x)</td>
-<td>将角度转换为弧度</td>
-</tr>
-<tr>
-<td>DEGREES(x)</td>
-<td>将弧度转化为角度</td>
-</tr>
-<tr>
-<td>SIN(x)</td>
-<td>返回x的正弦，其中x使用弧度</td>
-</tr>
-<tr>
-<td>ASIN(x,y)</td>
-<td>返回x的反正弦，若x不在-1到1范围内则返回NULL</td>
-</tr>
-<tr>
-<td>COS(x)</td>
-<td>返回x的余弦，其中x为弧度</td>
-</tr>
-<tr>
-<td>ACOS(x,y)</td>
-<td>返回x的反余弦，若x不在-1到1范围内则返回NULL</td>
-</tr>
-<tr>
-<td>TAN(x,y)</td>
-<td>返回x的正切，其中x为弧度</td>
-</tr>
-<tr>
-<td>ATAN(x),ATAN2(x)</td>
-<td>返回x的反正切，y确定结果所在象限</td>
-</tr>
-<tr>
-<td>COT(x,y)</td>
-<td>返回x的余切</td>
+<td>sys.version</td>
+<td>获取Python解释程序的版本信息</td>
 </tr>
 </tbody>
 </table>
-<h2 id="2-字符串函数："><strong>2.字符串函数：</strong></h2>
-<p>字符串函数是MySQL中最常用的的一类函数，主要用于处理表中的字符串。见下表：</p>
+<h2 id="os模块">os模块</h2>
 <table>
 <thead>
 <tr>
-<th>函数</th>
-<th>作用</th>
+<th style="text-align:center">方法</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>CHAR_LENGTH(s)</td>
-<td>返回字符串s的字符数</td>
+<td style="text-align:center">os.mkdir()</td>
+<td style="text-align:center">创建目录</td>
 </tr>
 <tr>
-<td>LENGTH(s)</td>
-<td>返回字符串的字节长度，一个多字节字符算作多字节</td>
+<td style="text-align:center">os.rmdir()</td>
+<td style="text-align:center">删除目录</td>
 </tr>
 <tr>
-<td>CONCAT(s)</td>
-<td>返回结果为连接参数产生的字符串。为了避免将数字参数转化为二进制字符串使用SELECT CONCAT(CAST(int_col AS CHAR),char_col)</td>
+<td style="text-align:center">os.rename()</td>
+<td style="text-align:center">重命名</td>
 </tr>
 <tr>
-<td>CONCAT_WS(x,s1,s2,…)</td>
-<td>同CONCAT()函数，但每个字符串都要加上x</td>
+<td style="text-align:center">os.remove()</td>
+<td style="text-align:center">删除文件</td>
 </tr>
 <tr>
-<td>INSERT(s1,x,len,s2)</td>
-<td>将字符串s2替换为s1的x位置开始长度为len的字符串</td>
+<td style="text-align:center">os.getcwd()</td>
+<td style="text-align:center">获取当前工作路径</td>
 </tr>
 <tr>
-<td>UPPER(s),UCASE(s)</td>
-<td>将字符串s的所有字母都变成大写字母</td>
+<td style="text-align:center">os.walk()</td>
+<td style="text-align:center">遍历目录</td>
 </tr>
 <tr>
-<td>LOWER(s),LCASE(s)</td>
-<td>将字符串s的所有字母都变成小写字母</td>
+<td style="text-align:center">os.path.join()</td>
+<td style="text-align:center">连接目录与文件名</td>
 </tr>
 <tr>
-<td>LEFT(s,n)</td>
-<td>返回从字符串s开始的最左边n个字符</td>
+<td style="text-align:center">os.path.split()</td>
+<td style="text-align:center">分割文件名与目录</td>
 </tr>
 <tr>
-<td>RIGHT(s,n)</td>
-<td>返回从字符串s开始的最右边n个字符</td>
+<td style="text-align:center">os.path.abspath()</td>
+<td style="text-align:center">获取绝对路径</td>
 </tr>
 <tr>
-<td>LPAD(s1,len,s2)</td>
-<td>返回字符串s1，其左边由字符串s2填补到len字符长度</td>
+<td style="text-align:center">os.path.dirname()</td>
+<td style="text-align:center">获取路径</td>
 </tr>
 <tr>
-<td>RPAD(s1,len,s2)</td>
-<td>返回字符串s1，其右边被字符串s2填补至len字符长度</td>
+<td style="text-align:center">os.path.basename()</td>
+<td style="text-align:center">获取文件名或文件夹名</td>
 </tr>
 <tr>
-<td>LTRIM(s)</td>
-<td>返回字符串s，其引导空格字符被删除</td>
+<td style="text-align:center">os.path.splitext()</td>
+<td style="text-align:center">分离文件名与扩展名</td>
 </tr>
 <tr>
-<td>RTRIM(s)</td>
-<td>返回字符串s，结尾空格字符被删去</td>
+<td style="text-align:center">os.path.isfile()</td>
+<td style="text-align:center">判断给出的路径是否是一个文件</td>
 </tr>
 <tr>
-<td>TRIM(s)</td>
-<td>去掉字符串s开始和结尾处的空格</td>
-</tr>
-<tr>
-<td>TRIM(s1 FROM s)</td>
-<td>去掉字符串s中开始处和结尾处的字符串s1</td>
-</tr>
-<tr>
-<td>REPEAT(s,n)</td>
-<td>将字符串s重复n次</td>
-</tr>
-<tr>
-<td>SPACE(n)</td>
-<td>返回n个空格</td>
-</tr>
-<tr>
-<td>REPLACE(s,s1,s2)</td>
-<td>用字符串s2替代字符串s中的字符串s1</td>
-</tr>
-<tr>
-<td>STRCMP(s1,s2)</td>
-<td>比较字符串s1和s2</td>
-</tr>
-<tr>
-<td>SUBSTRING(s,n,len)</td>
-<td>获取从字符串s第n个位置开始长度为len的字符串</td>
-</tr>
-<tr>
-<td>MID(s,n,len)</td>
-<td>同SUBSTRING()</td>
-</tr>
-<tr>
-<td>LOCATE(s1,s) POSITION(s1 IN s)</td>
-<td>从字符串s中获取s1的开始位置</td>
-</tr>
-<tr>
-<td>INSTR(s,s1)</td>
-<td>从字符串s中获取s1的开始位置</td>
-</tr>
-<tr>
-<td>REVERSE(s)</td>
-<td>将字符串s的顺序反过来</td>
-</tr>
-<tr>
-<td>ELT(n,s1,s2)</td>
-<td>返回第n个字符串</td>
-</tr>
-<tr>
-<td>EXPORT_SET(bits,on,off[, separator[,number_of_bits]])</td>
-<td>返回一个字符串，生成规则为：针对bits的二进制格式，如果位为1则返回一个on值，如果为0则返回一个off值。每个字符串用separator分隔，默认逗号；number_of_bits指定bits的可用位数，默认64位。示例 selectEXPORT_SET(182,‘Y’,‘N’,‘@’,6);</td>
-</tr>
-<tr>
-<td>FIELD(s,s1,s2)</td>
-<td>返回第一个与字符串s匹配的字符串的位置</td>
-</tr>
-<tr>
-<td>FIND_IN_SET(s,s2)</td>
-<td>返回在字符串s2中与s1匹配的字符串的位置</td>
-</tr>
-<tr>
-<td>MAKE_SET(x,s1,s2,…)</td>
-<td>按x的二进制数从s1,s2,…,sn中选取字符串</td>
+<td style="text-align:center">os.path.isdir()</td>
+<td style="text-align:center">判断给出的路径是否是一个目录</td>
 </tr>
 </tbody>
 </table>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/01/Mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%87%BD%E6%95%B0/#more" rel="contents">
+              <a class="btn" href="/2023/03/30/python%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9D%97%E7%9A%84%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/12306%E8%87%AA%E5%8A%A8%E6%8A%A2%E7%A5%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/30/12306%E8%87%AA%E5%8A%A8%E6%8A%A2%E7%A5%A8/" class="post-title-link" itemprop="url">12306自动化抢票实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/selenium%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">selenium知识</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>selenium常用API</h1>
+<ul>
+<li><code>find_element_by_xxx</code>  返回第一个符合条件<code>WebElement</code>元素</li>
+<li><code>find_elements_by_xxx</code>  返回符合条件所有元素包含了 <code>WebEelemnt </code>列表</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>函数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>find_element_by_class_name</td>
+<td>通过class查询元素</td>
+</tr>
+<tr>
+<td>find_element_by_id</td>
+<td>通过ID查询元素</td>
+</tr>
+<tr>
+<td>find_element_by_name</td>
+<td>通过name查询元素</td>
+</tr>
+<tr>
+<td>find_element_by_tag_name</td>
+<td>通过标签名称</td>
+</tr>
+<tr>
+<td>find_element_by_css_selector</td>
+<td>css样式选择</td>
+</tr>
+<tr>
+<td>find_element_by_link_text</td>
+<td>通过链接内容查找</td>
+</tr>
+<tr>
+<td>find_element_by_partial_link_text</td>
+<td>通过链接内容包含的内容查找，模糊查询</td>
+</tr>
+<tr>
+<td>find_element_by_xpath</td>
+<td>通过xpath查找数据</td>
+</tr>
+</tbody>
+</table>
+<h1>获取元素属性和文本内容</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#获取属性</span></span><br><span class="line">element.get_attribute（<span class="string">&#x27;属性名”）</span></span><br><span class="line"><span class="string">#获取文本内容</span></span><br><span class="line"><span class="string">element.text</span></span><br><span class="line"><span class="string"># 输入框输入内容</span></span><br><span class="line"><span class="string">input_element.send_keys（&#x27;</span>Luenci<span class="string">&#x27;）</span></span><br><span class="line"><span class="string"># 元素点击</span></span><br><span class="line"><span class="string">element.click()</span></span><br></pre></td></tr></table></figure>
+<h2 id="三种等待方式">三种等待方式</h2>
+<ul>
+<li>当控制浏览器时，浏览器正在加载页面同时又去获取数据导致浏览器寻找不到需要操作的元素引发异常。</li>
+<li>方式一：强制等待，浪费时间
+<ul>
+<li><code>time.sleep（秒数）</code></li>
+</ul>
+</li>
+<li>方式二：隐性等待，无法控制Ajax请求
+<ul>
+<li><code>browser.implicit1y_wait（等待时间）</code></li>
+</ul>
+</li>
+<li>方式三：显性等待，每个元素都可以自己定义检查条件。手动编写方式</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#显性等待-手动编写</span></span><br><span class="line">t = time.time（）</span><br><span class="line"><span class="comment">#定义超时时间</span></span><br><span class="line">timeout = <span class="number">60</span></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>：</span><br><span class="line">  <span class="keyword">try</span>：</span><br><span class="line">        <span class="comment">#超时时间间隔</span></span><br><span class="line">        time.sleep（<span class="number">0.1</span>）</span><br><span class="line">        ur1_element = browser.find_element_by_class_name（<span class="string">&quot;fav ur1&quot;</span>）</span><br><span class="line">    <span class="keyword">break</span> </span><br><span class="line">  <span class="keyword">except</span>：</span><br><span class="line">        <span class="comment">#超时处理</span></span><br><span class="line">        <span class="keyword">if</span> time.time（）- t &gt; timeout：</span><br><span class="line">          <span class="keyword">break</span> </span><br><span class="line">    <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+<h2 id="系统提供显性等待API">系统提供显性等待API</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导入显性等待的API需要的模块</span></span><br><span class="line"><span class="comment"># 1等待对象模块</span></span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.support.wait <span class="keyword">import</span> WebDriverwait</span><br><span class="line"><span class="comment"># 2导入等待条件模块</span></span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.support <span class="keyword">import</span> expected_conditions <span class="keyword">as</span> EC</span><br><span class="line"><span class="comment"># 3导入查询元素模块</span></span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.common.by <span class="keyword">import</span> By</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1.创建等待对象</span></span><br><span class="line"><span class="comment"># 参数一浏览器对象</span></span><br><span class="line"><span class="comment"># 参数二超时时间</span></span><br><span class="line"><span class="comment"># 参数三检查元素时间间隔</span></span><br><span class="line">wait = WebDriverwait（browser，<span class="number">5.0</span>，<span class="number">0.5</span>）</span><br><span class="line"><span class="comment"># 2.通过等待对象获取元素</span></span><br><span class="line"><span class="comment"># presence_of_element_located 检查元素是否存在，如果存在就返回如果不存在就继续检查</span></span><br><span class="line"><span class="comment"># visibility_of_element_located 检查元素是否可见</span></span><br><span class="line">linkelement = s wait.until（EC.presence_of_element_located（（By.CLASS_NAME，<span class="string">&quot;favurl&quot;</span>）</span><br><span class="line">link_element.click（）</span><br></pre></td></tr></table></figure>
+<h1>12306爬虫实现</h1>
+<p>完成代码见：<a target="_blank" rel="noopener" href="https://github.com/Lucareful/12306_Tickets">https://github.com/Lucareful/12306_Tickets</a></p>
+<ul>
+<li>实现步骤
+<ul>
+<li>1.访问列表页</li>
+<li>2.通过时间判定选择点击预订</li>
+<li>3.点击账号登录</li>
+<li>4.输入用户名和密码（15523750230）</li>
+<li>5.截图获取验证码图片</li>
+<li>6.发送打码平台获取识别数字</li>
+<li>7.定义8个点击坐标</li>
+<li>8.模拟点击坐标</li>
+<li>9.点击登录</li>
+<li>10.点击选择人物</li>
+<li>11.点击提交订单</li>
+<li>12.点击确认订单</li>
+</ul>
+</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/30/12306%E8%87%AA%E5%8A%A8%E6%8A%A2%E7%A5%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%20void%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%BA%94%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/30/C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%20void%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%BA%94%E7%94%A8/" class="post-title-link" itemprop="url">C 语言中 void* 详解及应用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-30 10:01:10" itemprop="dateCreated datePublished" datetime="2023-03-30T10:01:10+00:00">2023-03-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C%E8%AF%AD%E8%A8%80%E7%BC%96%E7%A8%8B%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">C语言编程知识</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>C 语言中 void* 详解及应用</h1>
+<p>void 在英文中作为名词的解释为 <strong>“空虚、空间、空隙”</strong>，而在 C 语言中，void 被翻译为**“无类型”<strong>，相应的</strong>void *** 为**“无类型指针”**。</p>
+<p>void 似乎只有&quot;注释&quot;和限制程序的作用，当然，这里的&quot;注释&quot;不是为我们人提供注释，而是为编译器提供一种所谓的注释。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/30/C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%20void%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%BA%94%E7%94%A8/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -2331,19 +1675,19 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/01/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;03&#x2F;01&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
+          <a href="/2023/03/30/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/" title="2023&#x2F;03&#x2F;30&#x2F;分布式12问&#x2F;">分布式12问</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/01/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;03&#x2F;01&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
+          <a href="/2023/03/30/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;03&#x2F;30&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/01/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;03&#x2F;01&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
+          <a href="/2023/03/30/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;03&#x2F;30&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/01/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;03&#x2F;01&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
+          <a href="/2023/03/30/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;03&#x2F;30&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/01/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;03&#x2F;01&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
+          <a href="/2023/03/30/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;03&#x2F;30&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
         </li>
     </ul>
   </div>
