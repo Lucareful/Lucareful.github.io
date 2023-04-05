@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/Django%E7%9A%84Cookie%E5%92%8CSession/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/30/Django%E7%9A%84Cookie%E5%92%8CSession/" class="post-title-link" itemprop="url">Cookie和Session知识</a>
+            <a href="/2023/04/05/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/" class="post-title-link" itemprop="url">Python后端架构演进（转载）</a>
         </h2>
 
         <div class="post-meta">
@@ -255,7 +255,112 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-30 10:28:02" itemprop="dateCreated datePublished" datetime="2023-03-30T10:28:02+00:00">2023-03-30</time>
+              <time title="创建时间：2023-04-05 06:21:36" itemprop="dateCreated datePublished" datetime="2023-04-05T06:21:36+00:00">2023-04-05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E5%90%8E%E7%AB%AF%E6%9E%B6%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">python后端架构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Python后端架构演进</h1>
+<p><em><strong>本文转自python社区：<a target="_blank" rel="noopener" href="https://www.pythontab.com/html/2018/pythonweb_0725/1329.html">https://www.pythontab.com/html/2018/pythonweb_0725/1329.html</a></strong></em></p>
+<h2 id="架构">架构</h2>
+<p>做了3年的后端开发, 经历一款SaaS产品从0到10(还没有到100, 哈哈哈)的过程, 3年间后端的架构逐步演变, 在微服务的实践过程中遇到的问题也越来越多, 在这里总结下.</p>
+<p>产品是一款服务于人力资源的SaaS在线服务, 面向HR有Web Android/iOS 小程序多个客户端, 后端采用RESTful风格API来提供服务. 主要使用Python语言, 方便快速迭代.</p>
+<p>架构的演进经历了4个大的阶段: 1. MVC 2. 服务拆分 3. 微服务架构 4. 领域驱动设计.</p>
+<h3 id="1-MVC">1. MVC</h3>
+<p>项目刚开始的时候, 后端同事不超过5个, 这个阶段主要的工作是实现产品的原型, 没有太多的考虑架构, 使用Django来快速实现功能, DB的表结构设计好之后, 抽象出功能View, 由于产品设计也很不完善, 后端需要很多的预留设计, 避免产品逻辑的变更带来整个表结构的变动, 在这个阶段代码上最重要的是确定适合团队的代码规范, 代码检查规则.</p>
+<p><img src="https://www.pythontab.com/uploadfile/other/90431532483907.jpg" alt="img"></p>
+<p>整体上架构如上图, Nginx负责负载均衡, 分发流量到多个Django服务, Django处理逻辑, 需要异步任务就交给Celery, 然后数据量比较大的地方使用Redis做缓存. 同时还有实时消息通知的需要使用了Nginx Push Module.</p>
+<p>问题与优化方式:</p>
+<p>Django并发性能差 使用uWSGI Master+Worker 配合 gevent 携程支持高并发</p>
+<p>Redis连接数过多 使用redis-py自带的连接池来实现连接复用</p>
+<p>MySQL连接数过多 使用djorm-ext-pool连接池复用连接</p>
+<p>Celery配置gevent支持并发任务</p>
+<p>随着开发的功能越来越多, Django下的app也越来越多, 这就带了发布上的不方便, 每次发布版本都需要重启所有的Django服务, 如果发布遇到问题, 只能加班解决了. 而且单个Django工程下的代码量也越来越多, 不好维护.</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/04/05/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/Django%E7%9A%84Cookie%E5%92%8CSession/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/04/05/Django%E7%9A%84Cookie%E5%92%8CSession/" class="post-title-link" itemprop="url">Cookie和Session知识</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-05 06:21:36" itemprop="dateCreated datePublished" datetime="2023-04-05T06:21:36+00:00">2023-04-05</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -342,7 +447,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/30/Django%E7%9A%84Cookie%E5%92%8CSession/#more" rel="contents">
+              <a class="btn" href="/2023/04/05/Django%E7%9A%84Cookie%E5%92%8CSession/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -366,7 +471,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -380,7 +485,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/30/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Django的ORM字段介绍</a>
+            <a href="/2023/04/05/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Django的ORM字段介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -390,7 +495,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-30 10:28:02" itemprop="dateCreated datePublished" datetime="2023-03-30T10:28:02+00:00">2023-03-30</time>
+              <time title="创建时间：2023-04-05 06:21:36" itemprop="dateCreated datePublished" datetime="2023-04-05T06:21:36+00:00">2023-04-05</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -456,7 +561,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -470,7 +575,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/30/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/" class="post-title-link" itemprop="url">Django的ORM多表操作</a>
+            <a href="/2023/04/05/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/" class="post-title-link" itemprop="url">Django的ORM多表操作</a>
         </h2>
 
         <div class="post-meta">
@@ -480,7 +585,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-30 10:28:02" itemprop="dateCreated datePublished" datetime="2023-03-30T10:28:02+00:00">2023-03-30</time>
+              <time title="创建时间：2023-04-05 06:21:36" itemprop="dateCreated datePublished" datetime="2023-04-05T06:21:36+00:00">2023-04-05</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -587,7 +692,7 @@
 <figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">__exact   精确等于 like ‘aaa’</span><br><span class="line">__iexact   精确等于 忽略大小写 ilike ‘aaa’</span><br><span class="line">__contains  是否包含 like ‘<span class="variable">%aaa%</span>’</span><br><span class="line">__icontains 包含 忽略大小写 ilike ‘<span class="variable">%aaa%</span>’，但是对于sqlite来说，contains的作用效果等同于icontains。</span><br><span class="line">__gt     大于</span><br><span class="line">__gte     大于等于</span><br><span class="line">__lt     小于</span><br><span class="line">__lte     小于等于</span><br><span class="line">__in     存在于一个list范围内</span><br><span class="line">__startswith 以…开头</span><br><span class="line">__istartswith 以…开头 忽略大小写</span><br><span class="line">__endswith  以…结尾</span><br><span class="line">__iendswith 以…结尾，忽略大小写</span><br><span class="line">__range   在…范围内</span><br><span class="line">__year     日期字段的年份</span><br><span class="line">__month   日期字段的月份</span><br><span class="line">__day     日期字段的日</span><br><span class="line">__isnull=True/False</span><br><span class="line">__isnull=True 与 __exact=None的区别</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/30/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/#more" rel="contents">
+              <a class="btn" href="/2023/04/05/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -611,7 +716,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/03/30/GIL%E9%94%81/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/GIL%E9%94%81/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -625,7 +730,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/03/30/GIL%E9%94%81/" class="post-title-link" itemprop="url">python解释器的GIL锁</a>
+            <a href="/2023/04/05/GIL%E9%94%81/" class="post-title-link" itemprop="url">python解释器的GIL锁</a>
         </h2>
 
         <div class="post-meta">
@@ -635,7 +740,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-03-30 10:28:02" itemprop="dateCreated datePublished" datetime="2023-03-30T10:28:02+00:00">2023-03-30</time>
+              <time title="创建时间：2023-04-05 06:21:36" itemprop="dateCreated datePublished" datetime="2023-04-05T06:21:36+00:00">2023-04-05</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -698,7 +803,7 @@
 </blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/03/30/GIL%E9%94%81/#more" rel="contents">
+              <a class="btn" href="/2023/04/05/GIL%E9%94%81/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -789,7 +894,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">124</span>
+          <span class="site-state-item-count">125</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -844,19 +949,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/30/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;03&#x2F;30&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
+          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/30/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;03&#x2F;30&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
+          <a href="/2023/04/05/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;04&#x2F;05&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/30/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;03&#x2F;30&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
+          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/30/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;03&#x2F;30&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
+          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/03/30/%E8%B7%9F%E8%B8%AA%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E9%93%BE/" title="2023&#x2F;03&#x2F;30&#x2F;跟踪函数调用链&#x2F;">defer的妙用之跟踪函数调用链</a>
+          <a href="/2023/04/05/%E8%B7%9F%E8%B8%AA%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E9%93%BE/" title="2023&#x2F;04&#x2F;05&#x2F;跟踪函数调用链&#x2F;">defer的妙用之跟踪函数调用链</a>
         </li>
     </ul>
   </div>
@@ -888,12 +993,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">285k</span>
+    <span title="站点总字数">288k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">17:16</span>
+    <span title="站点阅读时长">17:27</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
