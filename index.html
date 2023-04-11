@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/README/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/README/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/README/" class="post-title-link" itemprop="url">写在前面</a>
+            <a href="/2023/04/11/README/" class="post-title-link" itemprop="url">写在前面</a>
         </h2>
 
         <div class="post-meta">
@@ -256,7 +256,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -325,7 +325,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -339,7 +339,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">k8s架构介绍</a>
+            <a href="/2023/04/11/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/" class="post-title-link" itemprop="url">k8s核心数据结构（1）</a>
         </h2>
 
         <div class="post-meta">
@@ -350,7 +350,119 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" itemprop="url" rel="index"><span itemprop="name">云原生</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>23 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Kubernetes 核心数据结构（1）</h1>
+<blockquote>
+<p>参考书籍：《Kubernetes源码剖析-郑旭东著》</p>
+<p>K8s 是一个完全以资源为中心的系统</p>
+</blockquote>
+<h2 id="Group、Version、Resource-核心数据结构">Group、Version、Resource 核心数据结构</h2>
+<p>​	Kuberetes 系统虽然有相当复杂和众多的 功能，但它本质 上是一个资源控制系统——注册、管理、调度资源 并维护资源的状态。</p>
+<p>​	Kuberetes 将资源再次分组和版本化，形成 Group（资源组）、Version（资源版本）、Resource（资源）</p>
+<ul>
+<li>Group: 被称为资源组，在Kubernetes API Server 中也可称其为 APIGroup。</li>
+<li>Version: 被称为资源版本，在Kubernetes API Server 中也可称其为 APIVersions。</li>
+<li>Resource: 被称为资源，在Kubernetes API Server 中也可称其为 APIResource。</li>
+<li>Kind: 资源种类，描述 Resource 的种类，与 Resource 为同一级别。</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230410172134645.png" alt="image-20230410172134645"></p>
+<p>​</p>
+<p>​	Kubernetes 系统支持多个Group，每个Group 支持多个Version，每个Version 支 持多个Resource，其中部分资源同时会拥有自己的子资源(即SubResource )。例如， Deployment资源拥有Status 子资源。<br>
+​	资源组、资源版本、资源、子资源的完整表现形式<code>&lt;group&gt;/&lt;version&gt;/&lt;resource&gt;/ &lt;subresource&gt;</code>。以常用的 Deployment 资源为例，其完整表现形式为<code>apps/v1/deployments/status</code></p>
+<p>​	另外资源对象(Resource Object )在本书中也是 一个常用概念，由“ 资源组+ 资源版本+资源种类” 组成，并在实例化后表达一个资源对象，例如 Deployment 资源实例化后拥有资源组、资源版本及资源种类，其表现形式为<code>&lt;group&gt;/&lt;version&gt;, Kind=&lt;kind&gt;</code>，例如<code>apps/v1, Kind=Deployment</code>.</p>
+<p>​	每一个资源都拥有一定数量的资源操作方法(即 Verbs )，资源操作方法用于 Etcd 集群存储中对资源对象的增、删、改、查操作。目前 Kubemetes 系统支持8 种资源操作方法，分别是 create、delete、delete、collection、get、list、patch、update、watch 操作方法。</p>
+<p>​	每一个资源都至少有两个版本，分别是外部版本(External Version)和内部版本 ( Internal Version )。外部版本用于对外暴露给用户请求的接又所使用的资源对象。内部版本不对外暴露，仅在Kubernetes API Server 内部使用。</p>
+<p>​	Kubernetes 资源也可分为两种， 分别是Kubernetes Resource (Kubermetes 内罝资源 ) 和 Custom Resource( 自 定 义 资 源 )。 开 发 者 通 过 C R D ( 即 Custom Resource Definitions )可实现自定义资源，它允许用户将自己定义的资源添加到 Kubernetes 系统中，并像使用 Kubernetes 内置资源 一样使用它们。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/04/11/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/04/11/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">k8s架构介绍</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -411,7 +523,7 @@
 <p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230402142654737.png" alt="image-20230402142654737"></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -435,7 +547,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -449,7 +561,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/" class="post-title-link" itemprop="url">GO 三方库源码阅读姿势</a>
+            <a href="/2023/04/11/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/" class="post-title-link" itemprop="url">GO 三方库源码阅读姿势</a>
         </h2>
 
         <div class="post-meta">
@@ -460,7 +572,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -548,7 +660,7 @@
 <p>​	构建的 HTTP 服务端除了提供真实服务之外，也能提供代理中转服务，它们分别由 Client 和 Server 两个数据结构负责。除了这两个最重要的数据结构之外，HTTP 协议的每个部 分，比如请求、返回、传输设置等都有具体的数据结构负责。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -572,7 +684,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/Tekton%20%E5%85%A5%E9%97%A8/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/Tekton%20%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -586,7 +698,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/Tekton%20%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">Tekton 入门</a>
+            <a href="/2023/04/11/Tekton%20%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">Tekton 入门</a>
         </h2>
 
         <div class="post-meta">
@@ -597,7 +709,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -675,7 +787,7 @@
 <p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230301151952643.png" alt="image-20230301151952643"></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/Tekton%20%E5%85%A5%E9%97%A8/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/Tekton%20%E5%85%A5%E9%97%A8/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -699,7 +811,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -713,7 +825,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/" class="post-title-link" itemprop="url">分布式12问</a>
+            <a href="/2023/04/11/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/" class="post-title-link" itemprop="url">分布式12问</a>
         </h2>
 
         <div class="post-meta">
@@ -724,7 +836,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -845,7 +957,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/%E5%88%86%E5%B8%83%E5%BC%8F12%E9%97%AE/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -869,7 +981,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/CMDB%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/CMDB%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -883,7 +995,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/CMDB%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">CMDB 介绍</a>
+            <a href="/2023/04/11/CMDB%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">CMDB 介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -894,7 +1006,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -944,7 +1056,7 @@
 <p>CMDB的<strong>核心功能之一是支持服务管理流程</strong>，主要包括：事件，问题，变更，发布和资产管理。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/CMDB%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/CMDB%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -968,7 +1080,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/linux%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/linux%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -982,7 +1094,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/linux%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/" class="post-title-link" itemprop="url">Linux 网络模型</a>
+            <a href="/2023/04/11/linux%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/" class="post-title-link" itemprop="url">Linux 网络模型</a>
         </h2>
 
         <div class="post-meta">
@@ -993,7 +1105,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1078,7 +1190,7 @@
 <p>​	DMA(DIRECT MEMORY ACCESS) 是现代计算机的重要功能，它有一个重要特点：当需要与外设进行数据交换时, CPU 只需要初始化这个动作便可以继续执行其他指令,剩下的数据传输的动作完全由DMA来完成可以看到 DMA COPY 是可以避免大量的 CPU 中断的</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/linux%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/linux%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1102,7 +1214,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/GitOps%20%E5%8E%9F%E7%90%86/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/GitOps%20%E5%8E%9F%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1116,7 +1228,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/GitOps%20%E5%8E%9F%E7%90%86/" class="post-title-link" itemprop="url">GitOps 介绍</a>
+            <a href="/2023/04/11/GitOps%20%E5%8E%9F%E7%90%86/" class="post-title-link" itemprop="url">GitOps 介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -1127,7 +1239,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1195,7 +1307,7 @@
 <p>​	最后，<strong>GitOps 重新定义了云原生场景下的 CI/CD</strong>，它以 Git 作为中心的不可变状态声明，以加快持续部署速度。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/GitOps%20%E5%8E%9F%E7%90%86/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/GitOps%20%E5%8E%9F%E7%90%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1219,7 +1331,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1233,7 +1345,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/" class="post-title-link" itemprop="url">K8s的Pod创建历程</a>
+            <a href="/2023/04/11/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/" class="post-title-link" itemprop="url">K8s的Pod创建历程</a>
         </h2>
 
         <div class="post-meta">
@@ -1244,7 +1356,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1319,107 +1431,7 @@
 <p>​	如果要对k8s的部署文件进行进一步正确性校验，可以参看这个<a target="_blank" rel="noopener" href="https://github.com/instrumenta/kubeval">Kubeval</a></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/05/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/" class="post-title-link" itemprop="url">GO 代码风格指南</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>8.7k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>31 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>GO 代码风格指南</h1>
-<h2 id="风格原则">风格原则</h2>
-<p>​	有一些总体原则总结了如何考虑编写可读的 Go 代码。以下是可读代码的属性，按重要性排序：</p>
-<ol>
-<li><strong><a target="_blank" rel="noopener" href="https://google.github.io/styleguide/go/guide#clarity">清晰</a></strong>：代码的目的和基本原理对读者来说是清楚的。</li>
-<li><strong><a target="_blank" rel="noopener" href="https://google.github.io/styleguide/go/guide#simplicity">简单性</a></strong>：代码以尽可能简单的方式实现其目标。</li>
-<li><strong><a target="_blank" rel="noopener" href="https://google.github.io/styleguide/go/guide#concision">简洁</a></strong>：代码具有高信噪比。</li>
-<li><strong><a target="_blank" rel="noopener" href="https://google.github.io/styleguide/go/guide#maintainability">可维护性</a></strong>：代码的编写使其易于维护。</li>
-<li><strong><a target="_blank" rel="noopener" href="https://google.github.io/styleguide/go/guide#consistency">一致性</a></strong>：代码与更广泛的 Google 代码库一致。</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/04/05/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1510,7 +1522,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">125</span>
+          <span class="site-state-item-count">126</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1565,19 +1577,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
+          <a href="/2023/04/11/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;04&#x2F;11&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;04&#x2F;05&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
+          <a href="/2023/04/11/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;04&#x2F;11&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;04&#x2F;05&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
+          <a href="/2023/04/11/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;04&#x2F;11&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
+          <a href="/2023/04/11/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;04&#x2F;11&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
+          <a href="/2023/04/11/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;04&#x2F;11&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
         </li>
     </ul>
   </div>
@@ -1609,12 +1621,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">288k</span>
+    <span title="站点总字数">294k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">17:27</span>
+    <span title="站点阅读时长">17:50</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>

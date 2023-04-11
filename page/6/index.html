@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/django%E7%9A%84%E4%BF%A1%E5%8F%B7%E9%87%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/" class="post-title-link" itemprop="url">同源和跨域</a>
+            <a href="/2023/04/11/django%E7%9A%84%E4%BF%A1%E5%8F%B7%E9%87%8F/" class="post-title-link" itemprop="url">Django信号量初探</a>
         </h2>
 
         <div class="post-meta">
@@ -256,7 +256,186 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Django%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">Django框架</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>django的信号量</h1>
+<blockquote>
+<p>原文链接:<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903674049724424">https://juejin.cn/post/6844903674049724424</a></p>
+</blockquote>
+<h2 id="一、关于django信号量">一、关于<code>django</code>信号量</h2>
+<blockquote>
+<p><code>Django</code>包含一个&quot;信号调度程序&quot;，<strong>它有助于在框架中的其他位置发生操作时通知分离的应用程序</strong>。简而言之，信号允许某些发送者通知一组接收器已经发生了某些动作。当许多代码可能对同一事件感兴趣时，它们特别有用.</p>
+</blockquote>
+<h2 id="二、django中内置的信号量">二、<code>django</code>中内置的信号量</h2>
+<ul>
+<li>
+<p>1、<code>Model</code>的信号量</p>
+<ul>
+<li>
+<p><code>pre_init</code> # django的modal执行其构造方法前，自动触发</p>
+</li>
+<li>
+<p><code>post_init</code> # django的modal执行其构造方法后，自动触发</p>
+</li>
+<li>
+<p><code>pre_save</code> # django的modal对象保存前，自动触发</p>
+</li>
+<li>
+<p><code>post_save</code> # django的modal对象保存后，自动触发</p>
+</li>
+<li>
+<p><code>pre_delete</code> # django的modal对象删除前，自动触发</p>
+</li>
+<li>
+<p><code>post_delete</code> # django的modal对象删除后，自动触发</p>
+</li>
+<li>
+<p><code>m2m_changed</code> # django的modal中使用m2m字段操作第三张表（add,remove,clear）前后，自动触发</p>
+</li>
+<li>
+<p><code>class_prepared</code> # 程序启动时，检测已注册的app中modal类，对于每一个类，自动触发</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> class_prepared</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_init</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_init</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_save</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_save</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_delete</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_delete</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> m2m_changed</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>2、<code>Management</code>的信号量</p>
+<ul>
+<li>
+<p><code>pre_migrate</code> # 执行migrate命令前，自动触发</p>
+</li>
+<li>
+<p><code>post_migrate</code> # 执行migrate命令后，自动触发</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_migrate</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_migrate</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>3、<code>Request/Response</code>的信号量</p>
+<ul>
+<li>
+<p><code>request_started</code> # 请求到来前，自动触发</p>
+</li>
+<li>
+<p><code>request_finished</code> # 请求结束后，自动触发</p>
+</li>
+<li>
+<p><code>got_request_exception</code> # 请求异常后，自动触发</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.core.signals <span class="keyword">import</span> request_finished</span><br><span class="line"><span class="keyword">from</span> django.core.signals <span class="keyword">import</span> request_started</span><br><span class="line"><span class="keyword">from</span> django.core.signals <span class="keyword">import</span> got_request_exception</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>4、<code>Test</code>的信号量</p>
+<ul>
+<li>
+<p><code>setting_changed</code> # 使用test测试修改配置文件时，自动触发</p>
+</li>
+<li>
+<p><code>template_rendered</code> # 使用test测试渲染模板时，自动触发</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.test.signals <span class="keyword">import</span> setting_changed</span><br><span class="line"><span class="keyword">from</span> django.test.signals <span class="keyword">import</span> template_rendered</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>
+<p>5、<code>Database</code>的信号量</p>
+<ul>
+<li>
+<p><code>connection_created</code> # 创建数据库连接时，自动触发</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.backends.signals <span class="keyword">import</span> connection_created</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/04/11/django%E7%9A%84%E4%BF%A1%E5%8F%B7%E9%87%8F/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/04/11/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/" class="post-title-link" itemprop="url">同源和跨域</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -315,7 +494,7 @@
 2、跨域资源的引入是可以的。但是js不能读写加载的内容。如嵌入到页面中的<code>&lt;script src=&quot;...&quot;&gt;``&lt;/script&gt;，&lt;img&gt;</code>，<code>&lt;link&gt;</code>，<code>&lt;iframe&gt;</code>等。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -339,7 +518,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/RESTful%E9%A3%8E%E6%A0%BC%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/RESTful%E9%A3%8E%E6%A0%BC%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -353,7 +532,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/RESTful%E9%A3%8E%E6%A0%BC%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">RESTful风格</a>
+            <a href="/2023/04/11/RESTful%E9%A3%8E%E6%A0%BC%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">RESTful风格</a>
         </h2>
 
         <div class="post-meta">
@@ -364,7 +543,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -503,7 +682,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -517,7 +696,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/" class="post-title-link" itemprop="url">鸭子类型介绍</a>
+            <a href="/2023/04/11/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/" class="post-title-link" itemprop="url">鸭子类型介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -528,7 +707,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -587,7 +766,7 @@
 <p>抽象基类是在 Python 语言诞生 15 年后，Python 2.6 才引入的。这里我们不详细介绍抽象基类，因为<strong>即便现在也很少有代码使用抽象基类</strong>。对于多态，Python 有更好的实现方式——<strong>鸭子类型</strong>（duck typing）。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -611,7 +790,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/Django%E7%9A%84logger/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/Django%E7%9A%84logger/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -625,7 +804,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/Django%E7%9A%84logger/" class="post-title-link" itemprop="url">Django的logger配置</a>
+            <a href="/2023/04/11/Django%E7%9A%84logger/" class="post-title-link" itemprop="url">Django的logger配置</a>
         </h2>
 
         <div class="post-meta">
@@ -636,7 +815,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -700,7 +879,7 @@
 <p>其他格式化属性请参 <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/logging.html#logrecord-attributes">LogRecord attributes</a></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/Django%E7%9A%84logger/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/Django%E7%9A%84logger/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -724,7 +903,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/%E5%9B%9E%E6%BA%AF%E7%AE%97%E6%B3%95%E5%92%8CLRU/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/%E5%9B%9E%E6%BA%AF%E7%AE%97%E6%B3%95%E5%92%8CLRU/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -738,7 +917,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/%E5%9B%9E%E6%BA%AF%E7%AE%97%E6%B3%95%E5%92%8CLRU/" class="post-title-link" itemprop="url">回溯算法和LRU</a>
+            <a href="/2023/04/11/%E5%9B%9E%E6%BA%AF%E7%AE%97%E6%B3%95%E5%92%8CLRU/" class="post-title-link" itemprop="url">回溯算法和LRU</a>
         </h2>
 
         <div class="post-meta">
@@ -749,7 +928,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -826,7 +1005,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/python%E4%B9%8Basyncio%E5%8D%8F%E7%A8%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/python%E4%B9%8Basyncio%E5%8D%8F%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -840,7 +1019,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/python%E4%B9%8Basyncio%E5%8D%8F%E7%A8%8B/" class="post-title-link" itemprop="url">Python的asyncio(协程)</a>
+            <a href="/2023/04/11/python%E4%B9%8Basyncio%E5%8D%8F%E7%A8%8B/" class="post-title-link" itemprop="url">Python的asyncio(协程)</a>
         </h2>
 
         <div class="post-meta">
@@ -851,7 +1030,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -925,7 +1104,7 @@
 <p>接下来，我们也会针对 <code>asyncio模块</code> + <code>async &amp; await</code> 关键字进行更加详细的讲解。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/python%E4%B9%8Basyncio%E5%8D%8F%E7%A8%8B/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/python%E4%B9%8Basyncio%E5%8D%8F%E7%A8%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -949,7 +1128,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -963,7 +1142,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">浅谈Python垃圾回收机制</a>
+            <a href="/2023/04/11/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">浅谈Python垃圾回收机制</a>
         </h2>
 
         <div class="post-meta">
@@ -974,7 +1153,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1046,7 +1225,7 @@
 <p><strong>为了解决交叉引用的问题，Python 引入了标记清除算法和分代回收算法。</strong></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1070,7 +1249,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1084,7 +1263,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">list, tuple, dictionary, set的底层细节（python）</a>
+            <a href="/2023/04/11/python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">list, tuple, dictionary, set的底层细节（python）</a>
         </h2>
 
         <div class="post-meta">
@@ -1095,7 +1274,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1268,7 +1447,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1292,7 +1471,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/%E5%8D%8F%E7%A8%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/11/%E5%A4%9A%E8%BF%9B%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1306,7 +1485,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/05/%E5%8D%8F%E7%A8%8B/" class="post-title-link" itemprop="url">python的协程</a>
+            <a href="/2023/04/11/%E5%A4%9A%E8%BF%9B%E7%A8%8B/" class="post-title-link" itemprop="url">python的进程概念</a>
         </h2>
 
         <div class="post-meta">
@@ -1317,7 +1496,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
+              <time title="创建时间：2023-04-11 09:25:37 / 修改时间：09:25:24" itemprop="dateCreated datePublished" datetime="2023-04-11T09:25:37+00:00">2023-04-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1337,14 +1516,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.5k</span>
+              <span>2.8k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>9 分钟</span>
+              <span>10 分钟</span>
             </span>
 
         </div>
@@ -1356,158 +1535,76 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>可迭代对象</h1>
-<ul>
-<li>可遍历对象就是可迭代对象</li>
-<li>列表、元组、字典、字符串都是可迭代对象</li>
-<li>100和自定义<code>myclass</code> 默认都是不可以迷代的</li>
-<li><code>myclass </code>对象所属的类<code>MyClass</code>如果包含了<code>__iter__（）</code>方法，此时
-<ul>
-<li><code>myclass</code>就是一个可送代对象</li>
-</ul>
-</li>
-<li>可送代对象的本质：对象所属的类中包含了<code>__iter__（）</code>方法</li>
-<li>检测一个对象是否可以送代，用<code>isinstance（）</code>函数检测。</li>
-</ul>
-<h1>迭代器</h1>
-<ul>
-<li>我们发现选代器最核心的功能就是可以通过next0函数的调用来返回下一个数据值。如果每次返回的数据值不是在一个已有的数据集合中读取的，而是通过程序按照一定的规律计算生成的，那么也就意味着可以不用再依赖一个已有的数据集合，也就是说不用再将所有要迭代的数据都一次性缓存下来供后续依次读取，这样可以节省大量的存储（内存）空间。</li>
-<li>举个例子，比如，数学中有个著名的斐波拉契数列（Fibonacci），数列中第一个数为0，第二个数为1，其后的每一个数都可由前两个数相加得到：</li>
-</ul>
-<h2 id="特点">特点</h2>
+          <h1>进程</h1>
+<h2 id="进程概念">进程概念</h2>
 <ul>
 <li>
-<p>记录遍历的位置</p>
+<p>进程（Process）是资源分配的最小单位，是线程的容器。</p>
 </li>
 <li>
-<p>提供下一个元素的值（配合next（）函数）</p>
+<p>程序是固定不变的，而进程会根据运行需要，让操作系统动态分配各种资源的CPU的时间片轮转，在不同的时间段切换执行不同的进程，但是切换进程是比较耗时的；就引来了轻量级进程，也就是所谓的线程，一个进程中包括多个线程（代码流，其实也就是进程中同时跑的多个方法体）</p>
 </li>
 <li>
-<p>迭代器生成斐波那契数列</p>
+<p>程序：例<code>xxx.py</code>这是程序，是一个静态的</p>
+</li>
+<li>
+<p>进程：一个程序运行起来后，代码+用到的资源称之为进程，它是操作系统分配资源的基本单元。</p>
 </li>
 </ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Fibanacci</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num</span>):</span><br><span class="line">        <span class="comment"># 实例化生成列属性</span></span><br><span class="line">        self.num = num</span><br><span class="line">        self.a = <span class="number">1</span></span><br><span class="line">        self.b = <span class="number">1</span></span><br><span class="line">        self.current_index = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__iter__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="comment"># 返回自己</span></span><br><span class="line">        <span class="keyword">return</span> self</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__next__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">if</span> self.current_index &lt; self.num:</span><br><span class="line">            <span class="comment"># 生成斐波那契数列</span></span><br><span class="line">            <span class="comment"># 定义变量保存a的值</span></span><br><span class="line">            data = self.a</span><br><span class="line">            self.a, self.b = self.b, self.a + self.b</span><br><span class="line">            self.current_index += <span class="number">1</span></span><br><span class="line">            <span class="keyword">return</span> data</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> StopIteration</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    fib = Fibanacci(<span class="number">8</span>)</span><br><span class="line">    value = <span class="built_in">next</span>(fib)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> fib:</span><br><span class="line">        <span class="built_in">print</span>(i)</span><br><span class="line">out:</span><br><span class="line">  <span class="number">1</span></span><br><span class="line">    <span class="number">2</span></span><br><span class="line">    <span class="number">3</span></span><br><span class="line">    <span class="number">5</span></span><br><span class="line">    <span class="number">8</span></span><br><span class="line">    <span class="number">13</span></span><br><span class="line">    <span class="number">21</span></span><br></pre></td></tr></table></figure>
+<h2 id="进程状态">进程状态</h2>
+<ul>
+<li>
+<p>工作中，任务数往往大于cpu的核数，即一定有一些任务正在执行，而另外一些任务在等待cpu进行执行，因此导致了有了不同的状态</p>
+</li>
+<li>
+<p>进程状态</p>
+<ul>
+<li>就绪态：运行的条件都已经满足，正在等在cpu执行</li>
+<li>执行态：cpu正在执行其功能</li>
+<li>等待态：等待某些条件满足，例如一个程序sleep了，此时就处于等待态</li>
+</ul>
+</li>
+</ul>
+<h2 id="进程的创建-multiprocessing">进程的创建 - multiprocessing</h2>
+<ul>
+<li>
+<p>multiprocessing模块就是跨平台版本的多进程模块，提供了一个Process类来代表一个进程对象，这个对象可以理解为是一个独立的进程，可以执行另外的事情。</p>
+</li>
+<li>
+<p>·创建子进程跟创建线程十分类似，只需要传入一个执行函数和函数的参数，创建一个Process实例，用start0方法后动</p>
+</li>
+<li>
+<p>Process语法结构如下：<br>
+<code>Process([group [，target[，name，[args[，kwargs]]]）</code></p>
+<ul>
+<li>target：如果传递了函数的引用，这个子进程就执行这里（函数）的代码</li>
+<li>args：给target指定的函数传递的参数，以元组的方式传递</li>
+<li>kwargs：给target指定的函数传递命名参数</li>
+<li>name：给进程设定一个名字，可以不设定</li>
+<li>group：指定进程组，大多数情况下用不到</li>
+</ul>
+</li>
+<li>
+<p>Process创建的实例对象的常用方法：</p>
+<ul>
+<li>start()：后动子进程实例（创建子进程）</li>
+<li>is_alive：判断进程子进程是否还在活着</li>
+<li>join([timeout]）：是否等待子进程执行结束，或等待多少秒o</li>
+<li>terminate：不管任务是否完成，立即终止子进程</li>
+</ul>
+</li>
+<li>
+<p>Process创建的实例对象的常用属性：</p>
+<ul>
+<li>name：当前进程的别名，默认为Process-N，N为从1开始递增的整数</li>
+<li>pid：当前进程的pid（进程号）</li>
+</ul>
+</li>
+<li>
+<p><code>linux</code>系统可使用<code>kill</code>命令结束进程</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/05/%E5%8D%8F%E7%A8%8B/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/05/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/05/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="post-title-link" itemprop="url">python多线程，并发和锁</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-04-05 06:39:18 / 修改时间：06:39:02" itemprop="dateCreated datePublished" datetime="2023-04-05T06:39:18+00:00">2023-04-05</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.3k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>多任务</h1>
-<ul>
-<li>同一个时间有多个任务在执行</li>
-<li>python程序默认是单任务</li>
-</ul>
-<h1>线程</h1>
-<ul>
-<li>线程概念
-<ul>
-<li>线程，可简单理解为是程序执行的一条分支，也是程序执行流的最小单元。</li>
-<li><strong>线程是被系统独立调度和分底的基本单位</strong>，线程自己不拥有系统资源，只拥有一点儿在运行中必不可少的资源，但它可与同属一个进程为其它线程共享进程所拥有的全部资源。</li>
-</ul>
-</li>
-</ul>
-<p><img src="https://i.postimg.cc/C1xWN60d/image-20191113140837489.png" alt="image-20191113140837489"></p>
-<h2 id="主线程">主线程</h2>
-<ul>
-<li>
-<p>当一个程序后动时，就有一个进程被操作系统（OS）创建，与此同时一个线程也立刻运行，该线程通常叫做程序的主线程，简而言之；程序后动就会创建一个主线程。</p>
-</li>
-<li>
-<p>Copy主线程的重要性有两方面：</p>
-<blockquote>
-<p>1）是产生其他子线程的线程；</p>
-<p>2）通常它必须最后完成执行比如执行各种关闭动作·</p>
-</blockquote>
-</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/04/05/%E5%A4%9A%E7%BA%BF%E7%A8%8B/#more" rel="contents">
+              <a class="btn" href="/2023/04/11/%E5%A4%9A%E8%BF%9B%E7%A8%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1598,7 +1695,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">125</span>
+          <span class="site-state-item-count">126</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1653,19 +1750,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
+          <a href="/2023/04/11/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" title="2023&#x2F;04&#x2F;11&#x2F;聊聊链路追踪 OpenTracing&#x2F;">聊聊链路追踪 OpenTracing</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;04&#x2F;05&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
+          <a href="/2023/04/11/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" title="2023&#x2F;04&#x2F;11&#x2F;配置中心和热更新&#x2F;">服务配置和热更新</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;04&#x2F;05&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
+          <a href="/2023/04/11/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" title="2023&#x2F;04&#x2F;11&#x2F;浅析 Golang,make,new,&#x3D;,var声明变量&#x2F;">Go 变量声明指南</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
+          <a href="/2023/04/11/%E8%81%8A%E8%81%8A%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" title="2023&#x2F;04&#x2F;11&#x2F;聊聊分布式事务&#x2F;">聊聊分布式事务</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/05/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;04&#x2F;05&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
+          <a href="/2023/04/11/%E8%81%8A%E8%81%8A%E7%99%BB%E5%BD%95%E8%AE%A4%E7%9C%9F%E8%BF%99%E4%BB%B6%E4%BA%8B/" title="2023&#x2F;04&#x2F;11&#x2F;聊聊登录认真这件事&#x2F;">关于登录认证这件事</a>
         </li>
     </ul>
   </div>
@@ -1697,12 +1794,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">288k</span>
+    <span title="站点总字数">294k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">17:27</span>
+    <span title="站点阅读时长">17:50</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
