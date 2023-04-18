@@ -231,6 +231,95 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/04/18/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Django的ORM字段介绍</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>595</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Django的Field详解（转载）</h1>
+<blockquote>
+<p>本文转载于：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/ellisonzhang/p/10679054.html">https://www.cnblogs.com/ellisonzhang/p/10679054.html</a></p>
+</blockquote>
+<h2 id="字段">字段</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>、models.AutoField　　自增列 = <span class="built_in">int</span>(<span class="number">11</span>)</span><br><span class="line">　　如果没有的话，默认会生成一个名称为 <span class="built_in">id</span> 的列，如果要显示的自定义一个自增列，必须将给列设置为主键 primary_key=<span class="literal">True</span>。</span><br><span class="line"><span class="number">2</span>、models.CharField　　字符串字段</span><br><span class="line">　　必须 max_length 参数</span><br><span class="line"><span class="number">3</span>、models.BooleanField　　布尔类型=tinyint(<span class="number">1</span>)</span><br><span class="line">　　不能为空，Blank=<span class="literal">True</span></span><br><span class="line"><span class="number">4</span>、models.ComaSeparatedIntegerField　　用逗号分割的数字=varchar</span><br><span class="line">　　继承CharField，所以必须 max_lenght 参数</span><br><span class="line"><span class="number">5</span>、models.DateField　　日期类型 date</span><br><span class="line">　　对于参数，auto_now = <span class="literal">True</span> 则每次更新都会更新这个时间；auto_now_add 则只是第一次创建添加，之后的更新不再改变。</span><br><span class="line"><span class="number">6</span>、models.DateTimeField　　日期类型 datetime</span><br><span class="line">　　同DateField的参数</span><br><span class="line"><span class="number">7</span>、models.Decimal　　十进制小数类型 = decimal</span><br><span class="line">　　必须指定整数位max_digits和小数位decimal_places</span><br><span class="line"><span class="number">8</span>、models.EmailField　　字符串类型（正则表达式邮箱） =varchar</span><br><span class="line">　　对字符串进行正则表达式</span><br><span class="line"><span class="number">9</span>、models.FloatField　　浮点类型 = double</span><br><span class="line"><span class="number">10</span>、models.IntegerField　　整形</span><br><span class="line"><span class="number">11</span>、models.BigIntegerField　　长整形</span><br><span class="line">　　integer_field_ranges = &#123;</span><br><span class="line">　　　　<span class="string">&#x27;SmallIntegerField&#x27;</span>: (-<span class="number">32768</span>, <span class="number">32767</span>),</span><br><span class="line">　　　　<span class="string">&#x27;IntegerField&#x27;</span>: (-<span class="number">2147483648</span>, <span class="number">2147483647</span>),</span><br><span class="line">　　　　<span class="string">&#x27;BigIntegerField&#x27;</span>: (-<span class="number">9223372036854775808</span>, <span class="number">9223372036854775807</span>),</span><br><span class="line">　　　　<span class="string">&#x27;PositiveSmallIntegerField&#x27;</span>: (<span class="number">0</span>, <span class="number">32767</span>),</span><br><span class="line">　　　　<span class="string">&#x27;PositiveIntegerField&#x27;</span>: (<span class="number">0</span>, <span class="number">2147483647</span>),</span><br><span class="line">　　&#125;</span><br><span class="line"><span class="number">12</span>、models.IPAddressField　　字符串类型（ip4正则表达式）</span><br><span class="line"><span class="number">13</span>、models.GenericIPAddressField　　字符串类型（ip4和ip6是可选的）</span><br><span class="line">　　参数protocol可以是：both、ipv4、ipv6</span><br><span class="line">　　验证时，会根据设置报错</span><br><span class="line"><span class="number">14</span>、models.NullBooleanField　　允许为空的布尔类型</span><br><span class="line"><span class="number">15</span>、models.PositiveIntegerFiel　　正Integer</span><br><span class="line"><span class="number">16</span>、models.PositiveSmallIntegerField　　正smallInteger</span><br><span class="line"><span class="number">17</span>、models.SlugField　　减号、下划线、字母、数字</span><br><span class="line"><span class="number">18</span>、models.SmallIntegerField　　数字</span><br><span class="line">　　数据库中的字段有：tinyint、smallint、<span class="built_in">int</span>、bigint</span><br><span class="line"><span class="number">19</span>、models.TextField　　字符串=longtext</span><br><span class="line"><span class="number">20</span>、models.TimeField　　时间 HH:MM[:ss[.uuuuuu]]</span><br><span class="line"><span class="number">21</span>、models.URLField　　字符串，地址正则表达式</span><br><span class="line"><span class="number">22</span>、models.BinaryField　　二进制</span><br><span class="line"><span class="number">23</span>、models.ImageField   图片</span><br><span class="line"><span class="number">24</span>、models.FilePathField 文件</span><br></pre></td></tr></table></figure>
+<h2 id="参数">参数</h2>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>、null=True</span><br><span class="line">　　数据库中字段是否可以为空</span><br><span class="line"><span class="number">2</span>、blank=True</span><br><span class="line">　　django的 Admin 中添加数据时是否可允许空值</span><br><span class="line"><span class="number">3</span>、primary_key = False</span><br><span class="line">　　主键，对AutoField设置主键后，就会代替原来的自增 id 列</span><br><span class="line"><span class="number">4</span>、auto_now 和 auto_now_add</span><br><span class="line">　　auto_now   自动创建---无论添加或修改，都是当前操作的时间</span><br><span class="line">　　auto_now_add  自动创建---永远是创建时的时间</span><br><span class="line"><span class="number">5</span>、choices</span><br><span class="line">    sex_choice=((“F”,“FEMAL”),(“M”,’Male’),)　　　　#admin专用下拉选项    </span><br><span class="line">    gender=models.CharFiled(max_length=<span class="number">2</span>,choice=sex_choice)</span><br><span class="line"><span class="number">6</span>、max_length</span><br><span class="line"><span class="number">7</span>、default　　默认值</span><br><span class="line"><span class="number">8</span>、verbose_name　　Admin中字段的显示名称</span><br><span class="line"><span class="number">9</span>、name|db_column　　数据库中的字段名称</span><br><span class="line"><span class="number">10</span>、unique=True　　不允许重复</span><br><span class="line"><span class="number">11</span>、db_index = True　　数据库索引</span><br><span class="line"><span class="number">12</span>、editable=True　　在Admin里是否可编辑</span><br><span class="line"><span class="number">13</span>、error_messages=None　　错误提示</span><br><span class="line"><span class="number">14</span>、auto_created=False　　自动创建</span><br><span class="line"><span class="number">15</span>、help_text　　在Admin中提示帮助信息</span><br><span class="line"><span class="number">16</span>、validators=[]</span><br><span class="line"><span class="number">17</span>、upload-to</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -495,6 +584,138 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/IP%E4%BB%A3%E7%90%86%E6%B1%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/04/18/IP%E4%BB%A3%E7%90%86%E6%B1%A0/" class="post-title-link" itemprop="url">基于Python语言的IP代理池</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>环境：python3.6</p>
+<p>MongoDB</p>
+<p>flask</p>
+<p>requests等第三方库</p>
+<p>完整代码见： <a target="_blank" rel="noopener" href="https://github.com/Lucareful/IPProxyPool">https://github.com/Lucareful/IPProxyPool</a></p>
+<h1>代理池概述</h1>
+<h2 id="什么是代理池">什么是代理池</h2>
+<ul>
+<li>代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP</li>
+</ul>
+<h2 id="为什么要实现代理池">为什么要实现代理池</h2>
+<p>我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；</p>
+<ul>
+<li>使用IP代理池是其中一个比较常用的方案</li>
+<li>免费代理都是非常不稳定的，有10%是可用就很不错了</li>
+<li>一些收费代理稳定性也不好</li>
+</ul>
+<p>目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用</p>
+<h1>代理池开发环境</h1>
+<ul>
+<li>
+<p>python3开发语言</p>
+</li>
+<li>
+<p>requests：发送请求，获取页面数据</p>
+</li>
+<li>
+<p>lxml：使用XPATH从页面提取我们想要的书籍</p>
+</li>
+<li>
+<p>pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用</p>
+</li>
+<li>
+<p>Flask：用于提供WEB服务</p>
+</li>
+</ul>
+<h1>代理池工作流程</h1>
+<p><img src="https://i.ibb.co/b7YyrM5/image-20191024195902163.png" alt="image-20191024195902163"></p>
+<p>1.代理池工作渡程描述：</p>
+<ul>
+<li>代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中</li>
+<li>代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库</li>
+<li>代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/04/18/IP%E4%BB%A3%E7%90%86%E6%B1%A0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/JavaScript%E7%9A%84%E7%AE%80%E4%BB%8B%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -615,138 +836,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2023/04/18/JavaScript%E7%9A%84%E7%AE%80%E4%BB%8B%E5%92%8C%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/IP%E4%BB%A3%E7%90%86%E6%B1%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/18/IP%E4%BB%A3%E7%90%86%E6%B1%A0/" class="post-title-link" itemprop="url">基于Python语言的IP代理池</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>环境：python3.6</p>
-<p>MongoDB</p>
-<p>flask</p>
-<p>requests等第三方库</p>
-<p>完整代码见： <a target="_blank" rel="noopener" href="https://github.com/Lucareful/IPProxyPool">https://github.com/Lucareful/IPProxyPool</a></p>
-<h1>代理池概述</h1>
-<h2 id="什么是代理池">什么是代理池</h2>
-<ul>
-<li>代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP</li>
-</ul>
-<h2 id="为什么要实现代理池">为什么要实现代理池</h2>
-<p>我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；</p>
-<ul>
-<li>使用IP代理池是其中一个比较常用的方案</li>
-<li>免费代理都是非常不稳定的，有10%是可用就很不错了</li>
-<li>一些收费代理稳定性也不好</li>
-</ul>
-<p>目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用</p>
-<h1>代理池开发环境</h1>
-<ul>
-<li>
-<p>python3开发语言</p>
-</li>
-<li>
-<p>requests：发送请求，获取页面数据</p>
-</li>
-<li>
-<p>lxml：使用XPATH从页面提取我们想要的书籍</p>
-</li>
-<li>
-<p>pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用</p>
-</li>
-<li>
-<p>Flask：用于提供WEB服务</p>
-</li>
-</ul>
-<h1>代理池工作流程</h1>
-<p><img src="https://i.ibb.co/b7YyrM5/image-20191024195902163.png" alt="image-20191024195902163"></p>
-<p>1.代理池工作渡程描述：</p>
-<ul>
-<li>代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中</li>
-<li>代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库</li>
-<li>代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/04/18/IP%E4%BB%A3%E7%90%86%E6%B1%A0/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1152,149 +1241,6 @@ B.<code>super</code>和<code>this</code>两种构造调用，不能同时使用�
 这将会得到一个boolean值结果，也就是判断前面的对象能不能当做后面类型的实例。</p>
 </blockquote>
 
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/Linux%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/18/Linux%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">Linux常用命令</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" itemprop="url" rel="index"><span itemprop="name">常用命令</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1.6k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>6 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Linux管理文件和目录的命令">Linux管理文件和目录的命令</h2>
-<table>
-<thead>
-<tr>
-<th>命令</th>
-<th>功能</th>
-<th>命令</th>
-<th>功能</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>pwd</td>
-<td>显示当前目录</td>
-<td>ls</td>
-<td>查看目录下的内容</td>
-</tr>
-<tr>
-<td>cd</td>
-<td>改变所在目录</td>
-<td>cat</td>
-<td>显示文件的内容</td>
-</tr>
-<tr>
-<td>grep</td>
-<td>在文件中查找某字符</td>
-<td>cp</td>
-<td>复制文件</td>
-</tr>
-<tr>
-<td>touch</td>
-<td>创建文件</td>
-<td>mv</td>
-<td>移动文件</td>
-</tr>
-<tr>
-<td>rm</td>
-<td>删除文件</td>
-<td>rmdir</td>
-<td>删除目录</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li>
-<p>pwd命令</p>
-<p>该命令的英文解释为print working directory(打印工作目录)。输入pwd命令，Linux会输出当前目录。</p>
-</li>
-<li>
-<p>cd命令</p>
-<p>cd命令用来改变所在目录。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/04/18/Linux%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
       
     </div>
 
