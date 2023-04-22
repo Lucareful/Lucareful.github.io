@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/%E5%85%B3%E4%BA%8E%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81CPU%E5%AF%86%E9%9B%86%E5%9E%8B%20%E5%92%8C%20IO%20%E5%AF%86%E9%9B%86%E5%9E%8B%E7%9F%A5%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">json、结构体标签和rpc入门</a>
+            <a href="/2023/04/22/%E5%85%B3%E4%BA%8E%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81CPU%E5%AF%86%E9%9B%86%E5%9E%8B%20%E5%92%8C%20IO%20%E5%AF%86%E9%9B%86%E5%9E%8B%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">深入理解堆、栈、CPU密集型 和 I/O 密集型任务</a>
         </h2>
 
         <div class="post-meta">
@@ -262,7 +262,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+                  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
                 </span>
             </span>
 
@@ -274,14 +274,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>767</span>
+              <span>2.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>3 分钟</span>
+              <span>8 分钟</span>
             </span>
 
         </div>
@@ -293,12 +293,33 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>json、结构体标签和rpc入门</h1>
-<h2 id="json使用">json使用</h2>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;encoding/json&quot;</span></span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将 结构体 --&gt; 字符串  编码</span></span><br><span class="line"><span class="comment">// 将 字符串 --&gt; 结构体  解码</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 结构体的成员须大写，不然不参与编码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">   Name  <span class="type">string</span></span><br><span class="line">   Sex   <span class="type">string</span></span><br><span class="line">   Age   <span class="type">int</span></span><br><span class="line">   Score <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   st1 := Student&#123;</span><br><span class="line">      Name:  <span class="string">&quot;luenci&quot;</span>,</span><br><span class="line">      Sex:   <span class="string">&quot;man&quot;</span>,</span><br><span class="line">      Age:   <span class="number">22</span>,</span><br><span class="line">      Score: <span class="number">99</span>,</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 编码 序列化</span></span><br><span class="line">   encodeInfo, err := json.Marshal(st1)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;序列化发生错误,error&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(reflect.TypeOf(encodeInfo))</span><br><span class="line">   fmt.Println(<span class="type">string</span>(encodeInfo))</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 解码 反序列化</span></span><br><span class="line">   <span class="keyword">var</span> st2 Student</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> err := json.Unmarshal([]<span class="type">byte</span>(encodeInfo), &amp;st2); err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;反序列化发生错误,&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(st2.Name)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          <h1>关于堆、栈、CPU密集型 和 I/O 密集型知识</h1>
+<h2 id="程序中的内存分配方式（c-c-）">程序中的内存分配方式（c/c++）</h2>
+<ul>
+<li>1、栈区（stack）：由编译器自动分配释放 ，存放函数的参数值，局部变量的值等。其<br>
+操作方式类似于数据结构中的栈。</li>
+<li>2、堆区（heap）：一般由程序员分配释放， 若程序员不释放，程序结束时可能由OS回<br>
+收 。注意它与数据结构中的堆是两回事，分配方式倒是类似于链。</li>
+<li>3、全局区（静态区）（static）：全局变量和静态变量的存储是放在一块的，初始化的<br>
+全局变量和静态变量在一块区域， 未初始化的全局变量和未初始化的静态变量在相邻的另<br>
+一块区域。 - 程序结束后由系统释放。</li>
+<li>4、文字常量区：常量字符串就是放在这里的。 程序结束后由系统释放</li>
+<li>5、程序代码区：存放函数体的二进制代码。</li>
+</ul>
+<h2 id="python的堆栈解析">python的堆栈解析</h2>
+<p>因为是动态语言**，python中的所有变量内容都存在堆（heap）中**，而<strong>变量名只是堆中内容的引用，存放在栈（stack）中</strong>，便于用户去间接操作堆中的数据。</p>
+<p>堆与栈实际上是操作系统对进程占用的内存空间的两种管理方式，主要有如下几种区别：</p>
+<ul>
+<li>（1）管理方式不同。栈由操作系统自动分配释放，无需我们手动控制；堆的申请和释放工作由程序员控制，容易产生内存泄漏；</li>
+<li>（2）空间大小不同。每个进程拥有的栈的大小要远远小于堆的大小。理论上，程序员可申请的堆大小为虚拟内存的大小，进程栈的大小 64bits 的 Windows 默认 1MB，64bits 的 Linux 默认 10MB；</li>
+<li>（3）生长方向不同。堆的生长方向向上，内存地址由低到高；栈的生长方向向下，内存地址由高到低。</li>
+<li>（4）分配方式不同。堆都是动态分配的，没有静态分配的堆。栈有2种分配方式：静态分配和动态分配。静态分配是由操作系统完成的，比如局部变量的分配。动态分配由<code>malloc</code>函数进行分配，但是栈的动态分配和堆是不同的，他的动态分配是由操作系统进行释放，无需我们手工实现。</li>
+<li>（5）分配效率不同。栈由操作系统自动分配，会在硬件层级对栈提供支持：分配专门的寄存器存放栈的地址，压栈出栈都有专门的指令执行，这就决定了栈的效率比较高。堆则是由C/C++提供的库函数或运算符来完成申请与管理，实现机制较为复杂，频繁的内存申请容易产生内存碎片。显然，堆的效率比栈要低得多。</li>
+<li>（6）存放内容不同。栈存放的内容，函数返回地址、相关参数、局部变量和寄存器内容等。</li>
+</ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/18/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/#more" rel="contents">
+              <a class="btn" href="/2023/04/22/%E5%85%B3%E4%BA%8E%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81CPU%E5%AF%86%E9%9B%86%E5%9E%8B%20%E5%92%8C%20IO%20%E5%AF%86%E9%9B%86%E5%9E%8B%E7%9F%A5%E8%AF%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -322,7 +343,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -336,7 +357,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/" class="post-title-link" itemprop="url">consul服务发现</a>
+            <a href="/2023/04/22/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/" class="post-title-link" itemprop="url">consul服务发现</a>
         </h2>
 
         <div class="post-meta">
@@ -455,7 +476,7 @@
 </table>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/18/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/#more" rel="contents">
+              <a class="btn" href="/2023/04/22/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -479,7 +500,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -493,7 +514,98 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/" class="post-title-link" itemprop="url">管道和go程</a>
+            <a href="/2023/04/22/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">json、结构体标签和rpc入门</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>767</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>json、结构体标签和rpc入门</h1>
+<h2 id="json使用">json使用</h2>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;encoding/json&quot;</span></span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将 结构体 --&gt; 字符串  编码</span></span><br><span class="line"><span class="comment">// 将 字符串 --&gt; 结构体  解码</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 结构体的成员须大写，不然不参与编码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">   Name  <span class="type">string</span></span><br><span class="line">   Sex   <span class="type">string</span></span><br><span class="line">   Age   <span class="type">int</span></span><br><span class="line">   Score <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   st1 := Student&#123;</span><br><span class="line">      Name:  <span class="string">&quot;luenci&quot;</span>,</span><br><span class="line">      Sex:   <span class="string">&quot;man&quot;</span>,</span><br><span class="line">      Age:   <span class="number">22</span>,</span><br><span class="line">      Score: <span class="number">99</span>,</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 编码 序列化</span></span><br><span class="line">   encodeInfo, err := json.Marshal(st1)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;序列化发生错误,error&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(reflect.TypeOf(encodeInfo))</span><br><span class="line">   fmt.Println(<span class="type">string</span>(encodeInfo))</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 解码 反序列化</span></span><br><span class="line">   <span class="keyword">var</span> st2 Student</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> err := json.Unmarshal([]<span class="type">byte</span>(encodeInfo), &amp;st2); err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;反序列化发生错误,&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(st2.Name)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/04/22/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/04/22/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/" class="post-title-link" itemprop="url">管道和go程</a>
         </h2>
 
         <div class="post-meta">
@@ -550,7 +662,7 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;time&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">当通道在多个协程之间传输的是指向数据的指针是，且读写操作是由不同的协程操作，则需要提供额外的同步动作。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   <span class="comment">// 当涉及到多go程时，c语言使用互斥量，上锁来保持资源同步，避免资源竞争问题</span></span><br><span class="line">   <span class="comment">// go语言更好的解决方案是管道、通道</span></span><br><span class="line">   <span class="comment">// 使用通道不需要手动进行加锁</span></span><br><span class="line">   <span class="comment">//sync.RWMutex&#123;&#125;</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 创建管道 关键字 chan</span></span><br><span class="line">   numChan := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>) <span class="comment">// 装数字的管道，无缓冲通道，未声明空间</span></span><br><span class="line">   <span class="comment">//numChan := make(chan int, 10) // 有缓冲通道</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 创建两个go程，父写，子读</span></span><br><span class="line">   <span class="comment">// 发现子go程没有发生资源抢夺</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 子go程1</span></span><br><span class="line">   <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">25</span>; i++ &#123;</span><br><span class="line">         <span class="comment">// 只能 &lt;- 数据流向</span></span><br><span class="line">         data := &lt;-numChan</span><br><span class="line">         fmt.Println(<span class="string">&quot;子go程1 读取data&quot;</span>, data)</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;()</span><br><span class="line">   <span class="comment">// 子go程2</span></span><br><span class="line">   <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">25</span>; i++ &#123;</span><br><span class="line">         data := &lt;-numChan</span><br><span class="line">         fmt.Println(<span class="string">&quot;子go程2 读取data&quot;</span>, data)</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;()</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 父go程</span></span><br><span class="line">   <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">50</span>; i++ &#123;</span><br><span class="line">      <span class="comment">// 向管道中写入数据</span></span><br><span class="line">      numChan &lt;- i</span><br><span class="line">      fmt.Println(<span class="string">&quot;====&gt; 主go程，写入数据&quot;</span>, i)</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   time.Sleep(<span class="number">5</span> * time.Second)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/18/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/#more" rel="contents">
+              <a class="btn" href="/2023/04/22/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -574,7 +686,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -588,7 +700,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Go面向对象相关知识</a>
+            <a href="/2023/04/22/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Go面向对象相关知识</a>
         </h2>
 
         <div class="post-meta">
@@ -644,7 +756,7 @@
 <h2 id="类成员访问权限（字段大小写）">类成员访问权限（字段大小写）</h2>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/18/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/#more" rel="contents">
+              <a class="btn" href="/2023/04/22/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -668,7 +780,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -682,7 +794,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/" class="post-title-link" itemprop="url">Go语言基础知识和语法</a>
+            <a href="/2023/04/22/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/" class="post-title-link" itemprop="url">Go语言基础知识和语法</a>
         </h2>
 
         <div class="post-meta">
@@ -878,7 +990,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/python%E5%85%83%E7%B1%BB/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/python%E5%85%83%E7%B1%BB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -892,7 +1004,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/python%E5%85%83%E7%B1%BB/" class="post-title-link" itemprop="url">Python元类学习</a>
+            <a href="/2023/04/22/python%E5%85%83%E7%B1%BB/" class="post-title-link" itemprop="url">Python元类学习</a>
         </h2>
 
         <div class="post-meta">
@@ -959,7 +1071,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 常规方法创建类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Foo</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    name = <span class="string">&quot;luenci&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">func</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="number">666</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 基于type创建类</span></span><br><span class="line"><span class="comment"># - 类名</span></span><br><span class="line"><span class="comment"># - 继承的类</span></span><br><span class="line"><span class="comment"># - 类属性</span></span><br><span class="line"><span class="comment"># - 类方法</span></span><br><span class="line"></span><br><span class="line">foo1 = <span class="built_in">type</span>(<span class="string">&quot;Foo&quot;</span>, (<span class="built_in">object</span>,), &#123;<span class="string">&quot;name&quot;</span>: <span class="string">&quot;luenci&quot;</span>, <span class="string">&quot;func&quot;</span>: <span class="keyword">lambda</span> self: <span class="string">&quot;hi&quot;</span>&#125;)</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/18/python%E5%85%83%E7%B1%BB/#more" rel="contents">
+              <a class="btn" href="/2023/04/22/python%E5%85%83%E7%B1%BB/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -983,7 +1095,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -997,7 +1109,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式</a>
+            <a href="/2023/04/22/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式</a>
         </h2>
 
         <div class="post-meta">
@@ -1142,7 +1254,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1156,7 +1268,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">创建型模式</a>
+            <a href="/2023/04/22/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">创建型模式</a>
         </h2>
 
         <div class="post-meta">
@@ -1232,7 +1344,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/18/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
+              <a class="btn" href="/2023/04/22/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1256,7 +1368,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/22/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1270,7 +1382,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/18/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">结构型模式</a>
+            <a href="/2023/04/22/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">结构型模式</a>
         </h2>
 
         <div class="post-meta">
@@ -1342,133 +1454,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/04/18/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/04/18/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/18/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">行为型模式</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">软件工程</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>3.6k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>13 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>行为型模式</h1>
-<blockquote>
-<p>行为型模式，顾名思义，它主要关注的是对象的责任。</p>
-</blockquote>
-<ul>
-<li>它们关注对象之间的交互以及对象的响应性</li>
-<li>对象应该能够交互，同时仍然保持松散耦合</li>
-</ul>
-<h2 id="观察者模式">观察者模式</h2>
-<blockquote>
-<p>在观察者设计模式中，对象（主题）维护了一个依赖（观察者）列表，以便主题可以使用观察者定义的任何方法通知所有观察者它所发生的变化。</p>
-</blockquote>
-<ul>
-<li>它定义了对象之间的一对多的依赖关系，从而使得一个对象中的任何更改都将自动通知给其他对象</li>
-<li>它封装了主题的核心组件</li>
-</ul>
-<h3 id="UML图">UML图</h3>
-<p><a target="_blank" rel="noopener" href="https://gitee.com/luenci/RepoImg/raw/master/img/20210225223249.png"><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20210225223249.png" alt="image-20210225223249145"></a></p>
-<ul>
-<li>主题(Subject):类Subject需要了解Observe。Subject类具有许多方法，诸如register()和deregister()等，Observer可以通过这些方法注册到Subject类中。因此，一个Subject可以处理多个Observe。</li>
-<li>观察者(Observe)：它为关注主题的对象定义了一个接口。它定义了Observe需要实现的各个方法，以便在主题发生变化时能够获得相应的通知。</li>
-<li>具体观察者(ConcreteObserver):它用来保存应该与Subject的状态保持一致的状态。它实现了Observe接口以保持其状态与主题中的变化相一致。</li>
-</ul>
-<h3 id="代码案例">代码案例</h3>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Subject</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        self.__observer = []</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">register</span>(<span class="params">self, observer</span>):</span><br><span class="line">        self.__observer.append(observer)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">notifyAll</span>(<span class="params">self, *args, **kwargs</span>):</span><br><span class="line">        <span class="keyword">for</span> observer <span class="keyword">in</span> self.__observer:</span><br><span class="line">            observer.notify(self, *args, **kwargs)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Observer1</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, subject</span>):</span><br><span class="line">        subject.register(self)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">notify</span>(<span class="params">self, subject, *args</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;<span class="built_in">type</span>(self).__name__&#125;</span>:: Got, <span class="subst">&#123;args&#125;</span> from <span class="subst">&#123;subject&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Observer2</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, subject</span>):</span><br><span class="line">        subject.register(self)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">notify</span>(<span class="params">self, subject, *args</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;<span class="built_in">type</span>(self).__name__&#125;</span>:: Got, <span class="subst">&#123;args&#125;</span> from <span class="subst">&#123;subject&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    subject = Subject()</span><br><span class="line">    observer1 = Observer1(subject)</span><br><span class="line">    observer2 = Observer2(subject)</span><br><span class="line">    subject.notifyAll(<span class="string">&quot;notify~~~&quot;</span>)</span><br></pre></td></tr></table></figure>
-<h3 id="观察者模式的优点和缺点">观察者模式的优点和缺点</h3>
-<p>优点：</p>
-<ul>
-<li>它使得彼此交互的对象之间保持送耦合</li>
-<li>它使得我们可以在无需对主题或观察者进行任何修改的情况下高效地发送数据到其他对象</li>
-<li>可以随时添加/删除观察者</li>
-</ul>
-<p>缺点：</p>
-<ul>
-<li>观察者接口必须由具体观察者实现，这涉及继承。无法进行组合，因为观察者接口可以实例化</li>
-<li>如果实现不当的话，观察者可能会增加复杂性，并导致性能降低</li>
-<li>在软件应用程序中，通知有时可能是不可靠的，并导致竞争条件或不一致性</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/04/18/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
+              <a class="btn" href="/2023/04/22/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1559,7 +1545,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">126</span>
+          <span class="site-state-item-count">127</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1614,19 +1600,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/18/README/" title="2023&#x2F;04&#x2F;18&#x2F;README&#x2F;">写在前面</a>
+          <a href="/2023/04/22/README/" title="2023&#x2F;04&#x2F;22&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/18/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/" title="2023&#x2F;04&#x2F;18&#x2F;k8s核心数据结构1&#x2F;">k8s核心数据结构（1）</a>
+          <a href="/2023/04/22/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/" title="2023&#x2F;04&#x2F;22&#x2F;k8s核心数据结构2&#x2F;">k8s核心数据结构（2）</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/18/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;04&#x2F;18&#x2F;k8s架构介绍&#x2F;">k8s架构介绍</a>
+          <a href="/2023/04/22/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/" title="2023&#x2F;04&#x2F;22&#x2F;k8s核心数据结构1&#x2F;">k8s核心数据结构（1）</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/18/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/" title="2023&#x2F;04&#x2F;18&#x2F;Go三方库源码阅读姿势&#x2F;">GO 三方库源码阅读姿势</a>
+          <a href="/2023/04/22/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;04&#x2F;22&#x2F;k8s架构介绍&#x2F;">k8s架构介绍</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/04/18/Tekton%20%E5%85%A5%E9%97%A8/" title="2023&#x2F;04&#x2F;18&#x2F;Tekton 入门&#x2F;">Tekton 入门</a>
+          <a href="/2023/04/22/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/" title="2023&#x2F;04&#x2F;22&#x2F;Go三方库源码阅读姿势&#x2F;">GO 三方库源码阅读姿势</a>
         </li>
     </ul>
   </div>
@@ -1659,12 +1645,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">294k</span>
+    <span title="站点总字数">303k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">17:50</span>
+    <span title="站点阅读时长">18:22</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
