@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Golang Project Layout 最佳实践 鲍勃叔叔干净的架构（Uncle Bob）  依赖规则  同心圆代表软件的不同领域。 一般来说，你走得越远，软件的层次就越高。外圈是机制。内圈是政策。  ​     使这个架构工作的最重要的规则是依赖规则。这条规则说源代码依赖只能指向内部。内圈中的任何人都无法对外圈中的事物一无所知。特别是，在外圈中声明的事物的名称不能被内圈中的代码提及。这包括函">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go Project Layout 最佳实践">
+<meta property="og:url" content="https://luenci.me/2023/06/01/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="Golang Project Layout 最佳实践 鲍勃叔叔干净的架构（Uncle Bob）  依赖规则  同心圆代表软件的不同领域。 一般来说，你走得越远，软件的层次就越高。外圈是机制。内圈是政策。  ​     使这个架构工作的最重要的规则是依赖规则。这条规则说源代码依赖只能指向内部。内圈中的任何人都无法对外圈中的事物一无所知。特别是，在外圈中声明的事物的名称不能被内圈中的代码提及。这包括函">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/image-20220609141505914.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/clean-arch.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/layers-2.png">
+<meta property="article:published_time" content="2023-06-01T06:40:22.584Z">
+<meta property="article:modified_time" content="2023-02-06T12:51:59.000Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="Project Layout">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/image-20220609141505914.png">
+
+<link rel="canonical" href="https://luenci.me/2023/06/01/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '404,φ(*￣0￣),Waiting for you.';
+      visible = '200,(✿◡‿◡),Welcome back!';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
+
+  <title>Go Project Layout 最佳实践 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/01/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go Project Layout 最佳实践
+        </h1>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2023/06/01/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2023/06/01/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>Golang Project Layout 最佳实践</h1>
+<h2 id="鲍勃叔叔干净的架构（Uncle-Bob）">鲍勃叔叔干净的架构（Uncle Bob）</h2>
+<p><img src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/image-20220609141505914.png" alt="clean arch"></p>
+<h3 id="依赖规则">依赖规则</h3>
+<ul>
+<li>同心圆代表软件的不同领域。</li>
+<li>一般来说，你走得越远，软件的层次就越高。外圈是机制。内圈是政策。</li>
+</ul>
+<p>​     使这个架构工作的最重要的规则是<code>依赖规则</code>。这条规则说<code>源代码依赖只能指向内部</code>。内圈中的任何人都无法对外圈中的事物一无所知。特别是，在外圈中声明的事物的名称不能被内圈中的代码提及。这包括函数、类。变量或任何其他命名的软件实体。</p>
+<p>​     同样，在外圈中使用的数据格式不应该被内圈使用，特别是如果这些格式是由外圈中的框架生成的。我们不希望外圈的任何东西影响内圈。</p>
+<span id="more"></span>
+<h3 id="实体-entity">实体(<code>entity</code>)</h3>
+<p>​    实体封装了企业范围的业务规则。实体可以是具有方法的对象，也可以是一组数据结构和函数。只要实体可以被企业中的许多不同应用程序使用，这并不重要。</p>
+<p>​    如果您没有企业，而只是编写单个应用程序，则这些实体是应用程序的业务对象。它们封装了最一般和高级的规则。当外部变化时，它们最不可能改变。例如，您不会期望这些对象受到页面导航或安全性更改的影响。对任何特定应用程序的操作更改都不应影响实体层。</p>
+<h3 id="使用案例-usecase">使用案例(<code>usecase</code>)</h3>
+<p>​    此层中的软件包含<code>特定于应用程序的业务规则</code>。它封装并实现了系统的所有用例。这些用例协调进出实体的数据流，并指示这些实体使用其<code>企业范围</code>的业务规则来实现用例的目标。</p>
+<p>​    我们预计此层中的更改不会影响实体。我们也不希望此层受到外部性更改（如数据库、UI 或任何通用框架）的影响。这一层与此类问题隔离开来。</p>
+<p>​    但是，我们确实预计对应用程序操作的更改将影响用例，从而影响该层中的软件。如果用例的细节发生变化，那么这一层中的一些代码肯定会受到影响。</p>
+<h3 id="接口适配器-interface-adapter">接口适配器(<code>interface adapter</code>)</h3>
+<p>​    该层中的软件是一组适配器，可将数据从最适合用例和实体的格式转换为最适合某些外部机构（如数据库或 Web）的格式。例如，正是这一层将完全包含 <code>GUI</code> 的 <code>MVC</code> 架构。<code>Presenters</code>、<code>Views</code> 和 <code>Controllers</code> 都属于这里。模型可能只是从控制器传递到用例，然后从用例返回到演示者和视图的数据结构。</p>
+<p>​    类似地，在这一层中，数据从对实体和用例最方便的形式转换为对正在使用的任何持久性框架最方便的形式。即数据库。这个圈子内的任何代码都不应该对数据库有任何了解。如果数据库是 SQL 数据库，那么所有的 SQL 都应该限制在这一层，特别是限制在这一层与数据库有关的部分。</p>
+<p>在这一层中还有任何其他适配器，用于将数据从某种外部形式（例如外部服务）转换为用例和实体使用的内部形式</p>
+<h3 id="框架和驱动器（Frameworks-and-Drivers）">框架和驱动器（Frameworks and Drivers）</h3>
+<p>​    最外层一般由框架和工具组成，如数据库、Web 框架等。一般在这一层你不会写太多代码，除了向内与下一个循环通信的胶水代码。</p>
+<p>​    这一层是所有细节的所在。网络是一个细节。数据库是一个细节。我们把这些东西放在外面，它们不会造成什么伤害。</p>
+<h3 id="圈和边界">圈和边界</h3>
+<p>​    源代码依赖项总是指向内部。随着向内移动，抽象级别会增加。最外圈是低层次的具体细节。随着您向内移动，软件变得更加抽象，并封装了更高级别的策略。最内圈是最普通的。</p>
+<p>​    通常，<strong>跨越边界的数据是简单的数据结构</strong>。如果您愿意，可以使用基本结构或简单的数据传输对象。或者数据可以只是函数调用中的参数。或者你可以将它打包成一个 hashmap，或者将它构造成一个对象。重要的是，<strong>隔离的、简单的数据结构可以跨越边界传递</strong>。我们不想欺骗和传递实体或数据库行。我们不希望数据结构有任何违反<em>依赖规则的依赖</em>。</p>
+<p>​    例如，许多数据库框架返回方便的数据格式以响应查询。我们可以称其为 Row Structure。我们不想跨边界向内传递该行结构。这将违反依赖规则，因为它会迫使内圈了解外圈。</p>
+<p>所以当我们越界传递数据时，总是采用最方便内圈的形式。</p>
+<h3 id="结论">结论</h3>
+<p>​    遵守这些简单的规则并不难，并且会为您省去很多麻烦。通过将软件分层并遵守依赖规则，您将创建一个本质上可测试的系统，并具有所有暗示的好处。当系统的任何外部部件（如数据库或 Web 框架）过时时，您可以轻松替换那些过时的元素。</p>
+<h2 id="从-kratos-框架入手">从 kratos 框架入手</h2>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">application</span><br><span class="line">|____api</span><br><span class="line">| |____helloworld</span><br><span class="line">| | |____v1</span><br><span class="line">| | |____errors</span><br><span class="line">|____cmd</span><br><span class="line">| |____helloworld</span><br><span class="line">|____configs</span><br><span class="line">|____internal</span><br><span class="line">| |____conf</span><br><span class="line">| |____data</span><br><span class="line">| |____biz</span><br><span class="line">| |____service</span><br><span class="line">| |____server</span><br><span class="line">|____test</span><br><span class="line">|____pkg</span><br><span class="line">|____go.mod</span><br><span class="line">|____go.sum</span><br><span class="line">|____LICENSE</span><br><span class="line">|____README.md</span><br></pre></td></tr></table></figure>
+<h3 id="应用目录">应用目录</h3>
+<h4 id="cmd">/cmd</h4>
+<p>​     本项目的主干。</p>
+<p>​	每个应用程序的目录名应该与你想要的可执行文件的名称相匹配（例如，<code>/cmd/myapp</code>）。 不要在这个目录中放置太多代码。如果你认为代码可以导入并在其他项目中使用，那么它应该位于 <code>/pkg</code> 目录中。如果代码不是可重用的，或者你不希望其他人重用它，请将该代码放到 <code>/internal</code> 目录中。</p>
+<h4 id="internal">/internal</h4>
+<p>​      私有应用程序和库代码。</p>
+<p>​      这是你不希望其他人在其应用程序或库中导入代码。请注意，这个布局模式是由 Go 编译器本身执行的。有关更多细节，请参阅 Go 1.4 release notes。注意，你并不局限于顶级 <code>internal</code> 目录。在项目树的任何级别上都可以有多个内部目录。 你可以选择向 <code>internal</code> 包中添加一些额外的结构，以分隔共享和非共享的内部代码。这不是必需的(特别是对于较小的项目)，但是最好有有可视化的线索来显示预期的包的用途。你的实际应用程序代码可以放在 <code>/internal/app</code> 目录下（例如 <code>/internal/app/myapp</code>），这些应用程序共享的代码可以放在 <code>/internal/pkg</code> 目录下（例如 /internal/pkg/myprivlib）。 因为我们习惯把相关的服务，比如账号服务，内部有 rpc、job、admin 等，相关的服务整合一起后，需要区分 app。单一的服务，可以去掉 <code>/internal/myapp</code>。</p>
+<h4 id="pkg">/pkg</h4>
+<p>​     外部应用程序可以使用的库代码（例如 <code>/pkg/mypubliclib</code>）。</p>
+<p>​	其他项目会导入这些库，所以在这里放东西之前要三思:-)注意，<code>internal</code> 目录是确保私有包不可导入的更好方法，因为它是由 Go 强制执行的。<code>/pkg</code> 目录仍然是一种很好的方式，可以显式地表示该目录中的代码对于其他人来说是安全使用的好方法。</p>
+<blockquote>
+<p>/pkg 目录内，可以参考 go 标准库的组织方式，按照功能分类。/internla/pkg 一般用于项目内的 跨多个应用的公共共享代码，但其作用域仅在单个项目工程内。</p>
+</blockquote>
+<h3 id="服务应用目录">服务应用目录</h3>
+<h4 id="api">/api</h4>
+<pre><code>API 协议定义目录，services.proto protobuf 文件，以及生成的 go 文件。我们通常把 api 文档直接在 proto 文件中描述。
+</code></pre>
+<h4 id="configs">/configs</h4>
+<pre><code>配置文件模板或默认配置。
+</code></pre>
+<h4 id="test">/test</h4>
+<p>​	 额外的外部测试应用程序和测试数据。你可以随时根据需求构造 /test 目录。对于较大的项目，有一个数据子目录是有意义的。例如，你可以使用 /test/data 或 /test/testdata (如果你需要忽略目录中的内容)。请注意，Go 还会忽略以 “.” 或 “_” 开头的目录或文件，因此在如何命名测试数据目录方面有更大的灵活性。</p>
+<h3 id="服务内部目录">服务内部目录</h3>
+<p>​	Application 目录下有 api、cmd、configs、internal、pkg 目录，目录里一般还会放置 README、CHANGELOG、OWNERS。internal 是为了避免有同业务下有人跨目录引用了内部的 data、biz、service、server 等内部 struct。</p>
+<h4 id="data">data</h4>
+<p>​	业务数据访问，包含 cache、db 等封装，实现了 biz 的 repo 接口。我们可能会把 data 与 dao 混淆在一起，data 偏重业务的含义，它所要做的是将领域对象重新拿出来，我们去掉了 DDD 的 infra层。</p>
+<h4 id="biz">biz</h4>
+<p>​	业务逻辑的组装层，类似 DDD 的 domain 层，data 类似 DDD 的 repo，repo 接口在这里定义，使用依赖倒置的原则。</p>
+<h4 id="service">service</h4>
+<p>​	实现了 api 定义的服务层，类似 DDD 的 application 层，处理 DTO 到 biz 领域实体的转换（DTO -&gt; DO），同时协同各类 biz 交互，但是不应处理复杂逻辑。</p>
+<h4 id="server">server</h4>
+<p>​	为http和grpc实例的创建和配置，以及注册对应的 service 。</p>
+<h3 id="总结">总结</h3>
+<p>​	在实际 go 项目开发中，一定要灵活运用，当然也可以完全不按照这样架构分层、包设计的规则，一切以项目的大小、业务的复杂度、个人专业技能认知的广度和深度、时间的紧迫度为准。</p>
+<h2 id="github上优秀的项目">github上优秀的项目</h2>
+<h3 id="go-clean-arch">go-clean-arch</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/clean-arch.png" alt="golang clean architecture"></p>
+<p>​	此项目有 4 个域层</p>
+<ul>
+<li>模型层</li>
+<li>存储库层</li>
+<li>用例层</li>
+<li>交付层</li>
+</ul>
+<h3 id="go-clean-template">go-clean-template</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/layers-2.png" alt="例"></p>
+<h3 id="服务流向">服务流向</h3>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HTTP &gt; usecase</span><br><span class="line">          usecase &gt; repository</span><br><span class="line">          usecase &lt; repository</span><br><span class="line">          usecase &gt; webapi</span><br><span class="line">          usecase &lt; webapi</span><br><span class="line">          usecase &gt; RPC</span><br><span class="line">          usecase &lt; RPC</span><br><span class="line">          usecase &gt; repository</span><br><span class="line">          usecase &lt; repository</span><br><span class="line">   HTTP &lt; usecase</span><br></pre></td></tr></table></figure>
+<h2 id="参考文章">参考文章</h2>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">Clean Coder Blog</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://go-kratos.dev/blog/go-project-layout">Go工程化 - Project Layout 最佳实践 | Kratos (go-kratos.dev)</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6904595334693912584">Golang进阶4-Go 工程化实践和配置中心 - 掘金 (juejin.cn)</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://github.com/bxcodec/go-clean-arch">bxcodec/go-clean-arch: Go (Golang) Clean Architecture based on Reading Uncle Bob’s Clean Architecture (github.com)</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://github.com/evrone/go-clean-template">evrone/go-clean-template: Clean Architecture template for Golang services (github.com)</a></p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Project-Layout/" rel="tag"># Project Layout</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/06/01/Golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B%E5%92%8CGoroutine%20%E8%AF%A6%E8%A7%A3/" rel="prev" title="Golang 并发模型 & Goroutine 详解">
+      <i class="fa fa-chevron-left"></i> Golang 并发模型 & Goroutine 详解
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/06/01/Go%20%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8B%E3%80%81unsafe.Pointer%E3%80%81uintptr%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB/" rel="next" title="Golang指针详解">
+      Golang指针详解 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">Golang Project Layout 最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%B2%8D%E5%8B%83%E5%8F%94%E5%8F%94%E5%B9%B2%E5%87%80%E7%9A%84%E6%9E%B6%E6%9E%84%EF%BC%88Uncle-Bob%EF%BC%89"><span class="nav-number">1.1.</span> <span class="nav-text">鲍勃叔叔干净的架构（Uncle Bob）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BE%9D%E8%B5%96%E8%A7%84%E5%88%99"><span class="nav-number">1.1.1.</span> <span class="nav-text">依赖规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E4%BD%93-entity"><span class="nav-number">1.1.2.</span> <span class="nav-text">实体(entity)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%A1%88%E4%BE%8B-usecase"><span class="nav-number">1.1.3.</span> <span class="nav-text">使用案例(usecase)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3%E9%80%82%E9%85%8D%E5%99%A8-interface-adapter"><span class="nav-number">1.1.4.</span> <span class="nav-text">接口适配器(interface adapter)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%86%E6%9E%B6%E5%92%8C%E9%A9%B1%E5%8A%A8%E5%99%A8%EF%BC%88Frameworks-and-Drivers%EF%BC%89"><span class="nav-number">1.1.5.</span> <span class="nav-text">框架和驱动器（Frameworks and Drivers）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%88%E5%92%8C%E8%BE%B9%E7%95%8C"><span class="nav-number">1.1.6.</span> <span class="nav-text">圈和边界</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">1.1.7.</span> <span class="nav-text">结论</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8E-kratos-%E6%A1%86%E6%9E%B6%E5%85%A5%E6%89%8B"><span class="nav-number">1.2.</span> <span class="nav-text">从 kratos 框架入手</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E7%9B%AE%E5%BD%95"><span class="nav-number">1.2.1.</span> <span class="nav-text">应用目录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cmd"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">&#x2F;cmd</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#internal"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">&#x2F;internal</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#pkg"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">&#x2F;pkg</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%BA%94%E7%94%A8%E7%9B%AE%E5%BD%95"><span class="nav-number">1.2.2.</span> <span class="nav-text">服务应用目录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#api"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">&#x2F;api</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#configs"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">&#x2F;configs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#test"><span class="nav-number">1.2.2.3.</span> <span class="nav-text">&#x2F;test</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%86%85%E9%83%A8%E7%9B%AE%E5%BD%95"><span class="nav-number">1.2.3.</span> <span class="nav-text">服务内部目录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#data"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">data</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#biz"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">biz</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#service"><span class="nav-number">1.2.3.3.</span> <span class="nav-text">service</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#server"><span class="nav-number">1.2.3.4.</span> <span class="nav-text">server</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.2.4.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#github%E4%B8%8A%E4%BC%98%E7%A7%80%E7%9A%84%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.3.</span> <span class="nav-text">github上优秀的项目</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#go-clean-arch"><span class="nav-number">1.3.1.</span> <span class="nav-text">go-clean-arch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-clean-template"><span class="nav-number">1.3.2.</span> <span class="nav-text">go-clean-template</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E6%B5%81%E5%90%91"><span class="nav-number">1.3.3.</span> <span class="nav-text">服务流向</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-number">1.4.</span> <span class="nav-text">参考文章</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">128</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">50</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">91</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/06/01/README/" title="2023&#x2F;06&#x2F;01&#x2F;README&#x2F;">写在前面</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/06/01/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/" title="2023&#x2F;06&#x2F;01&#x2F;Prometheus 入门实操&#x2F;">Prometheus 入门实操</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/06/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/" title="2023&#x2F;06&#x2F;01&#x2F;k8s核心数据结构2&#x2F;">k8s核心数据结构（2）</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/06/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/" title="2023&#x2F;06&#x2F;01&#x2F;k8s核心数据结构1&#x2F;">k8s核心数据结构（1）</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/06/01/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;06&#x2F;01&#x2F;k8s架构介绍&#x2F;">k8s架构介绍</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">304k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">18:24</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>
