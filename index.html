@@ -346,7 +346,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-06-08 10:02:18" itemprop="dateModified" datetime="2023-06-08T10:02:18+00:00">2023-06-08</time>
+                <time title="修改时间：2023-06-08 10:29:44" itemprop="dateModified" datetime="2023-06-08T10:29:44+00:00">2023-06-08</time>
               </span>
 
           
@@ -405,87 +405,14 @@
 <li><strong>patch</strong></li>
 </ul>
 <p>修改文件的一般说明。文件路径，指向一个声明了 kubernetes API patch 的 YAML 文件</p>
-<p>&lt; !-- more – &gt;</p>
-<h2 id="kustomization-yml">kustomization.yml</h2>
-<p>一个常见的 <code>kustomization.yml</code> 如下所示，一般包含 <code>apiVsersion</code> 和 <code>kind</code> 两个固定字段</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">kustomize.config.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Kustomization</span></span><br><span class="line"></span><br><span class="line"><span class="attr">resources:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">manager.yaml</span></span><br><span class="line"></span><br><span class="line"><span class="attr">configMapGenerator:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">files:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">controller_manager_config.yaml</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">manager-config</span></span><br></pre></td></tr></table></figure>
-<p>kustomize 提供了比较丰富的字段选择，除此之外还可以自定义插件，下面会大概列举一下每个字段的含义，当我们需要用到的时候知道有这么个能力，然后再去 <a target="_blank" rel="noopener" href="https://kubectl.docs.kubernetes.io/zh/guides/">Kustomize 官方文档 </a>查找对应的 API 文档就行了</p>
-<ul>
-<li>
-<p><code>resources</code> 表示 k8s 资源的位置，这个可以是一个文件，也可以指向一个文件夹，读取的时候会按照顺序读取，路径可以是相对路径也可以是绝对路径，如果是相对路径那么就是相对于 <code>kustomization.yml</code>的路径</p>
-</li>
-<li>
-<p><code>crds</code> 和 <code>resources</code> 类似，只是 <code>crds</code> 是我们自定义的资源</p>
-</li>
-<li>
-<p><code>namespace</code> 为所有资源添加 namespace</p>
-</li>
-<li>
-<p><code>images</code> 修改镜像的名称、tag 或 image digest ，而无需使用 patches</p>
-</li>
-<li>
-<p><code>replicas</code> 修改资源副本数</p>
-</li>
-<li>
-<p><code>namePrefix</code> 为所有资源和引用的名称添加前缀</p>
-</li>
-<li>
-<p><code>nameSuffix</code> 为所有资源和引用的名称添加后缀</p>
-</li>
-<li>
-<p><code>patches</code> 在资源上添加或覆盖字段，Kustomization 使用 <code>patches</code> 字段来提供该功能。</p>
-</li>
-<li>
-<p><code>patchesJson6902</code> 列表中的每个条目都应可以解析为 kubernetes 对象和将应用于该对象的 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc6902">JSON patch</a>。</p>
-</li>
-<li>
-<p><code>patchesStrategicMerge</code> 使用 strategic merge patch 标准 Patch resources.</p>
-</li>
-<li>
-<p><code>vars</code> 类似指定变量</p>
-</li>
-<li>
-<p><code>commonAnnotations</code> 为所有资源加上 <code>annotations</code> 如果对应的 key 已经存在值，这个值将会被覆盖</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">commonAnnotations:</span></span><br><span class="line">  <span class="attr">app.lailin.xyz/inject:</span> <span class="string">agent</span></span><br><span class="line"></span><br><span class="line"><span class="attr">resources:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">deploy.yaml</span></span><br></pre></td></tr></table></figure>
-</li>
-<li>
-<p><code>commonLabels</code> 为所有资源的加上 label 和 label selector <strong>注意：这个操作会比较危险</strong></p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">kustomize.config.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Kustomization</span></span><br><span class="line"></span><br><span class="line"><span class="attr">commonLabels:</span></span><br><span class="line">  <span class="attr">app:</span> <span class="string">bingo</span></span><br></pre></td></tr></table></figure>
-</li>
-<li>
-<p><code>configMapGenerator</code> 可以生成 config map，列表中的每一条都会生成一个 configmap</p>
-</li>
-<li>
-<p><code>secretGenerator</code> 用于生成 secret 资源</p>
-</li>
-<li>
-<p><code>generatorOptions</code> 用于控制 <code>configMapGenerator</code> 和 <code>secretGenerator</code> 的行为</p>
-</li>
-</ul>
-<h2 id="kustomize-示例">kustomize 示例</h2>
-<pre><code>一个比较典型的场景是我们有一个应用，在不同的环境例如生产环境和测试环境，它的 yaml 配置绝大部分都是相同的，只有个别的字段不同，这时候就可以利用 kustomize 来解决，kustomize 也比较适合用于 gitops 工作流。
-</code></pre>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[root@dev-01 sammy-app]# tree</span><br><span class="line">.</span><br><span class="line">├── base</span><br><span class="line">│   ├── configmap.yml</span><br><span class="line">│   ├── deployment.yml</span><br><span class="line">│   ├── kustomization.yaml</span><br><span class="line">│   └── service.yml</span><br><span class="line">└── overlays</span><br><span class="line">    └── production</span><br><span class="line">        ├── kustomization.yml</span><br><span class="line">        └── map.yaml</span><br></pre></td></tr></table></figure>
-<p>​	如上图所示，有一个 <code>sammy-app</code> 的应用，<code>/base</code>目录保存的是基本的配置，<code>/overlays</code>里放置的不同环境的配置，例如 <code>/dev</code>、<code>/staging</code>，<code>/prod</code>这些就是不同环境的配置，<code>/base</code>等文件夹下都有一个 <code>kustomization .yml</code> 文件，用于配置。</p>
-<p>执行 <code>kustomize build dir</code>的方式就可以生成我们最后用于部署的 yaml 文件，也就是进行到了我们上图的第四步，然后通过 <code>kubectl apply -f</code>命令进行部署。</p>
-<h2 id="workflows-工作流">workflows 工作流</h2>
-<p>​    kustomize 将对 Kubernetes 应用的管理转换成对 Kubernetes manifests YAML 文件的管理，而对应用的修改也通过 YAML 文件来修改。这种修改变更操作可以通过 Git 版本控制工具进行管理维护, 因此用户可以使用 Git 风格的流程来管理应用。 workflows 是使用并配置应用所使用的一系列 Git 风格流程步骤。官网提供了两种方式，一种是定制配置，另一种是现成配置。</p>
-<h3 id="定制配置">定制配置</h3>
-<p>在这个工作流中，所有的配置（YAML 文件）都属于用户所有。</p>
-<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/v2-c7e447efc35bb37bed3f0c7685c82a3b_720w.webp" alt="img"></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">定制工作流步骤如下：</span></span><br><span class="line"></span><br><span class="line">1、创建一个目录用于版本管理</span><br><span class="line">git init ~/ldap</span><br><span class="line"></span><br><span class="line">2、创建一个 base</span><br><span class="line">mkdir -p ~/ldap/base  # 在这个目录中创建并提交 kustomization.yaml 文件和一组资源，例如 deployment、service</span><br><span class="line"></span><br><span class="line">3、创建 overlays</span><br><span class="line">mkdir -p ~/ldap/overlays/staging</span><br><span class="line">mkdir -p ~/ldap/overlays/production</span><br><span class="line"></span><br><span class="line">4、生成 variants</span><br><span class="line">kustomize build ~/ldap/overlays/staging | kubectl apply -f -</span><br><span class="line">kustomize build ~/ldap/overlays/production | kubectl apply -f -</span><br><span class="line"></span><br><span class="line">kubectl v1.14 版使用下面：</span><br><span class="line">kubectl apply -k ~/ldap/overlays/staging</span><br><span class="line">kubectl apply -k ~/ldap/overlays/production</span><br></pre></td></tr></table></figure>
-<h3 id="现成配置">现成配置</h3>
-<p>在这个工作流方式中，可从别人的 repo 中 fork kustomize 配置，并根据自己的需求来配置</p>
-<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/v2-3e43ae6bd923dde8519625ed52dd504d_720w.webp" alt="img"></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">现成配置工作流步骤如下：</span></span><br><span class="line"></span><br><span class="line">1、通过 fork 方式获得现成配置</span><br><span class="line"></span><br><span class="line">2、clone 作为你的 base</span><br><span class="line">mkdir ~/ldap</span><br><span class="line">git clone https://github.com/$USER/ldap ~/ldap/base</span><br><span class="line">cd ~/ldap/base</span><br><span class="line">git remote add upstream git@github.com:$USER/ldap</span><br><span class="line"></span><br><span class="line">3、创建并填充 overlays</span><br><span class="line">mkdir -p ~/ldap/overlays/staging</span><br><span class="line">mkdir -p ~/ldap/overlays/production</span><br><span class="line"></span><br><span class="line">4、生成 variants</span><br><span class="line">kustomize build ~/ldap/overlays/staging | kubectl apply -f -</span><br><span class="line">kustomize build ~/ldap/overlays/production | kubectl apply -f -</span><br><span class="line"></span><br><span class="line">5、(可选)更新上游配置，用户可以定期更新他的 base, 以更新上游所做的修改</span><br><span class="line">cd ~/ldap/base</span><br><span class="line">git fetch upstream</span><br><span class="line">git rebase upstream/master通过上面两种工作流方式，可以实现自定义管理应用的声明式资源文件，或者基于别人的应用声明式资源进行自定义修改</span><br></pre></td></tr></table></figure>
-<h2 id="总结">总结</h2>
-<p>总的来说 kustomize 更适合 gitOps 模式，相比于 helm ，kustomize更加轻量，原生的yaml模版，不必学习新语法。而 helm 支持 GoTemplate，组件上也要多一些，并且 helm 通过 chart 包来进行发布相对来说还是要重量级一些。</p>
-<h1>参考文章</h1>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://lailin.xyz/post/operator-04-kustomize-tutorial.html">4. kustomize 简明教程 - Mohuishou (lailin.xyz)</a></li>
-<li>[kustomize 最简实践 - 知乎 (<a target="_blank" rel="noopener" href="http://zhihu.com">zhihu.com</a>)](</li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/06/08/kustomize%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
