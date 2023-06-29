@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/django%E7%9A%84querySet%E8%AF%A6%E8%A7%A3/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/%E6%9F%A5%E7%9C%8Bmysql%E8%BF%9E%E6%8E%A5%E6%83%85%E5%86%B5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,855 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/django%E7%9A%84querySet%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">未命名</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>8.5k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>31 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>从数据库中查询出来的结果一般是一个集合，这个集合叫做 QuerySet。</p>
-<h1>一、QuerySet何时被提交</h1>
-<ul>
-<li>在内部，创建、过滤、切片和传递一个QuerySet不会真实操作数据库，在你对查询集提交之前，不会发生任何实际的数据库操作。可以使用下列方法对QuerySet提交查询操作：</li>
-</ul>
-<h2 id="迭代">迭代</h2>
-<ul>
-<li>QuerySet是可迭代的，在首次迭代查询集时执行实际的数据库查询。 例如， 下面的语句会将数据库中所有Entry的headline打印出来：</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> Entry.objects.<span class="built_in">all</span>():</span><br><span class="line">  <span class="built_in">print</span>(e.headline)</span><br></pre></td></tr></table></figure>
-<ul>
-<li>切片：如果使用切片的”step“参数，Django 将执行数据库查询并返回一个列表。</li>
-</ul>
-<h2 id="Pickling-缓存">Pickling/缓存</h2>
-<ul>
-<li>
-<p>repr()</p>
-</li>
-<li>
-<p>len()：当你对QuerySet调用len()时， 将提交数据库操作。</p>
-</li>
-<li>
-<p>list()：对QuerySet调用list()将强制提交操作entry_list = list(Entry.objects.all())</p>
-</li>
-<li>
-<p>bool()</p>
-<ul>
-<li>
-<p>测试布尔值，像这样：</p>
-</li>
-<li>
-<pre><code class="language-python">if Entry.objects.filter(headline=&quot;Test&quot;):
-  print(&quot;There is at least one Entry with the headline Test&quot;)
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">注：如果你需要知道是否存在至少一条记录（而不需要真实的对象），使用exists() 将更加高效。</span><br><span class="line"></span><br><span class="line"># 二、QuerySet</span><br><span class="line"></span><br><span class="line">下面是对于QuerySet的正式定义：</span><br><span class="line"></span><br><span class="line">- class QuerySet(model=None, query=None, using=None)[source]</span><br><span class="line"></span><br><span class="line">QuerySet类具有两个公有属性用于内省：</span><br><span class="line"></span><br><span class="line">- ordered：如果QuerySet是排好序的则为True，否则为False。</span><br><span class="line"></span><br><span class="line">- db：如果现在执行，则返回使用的数据库。</span><br><span class="line"></span><br><span class="line"># 三、返回新QuerySets的API</span><br><span class="line"></span><br><span class="line">- 以下的方法都将返回一个新的QuerySets。重点是加粗的几个API，其它的使用场景很少。</span><br><span class="line"></span><br><span class="line">## **方法名 解释**</span><br><span class="line"></span><br><span class="line">- filter() 过滤查询对象。</span><br><span class="line"></span><br><span class="line">- exclude() 排除满足条件的对象</span><br><span class="line">- annotate() 使用聚合函数</span><br><span class="line">- order_by() 对查询集进行排序</span><br><span class="line">- reverse() 反向排序</span><br><span class="line">- distinct() 对查询集去重</span><br><span class="line">- values() 返回包含对象具体值的字典的QuerySet</span><br><span class="line">- values_list() 与values()类似，只是返回的是元组而不是字典。</span><br><span class="line">- dates() 根据日期获取查询集</span><br><span class="line">- datetimes() 根据时间获取查询集</span><br><span class="line">- none() 创建空的查询集</span><br><span class="line">- all() 获取所有的对象</span><br><span class="line">- union() 并集</span><br><span class="line">- intersection() 交集</span><br><span class="line">- difference() 差集</span><br><span class="line">- select_related() 附带查询关联对象</span><br><span class="line">- prefetch_related()预先查询</span><br><span class="line">- extra() 附加SQL查询</span><br><span class="line">- defer() 不加载指定字段</span><br><span class="line">- only() 只加载指定的字段</span><br><span class="line">- using() 选择数据库</span><br><span class="line">- select_for_update()锁住选择的对象，直到事务结束。</span><br><span class="line">- raw() 接收一个原始的SQL查询</span><br><span class="line"></span><br><span class="line">### 1. filter()</span><br><span class="line"></span><br><span class="line">`filter(**kwargs)`</span><br><span class="line"></span><br><span class="line">- 返回满足查询参数的对象集合。</span><br><span class="line"></span><br><span class="line">- 查找的参数（**kwargs）应该满足下文字段查找中的格式。多个参数之间是和AND的关系。</span><br><span class="line"></span><br><span class="line">### 2. exclude()</span><br><span class="line"></span><br><span class="line">`exclude(**kwargs)`</span><br><span class="line"></span><br><span class="line">- 返回一个新的`QuerySet`，它包含`不满足给定的查找参数的对象`。</span><br><span class="line"></span><br><span class="line">- 查找的参数（**kwargs）应该满足下文字段查找中的格式。多个参数通过`AND连接`，然后所有的内容放入`NOT() `中。</span><br><span class="line"></span><br><span class="line">```python</span><br><span class="line"># 下面的示例排除所有pub_date晚于2005-1-3且headline为“Hello” 的记录：</span><br><span class="line"></span><br><span class="line">Entry.objects.exclude(pub_date__gt=[datetime.date](2005, 1, 3), headline=&#x27;Hello&#x27;)</span><br><span class="line"></span><br><span class="line"># 下面的示例排除所有pub_date晚于2005-1-3或者headline 为“Hello” 的记录：</span><br><span class="line"></span><br><span class="line">Entry.objects.exclude(pub_date__gt=[datetime.date](2005, 1, 3)).exclude(headline=&#x27;Hello&#x27;)</span><br></pre></td></tr></table></figure>
-
-</code></pre>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="3-annotate">3. annotate()</h3>
-<p><code>annotate(args, *kwargs)</code></p>
-<ul>
-<li>
-<p>使用提供的聚合表达式查询对象。</p>
-</li>
-<li>
-<p>表达式可以是简单的值、对模型（或任何关联模型）上的字段的引用或者聚合表达式（<code>平均值、总和等</code>）。</p>
-</li>
-<li>
-<p>annotate()的每个参数都是一个annotation，它将添加到返回的QuerySet每个对象中。</p>
-</li>
-<li>
-<p>关键字参数指定的Annotation将使用关键字作为Annotation 的别名。 匿名参数的别名将基于聚合函数的名称和模型的字段生成。 只有引用单个字段的聚合表达式才可以使用匿名参数。 其它所有形式都必须用关键字参数。</p>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 例如，如果正在操作一个Blog列表，你可能想知道每个Blog有多少Entry：</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models <span class="keyword">import</span> Count</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q = Blog.objects.annotate(Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># The name of the first blog</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q[<span class="number">0</span>].name</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;Blogasaurus&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># The number of entries on the first blog</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q[<span class="number">0</span>].entry__count</span><br><span class="line"><span class="number">42</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Blog模型本身没有定义entry__count属性，但是通过使用一个关键字参数来指定聚合函数，可以控制Annotation的名称：</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q = Blog.objects.annotate(number_of_entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># The number of entries on the first blog, using the name provided</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>q[<span class="number">0</span>].number_of_entries</span><br><span class="line"></span><br><span class="line"><span class="number">42</span></span><br></pre></td></tr></table></figure>
-<h3 id="4-order-by">4. order_by()</h3>
-<p><code>order_by(*fields)</code></p>
-<ul>
-<li>默认情况下，根据模型的Meta类中的ordering属性对QuerySet中的对象进行排序</li>
-</ul>
-<p><code>Entry.objects.filter(pub_date__year=2005).order_by('-pub_date', 'headline')</code></p>
-<ul>
-<li>
-<p>上面的结果将按照pub_date降序排序，然后再按照headline升序排序。“-pub_date&quot;前面的负号表示降序顺序。 升序是默认的。 要随机排序，使用”?&quot;，如下所示：</p>
-</li>
-<li>
-<p>Entry.objects.order_by(‘?’)</p>
-</li>
-</ul>
-<blockquote>
-<p>注：order_by(‘?’)可能耗费资源且很慢，这取决于使用的数据库。</p>
-</blockquote>
-<ul>
-<li>
-<p>若要按照另外一个模型中的字段排序，可以使用查询关联模型的语法。即通过字段的名称后面跟两个下划线（__），再加上新模型中的字段的名称，直到希望连接的模型。 像这样：</p>
-</li>
-<li>
-<p>Entry.objects.order_by(‘blog__name’, ‘headline’)</p>
-</li>
-<li>
-<p>如果排序的字段与另外一个模型关联，Django将使用关联的模型的默认排序，或者如果没有指定Meta.ordering将通过关联的模型的主键排序。 例如，因为Blog模型没有指定默认的排序：</p>
-</li>
-<li>
-<p>Entry.objects.order_by(‘blog’)</p>
-</li>
-</ul>
-<p>与以下相同：</p>
-<p><code>Entry.objects.order_by('blog__id')</code></p>
-<ul>
-<li>
-<p>如果Blog设置了ordering = [‘name’]，那么第一个QuerySet将等同于：</p>
-</li>
-<li>
-<p>Entry.objects.order_by(‘blog__name’)</p>
-</li>
-<li>
-<p>还可以通过调用表达式的<code>desc()</code>或者<code>asc()</code>方法：</p>
-</li>
-<li>
-<p>Entry.objects.order_by(Coalesce(‘summary’, ‘headline’).desc())</p>
-</li>
-</ul>
-<p>考虑下面的情况，指定一个多值字段来排序（例如，一个ManyToManyField 字段或者ForeignKey 字段的反向关联）：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Event</span>(<span class="title class_ inherited__">Model</span>):</span><br><span class="line"></span><br><span class="line">parent = models.ForeignKey(</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;self&#x27;</span>,</span><br><span class="line"></span><br><span class="line">on_delete=models.CASCADE,</span><br><span class="line"></span><br><span class="line">related_name=<span class="string">&#x27;children&#x27;</span>,</span><br><span class="line"></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">date = models.DateField()</span><br><span class="line"></span><br><span class="line">Event.objects.order_by(<span class="string">&#x27;children__date&#x27;</span>)</span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>在这里，每个Event可能有多个排序数据；具有多个children的每个Event将被多次返回到order_by()创建的新的QuerySet中。 换句话说，用order_by()方法对QuerySet对象进行操作会返回一个扩大版的新QuerySet对象。因此，使用多值字段对结果进行排序时要格外小心。</p>
-</li>
-<li>
-<p>没有方法指定排序是否考虑大小写。 对于大小写的敏感性，Django将根据数据库中的排序方式排序结果。</p>
-</li>
-<li>
-<p>可以通过Lower将一个字段转换为小写来排序，它将达到大小写一致的排序：</p>
-</li>
-<li>
-<p><code>Entry.objects.order_by(Lower('headline').desc())</code></p>
-</li>
-<li>
-<p>可以通过检查QuerySet.ordered属性来知道查询是否是排序的。</p>
-</li>
-<li>
-<p>每个<code>order_by()</code>都将清除前面的任何排序。 例如下面的查询将按照pub_date排序，而不是headline：</p>
-</li>
-<li>
-<p><code>Entry.objects.order_by('headline').order_by('pub_date')</code></p>
-</li>
-</ul>
-<h3 id="5-reverse">5. reverse()</h3>
-<p><code>reverse()</code></p>
-<ul>
-<li>
-<p>反向排序QuerySet中返回的元素。 第二次调用reverse()将恢复到原有的排序。</p>
-</li>
-<li>
-<p>如要获取QuerySet中最后五个元素，可以这样做：</p>
-</li>
-<li>
-<p>my_queryset.reverse()[:5]</p>
-</li>
-<li>
-<p>这与Python直接使用负索引有点不一样。 <code>Django不支持负索引，只能曲线救国</code>。</p>
-</li>
-</ul>
-<h3 id="6-distinct">6. distinct()</h3>
-<p><code>distinct(*fields)</code></p>
-<ul>
-<li>
-<p>去除查询结果中重复的行。</p>
-</li>
-<li>
-<p>默认情况下，QuerySet不会去除重复的行。当查询跨越多张表的数据时，QuerySet可能得到重复的结果，这时候可以使用<code>distinct()</code>进行去重。</p>
-</li>
-</ul>
-<h3 id="7-values">7. values()</h3>
-<p><code>values(fields, *expressions)</code></p>
-<ul>
-<li>
-<p>返回一个包含数据的字典的queryset，而不是模型实例。</p>
-</li>
-<li>
-<p>每个字典表示一个对象，键对应于模型对象的属性名称。</p>
-</li>
-</ul>
-<p>下面的例子将values() 与普通的模型对象进行比较：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 列表中包含的是Blog对象</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.<span class="built_in">filter</span>(name__startswith=<span class="string">&#x27;Beatles&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&lt;Blog: Beatles Blog&gt;]&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 列表中包含的是数据字典</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.<span class="built_in">filter</span>(name__startswith=<span class="string">&#x27;Beatles&#x27;</span>).values()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;Beatles Blog&#x27;</span>, <span class="string">&#x27;tagline&#x27;</span>: <span class="string">&#x27;All the latest Beatles news.&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line">该方法接收可选的位置参数*fields，它指定values()应该限制哪些字段。如果指定字段，每个字典将只包含指定的字段的键/值。如果没有指定字段，每个字典将包含数据库表中所有字段的键和值。</span><br><span class="line"></span><br><span class="line">例如：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;Beatles Blog&#x27;</span>, <span class="string">&#x27;tagline&#x27;</span>: <span class="string">&#x27;All the latest Beatles news.&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;id&#x27;</span>, <span class="string">&#x27;name&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;Beatles Blog&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">values()方法还有关键字参数**expressions，这些参数将传递给annotate()：</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models.functions <span class="keyword">import</span> Lower</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(lower_name=Lower(<span class="string">&#x27;name&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;lower_name&#x27;</span>: <span class="string">&#x27;beatles blog&#x27;</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">在values()子句中的聚合应用于相同values()子句中的其他参数之前。 如果需要按另一个值分组，请将其添加到较早的values()子句中。 像这样：</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models <span class="keyword">import</span> Count</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;author&#x27;</span>, entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;author&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;entries&#x27;</span>: <span class="number">20</span>&#125;, &#123;<span class="string">&#x27;author&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;entries&#x27;</span>: <span class="number">13</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;author&#x27;</span>).annotate(entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;author&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;entries&#x27;</span>: <span class="number">33</span>&#125;]&gt;</span><br><span class="line"></span><br><span class="line">注意：</span><br><span class="line">如果你有一个字段foo是一个ForeignKey，默认的foo_id参数返回的字典中将有一个叫做foo 的键，因为这是保存实际值的那个隐藏的模型属性的名称。 当调用foo_id并传递字段的名称，传递foo 或values()都可以，得到的结果是相同的。像这样：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;blog_id&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;headline&#x27;</span>: <span class="string">&#x27;First Entry&#x27;</span>, ...&#125;, ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values(<span class="string">&#x27;blog&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;blog&#x27;</span>: <span class="number">1</span>&#125;, ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values(<span class="string">&#x27;blog_id&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;blog_id&#x27;</span>: <span class="number">1</span>&#125;, ...]&gt;</span><br><span class="line"></span><br><span class="line">当values()与distinct()一起使用时，注意排序可能影响最终的结果。</span><br><span class="line">如果values()子句位于extra()调用之后，extra()中的select参数定义的字段必须显式包含在values()调用中。 values( 调用后面的extra( 调用将忽略选择的额外的字段。在values()之后调用only()和defer()不太合理，所以将引发一个NotImplementedError。可以通过ManyToManyField、ForeignKey 和 OneToOneFiel 属性反向引用关联的模型的字段：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.values(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [&#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;My blog&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>: <span class="string">&#x27;An entry&#x27;</span>&#125;,&#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;My blog&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>: <span class="string">&#x27;Another entry&#x27;</span>&#125;, ...]&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="8-values-list">8. values_list()</h3>
-<p><code>values_list(*fields, flat=False)</code></p>
-<ul>
-<li>与values()类似，只是在迭代时返回的是元组而不是字典。每个元组包含传递给values_list()调用的相应字段或表达式的值，因此第一个项目是第一个字段等。 像这样：</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>, <span class="string">&#x27;headline&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="number">1</span>, <span class="string">&#x27;First entry&#x27;</span>), ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models.functions <span class="keyword">import</span> Lower</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>, Lower(<span class="string">&#x27;headline&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="number">1</span>, <span class="string">&#x27;first entry&#x27;</span>), ...]&gt;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>如果只传递一个字段，还可以传递<code>flat</code>参数。 如果为True，它表示返回的结果为单个值而不是元组。 如下所示：</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>).order_by(<span class="string">&#x27;id&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet[(<span class="number">1</span>,), (<span class="number">2</span>,), (<span class="number">3</span>,), ...]&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;id&#x27;</span>, flat=<span class="literal">True</span>).order_by(<span class="string">&#x27;id&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, ...]&gt;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>如果有多个字段，传递flat将发生错误。</p>
-</li>
-<li>
-<p>如果不传递任何值给values_list()，它将返回模型中的所有字段，以在模型中定义的顺序。</p>
-</li>
-<li>
-<p>常见的情况是获取某个模型实例的特定字段值。可以使用values_list()，然后调用get()：</p>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;headline&#x27;</span>, flat=<span class="literal">True</span>).get(pk=<span class="number">1</span>)</span><br><span class="line"><span class="string">&#x27;First entry&#x27;</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>values()和values_list()都用于特定情况下的优化：检索数据子集，而无需创建模型实例。</li>
-<li>注意通过ManyToManyField进行查询时的行为：</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Author.objects.values_list(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;entry__headline&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="string">&#x27;Noam Chomsky&#x27;</span>, <span class="string">&#x27;Impressions of Gaza&#x27;</span>),(<span class="string">&#x27;George Orwell&#x27;</span>, <span class="string">&#x27;Why Socialists Do Not Believe in Fun&#x27;</span>),</span><br><span class="line">(<span class="string">&#x27;George Orwell&#x27;</span>, <span class="string">&#x27;In Defence of English Cooking&#x27;</span>),(<span class="string">&#x27;Don Quixote&#x27;</span>, <span class="literal">None</span>)]&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 类似地，当查询反向外键时，对于没有任何作者的条目，返回None。</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.values_list(<span class="string">&#x27;authors&#x27;</span>)</span><br><span class="line"></span><br><span class="line">&lt;QuerySet [(<span class="string">&#x27;Noam Chomsky&#x27;</span>,), (<span class="string">&#x27;George Orwell&#x27;</span>,), (<span class="literal">None</span>,)]&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="9-dates">9. dates()</h3>
-<p><code>dates(field, kind, order='ASC')</code></p>
-<ul>
-<li>
-<p>返回一个QuerySet，表示QuerySet内容中特定类型的所有可用日期的datetime.date对象列表。</p>
-</li>
-<li>
-<p>field参数是模型的DateField的名称。 kind参数应为&quot;year&quot;，“month&quot;或&quot;day”。 结果列表中的每个datetime.date对象被截取为给定的类型。</p>
-</li>
-<li>
-<p>“year” 返回对应该field的所有不同年份值的列表。</p>
-</li>
-<li>
-<p>&quot;month&quot;返回字段的所有不同年/月值的列表。</p>
-</li>
-<li>
-<p>&quot;day&quot;返回字段的所有不同年/月/日值的列表。</p>
-</li>
-<li>
-<p>order参数默认为’ASC’，或者’DESC’。 它指定如何排序结果。</p>
-</li>
-</ul>
-<p>例子：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;year&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">1</span>, <span class="number">1</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;month&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">3</span>, <span class="number">1</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;day&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">3</span>, <span class="number">20</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;day&#x27;</span>, order=<span class="string">&#x27;DESC&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">2</span>, <span class="number">20</span>)]</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">filter</span>(headline__contains=<span class="string">&#x27;Lennon&#x27;</span>).dates(<span class="string">&#x27;pub_date&#x27;</span>, <span class="string">&#x27;day&#x27;</span>)</span><br><span class="line"></span><br><span class="line">[[datetime.date](<span class="number">2005</span>, <span class="number">3</span>, <span class="number">20</span>)]</span><br></pre></td></tr></table></figure>
-<h3 id="10-datetimes">10. datetimes()</h3>
-<p><code>datetimes(field_name, kind, order='ASC', tzinfo=None)</code></p>
-<ul>
-<li>
-<p>返回QuerySet，为datetime.datetime对象的列表，表示QuerySet内容中特定种类的所有可用日期。</p>
-</li>
-<li>
-<p>field_name应为模型的DateTimeField的名称。</p>
-</li>
-<li>
-<p>kind参数应为&quot;hour&quot;，“minute”，“month”，“year”，“second&quot;或&quot;day”。</p>
-</li>
-<li>
-<p>结果列表中的每个datetime.datetime对象被截取到给定的类型。</p>
-</li>
-<li>
-<p>order参数默认为’ASC’，或者’DESC’。 它指定如何排序结果。</p>
-</li>
-<li>
-<p>tzinfo参数定义在截取之前将数据时间转换到的时区。</p>
-</li>
-</ul>
-<h3 id="11-none">11. none()</h3>
-<p><code>none()</code></p>
-<ul>
-<li>调用none()将创建一个不返回任何对象的查询集，并且在访问结果时不会执行任何查询。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">例子：</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.none()</span><br><span class="line"></span><br><span class="line">&lt;QuerySet []&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> django.db.models.query <span class="keyword">import</span> EmptyQuerySet</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">isinstance</span>(Entry.objects.none(), EmptyQuerySet)</span><br><span class="line"></span><br><span class="line"><span class="literal">True</span></span><br></pre></td></tr></table></figure>
-<h3 id="12-all">12. all()</h3>
-<p><code>all()</code></p>
-<ul>
-<li>返回当前QuerySet（或QuerySet子类）的副本。通常用于获取全部QuerySet对象。</li>
-</ul>
-<h3 id="13-union">13. union()</h3>
-<p><code>union(*other_qs, all=False)</code></p>
-<ul>
-<li>
-<p>Django中的新功能1.11。也就是集合中并集的概念！</p>
-</li>
-<li>
-<p>使用SQL的UNION运算符组合两个或更多个QuerySet的结果。例如：</p>
-</li>
-</ul>
-<p><code>qs1.union(qs2, qs3)</code></p>
-<ul>
-<li>默认情况下，UNION操作符仅选择不同的值。 要允许重复值，请使用all=True参数。</li>
-</ul>
-<h3 id="14-intersection">14. intersection()</h3>
-<ul>
-<li>
-<p>intersection(*other_qs)</p>
-</li>
-<li>
-<p>Django中的新功能1.11。也就是集合中<code>交集</code>的概念！</p>
-</li>
-<li>
-<p>使用SQL的INTERSECT运算符返回两个或更多个QuerySet的共有元素。例如：</p>
-</li>
-</ul>
-<p><code>qs1.intersection(qs2, qs3)</code></p>
-<h3 id="15-difference">15. difference()</h3>
-<p><code>difference(*other_qs)</code></p>
-<ul>
-<li>
-<p>Django中的新功能1.11。也就是集合中<code>差集</code>的概念！</p>
-</li>
-<li>
-<p>使用SQL的EXCEPT运算符只保留QuerySet中的元素，但不保留其他QuerySet中的元素。例如：</p>
-</li>
-</ul>
-<p><code>qs1.difference(qs2, qs3)</code></p>
-<h3 id="16-select-related">16. select_related()</h3>
-<p><code>select_related(*fields)</code></p>
-<ul>
-<li>
-<p>沿着外键关系查询关联的对象的数据。这会生成一个复杂的查询并引起性能的损耗，但是在以后使用外键关系时将不需要再次数据库查询。</p>
-</li>
-<li>
-<p>下面的例子解释了普通查询和select_related()查询的区别。 下面是一个标准的查询：</p>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 访问数据库。</span></span><br><span class="line"></span><br><span class="line">e = Entry.objects.get(<span class="built_in">id</span>=<span class="number">5</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 再次访问数据库以得到关联的Blog对象。</span></span><br><span class="line"></span><br><span class="line">b = [e.blog]</span><br><span class="line"></span><br><span class="line">下面是一个select_related查询：</span><br><span class="line"></span><br><span class="line"><span class="comment"># 访问数据库。</span></span><br><span class="line"></span><br><span class="line">e = Entry.objects.select_related(<span class="string">&#x27;blog&#x27;</span>).get(<span class="built_in">id</span>=<span class="number">5</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 不会访问数据库，因为e.blog已经在前面的查询中获得了。</span></span><br><span class="line"></span><br><span class="line">b = [e.blog]</span><br><span class="line"></span><br><span class="line">select_related()可用于objects任何的查询集：</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> django.utils <span class="keyword">import</span> timezone</span><br><span class="line"></span><br><span class="line"><span class="comment"># Find all the blogs with entries scheduled to be published in the future.</span></span><br><span class="line"></span><br><span class="line">blogs = <span class="built_in">set</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> Entry.objects.<span class="built_in">filter</span>(pub_date__gt=[timezone.now]()).select_related(<span class="string">&#x27;blog&#x27;</span>):</span><br><span class="line"></span><br><span class="line"><span class="comment"># 没有select_related()，下面的语句将为每次循环迭代生成一个数据库查询,以获得每个entry关联的blog。</span></span><br><span class="line"></span><br><span class="line">blogs.add([e.blog])</span><br><span class="line"></span><br><span class="line"><span class="built_in">filter</span>()和select_related()的顺序不重要。 下面的查询集是等同的：</span><br><span class="line"></span><br><span class="line">Entry.objects.<span class="built_in">filter</span>(pub_date__gt=[timezone.now].select_related(<span class="string">&#x27;blog&#x27;</span>)</span><br><span class="line"></span><br><span class="line">Entry.objects.select_related(<span class="string">&#x27;blog&#x27;</span>).<span class="built_in">filter</span>(pub_date__gt=[timezone.now]())</span><br></pre></td></tr></table></figure>
-<p>可以沿着外键查询。 如果有以下模型：</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">from django.db import models</span><br><span class="line">class City(models.Model):</span><br><span class="line">    # ...</span><br><span class="line">    pass</span><br><span class="line">class Person(models.Model):</span><br><span class="line">    # ...</span><br><span class="line">    hometown = models.ForeignKey(</span><br><span class="line">        City,</span><br><span class="line">        on_delete=models.SET_NULL,</span><br><span class="line">        blank=True,</span><br><span class="line">        null=True,</span><br><span class="line">    )</span><br><span class="line">class Book(models.Model):</span><br><span class="line">    # ...</span><br><span class="line">    author = models.ForeignKey(Person, on_delete=models.CASCADE)</span><br></pre></td></tr></table></figure>
-<p>调用Book.objects.select_related(‘author__hometown’).get(id=4)将缓存相关的Person 和相关的City：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">b = Book.objects.select_related(<span class="string">&#x27;author__hometown&#x27;</span>).get(<span class="built_in">id</span>=<span class="number">4</span>)</span><br><span class="line"></span><br><span class="line">p = [b.author] <span class="comment"># Doesn&#x27;t hit the database.</span></span><br><span class="line"></span><br><span class="line">c = p.hometown <span class="comment"># Doesn&#x27;t hit the database.</span></span><br><span class="line"></span><br><span class="line">b = Book.objects.get(<span class="built_in">id</span>=<span class="number">4</span>) <span class="comment"># No select_related() in this example.</span></span><br><span class="line"></span><br><span class="line">p = [b.author] <span class="comment"># Hits the database.</span></span><br><span class="line"></span><br><span class="line">c = p.hometown <span class="comment"># Hits the database.</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>在传递给select_related()的字段中，可以使用<code>任何ForeignKey</code>和<code>OneToOneField</code>。</p>
-</li>
-<li>
-<p>在传递给select_related()的字段中，还可以反向引用OneToOneField。也就是说，可以回溯到定义OneToOneField 的字段。 此时，可以使用关联对象字段的related_name，而不要指定字段的名称。</p>
-</li>
-</ul>
-<h3 id="17-prefetch-related">17. prefetch_related()</h3>
-<p><code>prefetch_related(*lookups)</code></p>
-<ul>
-<li>
-<p>在单个批处理中自动检索每个指定查找的相关对象。</p>
-</li>
-<li>
-<p>与select_related类似，但是策略是完全不同的。</p>
-</li>
-</ul>
-<p>假设有这些模型：</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">from django.db import models</span><br><span class="line">class Topping(models.Model):</span><br><span class="line">    name = models.CharField(max_length=30)</span><br><span class="line">class Pizza(models.Model):</span><br><span class="line">    name = models.CharField(max_length=50)</span><br><span class="line">    toppings = models.ManyToManyField(Topping)</span><br><span class="line">    def __str__(self):              # __unicode__ on Python 2</span><br><span class="line">        return &quot;%s (%s)&quot; % (</span><br><span class="line">            self.name,</span><br><span class="line">            &quot;, &quot;.join(topping.name for topping in self.toppings.all()),</span><br><span class="line">        )</span><br></pre></td></tr></table></figure>
-<p>并运行：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza.objects.<span class="built_in">all</span>()</span><br><span class="line"></span><br><span class="line">[<span class="string">&quot;Hawaiian (ham, pineapple)&quot;</span>, <span class="string">&quot;Seafood (prawns, smoked salmon)&quot;</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>问题是每次QuerySet要求Pizza.objects.all()查询数据库，因此<code>self.toppings.all()</code>将在<code>Pizza Pizza.__str__()</code>中的每个项目的<code>Toppings</code>表上运行查询。</p>
-</li>
-<li>
-<p>可以使用prefetch_related减少为只有两个查询：</p>
-</li>
-</ul>
-<p><code>Pizza.objects.all().prefetch_related('toppings')</code></p>
-<ul>
-<li>
-<p>这意味着现在每次<code>self.toppings.all()</code>被调用，不会再去数据库查找，而是在一个预取的QuerySet缓存中查找。</p>
-</li>
-<li>
-<p>还可以使用正常连接语法来执行相关字段的相关字段。 假设在上面的例子中增加一个额外的模型：</p>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Restaurant</span>(models.Model):</span><br><span class="line"></span><br><span class="line">  pizzas = models.ManyToManyField(Pizza, related_name=<span class="string">&#x27;restaurants&#x27;</span>)</span><br><span class="line"></span><br><span class="line">  best_pizza = models.ForeignKey(Pizza, related_name=<span class="string">&#x27;championed_by&#x27;</span>)</span><br></pre></td></tr></table></figure>
-<p>以下是合法的：</p>
-<p><code>Restaurant.objects.prefetch_related('pizzas__toppings')</code></p>
-<ul>
-<li>这将预取所有属于餐厅的比萨饼，和所有属于那些比萨饼的配料。 这将导致总共3个查询 - 一个用于餐馆，一个用于比萨饼，一个用于配料。</li>
-</ul>
-<p><code> Restaurant.objects.prefetch_related('best_pizza__toppings')</code></p>
-<ul>
-<li>
-<p>这将获取最好的比萨饼和每个餐厅最好的披萨的所有配料。 这将在3个表中查询 - 一个为餐厅，一个为“最佳比萨饼”，一个为配料。</p>
-</li>
-<li>
-<p>当然，也可以使用best_pizza来获取select_related关系，以将查询数减少为2：</p>
-</li>
-</ul>
-<p><code>Restaurant.objects.select_related('best_pizza').prefetch_related('best_pizza__toppings')</code></p>
-<h3 id="18-extra">18. extra()</h3>
-<p><code>extra(select=None, where=None, params=None, tables=None, order_by=None, select_params=None)</code></p>
-<ul>
-<li>有些情况下，Django的查询语法难以简单的表达复杂的WHERE子句，对于这种情况,可以在<code>extra()</code>生成的SQL从句中注入新子句。使用这种方法作为最后的手段，这是一个旧的API，在将来的某个时候可能被弃用。仅当无法使用其他查询方法表达查询时才使用它。</li>
-</ul>
-<p>例如：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">qs.extra(</span><br><span class="line">  select=&#123;<span class="string">&#x27;val&#x27;</span>: <span class="string">&quot;select col from sometable where othercol = %s&quot;</span>&#125;,</span><br><span class="line">  select_params=(someparam,),</span><br><span class="line"> )</span><br></pre></td></tr></table></figure>
-<p>相当于：</p>
-<p><code>qs.annotate(val=RawSQL(&quot;select col from sometable where othercol = %s&quot;, (someparam,)))</code></p>
-<h3 id="19-defer">19. defer()</h3>
-<p><code>defer(*fields)</code></p>
-<ul>
-<li>
-<p>在一些复杂的数据建模情况下，模型可能包含大量字段，其中一些可能包含大尺寸数据（例如文本字段），将它们转换为Python对象需要花费很大的代价。</p>
-</li>
-<li>
-<p>当最初获取数据时不知道是否需要这些特定字段的情况下，如果正在使用查询集的结果，可以告诉Django不要从数据库中检索它们。</p>
-</li>
-<li>
-<p>通过传递字段名称到defer()实现不加载：</p>
-</li>
-</ul>
-<p><code>Entry.objects.defer(&quot;headline&quot;, &quot;body&quot;)</code></p>
-<ul>
-<li>
-<p>具有延迟加载字段的查询集仍将返回模型实例。</p>
-</li>
-<li>
-<p>每个延迟字段将在你访问该字段时从数据库中检索（每次只检索一个，而不是一次检索所有的延迟字段）。</p>
-</li>
-<li>
-<p>可以多次调用defer()。 每个调用都向延迟集添加新字段：</p>
-</li>
-</ul>
-<h4 id="延迟body和headline两个字段。">延迟body和headline两个字段。</h4>
-<p><code>Entry.objects.defer(&quot;body&quot;).filter(rating=5).defer(&quot;headline&quot;)</code></p>
-<ul>
-<li>
-<p>字段添加到延迟集的顺序无关紧要。对已经延迟的字段名称再次defer()没有问题（该字段仍将被延迟）。</p>
-</li>
-<li>
-<p>可以使用标准的双下划线符号来分隔关联的字段，从而加载关联模型中的字段：</p>
-</li>
-</ul>
-<p><code>Blog.objects.select_related().defer(&quot;entry__headline&quot;, &quot;entry__body&quot;)</code></p>
-<ul>
-<li>如果要清除延迟字段集，将None作为参数传递到defer()：</li>
-</ul>
-<h4 id="立即加载所有的字段。">立即加载所有的字段。</h4>
-<ul>
-<li>
-<p>my_queryset.defer(None)</p>
-</li>
-<li>
-<p>defer()方法（及其兄弟，only()）仅适用于高级用例，它们提供了数据加载的优化方法。</p>
-</li>
-</ul>
-<h3 id="20-only">20. only()</h3>
-<p><code>only(*fields)</code></p>
-<ul>
-<li>
-<p>only()方法与defer()相反。</p>
-</li>
-<li>
-<p>如果有一个模型几乎所有的字段需要延迟，使用only()指定补充的字段集可以使代码更简单。</p>
-</li>
-<li>
-<p>假设有一个包含字段biography、age和name的模型。 以下两个查询集是相同的，就延迟字段而言：</p>
-<ul>
-<li>Person.objects.defer(“age”, “biography”)</li>
-<li>Person.objects.only(“name”)</li>
-</ul>
-</li>
-</ul>
-<p>每当你调用only()时，它将替换立即加载的字段集。因此，对only()的连续调用的结果是只有最后一次调用的字段被考虑：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># This will defer all fields except the headline.</span></span><br><span class="line"></span><br><span class="line">Entry.objects.only(<span class="string">&quot;body&quot;</span>, <span class="string">&quot;rating&quot;</span>).only(<span class="string">&quot;headline&quot;</span>)</span><br><span class="line"></span><br><span class="line">由于defer()以递增方式动作（向延迟列表中添加字段），因此你可以结合only()和defer()调用：</span><br><span class="line"></span><br><span class="line"><span class="comment"># Final result is that everything except &quot;headline&quot; is deferred.</span></span><br><span class="line"></span><br><span class="line">Entry.objects.only(<span class="string">&quot;headline&quot;</span>, <span class="string">&quot;body&quot;</span>).defer(<span class="string">&quot;body&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Final result loads headline and body immediately (only() replaces any</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># existing set of fields).</span></span><br><span class="line"></span><br><span class="line">Entry.objects.defer(<span class="string">&quot;body&quot;</span>).only(<span class="string">&quot;headline&quot;</span>, <span class="string">&quot;body&quot;</span>)</span><br></pre></td></tr></table></figure>
-<p>当对具有延迟字段的实例调用save()时，仅保存加载的字段。</p>
-<h3 id="21-using">21. using()</h3>
-<p><code>using(alias)</code></p>
-<ul>
-<li>如果正在使用多个数据库，这个方法用于指定在哪个数据库上查询QuerySet。方法的唯一参数是数据库的别名，定义在DATABASES。</li>
-</ul>
-<p>例如：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># queries the database with the &#x27;default&#x27; alias.</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">all</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># queries the database with the &#x27;backup&#x27; alias</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.using(<span class="string">&#x27;backup&#x27;</span>)</span><br></pre></td></tr></table></figure>
-<h3 id="22-select-for-update">22. select_for_update()</h3>
-<p><code>select_for_update(nowait=False, skip_locked=False)</code></p>
-<ul>
-<li>返回一个锁住行直到事务结束的查询集，如果数据库支持，它将生成一个SELECT … FOR UPDATE语句。</li>
-</ul>
-<p>例如：</p>
-<p><code>entries = Entry.objects.select_for_update().filter(author=request.user)</code></p>
-<ul>
-<li>
-<p>所有匹配的行将被锁定，直到事务结束。这意味着可以通过锁防止数据被其它事务修改。</p>
-</li>
-<li>
-<p>一般情况下如果其他事务锁定了相关行，那么本查询将被阻塞，直到锁被释放。使用select_for_update(nowait=True)将使查询不阻塞。如果其它事务持有冲突的锁,那么查询将引发DatabaseError异常。也可以使用select_for_update(skip_locked=True)忽略锁定的行。nowait和skip_locked是互斥的。</p>
-</li>
-<li>
-<p>目前，postgresql，oracle和mysql数据库后端支持select_for_update()。但是，MySQL不支持nowait和skip_locked参数。</p>
-</li>
-</ul>
-<h3 id="23-raw">23. raw()</h3>
-<p>raw(raw_query, params=None, translations=None)</p>
-<p>接收一个原始的SQL查询，执行它并返回一个django.db.models.query.RawQuerySet实例。</p>
-<p>这个RawQuerySet实例可以迭代，就像普通的QuerySet一样。</p>
-<h1>四、不返回QuerySets的API</h1>
-<ul>
-<li>以下的方法不会返回QuerySets，但是作用非常强大，尤其是粗体显示的方法，需要背下来。</li>
-</ul>
-<h2 id="方法名-解释"><strong>方法名 解释</strong></h2>
-<p>get() 获取单个对象</p>
-<p>create() 创建对象，无需save()</p>
-<p>get_or_create() 查询对象，如果没有找到就新建对象</p>
-<p>update_or_create() 更新对象，如果没有找到就创建对象</p>
-<p>bulk_create()</p>
-<p>批量创建对象</p>
-<p>count() 统计对象的个数</p>
-<p>in_bulk()</p>
-<p>根据主键值的列表，批量返回对象</p>
-<p>iterator()</p>
-<p>获取包含对象的迭代器</p>
-<p>latest() 获取最近的对象</p>
-<p>earliest() 获取最早的对象</p>
-<p>first() 获取第一个对象</p>
-<p>last() 获取最后一个对象</p>
-<p>aggregate() 聚合操作</p>
-<p>exists() 判断queryset中是否有对象</p>
-<p>update() 批量更新对象</p>
-<p>delete() 批量删除对象</p>
-<p>as_manager() 获取管理器</p>
-<h3 id="1-get">1. get()</h3>
-<p><code>get(**kwargs)</code></p>
-<ul>
-<li>
-<p>返回按照查询参数匹配到的单个对象，参数的格式应该符合Field lookups的要求。</p>
-</li>
-<li>
-<p>如果匹配到的对象个数不只一个的话，触发MultipleObjectsReturned异常</p>
-</li>
-<li>
-<p>如果根据给出的参数匹配不到对象的话，触发DoesNotExist异常。例如：</p>
-</li>
-</ul>
-<p><code>Entry.objects.get(id='foo') # raises Entry.DoesNotExist</code></p>
-<ul>
-<li>DoesNotExist异常从django.core.exceptions.ObjectDoesNotExist继承，可以定位多个DoesNotExist异常。 例如：</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.core.exceptions <span class="keyword">import</span> ObjectDoesNotExist</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">  e = Entry.objects.get(<span class="built_in">id</span>=<span class="number">3</span>)</span><br><span class="line">  b = Blog.objects.get(<span class="built_in">id</span>=<span class="number">1</span>)</span><br><span class="line"><span class="keyword">except</span> ObjectDoesNotExist:</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;Either the entry or blog doesn&#x27;t exist.&quot;</span>)</span><br></pre></td></tr></table></figure>
-<ul>
-<li>如果希望查询器只返回一行，则可以使用get()而不使用任何参数来返回该行的对象：</li>
-</ul>
-<p><code>entry = Entry.objects.filter(...).exclude(...).get()</code></p>
-<h3 id="2-create">2. create()</h3>
-<p><code>create(**kwargs)</code></p>
-<ul>
-<li>在一步操作中<code>同时创建</code>并且<code>保存对象</code>的便捷方法.</li>
-</ul>
-<p><code>p = Person.objects.create(first_name=&quot;Bruce&quot;, last_name=&quot;Springsteen&quot;)</code></p>
-<p>等于:</p>
-<p><code>p = Person(first_name=&quot;Bruce&quot;, last_name=&quot;Springsteen&quot;)</code></p>
-<p><code>p.save(force_insert=True)</code></p>
-<ul>
-<li>参数force_insert表示强制创建对象。如果model中有一个你手动设置的主键，并且这个值已经存在于数据库中, 调用create()将会失败并且触发IntegrityError因为主键必须是唯一的。如果你手动设置了主键，做好异常处理的准备。</li>
-</ul>
-<h3 id="3-get-or-create">3. get_or_create()</h3>
-<p><code>get_or_create(defaults=None, **kwargs)</code></p>
-<ul>
-<li>
-<p>通过kwargs来查询对象的便捷方法（如果模型中的所有字段都有默认值，可以为空），如果该对象不存在则创建一个新对象。</p>
-</li>
-<li>
-<p>该方法返回一个由(object, created)组成的元组，元组中的object 是一个查询到的或者是被创建的对象， created是一个表示是否创建了新的对象的布尔值。</p>
-</li>
-</ul>
-<p>对于下面的代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line"></span><br><span class="line">  obj = Person.objects.get(first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">except</span> Person.DoesNotExist:</span><br><span class="line"></span><br><span class="line">  obj = Person(first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>, birthday=date(<span class="number">1940</span>, <span class="number">10</span>, <span class="number">9</span>))</span><br><span class="line"></span><br><span class="line">  obj.save()</span><br></pre></td></tr></table></figure>
-<p>如果模型的字段数量较大的话，这种模式就变的非常不易用了。 上面的示例可以用get_or_create()重写 :</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">obj, created = Person.objects.get_or_create(</span><br><span class="line">  first_name=<span class="string">&#x27;John&#x27;</span>,</span><br><span class="line">  last_name=<span class="string">&#x27;Lennon&#x27;</span>,</span><br><span class="line">  defaults=&#123;<span class="string">&#x27;birthday&#x27;</span>: date(<span class="number">1940</span>, <span class="number">10</span>, <span class="number">9</span>)&#125;,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<ul>
-<li>任何传递给get_or_create()的关键字参数，除了一个可选的defaults，都将传递给get()调用。 如果查找到一个对象，返回一个包含匹配到的对象以及False 组成的元组。 如果查找到的对象超过一个以上，将引发MultipleObjectsReturned。如果查找不到对象，get_or_create()将会实例化并保存一个新的对象，返回一个由新的对象以及True组成的元组。新的对象将会按照以下的逻辑创建:</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">params = &#123;k: v <span class="keyword">for</span> k, v <span class="keyword">in</span> kwargs.items() <span class="keyword">if</span> <span class="string">&#x27;__&#x27;</span> <span class="keyword">not</span> <span class="keyword">in</span> k&#125;</span><br><span class="line"></span><br><span class="line">params.update(&#123;k: v() <span class="keyword">if</span> <span class="built_in">callable</span>(v) <span class="keyword">else</span> v <span class="keyword">for</span> k, v <span class="keyword">in</span> defaults.items()&#125;)</span><br><span class="line"></span><br><span class="line">obj = self.model(**params)</span><br><span class="line"></span><br><span class="line">obj.save()</span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>它表示从非’defaults’ 且不包含双下划线的关键字参数开始。然后将defaults的内容添加进来，覆盖必要的键，并使用结果作为关键字参数传递给模型类。</p>
-</li>
-<li>
-<p>如果有一个名为defaults__exact的字段，并且想在get_or_create()时用它作为精确查询，只需要使用defaults，像这样：</p>
-</li>
-</ul>
-<p><code>Foo.objects.get_or_create(defaults__exact='bar', defaults=&#123;'defaults': 'baz'&#125;)</code></p>
-<ul>
-<li>
-<p>当你使用手动指定的主键时，get_or_create()方法与create()方法有相似的错误行为 。 如果需要创建一个对象而该对象的主键早已存在于数据库中，IntegrityError异常将会被触发。</p>
-</li>
-<li>
-<p>这个方法假设进行的是原子操作，并且正确地配置了数据库和正确的底层数据库行为。如果数据库级别没有对get_or_create中用到的kwargs强制要求唯一性（unique和unique_together），方法容易导致竞态条件，可能会有相同参数的多行同时插入。（简单理解，kwargs必须指定的是主键或者unique属性的字段才安全。）</p>
-</li>
-<li>
-<p>最后建议只在Django视图的POST请求中使用get_or_create()，因为这是一个具有修改性质的动作，不应该使用在GET请求中，那样不安全。</p>
-</li>
-<li>
-<p>可以通过ManyToManyField属性和反向关联使用get_or_create()。在这种情况下，应该限制查询在关联的上下文内部。 否则，可能导致完整性问题。</p>
-</li>
-</ul>
-<p>例如下面的模型：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Chapter</span>(models.Model):</span><br><span class="line"></span><br><span class="line">  title = models.CharField(max_length=<span class="number">255</span>, unique=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">class</span> <span class="title class_">Book</span>(models.Model):</span><br><span class="line"></span><br><span class="line">  title = models.CharField(max_length=<span class="number">256</span>)</span><br><span class="line"></span><br><span class="line">  chapters = models.ManyToManyField(Chapter)</span><br></pre></td></tr></table></figure>
-<p>可以通过Book的chapters字段使用get_or_create()，但是它只会获取该Book内部的上下文：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>book = Book.objects.create(title=<span class="string">&quot;Ulysses&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>book.chapters.get_or_create(title=<span class="string">&quot;Telemachus&quot;</span>)</span><br><span class="line"></span><br><span class="line">(&lt;Chapter: Telemachus&gt;, <span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>book.chapters.get_or_create(title=<span class="string">&quot;Telemachus&quot;</span>)</span><br><span class="line"></span><br><span class="line">(&lt;Chapter: Telemachus&gt;, <span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Chapter.objects.create(title=<span class="string">&quot;Chapter 1&quot;</span>)</span><br><span class="line"></span><br><span class="line">&lt;Chapter: Chapter <span class="number">1</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>book.chapters.get_or_create(title=<span class="string">&quot;Chapter 1&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Raises IntegrityError</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>发生这个错误是因为尝试通过Book “Ulysses”获取或者创建“Chapter 1”，但是它不能，因为它与这个book不关联，但因为title 字段是唯一的它仍然不能创建。</li>
-</ul>
-<p>在Django1.11在defaults中增加了对可调用值的支持。</p>
-<h3 id="4-update-or-create">4. update_or_create()</h3>
-<p><code>update_or_create(defaults=None, **kwargs)</code></p>
-<p>类似前面的get_or_create()。</p>
-<ul>
-<li>
-<p>通过给出的kwargs来更新对象的便捷方法， 如果没找到对象，则创建一个新的对象。defaults是一个由 (field, value)对组成的字典，用于更新对象。defaults中的值可以是可调用对象（也就是说函数等）。</p>
-</li>
-<li>
-<p>该方法返回一个由(object, created)组成的元组,元组中的object是一个创建的或者是被更新的对象， created是一个标示是否创建了新的对象的布尔值。</p>
-</li>
-<li>
-<p>update_or_create方法尝试通过给出的kwargs 去从数据库中获取匹配的对象。 如果找到匹配的对象，它将会依据defaults 字典给出的值更新字段。</p>
-</li>
-</ul>
-<p>像下面的代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">defaults = &#123;<span class="string">&#x27;first_name&#x27;</span>: <span class="string">&#x27;Bob&#x27;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line"></span><br><span class="line">  obj = Person.objects.get(first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> key, value <span class="keyword">in</span> defaults.items():</span><br><span class="line"></span><br><span class="line">  <span class="built_in">setattr</span>(obj, key, value)</span><br><span class="line"></span><br><span class="line">  obj.save()</span><br><span class="line"></span><br><span class="line"><span class="keyword">except</span> Person.DoesNotExist:</span><br><span class="line"></span><br><span class="line">  new_values = &#123;<span class="string">&#x27;first_name&#x27;</span>: <span class="string">&#x27;John&#x27;</span>, <span class="string">&#x27;last_name&#x27;</span>: <span class="string">&#x27;Lennon&#x27;</span>&#125;</span><br><span class="line"></span><br><span class="line">  new_values.update(defaults)</span><br><span class="line"></span><br><span class="line">  obj = Person(**new_values)</span><br><span class="line"></span><br><span class="line">  obj.save()</span><br></pre></td></tr></table></figure>
-<p>如果模型的字段数量较大的话，这种模式就变的非常不易用了。 上面的示例可以用update_or_create() 重写:</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">obj, created = Person.objects.update_or_create(</span><br><span class="line"></span><br><span class="line">first_name=<span class="string">&#x27;John&#x27;</span>, last_name=<span class="string">&#x27;Lennon&#x27;</span>,</span><br><span class="line"></span><br><span class="line">defaults=&#123;<span class="string">&#x27;first_name&#x27;</span>: <span class="string">&#x27;Bob&#x27;</span>&#125;,</span><br><span class="line"></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>kwargs中的名称如何解析的详细描述可以参见get_or_create()。</p>
-</li>
-<li>
-<p>和get_or_create()一样，这个方法也容易导致竞态条件，如果数据库层级没有前置唯一性会让多行同时插入。</p>
-</li>
-</ul>
-<p>在Django1.11在defaults中增加了对可调用值的支持。</p>
-<h3 id="5-bulk-create">5. bulk_create()</h3>
-<p><code>bulk_create(objs, batch_size=None)</code></p>
-<ul>
-<li>以高效的方式（通常只有1个查询，无论有多少对象）将提供的对象列表插入到数据库中：</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.bulk_create([</span><br><span class="line"></span><br><span class="line"><span class="meta">... </span>Entry(headline=<span class="string">&#x27;This is a test&#x27;</span>),</span><br><span class="line"></span><br><span class="line"><span class="meta">... </span>Entry(headline=<span class="string">&#x27;This is only a test&#x27;</span>),</span><br><span class="line"></span><br><span class="line"><span class="meta">... </span>])</span><br></pre></td></tr></table></figure>
-<p>注意事项：</p>
-<ul>
-<li>
-<p>不会调用模型的save()方法，并且不会发送pre_save和post_save信号。</p>
-</li>
-<li>
-<p>不适用于多表继承场景中的子模型。</p>
-</li>
-<li>
-<p>如果模型的主键是AutoField，则不会像save()那样检索并设置主键属性，除非数据库后端支持。</p>
-</li>
-<li>
-<p>不适用于多对多关系。</p>
-</li>
-<li>
-<p>batch_size参数控制在单个查询中创建的对象数。</p>
-</li>
-</ul>
-<h3 id="6-count">6. count()</h3>
-<p><code>count()</code></p>
-<ul>
-<li>返回在数据库中对应的QuerySet对象的个数。count()永远不会引发异常。</li>
-</ul>
-<p>例如：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 返回总个数.</span></span><br><span class="line"></span><br><span class="line">Entry.objects.count()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 返回包含有&#x27;Lennon&#x27;的对象的总数</span></span><br><span class="line"></span><br><span class="line">Entry.objects.<span class="built_in">filter</span>(headline__contains=<span class="string">&#x27;Lennon&#x27;</span>).count()</span><br></pre></td></tr></table></figure>
-<h3 id="7-in-bulk">7. in_bulk()</h3>
-<p><code>in_bulk(id_list=None)</code></p>
-<ul>
-<li>获取主键值的列表，并返回将每个主键值映射到具有给定ID的对象的实例的字典。 如果未提供列表，则会返回查询集中的所有对象。</li>
-</ul>
-<p>例如：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk([<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">&#123;<span class="number">1</span>: &lt;Blog: Beatles Blog&gt;&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk([<span class="number">1</span>, <span class="number">2</span>])</span><br><span class="line"></span><br><span class="line">&#123;<span class="number">1</span>: &lt;Blog: Beatles Blog&gt;, <span class="number">2</span>: &lt;Blog: Cheddar Talk&gt;&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk([])</span><br><span class="line"></span><br><span class="line">&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Blog.objects.in_bulk()</span><br><span class="line"></span><br><span class="line">&#123;<span class="number">1</span>: &lt;Blog: Beatles Blog&gt;, <span class="number">2</span>: &lt;Blog: Cheddar Talk&gt;, <span class="number">3</span>: &lt;Blog: Django Weblog&gt;&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>
-<p>如果向in_bulk()传递一个空列表，会得到一个空的字典。</p>
-</li>
-<li>
-<p>在旧版本中，id_list是必需的参数，现在是一个可选参数。</p>
-</li>
-</ul>
-<h3 id="8-iterator">8. iterator()</h3>
-<p><code>iterator()</code></p>
-<ul>
-<li>
-<p>提交数据库操作，获取QuerySet，并返回一个迭代器。</p>
-</li>
-<li>
-<p>QuerySet通常会在内部缓存其结果，以便在重复计算时不会导致额外的查询。而iterator()将直接读取结果，不在QuerySet级别执行任何缓存。对于返回大量只需要访问一次的对象的QuerySet，这可以带来更好的性能，显著减少内存使用。</p>
-</li>
-</ul>
-<blockquote>
-<p>请注意，在已经提交了的iterator()上使用QuerySet会强制它再次提交数据库操作，进行重复查询。此外，使用iterator()会导致先前的prefetch_related()调用被忽略，因为这两个一起优化没有意义。</p>
-</blockquote>
-<h3 id="9-latest">9. latest()</h3>
-<p><code>latest(field_name=None)</code></p>
-<ul>
-<li>
-<p>使用日期字段field_name，按日期返回最新对象。</p>
-</li>
-<li>
-<p>下例根据Entry的’pub_date’字段返回最新发布的entry：</p>
-<p><code>Entry.objects.latest('pub_date')</code></p>
-</li>
-<li>
-<p>如果模型的Meta指定了get_latest_by，则可以将latest()参数留给earliest()或者field_name。 默认情况下，Django将使用get_latest_by中指定的字段。</p>
-</li>
-<li>
-<p>earliest()和latest()可能会返回空日期的实例,可能需要过滤掉空值：</p>
-</li>
-</ul>
-<p><code>Entry.objects.filter(pub_date__isnull=False).latest('pub_date')</code></p>
-<h3 id="10-earliest">10. earliest()</h3>
-<p>earliest(field_name=None)</p>
-<p>类同latest()。</p>
-<h3 id="11-first">11. first()</h3>
-<p><code>first()</code></p>
-<ul>
-<li>返回结果集的第一个对象, 当没有找到时返回None。如果QuerySet没有设置排序,则将会自动按主键进行排序。例如：</li>
-</ul>
-<p><code>p = Article.objects.order_by('title', 'pub_date').first()</code></p>
-<ul>
-<li>first()是一个简便方法，下面的例子和上面的代码效果是一样：</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">  p = Article.objects.order_by(<span class="string">&#x27;title&#x27;</span>, <span class="string">&#x27;pub_date&#x27;</span>)[<span class="number">0</span>]</span><br><span class="line"><span class="keyword">except</span> IndexError:</span><br><span class="line">  p = <span class="literal">None</span></span><br></pre></td></tr></table></figure>
-<h3 id="12-last">12. last()</h3>
-<p><code>last()</code></p>
-<p>工作方式类似first()，只是返回的是查询集中最后一个对象。</p>
-<h3 id="13-aggregate">13. aggregate()</h3>
-<p><code>aggregate(args, *kwargs)</code></p>
-<ul>
-<li>
-<p>返回汇总值的字典（平均值，总和等）,通过QuerySet进行计算。每个参数指定返回的字典中将要包含的值。</p>
-</li>
-<li>
-<p>使用关键字参数指定的聚合将使用关键字参数的名称作为Annotation 的名称。 匿名参数的名称将基于聚合函数的名称和模型字段生成。 复杂的聚合不可以使用匿名参数，必须指定一个关键字参数作为别名。</p>
-</li>
-</ul>
-<p>例如，想知道Blog Entry 的数目：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.models <span class="keyword">import</span> Count</span><br><span class="line"></span><br><span class="line">q = Blog.objects.aggregate(Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line">&#123;<span class="string">&#x27;entry__count&#x27;</span>: <span class="number">16</span>&#125;</span><br></pre></td></tr></table></figure>
-<p>通过使用关键字参数来指定聚合函数，可以控制返回的聚合的值的名称：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">q = Blog.objects.aggregate(number_of_entries=Count(<span class="string">&#x27;entry&#x27;</span>))</span><br><span class="line"></span><br><span class="line">&#123;<span class="string">&#x27;number_of_entries&#x27;</span>: <span class="number">16</span>&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="14-exists">14. exists()</h3>
-<p>exists()</p>
-<ul>
-<li>
-<p>如果QuerySet包含任何结果，则返回True，否则返回False。</p>
-</li>
-<li>
-<p>查找具有唯一性字段（例如primary_key）的模型是否在一个QuerySet中的最高效的方法是：</p>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">entry = Entry.objects.get(pk=<span class="number">123</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> some_queryset.<span class="built_in">filter</span>(pk=entry.pk).exists():</span><br><span class="line"></span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;Entry contained in queryset&quot;</span>)</span><br></pre></td></tr></table></figure>
-<p>它将比下面的方法快很多，这个方法要求对QuerySet求值并迭代整个QuerySet：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> entry <span class="keyword">in</span> some_queryset:</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;Entry contained in QuerySet&quot;</span>)</span><br></pre></td></tr></table></figure>
-<p>若要查找一个QuerySet是否包含任何元素：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> some_queryset.exists():</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;There is at least one object in some_queryset&quot;</span>)</span><br><span class="line">将快于：</span><br><span class="line"><span class="keyword">if</span> some_queryset:</span><br><span class="line">  <span class="built_in">print</span>(<span class="string">&quot;There is at least one object in some_queryset&quot;</span>)</span><br></pre></td></tr></table></figure>
-<h3 id="15-update">15. update()</h3>
-<p><code>update(**kwargs)</code></p>
-<ul>
-<li>
-<p>对指定的字段执行批量更新操作，并返回匹配的行数（如果某些行已具有新值，则可能不等于已更新的行数）。</p>
-</li>
-<li>
-<p>例如，要对2010年发布的所有博客条目启用评论，可以执行以下操作：</p>
-</li>
-</ul>
-<p><code>Entry.objects.filter(pub_date__year=2010).update(comments_on=False)</code></p>
-<ul>
-<li>可以同时更新多个字段 （没有多少字段的限制）。 例如同时更新comments_on和headline字段：</li>
-</ul>
-<p><code>Entry.objects.filter(pub_date__year=2010).update(comments_on=False, headline='This is old')</code></p>
-<p>update()方法<code>无需save</code>操作。唯一限制是它只能更新模型主表中的列，而不是关联的模型，例如不能这样做：</p>
-<p><code>Entry.objects.update(blog__name='foo') 	# Won't work!</code></p>
-<p>仍然可以根据相关字段进行过滤：</p>
-<p><code>Entry.objects.filter(blog__id=1).update(comments_on=True)</code></p>
-<p>update()方法返回受影响的行数：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Entry.objects.<span class="built_in">filter</span>(<span class="built_in">id</span>=<span class="number">64</span>).update(comments_on=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">filter</span>(slug=<span class="string">&#x27;nonexistent-slug&#x27;</span>).update(comments_on=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Entry.objects.<span class="built_in">filter</span>(pub_date__year=<span class="number">2010</span>).update(comments_on=<span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line"><span class="number">132</span></span><br></pre></td></tr></table></figure>
-<p>如果你只是更新一下对象，不需要为对象做别的事情，最有效的方法是调用update()，而不是将模型对象加载到内存中。 例如，不要这样做：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">e = Entry.objects.get(<span class="built_in">id</span>=<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">e.comments_on = <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">e.save()</span><br></pre></td></tr></table></figure>
-<p>建议如下操作：</p>
-<p><code>Entry.objects.filter(id=10).update(comments_on=False)</code></p>
-<p>用update()还可以防止在加载对象和调用save()之间的短时间内数据库中某些内容可能发生更改的竞争条件。</p>
-<p>如果想更新一个具有自定义save()方法的模型的记录，请循环遍历它们并调用save()，如下所示：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> e <span class="keyword">in</span> Entry.objects.<span class="built_in">filter</span>(pub_date__year=<span class="number">2010</span>):</span><br><span class="line">  e.comments_on = <span class="literal">False</span></span><br><span class="line">  e.save()</span><br></pre></td></tr></table></figure>
-<h3 id="16-delete">16. delete()</h3>
-<p><code>delete()</code></p>
-<ul>
-<li>
-<p>批量删除QuerySet中的所有对象，并返回删除的对象个数和每个对象类型的删除次数的字典。</p>
-</li>
-<li>
-<p>delete()动作是立即执行的。</p>
-</li>
-<li>
-<p>不能在QuerySet上调用delete()。</p>
-</li>
-<li>
-<p>例如，要删除特定博客中的所有条目：</p>
-</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">b = Blog.objects.get(pk=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Delete all the entries belonging to this Blog.</span></span><br><span class="line">Entry.objects.<span class="built_in">filter</span>(blog=b).delete()</span><br><span class="line">(<span class="number">4</span>, &#123;<span class="string">&#x27;weblog.Entry&#x27;</span>: <span class="number">2</span>, <span class="string">&#x27;weblog.Entry_authors&#x27;</span>: <span class="number">2</span>&#125;)</span><br></pre></td></tr></table></figure>
-<p>默认情况下，Django的ForeignKey使用SQL约束ON DELETE CASCADE，任何具有指向要删除的对象的外键的对象将与它们一起被删除。 像这样：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">blogs = Blog.objects.<span class="built_in">all</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># This will delete all Blogs and all of their Entry objects.</span></span><br><span class="line">blogs.delete()</span><br><span class="line">(<span class="number">5</span>, &#123;<span class="string">&#x27;weblog.Blog&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;weblog.Entry&#x27;</span>: <span class="number">2</span>, <span class="string">&#x27;weblog.Entry_authors&#x27;</span>: <span class="number">2</span>&#125;)</span><br></pre></td></tr></table></figure>
-<p>这种级联的行为可以通过的ForeignKey的on_delete参数自定义。（什么时候要改变这种行为呢？比如日志数据，就不能和它关联的主体一并被删除！）</p>
-<p>delete()会为所有已删除的对象（包括级联删除）发出<code>pre_delete</code>和<code>post_delete</code>信号。</p>
-<h3 id="17-as-manager">17. as_manager()</h3>
-<p><code>classmethod as_manager()</code></p>
-<ul>
-<li>一个类方法，返回Manager的实例与QuerySet的方法的副本</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/06/08/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/" class="post-title-link" itemprop="url">Django简介</a>
+            <a href="/2023/06/29/%E6%9F%A5%E7%9C%8Bmysql%E8%BF%9E%E6%8E%A5%E6%83%85%E5%86%B5/" class="post-title-link" itemprop="url">查看mysql连接状况</a>
         </h2>
 
         <div class="post-meta">
@@ -1110,7 +262,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                  <a href="/categories/SQL%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">SQL知识</span></a>
                 </span>
             </span>
 
@@ -1122,14 +274,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.4k</span>
+              <span>561</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
+              <span>2 分钟</span>
             </span>
 
         </div>
@@ -1141,40 +293,48 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>Django简介</h1>
-<h2 id="背景">背景</h2>
-<ul>
-<li>2003诞生 它最初是被开发来用于管理劳伦斯出版集团旗下的一些以新闻内容为主的网站的</li>
-</ul>
-<h2 id="MVT（框架）">MVT（框架）</h2>
+          <p>使用<a target="_blank" rel="noopener" href="http://www.boke365.net/archives/tag/mysql">mysql</a>- uroot -p登录后</p>
 <ul>
 <li>
-<p>Models 模型 数据库</p>
+<p>执行命令: show processlist;</p>
 </li>
 <li>
-<p>Views 视图 放和拿</p>
+<p>查询当前数据库用户连接情况.</p>
 </li>
 <li>
-<p>Template 模板 前端</p>
+<p>如果是root帐号,你能看到所有用户的当前连接.</p>
+</li>
+<li>
+<p>如果是其它普通帐号,只能看到自己占用的连接.</p>
+</li>
+<li>
+<p>只列出前100条</p>
 <ul>
-<li>From 表单 <code>django</code> 会根据你后台数据库字段及表单层的设计对应的给你创建HTML关于表单的代码</li>
+<li><code>show processlist;</code></li>
+</ul>
+</li>
+<li>
+<p>如果想全列出请使用</p>
+<ul>
+<li><code>show full processlist;</code></li>
 </ul>
 </li>
 </ul>
-<h2 id="Django优点">Django优点</h2>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> processlist;</span><br><span class="line"></span><br><span class="line">命令： <span class="keyword">show</span> status;</span><br><span class="line"></span><br><span class="line">命令：<span class="keyword">show</span> status <span class="keyword">like</span> ‘<span class="operator">%</span>下面变量<span class="operator">%</span>’;</span><br></pre></td></tr></table></figure>
 <ul>
-<li>对象关系映射（Object Relational Mapping ORM）：通过定义映射类来构建数据模型，将模型与关系型数据库连接起来，使用ORM框架内置的数据库接口可实现复杂的数据操作。（简单来说就是把数据库的语句换成了python可识别的语言）</li>
-<li>URL设计：开发者可以设计任意的URL（网站地址）， 而且支持使用正则表达式设计。</li>
-<li>模板系统：提供可扩展的模板语言，模板之间具有可继承性。</li>
-<li>表单处理：可以生成各种表单模型，而且表单具有有效性检验功能。</li>
-<li>Cache系统：完善的缓存系统，可支持多种缓存方式</li>
-<li>用户管理系统：提供用户认证，权限设置和用户组功能，功能扩展性强。</li>
-<li>国际化：内置国际化系统，方便开发出多语言的网站。</li>
-<li>admin管理系统：内置admin管理系统，系统的扩展性强。</li>
+<li>Aborted_clients	由于客户没有正确关闭连接已经死掉,已经放弃的连接数量.</li>
+<li>Aborted_connects	尝试已经失败的MySQL服务器的连接的次数.</li>
+<li>Connections	试图连接MySQL服务器的次数.</li>
+<li>Created_tmp_tables	当执行语句时,已经被创造了的隐含临时表的数量.</li>
+<li>Delayed_insert_threads	正在使用的延迟插入处理器线程的数量.</li>
+<li>Delayed_writes	用INSERT DELAYED写入的行数.</li>
+<li>Delayed_errors	用INSERT DELAYED写入的发生某些错误(可能重复键值)的行数.</li>
+<li>Flush_commands	执行FLUSH命令的次数.</li>
+<li>Handler_delete	请求从一张表中删除行的次数.</li>
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/%E6%9F%A5%E7%9C%8Bmysql%E8%BF%9E%E6%8E%A5%E6%83%85%E5%86%B5/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1198,7 +358,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1212,7 +372,101 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">docker相关知识学习</a>
+            <a href="/2023/06/29/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/" class="post-title-link" itemprop="url">常用的正则表达式</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">正则表达式</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>693</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="匹配小数">匹配小数</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[0-9]&#123;1,&#125;[.][0-9]*</span><br></pre></td></tr></table></figure>
+<h2 id="匹配整数">匹配整数</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[0-9]</span><br></pre></td></tr></table></figure>
+<h2 id="中文的匹配">中文的匹配</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[\u4e00-\u9fa5]</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/06/29/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/29/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">docker相关知识学习</a>
         </h2>
 
         <div class="post-meta">
@@ -1316,7 +570,7 @@
 <p><strong>容器虚拟化的是操作系统而不是硬件，容器之间是共享同一套操作系统资源的。虚拟机技术是虚拟出一套硬件后，在其上运行一个完整操作系统。因此容器的隔离级别会稍低一些。</strong></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/docker%E4%BB%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1340,7 +594,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/flask%E6%A1%86%E6%9E%B6/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/flask%E6%A1%86%E6%9E%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1354,7 +608,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/flask%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">flask框架学习</a>
+            <a href="/2023/06/29/flask%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">flask框架学习</a>
         </h2>
 
         <div class="post-meta">
@@ -1451,7 +705,7 @@
   <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用一个视图函数 来显示不同用户的订单信息</span></span><br><span class="line"><span class="comment"># &lt;&gt;路由定义的参数，&lt;&gt;内需要起个名字</span></span><br><span class="line"><span class="comment"># int：限定参数类型为int类型，其他的不解析</span></span><br><span class="line"><span class="comment">#   -大致原理是将参数强转为int，如果成功，则可以进行路由匹配</span></span><br><span class="line"><span class="comment">#   -如果参数无法转换成功，就无法匹配该路由</span></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/orders/&lt;int:order_id&gt;&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_order_id</span>(<span class="params">order_id</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="built_in">type</span>(order_id))</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&#x27;order_id %s&#x27;</span> % order_id</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/flask%E6%A1%86%E6%9E%B6/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/flask%E6%A1%86%E6%9E%B6/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1475,7 +729,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/git%E5%91%BD%E4%BB%A4/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/git%E5%91%BD%E4%BB%A4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1489,7 +743,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/git%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">Git命令集合</a>
+            <a href="/2023/06/29/git%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">Git命令集合</a>
         </h2>
 
         <div class="post-meta">
@@ -1548,7 +802,7 @@
 <figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看配置信息</span></span><br><span class="line"><span class="comment"># --local：仓库级，--global：全局级，--system：系统级</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; -l</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看当前生效的配置信息</span></span><br><span class="line"><span class="variable">$ </span>git config -l</span><br><span class="line"></span><br><span class="line"><span class="comment"># 编辑配置文件</span></span><br><span class="line"><span class="comment"># --local：仓库级，--global：全局级，--system：系统级</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; -e</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加配置项</span></span><br><span class="line"><span class="comment"># --local：仓库级，--global：全局级，--system：系统级</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; --add &lt;name&gt; &lt;value&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取配置项</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; --get &lt;name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除配置项</span></span><br><span class="line"><span class="variable">$ </span>git config &lt;--local |<span class="params"> --global </span>| --system&gt; --unset &lt;name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置提交记录中的用户信息</span></span><br><span class="line"><span class="variable">$ </span>git config --global user.name &lt;用户名&gt;</span><br><span class="line"><span class="variable">$ </span>git config --global user.email &lt;邮箱地址&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更改Git缓存区的大小</span></span><br><span class="line"><span class="comment"># 如果提交的内容较大，默认缓存较小，提交会失败</span></span><br><span class="line"><span class="comment"># 缓存大小单位：B，例如：524288000（500MB）</span></span><br><span class="line"><span class="variable">$ </span>git config --global http.postBuffer &lt;缓存大小&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调用 git status/git diff 命令时以高亮或彩色方式显示改动状态</span></span><br><span class="line"><span class="variable">$ </span>git config --global color.ui <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置可以缓存密码，默认缓存时间15分钟</span></span><br><span class="line"><span class="variable">$ </span>git config --global credential.helper cache</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置密码的缓存时间</span></span><br><span class="line"><span class="comment"># 缓存时间单位：秒</span></span><br><span class="line"><span class="variable">$ </span>git config --global credential.helper <span class="string">&#x27;cache --timeout=&lt;缓存时间&gt;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置长期存储密码</span></span><br><span class="line"><span class="variable">$ </span>git config --global credential.helper store</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/git%E5%91%BD%E4%BB%A4/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/git%E5%91%BD%E4%BB%A4/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1572,7 +826,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1586,7 +840,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/" class="post-title-link" itemprop="url">未命名</a>
+            <a href="/2023/06/29/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/" class="post-title-link" itemprop="url">未命名</a>
         </h2>
 
         <div class="post-meta">
@@ -1651,7 +905,7 @@
 </ol>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/golang%E7%9A%84%E5%80%BC%E4%BC%A0%E9%80%92%E5%92%8C%E5%86%85%E5%AD%98%E9%80%83%E9%80%B8/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1675,7 +929,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1689,7 +943,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">大数据之Hadoop</a>
+            <a href="/2023/06/29/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">大数据之Hadoop</a>
         </h2>
 
         <div class="post-meta">
@@ -1750,7 +1004,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1774,7 +1028,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1788,7 +1042,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Java基本知识</a>
+            <a href="/2023/06/29/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Java基本知识</a>
         </h2>
 
         <div class="post-meta">
@@ -1936,7 +1190,7 @@
 </blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/java%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1960,7 +1214,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/java%E7%AE%80%E4%BB%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/java%E7%AE%80%E4%BB%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1974,7 +1228,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/java%E7%AE%80%E4%BB%8B/" class="post-title-link" itemprop="url">Java语言概述</a>
+            <a href="/2023/06/29/java%E7%AE%80%E4%BB%8B/" class="post-title-link" itemprop="url">Java语言概述</a>
         </h2>
 
         <div class="post-meta">
@@ -2062,7 +1316,7 @@
 </blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/06/08/java%E7%AE%80%E4%BB%8B/#more" rel="contents">
+              <a class="btn" href="/2023/06/29/java%E7%AE%80%E4%BB%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -2086,7 +1340,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/08/pandas%E5%87%BD%E6%95%B0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/06/29/IP%E4%BB%A3%E7%90%86%E6%B1%A0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -2100,7 +1354,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/08/pandas%E5%87%BD%E6%95%B0/" class="post-title-link" itemprop="url">Pandas函数</a>
+            <a href="/2023/06/29/IP%E4%BB%A3%E7%90%86%E6%B1%A0/" class="post-title-link" itemprop="url">基于Python语言的IP代理池</a>
         </h2>
 
         <div class="post-meta">
@@ -2117,7 +1371,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/" itemprop="url" rel="index"><span itemprop="name">python数据挖掘</span></a>
+                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
                 </span>
             </span>
 
@@ -2129,14 +1383,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.4k</span>
+              <span>4.1k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>9 分钟</span>
+              <span>15 分钟</span>
             </span>
 
         </div>
@@ -2148,49 +1402,58 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>【python】Pandas中DataFrame基本函数整理</h1>
-<h5 id="构造函数">构造函数</h5>
+          <p>环境：python3.6</p>
+<p>MongoDB</p>
+<p>flask</p>
+<p>requests等第三方库</p>
+<p>完整代码见： <a target="_blank" rel="noopener" href="https://github.com/Lucareful/IPProxyPool">https://github.com/Lucareful/IPProxyPool</a></p>
+<h1>代理池概述</h1>
+<h2 id="什么是代理池">什么是代理池</h2>
 <ul>
-<li>DataFrame([data, index, columns, dtype, copy]) 	#构造数据框1</li>
+<li>代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP</li>
 </ul>
-<h5 id="属性和数据">属性和数据</h5>
-<p>DataFrame.axes                                #index: 行标签；columns: 列标签<br>
-DataFrame.as_matrix([columns])                #转换为矩阵<br>
-DataFrame.dtypes                              #返回数据的类型<br>
-DataFrame.ftypes                              #返回每一列的 数据类型float64:dense<br>
-DataFrame.get_dtype_counts()                  #返回数据框数据类型的个数<br>
-DataFrame.get_ftype_counts()                  #返回数据框数据类型float64:dense的个数<br>
-DataFrame.select_dtypes([include, include])   #根据数据类型选取子数据框<br>
-DataFrame.values                              #Numpy的展示方式<br>
-DataFrame.axes                                #返回横纵坐标的标签名<br>
-DataFrame.ndim                                #返回数据框的纬度<br>
-DataFrame.size                                #返回数据框元素的个数<br>
-DataFrame.shape                               #返回数据框的形状<br>
-DataFrame.memory_usage()                      #每一列的存储12345678910111213</p>
-<h5 id="类型转换">类型转换</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.astype(dtype[, copy, errors])       <span class="comment">#转换数据类型</span></span><br><span class="line">DataFrame.copy([deep])                        <span class="comment">#deep深度复制数据</span></span><br><span class="line">DataFrame.isnull()                            <span class="comment">#以布尔的方式返回空值</span></span><br><span class="line">DataFrame.notnull()                           <span class="comment">#以布尔的方式返回非空值1234</span></span><br></pre></td></tr></table></figure>
-<h5 id="索引和迭代">索引和迭代</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.head([n])                           <span class="comment">#返回前n行数据</span></span><br><span class="line">DataFrame.at                                  <span class="comment">#快速标签常量访问器</span></span><br><span class="line">DataFrame.iat                                 <span class="comment">#快速整型常量访问器</span></span><br><span class="line">DataFrame.loc                                 <span class="comment">#标签定位，使用名称</span></span><br><span class="line">DataFrame.iloc                                <span class="comment">#整型定位，使用数字</span></span><br><span class="line">DataFrame.insert(loc, column, value)          <span class="comment">#在特殊地点loc[数字]插入column[列名]某列数据</span></span><br><span class="line">DataFrame.<span class="built_in">iter</span>()                              <span class="comment">#Iterate over infor axis</span></span><br><span class="line">DataFrame.iteritems()                         <span class="comment">#返回列名和序列的迭代器</span></span><br><span class="line">DataFrame.iterrows()                          <span class="comment">#返回索引和序列的迭代器</span></span><br><span class="line">DataFrame.itertuples([index, name])           <span class="comment">#Iterate over DataFrame rows as namedtuples, with index value as first element of the tuple.</span></span><br><span class="line">DataFrame.lookup(row_labels, col_labels)      <span class="comment">#Label-based “fancy indexing” function for DataFrame.</span></span><br><span class="line">DataFrame.pop(item)                           <span class="comment">#返回删除的项目</span></span><br><span class="line">DataFrame.tail([n])                           <span class="comment">#返回最后n行</span></span><br><span class="line">DataFrame.xs(key[, axis, level, drop_level])  <span class="comment">#Returns a cross-section (row(s) or column(s)) from the Series/DataFrame.</span></span><br><span class="line">DataFrame.isin(values)                        <span class="comment">#是否包含数据框中的元素</span></span><br><span class="line">DataFrame.where(cond[, other, inplace, …])    <span class="comment">#条件筛选</span></span><br><span class="line">DataFrame.mask(cond[, other, inplace, …])     <span class="comment">#Return an object of same shape as self and whose corresponding entries are from self where cond is False and otherwise are from other.</span></span><br><span class="line">DataFrame.query(expr[, inplace])              <span class="comment">#Query the columns of a frame with a boolean expression.123456789101112131415161718</span></span><br></pre></td></tr></table></figure>
-<h5 id="二元运算">二元运算</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.add(other[,axis,fill_value])        <span class="comment">#加法，元素指向</span></span><br><span class="line">DataFrame.sub(other[,axis,fill_value])        <span class="comment">#减法，元素指向</span></span><br><span class="line">DataFrame.mul(other[, axis,fill_value])       <span class="comment">#乘法，元素指向</span></span><br><span class="line">DataFrame.div(other[, axis,fill_value])       <span class="comment">#小数除法，元素指向</span></span><br><span class="line">DataFrame.truediv(other[, axis, level, …])    <span class="comment">#真除法，元素指向</span></span><br><span class="line">DataFrame.floordiv(other[, axis, level, …])   <span class="comment">#向下取整除法，元素指向</span></span><br><span class="line">DataFrame.mod(other[, axis,fill_value])       <span class="comment">#模运算，元素指向</span></span><br><span class="line">DataFrame.<span class="built_in">pow</span>(other[, axis,fill_value])       <span class="comment">#幂运算，元素指向</span></span><br><span class="line">DataFrame.radd(other[, axis,fill_value])      <span class="comment">#右侧加法，元素指向</span></span><br><span class="line">DataFrame.rsub(other[, axis,fill_value])      <span class="comment">#右侧减法，元素指向</span></span><br><span class="line">DataFrame.rmul(other[, axis,fill_value])      <span class="comment">#右侧乘法，元素指向</span></span><br><span class="line">DataFrame.rdiv(other[, axis,fill_value])      <span class="comment">#右侧小数除法，元素指向</span></span><br><span class="line">DataFrame.rtruediv(other[, axis, …])          <span class="comment">#右侧真除法，元素指向</span></span><br><span class="line">DataFrame.rfloordiv(other[, axis, …])         <span class="comment">#右侧向下取整除法，元素指向</span></span><br><span class="line">DataFrame.rmod(other[, axis,fill_value])      <span class="comment">#右侧模运算，元素指向</span></span><br><span class="line">DataFrame.rpow(other[, axis,fill_value])      <span class="comment">#右侧幂运算，元素指向</span></span><br><span class="line">DataFrame.lt(other[, axis, level])            <span class="comment">#类似Array.lt</span></span><br><span class="line">DataFrame.gt(other[, axis, level])            <span class="comment">#类似Array.gt</span></span><br><span class="line">DataFrame.le(other[, axis, level])            <span class="comment">#类似Array.le</span></span><br><span class="line">DataFrame.ge(other[, axis, level])            <span class="comment">#类似Array.ge</span></span><br><span class="line">DataFrame.ne(other[, axis, level])            <span class="comment">#类似Array.ne</span></span><br><span class="line">DataFrame.eq(other[, axis, level])            <span class="comment">#类似Array.eq</span></span><br><span class="line">DataFrame.combine(other,func[,fill_value, …]) <span class="comment">#Add two DataFrame objects and do not propagate NaN values, so if for a</span></span><br><span class="line">DataFrame.combine_first(other)                <span class="comment">#Combine two DataFrame objects and default to non-null values in frame calling the method.123456789101112131415161718192021222324</span></span><br></pre></td></tr></table></figure>
-<h5 id="函数应用-分组-窗口">函数应用&amp;分组&amp;窗口</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.apply(func[, axis, broadcast, …])   <span class="comment">#应用函数</span></span><br><span class="line">DataFrame.applymap(func)                      <span class="comment">#Apply a function to a DataFrame that is intended to operate elementwise, i.e.</span></span><br><span class="line">DataFrame.aggregate(func[, axis])             <span class="comment">#Aggregate using callable, string, dict, or list of string/callables</span></span><br><span class="line">DataFrame.transform(func, *args, **kwargs)    <span class="comment">#Call function producing a like-indexed NDFrame</span></span><br><span class="line">DataFrame.groupby([by, axis, level, …])       <span class="comment">#分组</span></span><br><span class="line">DataFrame.rolling(window[, min_periods, …])   <span class="comment">#滚动窗口</span></span><br><span class="line">DataFrame.expanding([min_periods, freq, …])   <span class="comment">#拓展窗口</span></span><br><span class="line">DataFrame.ewm([com, span, halflife,  …])      <span class="comment">#指数权重窗口12345678</span></span><br></pre></td></tr></table></figure>
-<h5 id="描述统计学">描述统计学</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.<span class="built_in">abs</span>()                               <span class="comment">#返回绝对值</span></span><br><span class="line">DataFrame.<span class="built_in">all</span>([axis, bool_only, skipna])      <span class="comment">#Return whether all elements are True over requested axis</span></span><br><span class="line">DataFrame.<span class="built_in">any</span>([axis, bool_only, skipna])      <span class="comment">#Return whether any element is True over requested axis</span></span><br><span class="line">DataFrame.clip([lower, upper, axis])          <span class="comment">#Trim values at input threshold(s).</span></span><br><span class="line">DataFrame.clip_lower(threshold[, axis])       <span class="comment">#Return copy of the input with values below given value(s) truncated.</span></span><br><span class="line">DataFrame.clip_upper(threshold[, axis])       <span class="comment">#Return copy of input with values above given value(s) truncated.</span></span><br><span class="line">DataFrame.corr([method, min_periods])         <span class="comment">#返回本数据框成对列的相关性系数</span></span><br><span class="line">DataFrame.corrwith(other[, axis, drop])       <span class="comment">#返回不同数据框的相关性</span></span><br><span class="line">DataFrame.count([axis, level, numeric_only])  <span class="comment">#返回非空元素的个数</span></span><br><span class="line">DataFrame.cov([min_periods])                  <span class="comment">#计算协方差</span></span><br><span class="line">DataFrame.cummax([axis, skipna])              <span class="comment">#Return cumulative max over requested axis.</span></span><br><span class="line">DataFrame.cummin([axis, skipna])              <span class="comment">#Return cumulative minimum over requested axis.</span></span><br><span class="line">DataFrame.cumprod([axis, skipna])             <span class="comment">#返回累积</span></span><br><span class="line">DataFrame.cumsum([axis, skipna])              <span class="comment">#返回累和</span></span><br><span class="line">DataFrame.describe([percentiles,include, …])  <span class="comment">#整体描述数据框</span></span><br><span class="line">DataFrame.diff([periods, axis])               <span class="comment">#1st discrete difference of object</span></span><br><span class="line">DataFrame.<span class="built_in">eval</span>(expr[, inplace])               <span class="comment">#Evaluate an expression in the context of the calling DataFrame instance.</span></span><br><span class="line">DataFrame.kurt([axis, skipna, level, …])      <span class="comment">#返回无偏峰度Fisher’s  (kurtosis of normal == 0.0).</span></span><br><span class="line">DataFrame.mad([axis, skipna, level])          <span class="comment">#返回偏差</span></span><br><span class="line">DataFrame.<span class="built_in">max</span>([axis, skipna, level, …])       <span class="comment">#返回最大值</span></span><br><span class="line">DataFrame.mean([axis, skipna, level, …])      <span class="comment">#返回均值</span></span><br><span class="line">DataFrame.median([axis, skipna, level, …])    <span class="comment">#返回中位数</span></span><br><span class="line">DataFrame.<span class="built_in">min</span>([axis, skipna, level, …])       <span class="comment">#返回最小值</span></span><br><span class="line">DataFrame.mode([axis, numeric_only])          <span class="comment">#返回众数</span></span><br><span class="line">DataFrame.pct_change([periods, fill_method])  <span class="comment">#返回百分比变化</span></span><br><span class="line">DataFrame.prod([axis, skipna, level, …])      <span class="comment">#返回连乘积</span></span><br><span class="line">DataFrame.quantile([q, axis, numeric_only])   <span class="comment">#返回分位数</span></span><br><span class="line">DataFrame.rank([axis, method, numeric_only])  <span class="comment">#返回数字的排序</span></span><br><span class="line">DataFrame.<span class="built_in">round</span>([decimals])                   <span class="comment">#Round a DataFrame to a variable number of decimal places.</span></span><br><span class="line">DataFrame.sem([axis, skipna, level, ddof])    <span class="comment">#返回无偏标准误</span></span><br><span class="line">DataFrame.skew([axis, skipna, level, …])      <span class="comment">#返回无偏偏度</span></span><br><span class="line">DataFrame.<span class="built_in">sum</span>([axis, skipna, level, …])       <span class="comment">#求和</span></span><br><span class="line">DataFrame.std([axis, skipna, level, ddof])    <span class="comment">#返回标准误差</span></span><br><span class="line">DataFrame.var([axis, skipna, level, ddof])    <span class="comment">#返回无偏误差 12345678910111213141516171819202122232425262728293031323334</span></span><br></pre></td></tr></table></figure>
-<h5 id="从新索引-选取-标签操作">从新索引&amp;选取&amp;标签操作</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.add_prefix(prefix)                  <span class="comment">#添加前缀</span></span><br><span class="line">DataFrame.add_suffix(suffix)                  <span class="comment">#添加后缀</span></span><br><span class="line">DataFrame.align(other[, join, axis, level])   <span class="comment">#Align two object on their axes with the</span></span><br><span class="line">DataFrame.drop(labels[, axis, level, …])      <span class="comment">#返回删除的列</span></span><br><span class="line">DataFrame.drop_duplicates([subset, keep, …])  <span class="comment">#Return DataFrame with duplicate rows removed, optionally only</span></span><br><span class="line">DataFrame.duplicated([subset, keep])          <span class="comment">#Return boolean Series denoting duplicate rows, optionally only</span></span><br><span class="line">DataFrame.equals(other)                       <span class="comment">#两个数据框是否相同</span></span><br><span class="line">DataFrame.<span class="built_in">filter</span>([items, like, regex, axis])  <span class="comment">#过滤特定的子数据框</span></span><br><span class="line">DataFrame.first(offset)                       <span class="comment">#Convenience method for subsetting initial periods of time series data based on a date offset.</span></span><br><span class="line">DataFrame.head([n])                           <span class="comment">#返回前n行</span></span><br><span class="line">DataFrame.idxmax([axis, skipna])              <span class="comment">#Return index of first occurrence of maximum over requested axis.</span></span><br><span class="line">DataFrame.idxmin([axis, skipna])              <span class="comment">#Return index of first occurrence of minimum over requested axis.</span></span><br><span class="line">DataFrame.last(offset)                        <span class="comment">#Convenience method for subsetting final periods of time series data based on a date offset.</span></span><br><span class="line">DataFrame.reindex([index, columns])           <span class="comment">#Conform DataFrame to new index with optional filling logic, placing NA/NaN in locations having no value in the previous index.</span></span><br><span class="line">DataFrame.reindex_axis(labels[, axis, …])     <span class="comment">#Conform input object to new index with optional filling logic, placing NA/NaN in locations having no value in the previous index.</span></span><br><span class="line">DataFrame.reindex_like(other[, method, …])    <span class="comment">#Return an object with matching indices to myself.</span></span><br><span class="line">DataFrame.rename([index, columns])            <span class="comment">#Alter axes input function or functions.</span></span><br><span class="line">DataFrame.rename_axis(mapper[, axis, copy])   <span class="comment">#Alter index and / or columns using input function or functions.</span></span><br><span class="line">DataFrame.reset_index([level, drop, …])       <span class="comment">#For DataFrame with multi-level index, return new DataFrame with labeling information in the columns under the index names, defaulting to ‘level_0’, ‘level_1’, etc.</span></span><br><span class="line">DataFrame.sample([n, frac, replace, …])       <span class="comment">#返回随机抽样</span></span><br><span class="line">DataFrame.select(crit[, axis])                <span class="comment">#Return data corresponding to axis labels matching criteria</span></span><br><span class="line">DataFrame.set_index(keys[, drop, append ])    <span class="comment">#Set the DataFrame index (row labels) using one or more existing columns.</span></span><br><span class="line">DataFrame.tail([n])                           <span class="comment">#返回最后几行</span></span><br><span class="line">DataFrame.take(indices[, axis, convert])      <span class="comment">#Analogous to ndarray.take</span></span><br><span class="line">DataFrame.truncate([before, after, axis ])    <span class="comment">#Truncates a sorted NDFrame before and/or after some particular index value.12345678910111213141516171819202122232425</span></span><br></pre></td></tr></table></figure>
-<h5 id="处理缺失值">处理缺失值</h5>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.dropna([axis, how, thresh, …])      #Return object with labels on given axis omitted where alternately any</span><br><span class="line">DataFrame.fillna([value, method, axis, …])    #填充空值</span><br><span class="line">DataFrame.replace([to_replace, value, …])     #Replace values given in ‘to_replace’ with ‘value’.123</span><br></pre></td></tr></table></figure>
-<h5 id="从新定型-排序-转变形态">从新定型&amp;排序&amp;转变形态</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.pivot([index, columns, values])     <span class="comment">#Reshape data (produce a “pivot” table) based on column values.</span></span><br><span class="line">DataFrame.reorder_levels(order[, axis])       <span class="comment">#Rearrange index levels using input order.</span></span><br><span class="line">DataFrame.sort_values(by[, axis, ascending])  <span class="comment">#Sort by the values along either axis</span></span><br><span class="line">DataFrame.sort_index([axis, level, …])        <span class="comment">#Sort object by labels (along an axis)</span></span><br><span class="line">DataFrame.nlargest(n, columns[, keep])        <span class="comment">#Get the rows of a DataFrame sorted by the n largest values of columns.</span></span><br><span class="line">DataFrame.nsmallest(n, columns[, keep])       <span class="comment">#Get the rows of a DataFrame sorted by the n smallest values of columns.</span></span><br><span class="line">DataFrame.swaplevel([i, j, axis])             <span class="comment">#Swap levels i and j in a MultiIndex on a particular axis</span></span><br><span class="line">DataFrame.stack([level, dropna])              <span class="comment">#Pivot a level of the (possibly hierarchical) column labels, returning a DataFrame (or Series in the case of an object with a single level of column labels) having a hierarchical index with a new inner-most level of row labels.</span></span><br><span class="line">DataFrame.unstack([level, fill_value])        <span class="comment">#Pivot a level of the (necessarily hierarchical) index labels, returning a DataFrame having a new level of column labels whose inner-most level consists of the pivoted index labels.</span></span><br><span class="line">DataFrame.melt([id_vars, value_vars, …])      <span class="comment">#“Unpivots” a DataFrame from wide format to long format, optionally</span></span><br><span class="line">DataFrame.T                                   <span class="comment">#Transpose index and columns</span></span><br><span class="line">DataFrame.to_panel()                          <span class="comment">#Transform long (stacked) format (DataFrame) into wide (3D, Panel) format.</span></span><br><span class="line">DataFrame.to_xarray()                         <span class="comment">#Return an xarray object from the pandas object.</span></span><br><span class="line">DataFrame.transpose(*args, **kwargs)          <span class="comment">#Transpose index and columns1234567891011121314</span></span><br></pre></td></tr></table></figure>
-<h5 id="Combining-joining-merging">Combining&amp; joining&amp;merging</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.append(other[, ignore_index, …])    <span class="comment">#追加数据</span></span><br><span class="line">DataFrame.assign(**kwargs)                    <span class="comment">#Assign new columns to a DataFrame, returning a new object (a copy) with all the original columns in addition to the new ones.</span></span><br><span class="line">DataFrame.join(other[, on, how, lsuffix, …])  <span class="comment">#Join columns with other DataFrame either on index or on a key column.</span></span><br><span class="line">DataFrame.merge(right[, how, on, left_on, …]) <span class="comment">#Merge DataFrame objects by performing a database-style join operation by columns or indexes.</span></span><br><span class="line">DataFrame.update(other[, join, overwrite, …]) <span class="comment">#Modify DataFrame in place using non-NA values from passed DataFrame.12345</span></span><br></pre></td></tr></table></figure>
-<h5 id="时间序列">时间序列</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.asfreq(freq[, method, how, …])      <span class="comment">#将时间序列转换为特定的频次</span></span><br><span class="line">DataFrame.asof(where[, subset])               <span class="comment">#The last row without any NaN is taken (or the last row without</span></span><br><span class="line">DataFrame.shift([periods, freq, axis])        <span class="comment">#Shift index by desired number of periods with an optional time freq</span></span><br><span class="line">DataFrame.first_valid_index()                 <span class="comment">#Return label for first non-NA/null value</span></span><br><span class="line">DataFrame.last_valid_index()                  <span class="comment">#Return label for last non-NA/null value</span></span><br><span class="line">DataFrame.resample(rule[, how, axis, …])      <span class="comment">#Convenience method for frequency conversion and resampling of time series.</span></span><br><span class="line">DataFrame.to_period([freq, axis, copy])       <span class="comment">#Convert DataFrame from DatetimeIndex to PeriodIndex with desired</span></span><br><span class="line">DataFrame.to_timestamp([freq, how, axis])     <span class="comment">#Cast to DatetimeIndex of timestamps, at beginning of period</span></span><br><span class="line">DataFrame.tz_convert(tz[, axis, level, copy]) <span class="comment">#Convert tz-aware axis to target time zone.</span></span><br><span class="line">DataFrame.tz_localize(tz[, axis, level, …])   <span class="comment">#Localize tz-naive TimeSeries to target time zone.12345678910</span></span><br></pre></td></tr></table></figure>
-<h5 id="作图">作图</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.plot([x, y, kind, ax, ….])          <span class="comment">#DataFrame plotting accessor and method</span></span><br><span class="line">DataFrame.plot.area([x, y])                   <span class="comment">#面积图Area plot</span></span><br><span class="line">DataFrame.plot.bar([x, y])                    <span class="comment">#垂直条形图Vertical bar plot</span></span><br><span class="line">DataFrame.plot.barh([x, y])                   <span class="comment">#水平条形图Horizontal bar plot</span></span><br><span class="line">DataFrame.plot.box([by])                      <span class="comment">#箱图Boxplot</span></span><br><span class="line">DataFrame.plot.density(**kwds)                <span class="comment">#核密度Kernel Density Estimate plot</span></span><br><span class="line">DataFrame.plot.hexbin(x, y[, C, …])           <span class="comment">#Hexbin plot</span></span><br><span class="line">DataFrame.plot.hist([by, bins])               <span class="comment">#直方图Histogram</span></span><br><span class="line">DataFrame.plot.kde(**kwds)                    <span class="comment">#核密度Kernel Density Estimate plot</span></span><br><span class="line">DataFrame.plot.line([x, y])                   <span class="comment">#线图Line plot</span></span><br><span class="line">DataFrame.plot.pie([y])                       <span class="comment">#饼图Pie chart</span></span><br><span class="line">DataFrame.plot.scatter(x, y[, s, c])          <span class="comment">#散点图Scatter plot</span></span><br><span class="line">DataFrame.boxplot([column, by, ax, …])        <span class="comment">#Make a box plot from DataFrame column optionally grouped by some columns or</span></span><br><span class="line">DataFrame.hist(data[, column, by, grid, …])   <span class="comment">#Draw histogram of the DataFrame’s series using matplotlib / pylab.1234567891011121314</span></span><br></pre></td></tr></table></figure>
-<h5 id="转换为其他格式">转换为其他格式</h5>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">DataFrame.from_csv(path[, header, sep, …])    <span class="comment">#Read CSV file (DEPRECATED, please use pandas.read_csv() instead).</span></span><br><span class="line">DataFrame.from_dict(data[, orient, dtype])    <span class="comment">#Construct DataFrame from dict of array-like or dicts</span></span><br><span class="line">DataFrame.from_items(items[,columns,orient])  <span class="comment">#Convert (key, value) pairs to DataFrame.</span></span><br><span class="line">DataFrame.from_records(data[, index, …])      <span class="comment">#Convert structured or record ndarray to DataFrame</span></span><br><span class="line">DataFrame.info([verbose, buf, max_cols, …])   <span class="comment">#Concise summary of a DataFrame.</span></span><br><span class="line">DataFrame.to_pickle(path[, compression, …])   <span class="comment">#Pickle (serialize) object to input file path.</span></span><br><span class="line">DataFrame.to_csv([path_or_buf, sep, na_rep])  <span class="comment">#Write DataFrame to a comma-separated values (csv) file</span></span><br><span class="line">DataFrame.to_hdf(path_or_buf, key, **kwargs)  <span class="comment">#Write the contained data to an HDF5 file using HDFStore.</span></span><br><span class="line">DataFrame.to_sql(name, con[, flavor, …])      <span class="comment">#Write records stored in a DataFrame to a SQL database.</span></span><br><span class="line">DataFrame.to_dict([orient, into])             <span class="comment">#Convert DataFrame to dictionary.</span></span><br><span class="line">DataFrame.to_excel(excel_writer[, …])         <span class="comment">#Write DataFrame to an excel sheet</span></span><br><span class="line">DataFrame.to_json([path_or_buf, orient, …])   <span class="comment">#Convert the object to a JSON string.</span></span><br><span class="line">DataFrame.to_html([buf, columns, col_space])  <span class="comment">#Render a DataFrame as an HTML table.</span></span><br><span class="line">DataFrame.to_feather(fname)                   <span class="comment">#write out the binary feather-format for DataFrames</span></span><br><span class="line">DataFrame.to_latex([buf, columns, …])         <span class="comment">#Render an object to a tabular environment table.</span></span><br><span class="line">DataFrame.to_stata(fname[, convert_dates, …]) <span class="comment">#A class for writing Stata binary dta files from array-like objects</span></span><br><span class="line">DataFrame.to_msgpack([path_or_buf, encoding]) <span class="comment">#msgpack (serialize) object to input file path</span></span><br><span class="line">DataFrame.to_sparse([fill_value, kind])       <span class="comment">#Convert to SparseDataFrame</span></span><br><span class="line">DataFrame.to_dense()                          <span class="comment">#Return dense representation of NDFrame (as opposed to sparse)</span></span><br><span class="line">DataFrame.to_string([buf, columns, …])        <span class="comment">#Render a DataFrame to a console-friendly tabular output.</span></span><br><span class="line">DataFrame.to_clipboard([excel, sep])          <span class="comment">#Attempt to write text representation of object to the system cli</span></span><br></pre></td></tr></table></figure>
+<h2 id="为什么要实现代理池">为什么要实现代理池</h2>
+<p>我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；</p>
+<ul>
+<li>使用IP代理池是其中一个比较常用的方案</li>
+<li>免费代理都是非常不稳定的，有10%是可用就很不错了</li>
+<li>一些收费代理稳定性也不好</li>
+</ul>
+<p>目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用</p>
+<h1>代理池开发环境</h1>
+<ul>
+<li>
+<p>python3开发语言</p>
+</li>
+<li>
+<p>requests：发送请求，获取页面数据</p>
+</li>
+<li>
+<p>lxml：使用XPATH从页面提取我们想要的书籍</p>
+</li>
+<li>
+<p>pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用</p>
+</li>
+<li>
+<p>Flask：用于提供WEB服务</p>
+</li>
+</ul>
+<h1>代理池工作流程</h1>
+<p><img src="https://i.ibb.co/b7YyrM5/image-20191024195902163.png" alt="image-20191024195902163"></p>
+<p>1.代理池工作渡程描述：</p>
+<ul>
+<li>代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中</li>
+<li>代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库</li>
+<li>代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/06/29/IP%E4%BB%A3%E7%90%86%E6%B1%A0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -2276,7 +1539,7 @@ DataFrame.memory_usage()                      #每一列的存储123456789101112
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">129</span>
+          <span class="site-state-item-count">130</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -2331,19 +1594,19 @@ DataFrame.memory_usage()                      #每一列的存储123456789101112
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/06/08/README/" title="2023&#x2F;06&#x2F;08&#x2F;README&#x2F;">写在前面</a>
+          <a href="/2023/06/29/README/" title="2023&#x2F;06&#x2F;29&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/06/08/kustomize%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;06&#x2F;08&#x2F;kustomize介绍&#x2F;">kustomize 介绍</a>
+          <a href="/2023/06/29/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/" title="2023&#x2F;06&#x2F;29&#x2F;k8s核心组件介绍(一)&#x2F;">k8s 核心组件介绍</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/06/08/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/" title="2023&#x2F;06&#x2F;08&#x2F;Prometheus 入门实操&#x2F;">Prometheus 入门实操</a>
+          <a href="/2023/06/29/kustomize%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;06&#x2F;29&#x2F;kustomize介绍&#x2F;">kustomize 介绍</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/06/08/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/" title="2023&#x2F;06&#x2F;08&#x2F;k8s核心数据结构2&#x2F;">k8s核心数据结构（2）</a>
+          <a href="/2023/06/29/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/" title="2023&#x2F;06&#x2F;29&#x2F;Prometheus 入门实操&#x2F;">Prometheus 入门实操</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/06/08/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/" title="2023&#x2F;06&#x2F;08&#x2F;k8s核心数据结构1&#x2F;">k8s核心数据结构（1）</a>
+          <a href="/2023/06/29/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/" title="2023&#x2F;06&#x2F;29&#x2F;k8s核心数据结构2&#x2F;">k8s核心数据结构（2）</a>
         </li>
     </ul>
   </div>
@@ -2376,12 +1639,12 @@ DataFrame.memory_usage()                      #每一列的存储123456789101112
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">305k</span>
+    <span title="站点总字数">306k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">18:30</span>
+    <span title="站点阅读时长">18:33</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
