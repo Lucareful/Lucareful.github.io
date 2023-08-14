@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/README/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/README/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/README/" class="post-title-link" itemprop="url">写在前面</a>
+            <a href="/2023/08/14/README/" class="post-title-link" itemprop="url">写在前面</a>
         </h2>
 
         <div class="post-meta">
@@ -323,7 +323,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -337,7 +337,113 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">夜莺监控入门</a>
+            <a href="/2023/08/14/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">Prometheus 概念入门</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-08-14 12:44:11" itemprop="dateModified" datetime="2023-08-14T12:44:11+00:00">2023-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%9B%91%E6%8E%A7/" itemprop="url" rel="index"><span itemprop="name">监控</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Prometheus 概念入门</h1>
+<h1>数据模型</h1>
+<p>​	Prometheus 所有采集的监控数据均以指标（metric）的形式保存在内置的<a target="_blank" rel="noopener" href="https://www.wikiwand.com/zh/%E6%99%82%E9%96%93%E5%BA%8F%E5%88%97">时间序列</a>数据库当中（TSDB）：属于同一指标名称，同一标签集合的、有时间戳标记的数据流。除了存储的时间序列，Prometheus 还可以根据查询请求产生临时的、衍生的时间序列作为返回结果。</p>
+<h2 id="指标名称和标签">指标名称和标签</h2>
+<p>每一条时间序列由指标名称（Metrics Name）以及一组标签（键值对）唯一标识。其中指标的名称（metric name）可以反映被监控样本的含义（例如，<code>http_requests_total</code> — 表示当前系统接收到的 HTTP 请求总量），指标名称只能由 ASCII 字符、数字、下划线以及冒号组成，同时必须匹配正则表达式 <code>[a-zA-Z_:][a-zA-Z0-9_:]*</code>。</p>
+<blockquote>
+<p><strong>[info] 注意</strong></p>
+<p>冒号用来表示用户自定义的记录规则，不能在 exporter 中或监控对象直接暴露的指标中使用冒号来定义指标名称。</p>
+</blockquote>
+<p>通过使用标签，Prometheus 开启了强大的多维数据模型：对于相同的指标名称，通过不同标签列表的集合，会形成特定的度量维度实例（例如：所有包含度量名称为 <code>/api/tracks</code> 的 http 请求，打上 <code>method=POST</code> 的标签，就会形成具体的 http 请求）。该查询语言在这些指标和标签列表的基础上进行过滤和聚合。改变任何度量指标上的任何标签值（包括添加或删除指标），都会创建新的时间序列。</p>
+<p>标签的名称只能由 ASCII 字符、数字以及下划线组成并满足正则表达式 <code>[a-zA-Z_][a-zA-Z0-9_]*</code>。其中以 <code>__</code> 作为前缀的标签，是系统保留的关键字，只能在系统内部使用。标签的值则可以包含任何 <code>Unicode</code> 编码的字符。</p>
+<h2 id="样本">样本</h2>
+<p>在时间序列中的每一个点称为一个样本（sample），样本由以下三部分组成：</p>
+<ul>
+<li>指标（metric）：指标名称和描述当前样本特征的 labelsets；</li>
+<li>时间戳（timestamp）：一个精确到毫秒的时间戳；</li>
+<li>样本值（value）： 一个 folat64 的浮点型数据表示当前样本的值。</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/08/14/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/08/14/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">夜莺监控入门</a>
         </h2>
 
         <div class="post-meta">
@@ -408,7 +514,7 @@
 <p>​	Nightingale 可以接收各种采集器上报的监控数据，转存到时序库（可以支持Prometheus、M3DB、VictoriaMetrics、Thanos等），并提供告警规则、屏蔽规则、订阅规则的配置能力，提供监控数据的查看能力，提供告警自愈机制（告警触发之后自动回调某个webhook地址或者执行某个脚本），提供历史告警事件的存储管理、分组查看的能力。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -432,7 +538,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -446,7 +552,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/" class="post-title-link" itemprop="url">k8s 核心组件介绍</a>
+            <a href="/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/" class="post-title-link" itemprop="url">k8s 核心组件介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -511,7 +617,7 @@
 <p>​	底层存储，也被称为 BackendStorage (后端存储)，是真正与 Etcd 集群交互的资源存储对象，CacherStorage 相当 UnderlyingStorage 的缓存层。UnderlyingStorage 同样也是 Storage.Interface 通用存储接又的实现。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -535,7 +641,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/kustomize%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/kustomize%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -549,7 +655,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/kustomize%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">kustomize 介绍</a>
+            <a href="/2023/08/14/kustomize%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">kustomize 介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -619,7 +725,7 @@
 <p>修改文件的一般说明。文件路径，指向一个声明了 kubernetes API patch 的 YAML 文件</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/kustomize%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/kustomize%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -643,7 +749,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -657,7 +763,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/" class="post-title-link" itemprop="url">Prometheus 入门实操</a>
+            <a href="/2023/08/14/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/" class="post-title-link" itemprop="url">Prometheus 入门实操</a>
         </h2>
 
         <div class="post-meta">
@@ -720,7 +826,7 @@
 <p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601135045946.png" alt="image-20230601135045946"></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -744,7 +850,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -758,7 +864,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/" class="post-title-link" itemprop="url">k8s核心数据结构（2）</a>
+            <a href="/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/" class="post-title-link" itemprop="url">k8s核心数据结构（2）</a>
         </h2>
 
         <div class="post-meta">
@@ -1079,7 +1185,7 @@
 </table>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1103,7 +1209,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1117,7 +1223,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/" class="post-title-link" itemprop="url">k8s核心数据结构（1）</a>
+            <a href="/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/" class="post-title-link" itemprop="url">k8s核心数据结构（1）</a>
         </h2>
 
         <div class="post-meta">
@@ -1189,7 +1295,7 @@
 <p>​	Kubernetes 资源也可分为两种， 分别是Kubernetes Resource (Kubermetes 内罝资源 ) 和 Custom Resource( 自 定 义 资 源 )。 开 发 者 通 过 C R D ( 即 Custom Resource Definitions )可实现自定义资源，它允许用户将自己定义的资源添加到 Kubernetes 系统中，并像使用 Kubernetes 内置资源 一样使用它们。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1213,7 +1319,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1227,7 +1333,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">k8s架构介绍</a>
+            <a href="/2023/08/14/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">k8s架构介绍</a>
         </h2>
 
         <div class="post-meta">
@@ -1297,7 +1403,7 @@
 <p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230402142654737.png" alt="image-20230402142654737"></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1321,7 +1427,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/08/14/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1335,7 +1441,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/30/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/" class="post-title-link" itemprop="url">GO 三方库源码阅读姿势</a>
+            <a href="/2023/08/14/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/" class="post-title-link" itemprop="url">GO 三方库源码阅读姿势</a>
         </h2>
 
         <div class="post-meta">
@@ -1432,132 +1538,7 @@
 <p>​	构建的 HTTP 服务端除了提供真实服务之外，也能提供代理中转服务，它们分别由 Client 和 Server 两个数据结构负责。除了这两个最重要的数据结构之外，HTTP 协议的每个部 分，比如请求、返回、传输设置等都有具体的数据结构负责。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/30/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/07/30/Tekton%20%E5%85%A5%E9%97%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/07/30/Tekton%20%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">Tekton 入门</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-03-01 10:40:41" itemprop="dateModified" datetime="2023-03-01T10:40:41+00:00">2023-03-01</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/CloudNative/" itemprop="url" rel="index"><span itemprop="name">CloudNative</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1.3k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>Tekton 入门</h1>
-<h2 id="术语解释">术语解释</h2>
-<h3 id="Cloud-Native">Cloud Native</h3>
-<p>​	云原生是一种软件开发方法，其中应用程序被分解为微服务，这些微服务被打包到容器中，容器在云中动态编排以优化资源利用</p>
-<h3 id="Continuous-Delivery">Continuous Delivery</h3>
-<p>​	持续交付是一种软件开发实践，团队可以安全、快速、可持续地向用户发布软件变更。</p>
-<h3 id="Tekton">Tekton</h3>
-<p>​	Tekton 是一个用于创建持续交付系统的开源 kubernetes 原生的框架。你可以使用 tekton 跨多个云提供商或混合环境构建，测试和部署。Tekton 通过抽象出复杂的kubenetes概念和实现细节来简化应用程序管理。它提供了用于声明持续交付管道的 Kubernetes 自定义资源。</p>
-<h2 id="基本构建块">基本构建块</h2>
-<p>其中Task、TaskRun、Pipeline、PipelineRun、PipelineResource、Condition作为其核心CRD，这里主要介绍它们。</p>
-<ul>
-<li>
-<p><strong>Task：</strong> 定义构建任务，它由一系列有序steps构成。每个step可以定义输入和输出，且可以将上一个step的输出作为下一个step的输入。每个step都会由一个container来执行。</p>
-<ul>
-<li>是 Tekton 中不可分割的最小单位，正如同 Pod 在 Kubernetes 中的概念一样</li>
-</ul>
-</li>
-<li>
-<p><strong>TaskRun：</strong> Task用于定义具体要做的事情，并不会真正的运行，而TaskRun就是真正的执行者，并且会提供执行所需需要的参数，一个TaskRun就是一个Pod。</p>
-</li>
-<li>
-<p><strong>Pipeline：</strong> 顾名思义就是流水线，它由一系列Tasks组成。就像Task中的step一样，上一个Task的输出可以作为下一个Task的输入。</p>
-</li>
-<li>
-<p><strong>PipelineRun：</strong> Pipeline的实际执行，创建后会创建Pod来执行Task，一个PipelineRun中有多个Task。</p>
-</li>
-<li>
-<p><strong>PipelineResource：</strong> 主要用于定义Pipeline的资源，常见的如Git地址、Docker镜像等。</p>
-</li>
-<li>
-<p><strong>Condition：</strong> 它主要是在Pipeline中用于判断的，Task的执行与否通过Condition的判断结果来决定。</p>
-</li>
-</ul>
-<blockquote>
-<p><strong>Tips：</strong> PipelineResource和Condition都会被废弃。但是在低版本中还是会继续使用，所以这里会简单介绍一下。</p>
-</blockquote>
-<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230301151952643.png" alt="image-20230301151952643"></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/07/30/Tekton%20%E5%85%A5%E9%97%A8/#more" rel="contents">
+              <a class="btn" href="/2023/08/14/Go%E4%B8%89%E6%96%B9%E5%BA%93%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E5%A7%BF%E5%8A%BF/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1648,7 +1629,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">131</span>
+          <span class="site-state-item-count">132</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1703,19 +1684,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/07/30/README/" title="2023&#x2F;07&#x2F;30&#x2F;README&#x2F;">写在前面</a>
+          <a href="/2023/08/14/README/" title="2023&#x2F;08&#x2F;14&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/07/30/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" title="2023&#x2F;07&#x2F;30&#x2F;夜莺监控入门&#x2F;">夜莺监控入门</a>
+          <a href="/2023/08/14/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" title="2023&#x2F;08&#x2F;14&#x2F;Prometheus 概念入门&#x2F;">Prometheus 概念入门</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/07/30/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/" title="2023&#x2F;07&#x2F;30&#x2F;k8s核心组件介绍(一)&#x2F;">k8s 核心组件介绍</a>
+          <a href="/2023/08/14/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" title="2023&#x2F;08&#x2F;14&#x2F;夜莺监控入门&#x2F;">夜莺监控入门</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/07/30/kustomize%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;07&#x2F;30&#x2F;kustomize介绍&#x2F;">kustomize 介绍</a>
+          <a href="/2023/08/14/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/" title="2023&#x2F;08&#x2F;14&#x2F;k8s核心组件介绍(一)&#x2F;">k8s 核心组件介绍</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/07/30/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/" title="2023&#x2F;07&#x2F;30&#x2F;Prometheus 入门实操&#x2F;">Prometheus 入门实操</a>
+          <a href="/2023/08/14/kustomize%E4%BB%8B%E7%BB%8D/" title="2023&#x2F;08&#x2F;14&#x2F;kustomize介绍&#x2F;">kustomize 介绍</a>
         </li>
     </ul>
   </div>
@@ -1748,12 +1729,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">310k</span>
+    <span title="站点总字数">312k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">18:47</span>
+    <span title="站点阅读时长">18:56</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
