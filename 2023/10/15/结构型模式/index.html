@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="结构型模式 结构型模式用于设计对象和类的结构，从而使它们之间可以互相协作以获取更大的结构。  结构型模式描述如何将对象和类组合成更大的结构 结构型模式是一种能够简化设计工作的模式，因为它能够找出更简单的方法来认识或表示实体之间的关系。在面向对象世界中，实体指的是对象或类 类模式可以通过继承来描述对象，从而提供更有用的程序接口，而对象模式则描述了如何将对象联系起来从而组合成更大的对象。结构型模式是类">
+<meta property="og:type" content="article">
+<meta property="og:title" content="结构型模式">
+<meta property="og:url" content="https://luenci.me/2023/10/15/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="结构型模式 结构型模式用于设计对象和类的结构，从而使它们之间可以互相协作以获取更大的结构。  结构型模式描述如何将对象和类组合成更大的结构 结构型模式是一种能够简化设计工作的模式，因为它能够找出更简单的方法来认识或表示实体之间的关系。在面向对象世界中，实体指的是对象或类 类模式可以通过继承来描述对象，从而提供更有用的程序接口，而对象模式则描述了如何将对象联系起来从而组合成更大的对象。结构型模式是类">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/luenci/RepoImg/raw/master/img/20210225222333.png">
+<meta property="og:image" content="https://gitee.com/luenci/RepoImg/raw/master/img/20210225222800.png">
+<meta property="article:published_time" content="2023-10-15T11:19:25.084Z">
+<meta property="article:modified_time" content="2023-02-06T12:51:59.000Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="设计模式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/luenci/RepoImg/raw/master/img/20210225222333.png">
+
+<link rel="canonical" href="https://luenci.me/2023/10/15/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '404,φ(*￣0￣),Waiting for you.';
+      visible = '200,(✿◡‿◡),Welcome back!';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
+
+  <title>结构型模式 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/15/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          结构型模式
+        </h1>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">软件工程</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2023/10/15/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2023/10/15/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>结构型模式</h1>
+<p>结构型模式用于设计对象和类的结构，从而使它们之间可以互相协作以获取更大的结构。</p>
+<ul>
+<li>结构型模式描述如何将对象和类组合成更大的结构</li>
+<li>结构型模式是一种能够简化设计工作的模式，因为它能够找出更简单的方法来认识或表示实体之间的关系。在面向对象世界中，实体指的是对象或类</li>
+<li>类模式可以通过继承来描述对象，从而提供更有用的程序接口，而对象模式则描述了如何将对象联系起来从而组合成更大的对象。结构型模式是类和对象模式的综合体</li>
+</ul>
+<h2 id="门面设计模式">门面设计模式</h2>
+<ul>
+<li>它为子系统的一组接口提供一个统一的接口，并定义一个高级接口来帮助客户端通过更加简单的方式使用子系统</li>
+<li>门面模式解决的问题是，如何用的单个接口对象来表示复杂的子系统。实际上它并不是封装子系统，而是对底层子系统进行组合</li>
+<li>它促进了实现与多个客户端的解耦</li>
+</ul>
+<h3 id="UML图">UML图</h3>
+<p><a target="_blank" rel="noopener" href="https://gitee.com/luenci/RepoImg/raw/master/img/20210225222333.png"><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20210225222333.png" alt="image-20210225222333048"></a></p>
+<h3 id="代码实现">代码实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">EventManager</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Event Manager:: Let me talk to the folks\\n&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">arrange</span>(<span class="params">self</span>):</span><br><span class="line">        self.hotelier = Hotelier()</span><br><span class="line">        self.hotelier.bookHotel()</span><br><span class="line"></span><br><span class="line">        self.florist = Florist()</span><br><span class="line">        self.florist.setFlowerRequirements()</span><br><span class="line"></span><br><span class="line">        self.caterer = Caterer()</span><br><span class="line">        self.caterer.setCuisine()</span><br><span class="line"></span><br><span class="line">        self.musiccian = Musician()</span><br><span class="line">        self.musiccian.setMusicType()</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Hotelier</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Arranging the hotel for Marriage ?&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__isAvailable</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Is the Hotel free for the event on given day?&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">bookHotel</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">if</span> self.__isAvailable():</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Register the Booking \\n\\n&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Florist</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Flower Decorations for the Event ? --&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">setFlowerRequirements</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Carnations, Rose and Lilies would be used for Decorations\\n\\n&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Caterer</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Food Arrangements for the Event --&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">setCuisine</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Chinese &amp; Continental Cuisine to be served \\n\\n&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Musician</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Musical Arrangements for the Marriage --&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">setMusicType</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">You</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;you::whoa Marriage Arrangements !&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">askEventManager</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;you:: Let is Contact the Event Manager\\n\\n&quot;</span>)</span><br><span class="line">        em = EventManager()</span><br><span class="line">        em.arrange()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__del__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;All preparations done!&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    you = You()</span><br><span class="line">    you.askEventManager()</span><br><span class="line"></span><br><span class="line">out：</span><br><span class="line">you::whoa Marriage Arrangements !</span><br><span class="line">you:: Let <span class="keyword">is</span> Contact the Event Manager</span><br><span class="line"></span><br><span class="line">Event Manager:: Let me talk to the folks</span><br><span class="line"></span><br><span class="line">Arranging the hotel <span class="keyword">for</span> Marriage ?</span><br><span class="line">Is the Hotel free <span class="keyword">for</span> the event on given day?</span><br><span class="line">Register the Booking </span><br><span class="line"></span><br><span class="line">Flower Decorations <span class="keyword">for</span> the Event ? --</span><br><span class="line">Carnations, Rose <span class="keyword">and</span> Lilies would be used <span class="keyword">for</span> Decorations</span><br><span class="line"></span><br><span class="line">Food Arrangements <span class="keyword">for</span> the Event --</span><br><span class="line">Chinese &amp; Continental Cuisine to be served </span><br><span class="line"></span><br><span class="line">Musical Arrangements <span class="keyword">for</span> the Marriage --</span><br><span class="line"></span><br><span class="line">All preparations done!</span><br></pre></td></tr></table></figure>
+<h3 id="小结">小结</h3>
+<ul>
+<li><code>EventManager</code>类是简化接口的门面</li>
+<li><code>EventManager </code>通过组合创建子系统对象，如Hotelier，Florist等。</li>
+</ul>
+<span id="more"></span>
+<h3 id="补充：（最少知识原则）">补充：（最少知识原则）</h3>
+<p>最少知识原则指导我们减少对象之间的交互，就像跟你亲近的只有某几个朋友那样。</p>
+<ul>
+<li>在设计系统时，对于创建的每个对象，都应该考察与之交互的类的数量，以及交互的方式</li>
+<li>遵循这个原则，就能够避免创建许多彼此紧密耦合的类的情况</li>
+<li>如果类之间存在大量的依赖关系，那么系统就会变得难以维护。如果对系统中的任何一部分进行修改，都可能导致系统的其他部分被无意改变，这意味着系统会退化，是应该坚决避免的</li>
+</ul>
+<h2 id="代理模式—控制对象的访问">代理模式—控制对象的访问</h2>
+<p>代理通常就是一个介于寻求方和提供方之间的中介系统</p>
+<h3 id="代理模式优势">代理模式优势</h3>
+<p>在设计模式中，代理是充当实际对象接口的类</p>
+<ul>
+<li>它能够以更简单的方式表示一个复杂的接口</li>
+<li>它提高了现有对象的安全性。</li>
+<li>它为不同服务器上的远程对象提供了本地接口</li>
+<li>它为消耗大量内存的对象提供了一个轻量级的句柄</li>
+</ul>
+<h3 id="UML图-2">UML图</h3>
+<p><a target="_blank" rel="noopener" href="https://gitee.com/luenci/RepoImg/raw/master/img/20210225222800.png"><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20210225222800.png" alt="image-20210225222800147"></a></p>
+<ul>
+<li>代理：它是一个控制对RealSubject类访问的类。它处理客户端的请求，负责创建或删除RealSubject</li>
+<li>主题/真实主题：主题是定义真实主题(RealSubject）和代理（Proxy）相类似的接口。RealSubject是Subject接口的实际实现。它提供了真正的功能，然后由客户端使用。</li>
+<li>客户端：它访问要完成工作的Proxy类。Proxy类在内部控制对RealSubject的访问，并引导客户端（Client）所请求的工作</li>
+</ul>
+<h3 id="代码实现-2">代码实现</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Actor</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        self.isBusy = <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">occupied</span>(<span class="params">self</span>):</span><br><span class="line">        self.isBusy = <span class="literal">True</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;<span class="built_in">type</span>(self).__name__&#125;</span> is occupied with current movie&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">available</span>(<span class="params">self</span>):</span><br><span class="line">        self.isBusy = <span class="literal">False</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;<span class="built_in">type</span>(self).__name__&#125;</span> is free for the movie&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">getStatus</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> self.isBusy</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Agent</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        self.principal = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">work</span>(<span class="params">self</span>):</span><br><span class="line">        self.actor = Actor()</span><br><span class="line">        <span class="keyword">if</span> self.actor.getStatus():</span><br><span class="line">            self.actor.occupied()</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.actor.available()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    r = Agent()</span><br><span class="line">    r.work()</span><br></pre></td></tr></table></figure>
+<h3 id="虚拟代理">虚拟代理</h3>
+<blockquote>
+<p>帮助我们控制访问创建开销大的资源</p>
+</blockquote>
+<p>如果一个对象实例化后会占用大量内存的话，可以先利用占位符来表示，这就是所谓的虚拟代理。例如，假设你想在网站上加载大型图片，而这个请求需要很长时间才能加载完成。通常，开发人员将在网页上创建一个占位符图标，以提示这里有图像。但是，只有当用户实际点击图标时才会加载图像，从而节省了向存储器中加载大型图像的开销。因此，在虚拟代理中，当客户端请求或访间对象时，才会创建实际对象。</p>
+<h3 id="远程代理">远程代理</h3>
+<p>远程代理可表述如下：它给位于远程服务器或不同地址空间上的实际对象提供了一个本地表示。例如，你希望为应用程序建立一个监控系统，而该应用涉及多个Web服务器、数据库服务器、芹菜（cery）任务服务器、缓存服务器，等等。如果我们要监视这些服务器的CPU和磁盘利用率，就需要建立一个对象，该对象能够用于监视应用程序运行的上下文中，同时还可以执行远程命令以获取实际的参数值。在这种情况下，建立一个作为远程对象的本地表示的远程代理对象将可以帮助我们实现这个目标。</p>
+<h3 id="保护代理">保护代理</h3>
+<p>你可以通过以下几点加深对保护代理的理解。这种代理能够控制 Realsubject的敏感对象的访问。例如，在当今分布式系统的世界中，Web应用会提供多个服务，这些服务相互协作来提供各种功能。现在，在这样的系统中，认证服务充当负责认证和授权的保护性代理服务器。在这种情况下，代理自然有助于保护网站的核心功能，防止无法识别或未授权的代理访间它们。因此，代理对象会检查调用者是否具有转发请求所需的访间权限。</p>
+<h3 id="智能代理">智能代理</h3>
+<p>智能代理在访问对象时插入其他操作。例如，假设在系统中有一个核心组件，它将状态信息集中保存在一个地点。通常情况下，这样的组件需要被多个不同的服务调用以完成它们的任务，并且可能导致共享资源的问题。与让服务直接调用核心组件不同，智能代理是内置的，并且会在访问之前检查实际对象是否被锁定，以确保没有其他对象可以更改它。</p>
+<h2 id="现实世界代理模式">现实世界代理模式</h2>
+<blockquote>
+<p>下面通过现实世界的付款案例来展示代理模式的现实应用场景</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> abc <span class="keyword">import</span> ABCMeta</span><br><span class="line"><span class="keyword">import</span> abc</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">You</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;you: buy the Denim shift&quot;</span>)</span><br><span class="line">        self.debitCard = DebitCard()</span><br><span class="line">        self.isPurchased = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">make_payment</span>(<span class="params">self</span>):</span><br><span class="line">        self.isPurchased = self.debitCard.do_pay()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__del__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">if</span> self.isPurchased:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;I buy it!!!&quot;</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;I have no money&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Payment</span>(metaclass=ABCMeta):</span><br><span class="line"><span class="meta">    @abc.abstractmethod</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">do_pay</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Bank</span>(<span class="title class_ inherited__">Payment</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        self.card = <span class="literal">None</span></span><br><span class="line">        self.account = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__getAccount</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="comment"># 假设card人员是账户成员</span></span><br><span class="line">        self.account = self.card</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> self.account</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__hasFunds</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Bank: checking if Account <span class="subst">&#123;self.__getAccount()&#125;</span> has enough funds&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">setCard</span>(<span class="params">self, card</span>):</span><br><span class="line">        self.card = card</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">do_pay</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">if</span> self.__hasFunds():</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Bank: Paying the merchant&quot;</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Bank: Sorry, not enough funds&quot;</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">DebitCard</span>(<span class="title class_ inherited__">Payment</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        self.bank = Bank()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">do_pay</span>(<span class="params">self</span>):</span><br><span class="line">        card = <span class="built_in">input</span>(<span class="string">&quot;punch in card number:\\n&quot;</span>)</span><br><span class="line">        self.bank.setCard(card)</span><br><span class="line">        <span class="keyword">return</span> self.bank.do_pay()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    you = You()</span><br><span class="line">    you.make_payment()</span><br><span class="line"></span><br><span class="line">out：</span><br><span class="line">you: buy the Denim shift</span><br><span class="line">punch <span class="keyword">in</span> card number:</span><br><span class="line"><span class="number">231468498</span></span><br><span class="line">Bank: checking <span class="keyword">if</span> Account <span class="number">231468498</span> has enough funds</span><br><span class="line">Bank: Paying the merchant</span><br><span class="line">I buy it!!!</span><br></pre></td></tr></table></figure>
+<p>注解：</p>
+<h3 id="class-You：">class You：</h3>
+<blockquote>
+<p>客户端</p>
+</blockquote>
+<ul>
+<li>你的行为由类You（即客户端）来表示</li>
+<li>为了购买衬衫，该类提供了**make_payment（）**方法</li>
+<li><strong>make_payment（）方法会在内部调用代理的方法进行付款</strong></li>
+<li>如果付款成功最后会执行<strong>del</strong>（）方法</li>
+</ul>
+<h3 id="class-Payment：">class Payment：</h3>
+<blockquote>
+<p>主题是由代理和真实主题实现的接口</p>
+</blockquote>
+<ul>
+<li>在本例中，主题是Payment类。它是一个抽象基类，代表一个接口</li>
+<li>付款具有一个 do_pay() 方法，该方法需要借助代理和真实主题来实现</li>
+</ul>
+<h3 id="class-Bank-Payment">class Bank(Payment):</h3>
+<blockquote>
+<p>真实主题</p>
+</blockquote>
+<ul>
+<li>Bank 实际完成从你账户向商家账户划账的功能</li>
+<li>Bank 提供了多个方法来处理付款。代理使用setCard（）方法将借记卡详细信息发送给银行</li>
+<li>__getAccount（）方法是Bank的私有方法，用于获取借记卡持有人的账户详细信息。为了简单起见，我们强制使用与账号相同的借记卡号。</li>
+<li>Bank还有__hasFunds()方法，它用来查看账户持有人在账户中是否有足够的资金来为衬衫付款。</li>
+<li>由Bank类（通过Payment接口）实现的do_pay（）方法实际上负责根据可用资金向商家付款</li>
+</ul>
+<h3 id="class-DebitCard-Payment">class DebitCard(Payment)</h3>
+<blockquote>
+<p>代理</p>
+</blockquote>
+<ul>
+<li>DebitCard类是此处的代理。当你想要付款时，它会调用do_pay()方法。这是因为你不想跑去银行提款，然后再跑回商家完成支付。</li>
+<li>DebitCard类充当真实主题（银行）的代理</li>
+</ul>
+<h3 id="代理模式的优点">代理模式的优点</h3>
+<ul>
+<li>代理可以通过缓存笨重的对象或频繁访问的对象来提高应用程序的性能。</li>
+<li>代理还提供对于真实主题的访问授权。因此，只有提供合适权限的情况下，这个模式才会接受委派</li>
+<li>远程代理还便于与可作网络连接和数据库连接的远程服务器进行交互，并可用于监视系统</li>
+</ul>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag"># 设计模式</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/10/15/%E7%BD%91%E7%AB%99%E6%A6%82%E5%BF%B5/" rel="prev" title="网站概念">
+      <i class="fa fa-chevron-left"></i> 网站概念
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/10/15/%E7%B4%A2%E5%BC%95%E5%92%8C%E4%BA%8B%E5%8A%A1/" rel="next" title="MySQL索引和事务">
+      MySQL索引和事务 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">结构型模式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%A8%E9%9D%A2%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F"><span class="nav-number">1.1.</span> <span class="nav-text">门面设计模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#UML%E5%9B%BE"><span class="nav-number">1.1.1.</span> <span class="nav-text">UML图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.1.2.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">1.1.3.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A5%E5%85%85%EF%BC%9A%EF%BC%88%E6%9C%80%E5%B0%91%E7%9F%A5%E8%AF%86%E5%8E%9F%E5%88%99%EF%BC%89"><span class="nav-number">1.1.4.</span> <span class="nav-text">补充：（最少知识原则）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E2%80%94%E6%8E%A7%E5%88%B6%E5%AF%B9%E8%B1%A1%E7%9A%84%E8%AE%BF%E9%97%AE"><span class="nav-number">1.2.</span> <span class="nav-text">代理模式—控制对象的访问</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E4%BC%98%E5%8A%BF"><span class="nav-number">1.2.1.</span> <span class="nav-text">代理模式优势</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UML%E5%9B%BE-2"><span class="nav-number">1.2.2.</span> <span class="nav-text">UML图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0-2"><span class="nav-number">1.2.3.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E4%BB%A3%E7%90%86"><span class="nav-number">1.2.4.</span> <span class="nav-text">虚拟代理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E4%BB%A3%E7%90%86"><span class="nav-number">1.2.5.</span> <span class="nav-text">远程代理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%9D%E6%8A%A4%E4%BB%A3%E7%90%86"><span class="nav-number">1.2.6.</span> <span class="nav-text">保护代理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%99%BA%E8%83%BD%E4%BB%A3%E7%90%86"><span class="nav-number">1.2.7.</span> <span class="nav-text">智能代理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E5%AE%9E%E4%B8%96%E7%95%8C%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F"><span class="nav-number">1.3.</span> <span class="nav-text">现实世界代理模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#class-You%EF%BC%9A"><span class="nav-number">1.3.1.</span> <span class="nav-text">class You：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#class-Payment%EF%BC%9A"><span class="nav-number">1.3.2.</span> <span class="nav-text">class Payment：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#class-Bank-Payment"><span class="nav-number">1.3.3.</span> <span class="nav-text">class Bank(Payment):</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#class-DebitCard-Payment"><span class="nav-number">1.3.4.</span> <span class="nav-text">class DebitCard(Payment)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-number">1.3.5.</span> <span class="nav-text">代理模式的优点</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">133</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">51</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">94</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/15/README/" title="2023&#x2F;10&#x2F;15&#x2F;README&#x2F;">写在前面</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/15/what-happens-when/" title="2023&#x2F;10&#x2F;15&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/15/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;15&#x2F;Prometheus 概念入门&#x2F;">Prometheus 概念入门</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/15/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;15&#x2F;夜莺监控入门&#x2F;">夜莺监控入门</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/15/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D(%E4%B8%80)/" title="2023&#x2F;10&#x2F;15&#x2F;k8s核心组件介绍(一)&#x2F;">k8s 核心组件介绍</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">320k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">19:24</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>
