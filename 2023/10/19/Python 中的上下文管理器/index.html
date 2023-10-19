@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="with 这个关键字，对于每一学习Python的人，都不会陌生。  操作文本对象的时候，我们用 with open ，这就是一个上下文管理的例子。 12with open(&amp;#x27;test.txt&amp;#x27;) as f:    print f.readlines() 上下文管理器概念 基本语法 12with EXPR as VAR:    BLOCK 几个概念 1231. 上下文表达式：w">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 中的上下文管理器">
+<meta property="og:url" content="https://luenci.me/2023/10/19/Python%20%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="with 这个关键字，对于每一学习Python的人，都不会陌生。  操作文本对象的时候，我们用 with open ，这就是一个上下文管理的例子。 12with open(&amp;#x27;test.txt&amp;#x27;) as f:    print f.readlines() 上下文管理器概念 基本语法 12with EXPR as VAR:    BLOCK 几个概念 1231. 上下文表达式：w">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-10-19T02:40:17.614Z">
+<meta property="article:modified_time" content="2023-02-06T12:51:59.000Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="上下文管理器">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/10/19/Python%20%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '404,φ(*￣0￣),Waiting for you.';
+      visible = '200,(✿◡‿◡),Welcome back!';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
+
+  <title>Python 中的上下文管理器 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/19/Python%20%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Python 中的上下文管理器
+        </h1>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2023/10/19/Python%20%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2023/10/19/Python%20%E4%B8%AD%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><code>with</code> 这个关键字，对于每一学习Python的人，都不会陌生。</li>
+</ul>
+<p>操作文本对象的时候，我们用 <code>with open</code> ，这就是一个上下文管理的例子。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;test.txt&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    <span class="built_in">print</span> f.readlines()</span><br></pre></td></tr></table></figure>
+<h2 id="上下文管理器概念">上下文管理器概念</h2>
+<p><strong>基本语法</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> EXPR <span class="keyword">as</span> VAR:</span><br><span class="line">    BLOCK</span><br></pre></td></tr></table></figure>
+<p>几个概念</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span> 上下文表达式：<span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;test.txt&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line"><span class="number">2.</span> 上下文管理器：<span class="built_in">open</span>(<span class="string">&#x27;test.txt&#x27;</span>)  </span><br><span class="line"><span class="number">3.</span> f不是上下文管理器，应该是资源对象。</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h2 id="实现下文管理器">实现下文管理器</h2>
+<p>要自己实现这样一个上下文管理，要先知道上下文管理协议。</p>
+<ul>
+<li>简单点说，就是在一个类里，实现了<code>__enter__</code>和<code>__exit__</code>的方法，这个类的实例就是一个上下文管理器。</li>
+</ul>
+<p>例如这个示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Resource</span>():</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__enter__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;===connect to resource===&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> self</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__exit__</span>(<span class="params">self, exc_type, exc_val, exc_tb</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;===close resource connection===&#x27;</span>)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">operate</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;===in operation===&#x27;</span>)</span><br><span class="line">        </span><br><span class="line"><span class="keyword">with</span> Resource() <span class="keyword">as</span> res:</span><br><span class="line">    res.operate()</span><br></pre></td></tr></table></figure>
+<p>我们执行一下，通过日志的打印顺序。可以知道其执行过程。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">===connect to resource===</span><br><span class="line">===<span class="keyword">in</span> operation===</span><br><span class="line">===close resource connection===</span><br></pre></td></tr></table></figure>
+<ul>
+<li>从这个示例可以很明显的看出，在编写代码时，可以将资源的连接或者获取放在<code>__enter__</code>中，而将资源的关闭写在<code>__exit__</code> 中。</li>
+</ul>
+<h2 id="上下文管理器作用">上下文管理器作用</h2>
+<ul>
+<li>
+<ol>
+<li>可以以一种更加优雅的方式，操作（创建/获取/释放）资源，如文件操作、数据库连接；</li>
+</ol>
+</li>
+<li>
+<ol start="2">
+<li>可以以一种更加优雅的方式，处理异常；</li>
+</ol>
+</li>
+</ul>
+<p>第一种，我们上面已经以资源的连接为例介绍了。</p>
+<p>而第二种，会被大多数人所忽略。这里会重点讲一下。</p>
+<p>大家都知道，处理异常，通常都是使用 <code>try...execept..</code> 来捕获处理的。这样做一个不好的地方是，在代码的主逻辑里，会有大量的异常处理代理，这会很大的影响我们的可读性。</p>
+<p>好一点的做法呢，可以使用 <code>with</code> 将异常的处理隐藏起来。</p>
+<p>仍然是以上面的代码为例，我们将<code>I/O</code> 这个一定会抛出异常的代码写在 <code>operate</code> 里</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Resource</span>():</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__enter__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;===connect to resource===&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> self</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__exit__</span>(<span class="params">self, exc_type, exc_val, exc_tb</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;===close resource connection===&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">operate</span>(<span class="params">self</span>):</span><br><span class="line">        I/O</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> Resource() <span class="keyword">as</span> res:</span><br><span class="line">    res.operate()</span><br></pre></td></tr></table></figure>
+<p>运行一下，惊奇地发现，居然不会报错。</p>
+<p>这就是上下文管理协议的一个强大之处，异常可以在<code>__exit__</code> 进行捕获并由你自己决定如何处理，是抛出呢还是在这里就解决了。在<code>__exit__</code> 里返回 <code>True</code>（没有return 就默认为 return False），就相当于告诉 Python解释器，这个异常我们已经捕获了，不需要再往外抛了。</p>
+<p>在 写<code>__exit__</code> 函数时，需要注意的事，它必须要有这三个参数：</p>
+<ul>
+<li><code>exc_type</code>：异常类型</li>
+<li><code>exc_val</code>：异常值</li>
+<li><code>exc_tb</code>：异常的错误栈信息</li>
+</ul>
+<p>当主逻辑代码没有报异常时，这三个参数将都为None。</p>
+<h2 id="常见的异常">常见的异常</h2>
+<ul>
+<li>异常即是一个事件，该事件会在程序执行过程中发生，影响了程序的正常执行。 一般情况下，在Python无法正常处理程序时就会发生一个异常。 异常是Python对象，表示一个错误。 当Python脚本发生异常时我们需要捕获处理它，否则程序会终止执行。 python的标准异常可以在<a target="_blank" rel="noopener" href="https://docs.python.org/3/library/exceptions.html?highlight=exception">官网文档</a>中查看,常用的如下:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>异常名称</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SystemExit</code></td>
+<td>解释器请求退出</td>
+</tr>
+<tr>
+<td><code>KeyboardInterrupt</code></td>
+<td>用户中断执行(通常是输入^C)</td>
+</tr>
+<tr>
+<td><code>Exception</code></td>
+<td>常规错误的基类</td>
+</tr>
+<tr>
+<td><code>StopIteration</code></td>
+<td>迭代器没有更多的值</td>
+</tr>
+<tr>
+<td><code>GeneratorExit</code></td>
+<td>生成器(generator)发生异常来通知退出</td>
+</tr>
+<tr>
+<td><code>StandardError</code></td>
+<td>所有的内建标准异常的基类</td>
+</tr>
+<tr>
+<td><code>ArithmeticError</code></td>
+<td>所有数值计算错误的基类</td>
+</tr>
+<tr>
+<td><code>FloatingPointError</code></td>
+<td>浮点计算错误</td>
+</tr>
+<tr>
+<td><code>OverflowError</code></td>
+<td>数值运算超出最大限制</td>
+</tr>
+<tr>
+<td><code>ZeroDivisionError</code></td>
+<td>除(或取模)零 (所有数据类型)</td>
+</tr>
+<tr>
+<td><code>AssertionError</code></td>
+<td>断言语句失败</td>
+</tr>
+<tr>
+<td><code>AttributeError</code></td>
+<td>对象没有这个属性</td>
+</tr>
+<tr>
+<td><code>EOFError</code></td>
+<td>没有内建输入,到达EOF 标记</td>
+</tr>
+<tr>
+<td><code>EnvironmentError</code></td>
+<td>操作系统错误的基类</td>
+</tr>
+<tr>
+<td><code>IOError</code></td>
+<td>输入/输出操作失败</td>
+</tr>
+<tr>
+<td><code>OSError</code></td>
+<td>操作系统错误</td>
+</tr>
+<tr>
+<td><code>WindowsError</code></td>
+<td>系统调用失败</td>
+</tr>
+<tr>
+<td><code>ImportError</code></td>
+<td>导入模块/对象失败</td>
+</tr>
+<tr>
+<td><code>LookupError</code></td>
+<td>无效数据查询的基类</td>
+</tr>
+<tr>
+<td><code>IndexError</code></td>
+<td>序列中没有此索引(index)</td>
+</tr>
+<tr>
+<td><code>KeyError</code></td>
+<td>映射中没有这个键</td>
+</tr>
+<tr>
+<td><code>MemoryError</code></td>
+<td>内存溢出错误(对于Python 解释器不是致命的)</td>
+</tr>
+<tr>
+<td><code>NameError</code></td>
+<td>未声明/初始化对象 (没有属性)</td>
+</tr>
+<tr>
+<td><code>UnboundLocalError</code></td>
+<td>访问未初始化的本地变量</td>
+</tr>
+<tr>
+<td><code>ReferenceError</code></td>
+<td>弱引用(Weak reference)试图访问已经垃圾回收了的对象</td>
+</tr>
+<tr>
+<td><code>RuntimeError</code></td>
+<td>一般的运行时错误</td>
+</tr>
+<tr>
+<td><code>NotImplementedError</code></td>
+<td>尚未实现的方法</td>
+</tr>
+<tr>
+<td><code>SyntaxError</code></td>
+<td>Python 语法错误</td>
+</tr>
+<tr>
+<td><code>IndentationError</code></td>
+<td>缩进错误</td>
+</tr>
+<tr>
+<td><code>TabError</code></td>
+<td>Tab 和空格混用</td>
+</tr>
+<tr>
+<td><code>SystemError</code></td>
+<td>一般的解释器系统错误</td>
+</tr>
+<tr>
+<td><code>TypeError</code></td>
+<td>对类型无效的操作</td>
+</tr>
+<tr>
+<td><code>ValueError</code></td>
+<td>传入无效的参数</td>
+</tr>
+<tr>
+<td><code>UnicodeError</code></td>
+<td>Unicode 相关的错误</td>
+</tr>
+<tr>
+<td><code>UnicodeDecodeError</code></td>
+<td>Unicode 解码时的错误</td>
+</tr>
+<tr>
+<td><code>UnicodeEncodeError</code></td>
+<td>Unicode 编码时错误</td>
+</tr>
+<tr>
+<td><code>UnicodeTranslateError</code></td>
+<td>Unicode 转换时错误</td>
+</tr>
+<tr>
+<td><code>Warning</code></td>
+<td>警告的基类</td>
+</tr>
+<tr>
+<td><code>DeprecationWarning</code></td>
+<td>关于被弃用警告</td>
+</tr>
+<tr>
+<td><code>FutureWarning</code></td>
+<td>关于构造将来语义会有改变的警告</td>
+</tr>
+<tr>
+<td><code>OverflowWarning</code></td>
+<td>旧的关于自动提升为长整型(long)的警告</td>
+</tr>
+<tr>
+<td><code>PendingDeprecationWarning</code></td>
+<td>关于特性将会被废弃的警告</td>
+</tr>
+<tr>
+<td><code>RuntimeWarning</code></td>
+<td>可疑的运行时行为(runtime behavior)的警告</td>
+</tr>
+<tr>
+<td><code>SyntaxWarning</code></td>
+<td>可疑的语法的警告</td>
+</tr>
+<tr>
+<td><code>UserWarning</code></td>
+<td>用户代码生成的警告</td>
+</tr>
+</tbody>
+</table>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8/" rel="tag"># 上下文管理器</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/10/19/Python%E7%9A%84%E6%A8%A1%E5%9D%97%E5%92%8C%E7%B1%BB/" rel="prev" title="Python的模块和类">
+      <i class="fa fa-chevron-left"></i> Python的模块和类
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/10/19/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" rel="next" title="Prometheus 概念入门">
+      Prometheus 概念入门 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">上下文管理器概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8"><span class="nav-number">2.</span> <span class="nav-text">实现下文管理器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8%E4%BD%9C%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">上下文管理器作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E5%BC%82%E5%B8%B8"><span class="nav-number">4.</span> <span class="nav-text">常见的异常</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">134</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">52</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">95</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/README/" title="2023&#x2F;10&#x2F;19&#x2F;README&#x2F;">写在前面</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2023&#x2F;10&#x2F;19&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/what-happens-when/" title="2023&#x2F;10&#x2F;19&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;19&#x2F;Prometheus 概念入门&#x2F;">Prometheus 概念入门</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;19&#x2F;夜莺监控入门&#x2F;">夜莺监控入门</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">320k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">19:25</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>

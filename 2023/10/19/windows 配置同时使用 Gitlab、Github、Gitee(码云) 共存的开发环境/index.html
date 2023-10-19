@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文链接：https:&#x2F;&#x2F;blog.csdn.net&#x2F;flowerspring&#x2F;article&#x2F;details&#x2F;104962002  清除 git 的全局设置（针对已安装 git）   新安装 git 跳过。   若之前对 git 设置过全局的 user.name 和 user.email。 类似 (用 git config --global --list 进行查看你是否设置)   12$ gi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="windows 配置同时使用 Gitlab、Github、Gitee(码云) 共存的开发环境（转载）">
+<meta property="og:url" content="https://luenci.me/2023/10/19/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="原文链接：https:&#x2F;&#x2F;blog.csdn.net&#x2F;flowerspring&#x2F;article&#x2F;details&#x2F;104962002  清除 git 的全局设置（针对已安装 git）   新安装 git 跳过。   若之前对 git 设置过全局的 user.name 和 user.email。 类似 (用 git config --global --list 进行查看你是否设置)   12$ gi">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-10-19T02:40:17.618Z">
+<meta property="article:modified_time" content="2023-02-06T12:51:59.000Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="git配置">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2023/10/19/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '404,φ(*￣0￣),Waiting for you.';
+      visible = '200,(✿◡‿◡),Welcome back!';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
+
+  <title>windows 配置同时使用 Gitlab、Github、Gitee(码云) 共存的开发环境（转载） | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/19/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          windows 配置同时使用 Gitlab、Github、Gitee(码云) 共存的开发环境（转载）
+        </h1>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/git/" itemprop="url" rel="index"><span itemprop="name">git</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2023/10/19/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2023/10/19/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>原文链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/flowerspring/article/details/104962002">https://blog.csdn.net/flowerspring/article/details/104962002</a></p>
+</blockquote>
+<h1>清除 git 的全局设置（针对已安装 git）</h1>
+<ul>
+<li>
+<p>新安装 git 跳过。</p>
+</li>
+<li>
+<p>若之前对 git 设置过全局的 <a target="_blank" rel="noopener" href="http://user.name">user.name</a> 和 user.email。<br>
+类似 (用 git config --global --list 进行查看你是否设置)</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global user.name <span class="string">&quot;你的名字&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global user.email  <span class="string">&quot;你的邮箱&quot;</span></span></span><br></pre></td></tr></table></figure>
+<p>必须删除该设置</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global --<span class="built_in">unset</span> user.name <span class="string">&quot;你的名字&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git config --global --<span class="built_in">unset</span> user.email <span class="string">&quot;你的邮箱&quot;</span></span></span><br></pre></td></tr></table></figure>
+<h1>生成新的 SSH keys</h1>
+<h2 id="1）Gitee-密钥">1）Gitee 密钥</h2>
+<ul>
+<li>
+<p>跳转到keygen目录，git bash here。</p>
+</li>
+<li>
+<p>先键入第二行命令</p>
+</li>
+<li>
+<p>第四行 指定 id 文件名称为id_rsa_gitee</p>
+</li>
+<li>
+<p>第五、六行 设置无密码，直接回车两次。</p>
+</li>
+<li>
+<p>会在keygen目录下生成文件  id_rsa_gitee 和 id_rsa_gitee.pub。</p>
+</li>
+<li>
+<p>id_rsa_gitee.pub中存放的是公钥。</p>
+</li>
+<li>
+<p>把公钥保存到gitee网页密钥中。</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">honey@honey MINGW64 /d/keygen</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ssh-keygen -t rsa -C yourmail@.com</span></span><br><span class="line">Generating public/private rsa key pair.</span><br><span class="line">Enter file in which to save the key (/c/Users/honey/.ssh/id_rsa): id_rsa_gitee</span><br><span class="line">Enter passphrase (empty for no passphrase):</span><br><span class="line">Enter same passphrase again:</span><br><span class="line">Your identification has been saved in id_rsa_gitee.</span><br><span class="line">Your public key has been saved in id_rsa_gitee.pub.</span><br><span class="line">The key fingerprint is:</span><br><span class="line">...</span><br><span class="line">The key&#x27;s randomart image is:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<ul>
+<li>也可指定文件路径，方便后面操作：<code>~/.ssh/id_rsa.gitlab </code></li>
+</ul>
+<p><code>ssh-keygen -t rsa -f ~/.ssh/id_rsa.gitee -C &quot;yourmail@.com&quot;</code></p>
+<ul>
+<li>直接回车3下，什么也不要输入，就是默认没有密码。</li>
+<li>注意 gitee 和 gitlab 的文件名是不同的。</li>
+</ul>
+<span id="more"></span>
+<h2 id="2）GitLab-密钥">2）GitLab 密钥</h2>
+<p>同上</p>
+<ul>
+<li>
+<p>跳转到keygen目录，git bash here。</p>
+</li>
+<li>
+<p>先键入第二行命令</p>
+</li>
+<li>
+<p>第四行 指定 id 文件名称为id_rsa_gitlab</p>
+</li>
+<li>
+<p>第五、六行 设置无密码，直接回车两次。</p>
+</li>
+<li>
+<p>会在keygen目录下生成文件  id_rsa_gitlab 和 id_rsa_gitlab.pub。</p>
+</li>
+<li>
+<p>id_rsa_gitlab.pub中存放的是公钥。</p>
+</li>
+<li>
+<p>把公钥保存到gitlab网页密钥中。</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">honey@honey MINGW64 /d/keygen</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ssh-keygen -t rsa -f id_rsa_gitlab -C <span class="string">&quot;yourmail@.com&quot;</span>`</span></span><br><span class="line">Generating public/private rsa key pair.</span><br><span class="line">id_rsa_gitlab already exists.</span><br><span class="line">Overwrite (y/n)? y</span><br><span class="line">Enter passphrase (empty for no passphrase):</span><br><span class="line">Enter same passphrase again:</span><br><span class="line">Your identification has been saved in id_rsa_gitlab.</span><br><span class="line">Your public key has been saved in id_rsa_gitlab.pub.</span><br><span class="line">The key fingerprint is:</span><br><span class="line">...</span><br><span class="line">The key&#x27;s randomart image is:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p><code>ssh-keygen -t rsa -f ~/.ssh/id_rsa.gitlab -C &quot;yourmail@.com&quot;</code></p>
+<h2 id="3）GitHub-密钥">3）GitHub 密钥</h2>
+<p>同上</p>
+<p><code>ssh-keygen -t rsa -f ~/.ssh/id_rsa.github -C &quot;yourmail@.com&quot;</code></p>
+<h2 id="4-完成后会在-ssh目录下生成以下文件">4)完成后会在~/.ssh目录下生成以下文件</h2>
+<ul>
+<li>
+<p>id_rsa_github</p>
+</li>
+<li>
+<p>id_rsa_github.pub</p>
+</li>
+<li>
+<p>id_rsa_gitlab</p>
+</li>
+<li>
+<p>id_rsa_gitlab.pub</p>
+</li>
+<li>
+<p>id_rsa_gitee</p>
+</li>
+<li>
+<p>id_rsa_gitee.pub</p>
+</li>
+</ul>
+<h2 id="config文件">config文件</h2>
+<ul>
+<li>
+<p>需要在.ssh文件夹下新建config文件，先新建config.txt，然后修改文件名去掉后缀。</p>
+</li>
+<li>
+<p>config文件内容如下：</p>
+</li>
+<li>
+<p>其中第二行和第三中 需要填写gitlab的仓库地址</p>
+</li>
+</ul>
+<h3 id="gitlab">gitlab</h3>
+<pre><code>Host git.xxx.cn
+HostName git.xxx.cn
+PreferredAuthentications publickey
+IdentityFile ~/.ssh/id_rsa_gitlab
+User git
+</code></pre>
+<h3 id="gitee">gitee</h3>
+<pre><code>Host gitee.com
+HostName gitee.com
+PreferredAuthentications publickey
+IdentityFile ~/.ssh/id_rsa_gitee
+User git
+</code></pre>
+<h3 id="github">github</h3>
+<pre><code>Host github.com
+HostName github.com
+PreferredAuthentications publickey
+IdentityFile ~/.ssh/id_rsa_github
+User git
+</code></pre>
+<h1>测试</h1>
+<p>1）Gitee 测试</p>
+<p>$ ssh -T <a href="mailto:git@gitee.com">git@gitee.com</a><br>
+步骤如下：</p>
+<p>在gitee注册用户登录，创建仓库。<a target="_blank" rel="noopener" href="https://gitee.com/XXXX/c_demo">https://gitee.com/XXXX/c_demo</a></p>
+<p>在.ssh目录 git bash here</p>
+<p>honey@honey MINGW64 ~/.ssh<br>
+$ ssh -T <a href="mailto:git@gitee.com">git@gitee.com</a><br>
+Warning: Permanently added the ECDSA host key for IP address ‘180.97.125.228’ to the list of known hosts.<br>
+Hi fengmi! You’ve successfully authenticated, but <a target="_blank" rel="noopener" href="http://GITEE.COM">GITEE.COM</a> does not provide shell access.<br>
+显示successfully。</p>
+<p>2）GitLab 测试<br>
+<a href="mailto:git@git.XXX.cn">git@git.XXX.cn</a> 是gitlab的仓库地址</p>
+<p>$ ssh -T <a href="mailto:git@git.XXX.cn">git@git.XXX.cn</a><br>
+步骤如下：</p>
+<p>跳转到.ssh目录，git bash here。</p>
+<p>honey@honey MINGW64 ~/.ssh<br>
+$ ssh -T <a href="mailto:git@git.XXX.cn">git@git.XXX.cn</a><br>
+The authenticity of host ‘<a target="_blank" rel="noopener" href="http://git.XXX.cn">git.XXX.cn</a> (111.203.245.108)’ can’t be established.<br>
+ECDSA key fingerprint is …<br>
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes<br>
+Warning: Permanently added ‘<a target="_blank" rel="noopener" href="http://git.emapgo.cn">git.emapgo.cn</a>,111.203.245.108’ (ECDSA) to the list of known hosts.<br>
+Welcome to GitLab, @mygitlabhostname!<br>
+显示welcome to gitlab。</p>
+<p>3）Github 测试<br>
+同gitee</p>
+<p>4)~/.ssh / 目录下最终拥有如下文件<br>
+windows .ssh目录 是 C:\Users\honey.ssh 即C:\Users\windows登录名.ssh</p>
+<p>id_rsa_github<br>
+id_rsa_github.pub<br>
+id_rsa_gitlab<br>
+id_rsa_gitlab.pub<br>
+id_rsa_gitee<br>
+id_rsa_gitee.pub<br>
+config<br>
+known_hosts</p>
+<ol start="4">
+<li>查看电脑中自己的配置信息<br>
+$ cat config<br>
+honey@honey MINGW64 ~/.ssh<br>
+$ cat config</li>
+</ol>
+<h1>使用</h1>
+<h3 id="1）Gitlab">1）Gitlab</h3>
+<p>在本地以后gitlab仓库，git pull ,git commit -m “XXX”,git push 会提示 tell me who you are</p>
+<p>此时需要填写local 用户名和邮箱，而不是 --global</p>
+<p>$ ssh git config --local <a target="_blank" rel="noopener" href="http://user.name">user.name</a> “你的名字”<br>
+$ ssh git config --local user.email  “你的邮箱”</p>
+<h3 id="2）Gitee">2）Gitee</h3>
+<p>同上类似</p>
+<h3 id="3）Github">3）Github</h3>
+<p>同上类似</p>
+<h2 id="配置文件和配置字段信息解释">配置文件和配置字段信息解释</h2>
+<ul>
+<li>
+<p><code>Host</code><br>
+它涵盖了下面一个段的配置，我们可以通过他来替代将要连接的服务器地址。<br>
+这里可以使用任意字段或通配符。<br>
+当ssh的时候如果服务器地址能匹配上这里Host指定的值，则Host下面指定的HostName将被作为最终的服务器地址使用，并且将使用该Host字段下面配置的所有自定义配置来覆盖默认的<code>/etc/ssh/ssh_config</code>配置信息。</p>
+</li>
+<li>
+<p><code>Port</code><br>
+自定义的端口。默认为22，可不配置</p>
+</li>
+<li>
+<p><code>User</code><br>
+自定义的用户名，默认为git，可不配置   ， User git #默认就是git，可以不写</p>
+</li>
+<li>
+<p><code>HostName</code><br>
+真正连接的服务器地址</p>
+</li>
+<li>
+<p><code>PreferredAuthentications</code><br>
+指定优先使用哪种方式验证，支持密码和秘钥验证方式</p>
+</li>
+<li>
+<p><code>IdentityFile</code><br>
+指定本次连接使用的密钥文件</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/git%E9%85%8D%E7%BD%AE/" rel="tag"># git配置</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/10/19/%E4%BA%91%E8%AE%A1%E7%AE%97%E5%92%8C%E4%BA%91%E5%8E%9F%E7%94%9F%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" rel="prev" title="云计算和云原生概念浅析">
+      <i class="fa fa-chevron-left"></i> 云计算和云原生概念浅析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/10/19/what-happens-when/" rel="next" title="what-happens-when（浏览器一次请求的历程）">
+      what-happens-when（浏览器一次请求的历程） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">清除 git 的全局设置（针对已安装 git）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">生成新的 SSH keys</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%EF%BC%89Gitee-%E5%AF%86%E9%92%A5"><span class="nav-number">2.1.</span> <span class="nav-text">1）Gitee 密钥</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%EF%BC%89GitLab-%E5%AF%86%E9%92%A5"><span class="nav-number">2.2.</span> <span class="nav-text">2）GitLab 密钥</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%EF%BC%89GitHub-%E5%AF%86%E9%92%A5"><span class="nav-number">2.3.</span> <span class="nav-text">3）GitHub 密钥</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E5%AE%8C%E6%88%90%E5%90%8E%E4%BC%9A%E5%9C%A8-ssh%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%94%9F%E6%88%90%E4%BB%A5%E4%B8%8B%E6%96%87%E4%BB%B6"><span class="nav-number">2.4.</span> <span class="nav-text">4)完成后会在~&#x2F;.ssh目录下生成以下文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#config%E6%96%87%E4%BB%B6"><span class="nav-number">2.5.</span> <span class="nav-text">config文件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#gitlab"><span class="nav-number">2.5.1.</span> <span class="nav-text">gitlab</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gitee"><span class="nav-number">2.5.2.</span> <span class="nav-text">gitee</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#github"><span class="nav-number">2.5.3.</span> <span class="nav-text">github</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">测试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89Gitlab"><span class="nav-number">4.0.1.</span> <span class="nav-text">1）Gitlab</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89Gitee"><span class="nav-number">4.0.2.</span> <span class="nav-text">2）Gitee</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89Github"><span class="nav-number">4.0.3.</span> <span class="nav-text">3）Github</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E5%92%8C%E9%85%8D%E7%BD%AE%E5%AD%97%E6%AE%B5%E4%BF%A1%E6%81%AF%E8%A7%A3%E9%87%8A"><span class="nav-number">4.1.</span> <span class="nav-text">配置文件和配置字段信息解释</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">134</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">52</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">95</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/README/" title="2023&#x2F;10&#x2F;19&#x2F;README&#x2F;">写在前面</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2023&#x2F;10&#x2F;19&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/what-happens-when/" title="2023&#x2F;10&#x2F;19&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;19&#x2F;Prometheus 概念入门&#x2F;">Prometheus 概念入门</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/10/19/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;19&#x2F;夜莺监控入门&#x2F;">夜莺监控入门</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">320k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">19:25</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>
