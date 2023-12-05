@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,164 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">json、结构体标签和rpc入门</a>
+            <a href="/2023/12/05/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/" class="post-title-link" itemprop="url">consul服务发现</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">微服务</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>consul服务发现</h1>
+<blockquote>
+<p>Consul是由HashiCorp开发的一个支持多数据中心的分布式服务发现和键值对存储服务的开源软件，被大量应用于基于微服务的软件架构当中。</p>
+</blockquote>
+<h2 id="服务发现流程图">服务发现流程图</h2>
+<p><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20210607214102.png" alt="image-20210607214102612"></p>
+<ul>
+<li>服务发现，也可以看做一个“服务”，是给“服务”提供服务的</li>
+</ul>
+<h2 id="服务发现种类">服务发现种类</h2>
+<ul>
+<li>consul：常用于go-micro中</li>
+<li>mdns：go-micro中默认的服务发现</li>
+<li>etcd：k8s内嵌的服务发现</li>
+<li>zookeeper：java中常用</li>
+</ul>
+<h2 id="Consul关键特性">Consul关键特性</h2>
+<ul>
+<li>服务发现：consul提供服务，服务端主动向consul发起注册。</li>
+<li>健康检查：定时发送消息，类似于“心跳包”，保证客户端获取到的一定是健康的服务。</li>
+<li>键值存储：consul提供，但常用于redis。</li>
+<li>多数据中心：可以轻松加入集群。</li>
+</ul>
+<h2 id="Consul-参数">Consul 参数</h2>
+<ul>
+<li>安装好 Consul 后，在启动程序之前，需要掌握一些配置参数，通过掌握这些参数，可以一次性的成功运行 Consul 服务器集群，常用的参数如下：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">参数名称</th>
+<th style="text-align:center">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">-server</td>
+<td style="text-align:center">此标志用于控制代理是运行于服务器/客户端模式，每个 Consul 集群至少有一个服务器，正常情况下不超过5个，使用此标记的服务器参与 Raft一致性算法、选举等事务性工作</td>
+</tr>
+<tr>
+<td style="text-align:center">-http-port=8500</td>
+<td style="text-align:center">consul自带的一个web访问端口，默认为8500</td>
+</tr>
+<tr>
+<td style="text-align:center">-client</td>
+<td style="text-align:center">表示 Consul 绑定客户端接口的IP地址，默认值为：127.0.0.1，当你有多块网卡的时候，最好指定IP地址，不要使用默认值</td>
+</tr>
+<tr>
+<td style="text-align:center">-bootstrap-expect</td>
+<td style="text-align:center">预期的服务器集群的数量，整数，如 -bootstrap-expect=3，表示集群服务器数量为3台，设置该参数后，Consul将等待指定数量的服务器全部加入集群可用后，才开始引导集群正式开始工作，此参数必须与 -server 一起使用</td>
+</tr>
+<tr>
+<td style="text-align:center">-data-dir</td>
+<td style="text-align:center">存储数据的目录，该目录在 Consul 程序重启后数据不会丢失，指定此目录时，应确保运行 Consul 程序的用户对该目录具有读写权限</td>
+</tr>
+<tr>
+<td style="text-align:center">-config-dir=XX</td>
+<td style="text-align:center">所有服务主动注册的配置文件</td>
+</tr>
+<tr>
+<td style="text-align:center">- node</td>
+<td style="text-align:center">当前服务器在集群中的名称，该值在整个 Consul 集群中必须唯一，默认值为当前主机名称</td>
+</tr>
+<tr>
+<td style="text-align:center">- bind</td>
+<td style="text-align:center">Consul 在当前服务器侦听的地址，如果您有多块网卡，请务必指定一个IP地址（IPv4/IPv6)，默认值为：0.0.0.0，也可用使用[::]</td>
+</tr>
+</tbody>
+</table>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/12/05/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/12/05/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">json、结构体标签和rpc入门</a>
         </h2>
 
         <div class="post-meta">
@@ -298,7 +455,7 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;encoding/json&quot;</span></span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将 结构体 --&gt; 字符串  编码</span></span><br><span class="line"><span class="comment">// 将 字符串 --&gt; 结构体  解码</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 结构体的成员须大写，不然不参与编码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">   Name  <span class="type">string</span></span><br><span class="line">   Sex   <span class="type">string</span></span><br><span class="line">   Age   <span class="type">int</span></span><br><span class="line">   Score <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   st1 := Student&#123;</span><br><span class="line">      Name:  <span class="string">&quot;luenci&quot;</span>,</span><br><span class="line">      Sex:   <span class="string">&quot;man&quot;</span>,</span><br><span class="line">      Age:   <span class="number">22</span>,</span><br><span class="line">      Score: <span class="number">99</span>,</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 编码 序列化</span></span><br><span class="line">   encodeInfo, err := json.Marshal(st1)</span><br><span class="line">   <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;序列化发生错误,error&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(reflect.TypeOf(encodeInfo))</span><br><span class="line">   fmt.Println(<span class="type">string</span>(encodeInfo))</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 解码 反序列化</span></span><br><span class="line">   <span class="keyword">var</span> st2 Student</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> err := json.Unmarshal([]<span class="type">byte</span>(encodeInfo), &amp;st2); err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">&quot;反序列化发生错误,&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line">   fmt.Println(st2.Name)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/24/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/#more" rel="contents">
+              <a class="btn" href="/2023/12/05/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -322,7 +479,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -336,7 +493,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/" class="post-title-link" itemprop="url">管道和go程</a>
+            <a href="/2023/12/05/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/" class="post-title-link" itemprop="url">管道和go程</a>
         </h2>
 
         <div class="post-meta">
@@ -393,7 +550,7 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   <span class="string">&quot;time&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">当通道在多个协程之间传输的是指向数据的指针是，且读写操作是由不同的协程操作，则需要提供额外的同步动作。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   <span class="comment">// 当涉及到多go程时，c语言使用互斥量，上锁来保持资源同步，避免资源竞争问题</span></span><br><span class="line">   <span class="comment">// go语言更好的解决方案是管道、通道</span></span><br><span class="line">   <span class="comment">// 使用通道不需要手动进行加锁</span></span><br><span class="line">   <span class="comment">//sync.RWMutex&#123;&#125;</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 创建管道 关键字 chan</span></span><br><span class="line">   numChan := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>) <span class="comment">// 装数字的管道，无缓冲通道，未声明空间</span></span><br><span class="line">   <span class="comment">//numChan := make(chan int, 10) // 有缓冲通道</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 创建两个go程，父写，子读</span></span><br><span class="line">   <span class="comment">// 发现子go程没有发生资源抢夺</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 子go程1</span></span><br><span class="line">   <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">25</span>; i++ &#123;</span><br><span class="line">         <span class="comment">// 只能 &lt;- 数据流向</span></span><br><span class="line">         data := &lt;-numChan</span><br><span class="line">         fmt.Println(<span class="string">&quot;子go程1 读取data&quot;</span>, data)</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;()</span><br><span class="line">   <span class="comment">// 子go程2</span></span><br><span class="line">   <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">25</span>; i++ &#123;</span><br><span class="line">         data := &lt;-numChan</span><br><span class="line">         fmt.Println(<span class="string">&quot;子go程2 读取data&quot;</span>, data)</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;()</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 父go程</span></span><br><span class="line">   <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">50</span>; i++ &#123;</span><br><span class="line">      <span class="comment">// 向管道中写入数据</span></span><br><span class="line">      numChan &lt;- i</span><br><span class="line">      fmt.Println(<span class="string">&quot;====&gt; 主go程，写入数据&quot;</span>, i)</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   time.Sleep(<span class="number">5</span> * time.Second)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/24/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/#more" rel="contents">
+              <a class="btn" href="/2023/12/05/%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95(%E7%AE%A1%E9%81%93%E5%92%8Cgo%E7%A8%8B)/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -417,7 +574,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -431,7 +588,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Go面向对象相关知识</a>
+            <a href="/2023/12/05/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">Go面向对象相关知识</a>
         </h2>
 
         <div class="post-meta">
@@ -487,7 +644,7 @@
 <h2 id="类成员访问权限（字段大小写）">类成员访问权限（字段大小写）</h2>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/24/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/#more" rel="contents">
+              <a class="btn" href="/2023/12/05/Go%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -511,7 +668,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -525,7 +682,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/" class="post-title-link" itemprop="url">Go语言基础知识和语法</a>
+            <a href="/2023/12/05/Go%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%92%8C%E8%AF%AD%E6%B3%95/" class="post-title-link" itemprop="url">Go语言基础知识和语法</a>
         </h2>
 
         <div class="post-meta">
@@ -721,7 +878,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/python%E5%85%83%E7%B1%BB/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/python%E5%85%83%E7%B1%BB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -735,7 +892,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/python%E5%85%83%E7%B1%BB/" class="post-title-link" itemprop="url">Python元类学习</a>
+            <a href="/2023/12/05/python%E5%85%83%E7%B1%BB/" class="post-title-link" itemprop="url">Python元类学习</a>
         </h2>
 
         <div class="post-meta">
@@ -802,7 +959,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 常规方法创建类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Foo</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    name = <span class="string">&quot;luenci&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">func</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="number">666</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 基于type创建类</span></span><br><span class="line"><span class="comment"># - 类名</span></span><br><span class="line"><span class="comment"># - 继承的类</span></span><br><span class="line"><span class="comment"># - 类属性</span></span><br><span class="line"><span class="comment"># - 类方法</span></span><br><span class="line"></span><br><span class="line">foo1 = <span class="built_in">type</span>(<span class="string">&quot;Foo&quot;</span>, (<span class="built_in">object</span>,), &#123;<span class="string">&quot;name&quot;</span>: <span class="string">&quot;luenci&quot;</span>, <span class="string">&quot;func&quot;</span>: <span class="keyword">lambda</span> self: <span class="string">&quot;hi&quot;</span>&#125;)</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/24/python%E5%85%83%E7%B1%BB/#more" rel="contents">
+              <a class="btn" href="/2023/12/05/python%E5%85%83%E7%B1%BB/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -826,7 +983,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -840,7 +997,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式</a>
+            <a href="/2023/12/05/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式</a>
         </h2>
 
         <div class="post-meta">
@@ -985,7 +1142,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -999,7 +1156,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">创建型模式</a>
+            <a href="/2023/12/05/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">创建型模式</a>
         </h2>
 
         <div class="post-meta">
@@ -1075,7 +1232,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/24/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
+              <a class="btn" href="/2023/12/05/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1099,7 +1256,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1113,7 +1270,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">结构型模式</a>
+            <a href="/2023/12/05/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">结构型模式</a>
         </h2>
 
         <div class="post-meta">
@@ -1185,7 +1342,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/24/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
+              <a class="btn" href="/2023/12/05/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1209,7 +1366,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1223,7 +1380,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/10/24/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">行为型模式</a>
+            <a href="/2023/12/05/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">行为型模式</a>
         </h2>
 
         <div class="post-meta">
@@ -1311,184 +1468,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/24/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/10/24/django%E7%9A%84%E4%BF%A1%E5%8F%B7%E9%87%8F/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/10/24/django%E7%9A%84%E4%BF%A1%E5%8F%B7%E9%87%8F/" class="post-title-link" itemprop="url">Django信号量初探</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Django%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">Django框架</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>django的信号量</h1>
-<blockquote>
-<p>原文链接:<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903674049724424">https://juejin.cn/post/6844903674049724424</a></p>
-</blockquote>
-<h2 id="一、关于django信号量">一、关于<code>django</code>信号量</h2>
-<blockquote>
-<p><code>Django</code>包含一个&quot;信号调度程序&quot;，<strong>它有助于在框架中的其他位置发生操作时通知分离的应用程序</strong>。简而言之，信号允许某些发送者通知一组接收器已经发生了某些动作。当许多代码可能对同一事件感兴趣时，它们特别有用.</p>
-</blockquote>
-<h2 id="二、django中内置的信号量">二、<code>django</code>中内置的信号量</h2>
-<ul>
-<li>
-<p>1、<code>Model</code>的信号量</p>
-<ul>
-<li>
-<p><code>pre_init</code> # django的modal执行其构造方法前，自动触发</p>
-</li>
-<li>
-<p><code>post_init</code> # django的modal执行其构造方法后，自动触发</p>
-</li>
-<li>
-<p><code>pre_save</code> # django的modal对象保存前，自动触发</p>
-</li>
-<li>
-<p><code>post_save</code> # django的modal对象保存后，自动触发</p>
-</li>
-<li>
-<p><code>pre_delete</code> # django的modal对象删除前，自动触发</p>
-</li>
-<li>
-<p><code>post_delete</code> # django的modal对象删除后，自动触发</p>
-</li>
-<li>
-<p><code>m2m_changed</code> # django的modal中使用m2m字段操作第三张表（add,remove,clear）前后，自动触发</p>
-</li>
-<li>
-<p><code>class_prepared</code> # 程序启动时，检测已注册的app中modal类，对于每一个类，自动触发</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> class_prepared</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_init</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_init</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_save</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_save</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_delete</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_delete</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> m2m_changed</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>2、<code>Management</code>的信号量</p>
-<ul>
-<li>
-<p><code>pre_migrate</code> # 执行migrate命令前，自动触发</p>
-</li>
-<li>
-<p><code>post_migrate</code> # 执行migrate命令后，自动触发</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> pre_migrate</span><br><span class="line"><span class="keyword">from</span> django.db.models.signals <span class="keyword">import</span> post_migrate</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>3、<code>Request/Response</code>的信号量</p>
-<ul>
-<li>
-<p><code>request_started</code> # 请求到来前，自动触发</p>
-</li>
-<li>
-<p><code>request_finished</code> # 请求结束后，自动触发</p>
-</li>
-<li>
-<p><code>got_request_exception</code> # 请求异常后，自动触发</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.core.signals <span class="keyword">import</span> request_finished</span><br><span class="line"><span class="keyword">from</span> django.core.signals <span class="keyword">import</span> request_started</span><br><span class="line"><span class="keyword">from</span> django.core.signals <span class="keyword">import</span> got_request_exception</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>4、<code>Test</code>的信号量</p>
-<ul>
-<li>
-<p><code>setting_changed</code> # 使用test测试修改配置文件时，自动触发</p>
-</li>
-<li>
-<p><code>template_rendered</code> # 使用test测试渲染模板时，自动触发</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.test.signals <span class="keyword">import</span> setting_changed</span><br><span class="line"><span class="keyword">from</span> django.test.signals <span class="keyword">import</span> template_rendered</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li>
-<p>5、<code>Database</code>的信号量</p>
-<ul>
-<li>
-<p><code>connection_created</code> # 创建数据库连接时，自动触发</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db.backends.signals <span class="keyword">import</span> connection_created</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/10/24/django%E7%9A%84%E4%BF%A1%E5%8F%B7%E9%87%8F/#more" rel="contents">
+              <a class="btn" href="/2023/12/05/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1579,7 +1559,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">135</span>
+          <span class="site-state-item-count">136</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1592,7 +1572,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">96</span>
+        <span class="site-state-item-count">97</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1634,19 +1614,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2023/10/24/README/" title="2023&#x2F;10&#x2F;24&#x2F;README&#x2F;">写在前面</a>
+          <a href="/2023/12/05/README/" title="2023&#x2F;12&#x2F;05&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/10/24/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;24&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
+          <a href="/2023/12/05/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2023&#x2F;12&#x2F;05&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/10/24/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2023&#x2F;10&#x2F;24&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
+          <a href="/2023/12/05/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2023&#x2F;12&#x2F;05&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/10/24/what-happens-when/" title="2023&#x2F;10&#x2F;24&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
+          <a href="/2023/12/05/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2023&#x2F;12&#x2F;05&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2023/10/24/Prometheus%20%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/" title="2023&#x2F;10&#x2F;24&#x2F;Prometheus 概念入门&#x2F;">Prometheus 概念入门</a>
+          <a href="/2023/12/05/what-happens-when/" title="2023&#x2F;12&#x2F;05&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
         </li>
     </ul>
   </div>
@@ -1679,12 +1659,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">322k</span>
+    <span title="站点总字数">324k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">19:31</span>
+    <span title="站点阅读时长">19:39</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>

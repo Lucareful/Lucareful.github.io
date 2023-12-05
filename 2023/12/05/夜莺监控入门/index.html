@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="引子 监控系统必要性 ​    作为运维者，第一个接触的基本上是监控平台，各种各样的监控，看各种各样的指标，好像没有监控就觉得不正常，那么为什么需要监控呢？  预防故障，例如当磁盘空间增长到一定的程度的时候，就会产生故障，这个时候监控系统的作用就是当达到一个阀值的时候，发出告警，然后进行处理。 预测变化趋势，例如我的分布式文件系统，每天数据增长1T空间，那么我总共有多少空间，剩余空间大小，是否要进">
+<meta property="og:type" content="article">
+<meta property="og:title" content="夜莺监控入门">
+<meta property="og:url" content="https://luenci.me/2023/12/05/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="引子 监控系统必要性 ​    作为运维者，第一个接触的基本上是监控平台，各种各样的监控，看各种各样的指标，好像没有监控就觉得不正常，那么为什么需要监控呢？  预防故障，例如当磁盘空间增长到一定的程度的时候，就会产生故障，这个时候监控系统的作用就是当达到一个阀值的时候，发出告警，然后进行处理。 预测变化趋势，例如我的分布式文件系统，每天数据增长1T空间，那么我总共有多少空间，剩余空间大小，是否要进">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/arch-product.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/v6.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002957_62acac05c1eab39486.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002957_62acac05e005363378.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac0606dab93833.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac062728496176.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac064990d41026.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac06771bd19716.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac06c186c79198.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/install-standalone.png">
+<meta property="article:published_time" content="2023-12-05T14:35:18.956Z">
+<meta property="article:modified_time" content="2023-07-30T15:21:34.000Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="n9e">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/arch-product.png">
+
+<link rel="canonical" href="https://luenci.me/2023/12/05/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '404,φ(*￣0￣),Waiting for you.';
+      visible = '200,(✿◡‿◡),Welcome back!';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
+
+  <title>夜莺监控入门 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2023/12/05/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          夜莺监控入门
+        </h1>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-07-30 15:21:34" itemprop="dateModified" datetime="2023-07-30T15:21:34+00:00">2023-07-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%9B%91%E6%8E%A7/" itemprop="url" rel="index"><span itemprop="name">监控</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2023/12/05/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2023/12/05/%E5%A4%9C%E8%8E%BA%E7%9B%91%E6%8E%A7%E5%85%A5%E9%97%A8/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>13 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>引子</h1>
+<h2 id="监控系统必要性">监控系统必要性</h2>
+<p>​    作为运维者，第一个接触的基本上是监控平台，各种各样的监控，看各种各样的指标，好像没有监控就觉得不正常，那么为什么需要监控呢？</p>
+<ul>
+<li>预防故障，例如当磁盘空间增长到一定的程度的时候，就会产生故障，这个时候监控系统的作用就是当达到一个阀值的时候，发出告警，然后进行处理。</li>
+<li>预测变化趋势，例如我的分布式文件系统，每天数据增长1T空间，那么我总共有多少空间，剩余空间大小，是否要进行扩容等操作。</li>
+<li>当故障发生的时候，能提供给我基本信息给与我排查的思路，例如redis不可读，是否能看到是哪个实例，能看到相关的日志信息，能测试是否刻读写，能查看哪个是master。</li>
+<li>监控系统关键指标，例如对于web服务器来说，响应速度，来判断是否中间件有问题，是否数据库有问题，还是网络有问题；活跃的用户数，每天我的网站有多少用户访问；有多少新注册的用户。</li>
+</ul>
+<h1>简介</h1>
+<p>​	夜莺监控（ Nightingale ）是一款国产、开源云原生监控分析系统，采用 All-In-One 的设计，集数据采集、可视化、监控告警、数据分析于一体。于 2020 年 3 月 20 日，在 github 上发布 v1 版本，已累计迭代 60 多个版本。从 v5 版本开始与 Prometheus、VictoriaMetrics、Grafana、Telegraf、Datadog 等生态紧密协同集成，提供开箱即用的企业级监控分析和告警能力，已有众多企业选择将 Prometheus + AlertManager + Grafana 的组合方案升级为使用夜莺监控。夜莺监控，由滴滴开发和开源，并于 2022 年 5 月 11 日，捐赠予中国计算机学会开源发展委员会（CCF ODC），为 CCF ODC 成立后接受捐赠的第一个开源项目。夜莺监控的核心开发团队，也是Open-Falcon项目原核心研发人员。</p>
+<h2 id="产品介绍">产品介绍</h2>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/arch-product.png" alt="img"></p>
+<ul>
+<li>开箱即用：支持 Docker、Helm Chart、云服务等多种部署方式；集数据采集、监控告警、可视化为一体；内置多种监控仪表盘、快捷视图、告警规则模板，导入即可快速使用；大幅降低云原生监控系统的建设成本、学习成本、使用成本</li>
+<li>云原生：以交钥匙的方式快速构建企业级的云原生监控体系，支持 Categraf、Telegraf、Grafana-agent 等多种采集器，支持 Prometheus、VictoriaMetrics、M3DB、ElasticSearch 等多种数据库，兼容支持导入 Grafana 仪表盘，与云原生生态无缝集成</li>
+<li>专业告警：可视化的告警配置和管理，支持丰富的告警规则，提供屏蔽规则、订阅规则的配置能力，支持告警多种送达渠道，支持告警自愈、告警事件管理等</li>
+<li>灵活扩展、中心化管理：夜莺监控，可部署在 1 核 1G 的云主机，可在上百台机器集群化部署，可运行在 K8s 中；也可将时序库、告警引擎等组件下沉到各机房、各 Region，兼顾边缘部署和中心化统一管理，解决数据割裂，缺乏统一视图的难题</li>
+<li>高性能、高可用：得益于夜莺的多数据源管理引擎，和夜莺引擎侧优秀的架构设计，借助于高性能时序库，可以满足数亿时间线的采集、存储、告警分析场景，节省大量成本；夜莺监控组件均可水平扩展，无单点，已在上千家企业部署落地，经受了严苛的生产实践检验</li>
+</ul>
+<p>​	Nightingale 可以接收各种采集器上报的监控数据，转存到时序库（可以支持Prometheus、M3DB、VictoriaMetrics、Thanos等），并提供告警规则、屏蔽规则、订阅规则的配置能力，提供监控数据的查看能力，提供告警自愈机制（告警触发之后自动回调某个webhook地址或者执行某个脚本），提供历史告警事件的存储管理、分组查看的能力。</p>
+<span id="more"></span>
+<h3 id="架构设计（V6）">架构设计（V6）</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/v6.png" alt="Nightingale v6 architecture"></p>
+<p>​	上图是画了4个Region，Beijing 这个区域部署了中心的 n9e-center、MySQL，还有中心的时序库 VictoriaMetrics，Beijing和Shanghai网络链路比较好，Shanghai部署了CK、ES、Jaeger，Beijing 的n9e-center 会直连读取 Shanghai 区的数据，对 Shanghai 区的数据做告警判断，Beijing和Sgp的两个机房链路不好，告警引擎n9e-alerting-engine下沉到了Sgp的两个机房，只对本机房的数据做告警判断。n9e-pushgateway 只是下沉到了 Sgp02，没有部署在 Sgp01，是因为 Sgp01 是用 Prometheus 拉取各个 Exporter 的数据，走的 PULL 模型，Sgp02 才是用的各种 PUSH 型 agent。</p>
+<p>​	register targets 这个表示设备注册，这个是可以没有的，比如已有的一个 Prometheus，通过 PULL 的方式拉取监控数据，拉到数据之后直接存入时序库了，数据没有流经 n9e-pushgateway，这个影响不大，不影响看图也不影响告警。但是对于 PUSH 型架构，需要对 agent 是否存活做告警，这个注册 target 的逻辑就很关键了。回头单独写个文章来分享这块逻辑如何改造优化。</p>
+<p>​	总结这个架构，如果公司的网络环境比较简单，多个机房相互之间有很好的连通性，就只需要在中心部署一个 n9e-center，对接多个数据源就好了。如果某个地域的机房网络链路不好，就需要在这个地域单独搭建时序库 + 告警引擎 + Pushgateway(可选)。</p>
+<h2 id="产品对比">产品对比</h2>
+<h3 id="Zabbix"><strong>Zabbix</strong></h3>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002957_62acac05c1eab39486.png" alt="最详细的开源监控系统对比分析！建议收藏_分布式_02"></p>
+<h4 id="优势">优势</h4>
+<ul>
+<li>丰富的插件。Zabbix拥有丰富的MiB库资源以及模版等850多个插件；</li>
+<li>易用性、依赖少。基于PHP与MySQL搭建，可用性比较强；</li>
+<li>可进行一定颗粒度的权限控制；</li>
+<li>文档完善。Zabbix本身定位为企业级分布式监控系统，故拥有完善的文档，活跃的官方社区，且本身也更新得比较频繁，开发比较积极；</li>
+<li>国内市场有相关的商业支持。</li>
+</ul>
+<h4 id="不足">不足</h4>
+<ul>
+<li>zabbix 使用mysql存储的，有性能瓶颈，容量有限，监控大盘不足，配置麻烦，服务器较多的话，很卡。</li>
+<li>zabbix 需要部署多套，没办法用一套前端</li>
+</ul>
+<h4 id="一般应用场景">一般应用场景</h4>
+<ul>
+<li>监控基础设施。主机、网络设备监控等；</li>
+<li>中小规模监控；</li>
+<li>对于大型场景的监控来说仍需注意数据问题。</li>
+</ul>
+<h3 id="Nagios（2002）">Nagios（2002）</h3>
+<p>​	Nagios是一个主要用于监控系统运行状态和网络信息的监控系统。Nagios能监控所指定的本地或远程主机以及服务，同时提供异常通知等功能。Nagios拥有4000多个插件，且在很早之前就开始拥有自己的官方插件社区。这里面包括很多应用级别的监控插件。此外，Nagios的通知虽然简单但能覆盖所有场景，以及本身拥有强大的监控任务调度的能力。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002957_62acac05e005363378.png" alt="最详细的开源监控系统对比分析！建议收藏_大数据_03"></p>
+<h4 id="优势-2">优势</h4>
+<ul>
+<li>功能简单易用，主要的功能是主动检测。</li>
+</ul>
+<h4 id="劣势">劣势</h4>
+<ul>
+<li>功能过于单一，只能通过主动检测告知结果是否匹配，被动检测功能原生功能较弱；</li>
+<li>配置复杂，配置修改主机、报警、阈值等时，在原生Nagios中只能通过修改配置文件来实现，操作较为复杂。</li>
+</ul>
+<h4 id="使用场景">使用场景</h4>
+<ul>
+<li>小场景简单监控。对于一些网站、端口等可进行简单监控；</li>
+<li>大型场景需要各种花式Hack，需要借助很多第三方的插件进行效率的提升和分布式的扩展。</li>
+</ul>
+<h3 id="Centreon（2005）">Centreon（2005）</h3>
+<p>​	Centreon是一款开源的软件，主要用于对Nagios的一些功能增强。可通过页面管理Nagios，通过第三方插件实现对网络，操作系统，应用程序的监控。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac0606dab93833.png" alt="最详细的开源监控系统对比分析！建议收藏_分布式_04"></p>
+<h4 id="优势-3">优势</h4>
+<ul>
+<li>界面友好</li>
+<li>维护方便</li>
+<li>统一管理</li>
+<li>性能数据可追溯</li>
+</ul>
+<h4 id="劣势-2">劣势</h4>
+<ul>
+<li>
+<p>修改配置需要重启或者重载Nagios主进程</p>
+</li>
+<li>
+<p>MySQL依然存在数据问题</p>
+</li>
+<li>
+<p>文档资料较少</p>
+</li>
+</ul>
+<h4 id="使用场景分析">使用场景分析</h4>
+<ul>
+<li>
+<p>适用于百台规模的中等监控</p>
+</li>
+<li>
+<p>仍需要解决原生Nagios的一些弊端</p>
+</li>
+</ul>
+<h3 id="Check-MK">Check_MK</h3>
+<p>​	Check_MK是一款通用的Nagios/Icinga增强工具集。其插件有着相当成熟的检测机制和对硬件服务器的检测手段。非常适合对硬件服务器进行“体检”。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac062728496176.png" alt="最详细的开源监控系统对比分析！建议收藏_网络_05"></p>
+<h4 id="优势-4">优势</h4>
+<ul>
+<li>界面友好</li>
+<li>维护方便</li>
+<li>统一管理</li>
+<li>性能数据可追溯</li>
+</ul>
+<h4 id="劣势-3">劣势</h4>
+<ul>
+<li>增加变更需要重启Nagios主进程。</li>
+<li>因后端存储使用RRD，导致分布式扩展较为困难。</li>
+<li>文档资料较少。</li>
+</ul>
+<h4 id="使用场景分析-2">使用场景分析</h4>
+<p>适用于百台到千台以内中等规模监控，需要解决Nagios的一些弊端</p>
+<h3 id="Cacti（2001）">Cacti（2001）</h3>
+<p>​	Cacti是用PHP语言实现的一个监控软件，它的主要功能是用SNMP服务获取数据，然后用RRD储存和更新数据，当用户需要查看数据的时候用RRD生成图表呈现给用户。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac064990d41026.png" alt="最详细的开源监控系统对比分析！建议收藏_运维_06"></p>
+<h4 id="优势-5">优势</h4>
+<ul>
+<li>网络设备支持好</li>
+<li>有权限控制</li>
+<li>有汉化版</li>
+<li>早期在IDC覆盖广</li>
+</ul>
+<h4 id="劣势-4">劣势</h4>
+<ul>
+<li>SNMP依赖只适合特性场景</li>
+<li>资料老旧</li>
+</ul>
+<h4 id="使用场景分析-3">使用场景分析</h4>
+<ul>
+<li>简单的IDC托管</li>
+<li>网络运维</li>
+</ul>
+<h3 id="Ganglia（2001）">Ganglia（2001）</h3>
+<p>Ganglia是UC Berkeley发起的一个开源集群监视项目，设计用于测量数以千计的节点。主要是用来监控系统性能，如：CPU 、内存、硬盘利用率， I/O负载、网络流量情况等。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac06771bd19716.png" alt="最详细的开源监控系统对比分析！建议收藏_网络_07"></p>
+<h4 id="优势-6">优势</h4>
+<ul>
+<li>数据集中，部署分布式</li>
+<li>适合大规模部署</li>
+<li>对集群热点观测性支持较好</li>
+</ul>
+<h4 id="劣势-5">劣势</h4>
+<ul>
+<li>无告警</li>
+<li>集群内UDP广播问题多</li>
+</ul>
+<h4 id="使用场景分析-4">使用场景分析</h4>
+<ul>
+<li>大数据应用</li>
+<li>集群较多，关注整体资源使用率</li>
+</ul>
+<h3 id="Graphite（2008）">Graphite（2008）</h3>
+<p>​	Graphite是一个开源实时的、显示时间序列度量数据的图形系统，通过其后端接收度量数据，然后以实时方式查询、转换、组合这些度量数据。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/18002958_62acac06c186c79198.png" alt="最详细的开源监控系统对比分析！建议收藏_大数据_09"></p>
+<h4 id="优势-7">优势</h4>
+<ul>
+<li>指标点分概念引入</li>
+<li>Grafana支持较早的协议之一</li>
+<li>统计函数支持（140+）</li>
+</ul>
+<h4 id="劣势-6">劣势</h4>
+<ul>
+<li>指标无Label支持</li>
+</ul>
+<h4 id="使用场景分析-5">使用场景分析</h4>
+<ul>
+<li>在做好数据归并时可用于大规模场景</li>
+</ul>
+<h1>安装部署架构</h1>
+<p>​		首先我们来看下面的架构图，夜莺的服务端有两个模块：n9e-webapi 和 n9e-server，n9e-webapi 用于提供 API 给前端 JavaScript 使用，n9e-server 的职责是告警引擎和数据转发器。依赖的组件有 MySQL、Redis、时序库，时序库我们这里使用 Prometheus。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/install-standalone.png" alt="img"></p>
+<h1>采集器（数据源）</h1>
+<p>​	Categraf 是一款 all-in-one 的采集器，由 <a target="_blank" rel="noopener" href="https://flashcat.cloud/">快猫团队</a> 开源，代码托管在两个地方：</p>
+<ul>
+<li>gitlink: <a target="_blank" rel="noopener" href="https://www.gitlink.org.cn/flashcat/categraf">https://www.gitlink.org.cn/flashcat/categraf</a></li>
+<li>github: <a target="_blank" rel="noopener" href="https://github.com/flashcatcloud/categraf">https://github.com/flashcatcloud/categraf</a></li>
+</ul>
+<p>​	Categraf 不但可以采集 OS、MySQL、Redis、Oracle 等常见的监控对象，也准备提供日志采集能力和 trace 接收能力，这是夜莺主推的采集器，相关信息请查阅项目 <a target="_blank" rel="noopener" href="https://www.gitlink.org.cn/flashcat/categraf/tree/main/README.md">README</a></p>
+<p>​	Categraf 采集到数据之后，通过 remote write 协议推给远端存储，Nightingale 恰恰提供了 remote write 协议的数据接收接口，所以二者可以整合在一起，重点是配置 Categraf 的 <code>conf/config.toml</code> 中的 writer 部分，其中 url 部分配置为 n9e-server 的 remote write 接口</p>
+<h2 id="对比"><strong>对比</strong></h2>
+<p><strong>categraf 和 telegraf、exporters、grafana-agent、datadog-agent 等的关系是什么？</strong></p>
+<p>​	telegraf 是 influxdb 生态的产品，因为 influxdb 是支持字符串数据的，所以 telegraf 采集的很多 field 是字符串类型，另外 influxdb 的设计，允许 labels 是非稳态结构，比如 result_code 标签，有时其 value 是 0，有时其 value 是 1，在 influxdb 中都可以接受。但是上面两点，在类似 prometheus 的时序库中，处理起来就很麻烦。</p>
+<p>​	prometheus 生态有各种 exporters，但是设计逻辑都是一个监控类型一个 exporter，甚至一个实例一个 exporter，生产环境可能会部署特别多的 exporters，管理起来略麻烦。</p>
+<p>​	grafana-agent import 了大量 exporters 的代码，没有裁剪，没有优化，没有最佳实践在产品上的落地，有些中间件，仍然是一个 grafana-agent 一个目标实例，管理起来也很不方便。</p>
+<p>​	datadog-agent确实是集大成者，但是大量代码是 python 的，整个发布包也比较大，有不少历史包袱，而且生态上是自成一派，和社区相对割裂。</p>
+<p><strong>一般直接采用社区的采集器可能无法涵盖公司内部所以场景，这时候根据公司监控业务的需求，可自行开发 agent 采集器上报数据</strong></p>
+<h1>告警（重要）</h1>
+<blockquote>
+<p>根据采集的数据，编写一些策略（如：cpu使用率大于90%，发送告警信息提醒相关人员进行相关操作，来维护系统的稳定可用性）</p>
+</blockquote>
+<p>​	当监控到异常指标的时候（根据预先定义的策略模版）就通过，企业微信，钉钉飞书机器人，邮件，电话等。告知相关人员，推送告警的信息，让大家知道采取什么措施及时止损。</p>
+<h1>参考文章</h1>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wdyjx/p/16521918.html">夜莺监控（ Nightingale ） - 追梦nan - 博客园 (cnblogs.com)</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/mingongge/5888227?u_atoken=d81842c8-b117-46a2-be28-6fca15157a18&amp;u_asession=012tVaxxSALWLG2Qwuz0k-tsEHqW03AYgLdeKSFqumfwbvPiw_ChzjsBsyoH9tyYELX0KNBwm7Lovlpxjd_P_q4JsKWYrT3W_NKPr8w6oU7K8epyIisa5VBZcV6ceiWoiupr4teCvh5VY5Njd5VdG1omBkFo3NEHBv0PZUm6pbxQU&amp;u_asig=05YQGyVmqq9N-jxS6XiKr_kOGFaqB2lkM39o5rHH36Jf9X6yuGAhFQFWANfAp6PbP_Njo3IjBf-sHct7PzagIfcJkHPH-PMHzStK20TpA3BhRZSlsbh2I4Ume4XT7U2FZTgfvUzIeicmP8DrJgUy1SYZLr2cPb587AXyZC1Bg6kGf9JS7q8ZD7Xtz2Ly-b0kmuyAKRFSVJkkdwVUnyHAIJzY3kk1TpKGX7LIIbMdYt0cb1leJBzhF3LYQ-YYMawd1PvAnn-RUoQiN9jeSNwt9ne-3h9VXwMyh6PgyDIVSG1W-_8LOfXyYcQgotwE6UYm4ymM8n6LZfV8dS5X4UgKDrBmI4JI9vADP7UqvIkmehgap36S8MWH7TzizRmWnxecsWmWspDxyAEEo4kbsryBKb9Q&amp;u_aref=1X7jTmsQkCFCsu5%2BXwSBNC%2BmQK0%3D">最详细的开源监控系统对比分析！建议收藏_51CTO博客_监控系统 开源</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/26369145">一篇文章全面了解监控知识体系 - 知乎 (zhihu.com)</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/1100508">【滴滴开源运维监控系统】夜莺V5版本部署实践-阿里云开发者社区 (aliyun.com)</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://flashcat.cloud/blog/nightingale-design-v6-arch/">夜莺监控(Nightingale)6.x版本整体架构设计思考 - 快猫星云 (flashcat.cloud)</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://redian.news/wxnews/245895">如何解决Prometheus的存储容量问题？ | Redian新闻</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1458754">聊聊监控系统-腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/n9e/" rel="tag"># n9e</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/05/%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96%E7%AC%94%E8%AE%B0/" rel="prev" title="数据科学之数据可视化">
+      <i class="fa fa-chevron-left"></i> 数据科学之数据可视化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/05/%E5%A4%9A%E8%BF%9B%E7%A8%8B/" rel="next" title="python的进程概念">
+      python的进程概念 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">引子</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%91%E6%8E%A7%E7%B3%BB%E7%BB%9F%E5%BF%85%E8%A6%81%E6%80%A7"><span class="nav-number">1.1.</span> <span class="nav-text">监控系统必要性</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.1.</span> <span class="nav-text">产品介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%EF%BC%88V6%EF%BC%89"><span class="nav-number">2.1.1.</span> <span class="nav-text">架构设计（V6）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A7%E5%93%81%E5%AF%B9%E6%AF%94"><span class="nav-number">2.2.</span> <span class="nav-text">产品对比</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Zabbix"><span class="nav-number">2.2.1.</span> <span class="nav-text">Zabbix</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E8%B6%B3"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">不足</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E8%88%AC%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">2.2.1.3.</span> <span class="nav-text">一般应用场景</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Nagios%EF%BC%882002%EF%BC%89"><span class="nav-number">2.2.2.</span> <span class="nav-text">Nagios（2002）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF-2"><span class="nav-number">2.2.2.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A3%E5%8A%BF"><span class="nav-number">2.2.2.2.</span> <span class="nav-text">劣势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">2.2.2.3.</span> <span class="nav-text">使用场景</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Centreon%EF%BC%882005%EF%BC%89"><span class="nav-number">2.2.3.</span> <span class="nav-text">Centreon（2005）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF-3"><span class="nav-number">2.2.3.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A3%E5%8A%BF-2"><span class="nav-number">2.2.3.2.</span> <span class="nav-text">劣势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90"><span class="nav-number">2.2.3.3.</span> <span class="nav-text">使用场景分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Check-MK"><span class="nav-number">2.2.4.</span> <span class="nav-text">Check_MK</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF-4"><span class="nav-number">2.2.4.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A3%E5%8A%BF-3"><span class="nav-number">2.2.4.2.</span> <span class="nav-text">劣势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90-2"><span class="nav-number">2.2.4.3.</span> <span class="nav-text">使用场景分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cacti%EF%BC%882001%EF%BC%89"><span class="nav-number">2.2.5.</span> <span class="nav-text">Cacti（2001）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF-5"><span class="nav-number">2.2.5.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A3%E5%8A%BF-4"><span class="nav-number">2.2.5.2.</span> <span class="nav-text">劣势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90-3"><span class="nav-number">2.2.5.3.</span> <span class="nav-text">使用场景分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Ganglia%EF%BC%882001%EF%BC%89"><span class="nav-number">2.2.6.</span> <span class="nav-text">Ganglia（2001）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF-6"><span class="nav-number">2.2.6.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A3%E5%8A%BF-5"><span class="nav-number">2.2.6.2.</span> <span class="nav-text">劣势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90-4"><span class="nav-number">2.2.6.3.</span> <span class="nav-text">使用场景分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Graphite%EF%BC%882008%EF%BC%89"><span class="nav-number">2.2.7.</span> <span class="nav-text">Graphite（2008）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF-7"><span class="nav-number">2.2.7.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A3%E5%8A%BF-6"><span class="nav-number">2.2.7.2.</span> <span class="nav-text">劣势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90-5"><span class="nav-number">2.2.7.3.</span> <span class="nav-text">使用场景分析</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">安装部署架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">采集器（数据源）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94"><span class="nav-number">4.1.</span> <span class="nav-text">对比</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">告警（重要）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">136</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">52</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/12/05/README/" title="2023&#x2F;12&#x2F;05&#x2F;README&#x2F;">写在前面</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/12/05/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2023&#x2F;12&#x2F;05&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/12/05/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2023&#x2F;12&#x2F;05&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/12/05/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2023&#x2F;12&#x2F;05&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2023/12/05/what-happens-when/" title="2023&#x2F;12&#x2F;05&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">324k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">19:39</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>
