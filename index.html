@@ -323,109 +323,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="post-title-link" itemprop="url">golang 构造方法入参出参最佳实践</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-12-05 14:35:01" itemprop="dateModified" datetime="2023-12-05T14:35:01+00:00">2023-12-05</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>7 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>对上层保持简洁，对下层保持抽象</p>
-</blockquote>
-<h2 id="概念">概念</h2>
-<h3 id="接口">接口</h3>
-<p>​	在 Golang 中，接口是<strong>一组方法签名</strong>。 当类型为接口中的所有方法提供定义时，它被称为实现接口。 它与 OOP(面向对象编程) 非常相似。 接口指定了类型应该具有的方法，类型决定了如何实现这些方法。</p>
-<p>结构体</p>
-<h2 id="结构体">结构体</h2>
-<p>​	Golang 提供了<strong>一种自定义数据类型，可以封装多个基本数据类型，这种数据类型叫结构体，英文名称 struct</strong></p>
-<h2 id="传入接口">传入接口</h2>
-<p>​	传入接口意味着，可以使调用方更加具有灵活性、可扩展、且更易于编写单元测试.</p>
-<h3 id="可扩展性">可扩展性</h3>
-<p>​	如下面这个例子,<code>UserService</code>需要一个存储对象完成一些操作，如果传入<code>db struct</code> 实例的话，意味着如果下次新增了<code>redis store</code> 那么<code>UserService</code>的逻辑需要进行修改，如果传入接口，只要相关的store实现了接口中定义的方法即可为<code>UserService</code>使用，不需要额外修改代码</p>
-<h3 id="（推荐）">（推荐）</h3>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// db.go mysql </span></span><br><span class="line"><span class="keyword">package</span> db</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Store <span class="keyword">struct</span> &#123;</span><br><span class="line">   db *sql.DB</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewDB</span><span class="params">()</span></span> *Store &#123; ... &#125;               <span class="comment">// func to initialise DB</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Store)</span></span> Insert(item <span class="keyword">interface</span>&#123;&#125;) <span class="type">error</span> &#123; ... &#125;   <span class="comment">// insert item</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Store)</span></span> Get(id <span class="type">int</span>) <span class="type">error</span> &#123; ... &#125;          <span class="comment">// get item by id</span></span><br><span class="line"></span><br><span class="line">------------------------------------------------------------------------------</span><br><span class="line"><span class="comment">// user.go</span></span><br><span class="line"><span class="keyword">package</span> user</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> UserStore <span class="keyword">interface</span> &#123;</span><br><span class="line">   Insert(item <span class="keyword">interface</span>&#123;&#125;) <span class="type">error</span></span><br><span class="line">   Get(id <span class="type">int</span>) <span class="type">error</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> UserService <span class="keyword">struct</span> &#123;</span><br><span class="line">   store UserStore</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受接口</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewUserService</span><span class="params">(s UserStore)</span></span> *UserService &#123;</span><br><span class="line">   <span class="keyword">return</span> &amp;UserService&#123;</span><br><span class="line">      store: s,</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u *UserService)</span></span> CreateUser() &#123; ... &#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u *UserService)</span></span> RetrieveUser(id <span class="type">int</span>) User &#123; ... &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -449,7 +346,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-02-20 04:18:08" itemprop="dateModified" datetime="2024-02-20T04:18:08+00:00">2024-02-20</time>
+                <time title="修改时间：2024-02-20 05:57:51" itemprop="dateModified" datetime="2024-02-20T05:57:51+00:00">2024-02-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -537,6 +434,109 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="post-title-link" itemprop="url">golang 构造方法入参出参最佳实践</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-12-05 14:35:01" itemprop="dateModified" datetime="2023-12-05T14:35:01+00:00">2023-12-05</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>对上层保持简洁，对下层保持抽象</p>
+</blockquote>
+<h2 id="概念">概念</h2>
+<h3 id="接口">接口</h3>
+<p>​	在 Golang 中，接口是<strong>一组方法签名</strong>。 当类型为接口中的所有方法提供定义时，它被称为实现接口。 它与 OOP(面向对象编程) 非常相似。 接口指定了类型应该具有的方法，类型决定了如何实现这些方法。</p>
+<p>结构体</p>
+<h2 id="结构体">结构体</h2>
+<p>​	Golang 提供了<strong>一种自定义数据类型，可以封装多个基本数据类型，这种数据类型叫结构体，英文名称 struct</strong></p>
+<h2 id="传入接口">传入接口</h2>
+<p>​	传入接口意味着，可以使调用方更加具有灵活性、可扩展、且更易于编写单元测试.</p>
+<h3 id="可扩展性">可扩展性</h3>
+<p>​	如下面这个例子,<code>UserService</code>需要一个存储对象完成一些操作，如果传入<code>db struct</code> 实例的话，意味着如果下次新增了<code>redis store</code> 那么<code>UserService</code>的逻辑需要进行修改，如果传入接口，只要相关的store实现了接口中定义的方法即可为<code>UserService</code>使用，不需要额外修改代码</p>
+<h3 id="（推荐）">（推荐）</h3>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// db.go mysql </span></span><br><span class="line"><span class="keyword">package</span> db</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Store <span class="keyword">struct</span> &#123;</span><br><span class="line">   db *sql.DB</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewDB</span><span class="params">()</span></span> *Store &#123; ... &#125;               <span class="comment">// func to initialise DB</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Store)</span></span> Insert(item <span class="keyword">interface</span>&#123;&#125;) <span class="type">error</span> &#123; ... &#125;   <span class="comment">// insert item</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Store)</span></span> Get(id <span class="type">int</span>) <span class="type">error</span> &#123; ... &#125;          <span class="comment">// get item by id</span></span><br><span class="line"></span><br><span class="line">------------------------------------------------------------------------------</span><br><span class="line"><span class="comment">// user.go</span></span><br><span class="line"><span class="keyword">package</span> user</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> UserStore <span class="keyword">interface</span> &#123;</span><br><span class="line">   Insert(item <span class="keyword">interface</span>&#123;&#125;) <span class="type">error</span></span><br><span class="line">   Get(id <span class="type">int</span>) <span class="type">error</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> UserService <span class="keyword">struct</span> &#123;</span><br><span class="line">   store UserStore</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受接口</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewUserService</span><span class="params">(s UserStore)</span></span> *UserService &#123;</span><br><span class="line">   <span class="keyword">return</span> &amp;UserService&#123;</span><br><span class="line">      store: s,</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u *UserService)</span></span> CreateUser() &#123; ... &#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u *UserService)</span></span> RetrieveUser(id <span class="type">int</span>) User &#123; ... &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1435,10 +1435,10 @@
           <a href="/2024/02/20/README/" title="2024&#x2F;02&#x2F;20&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;02&#x2F;20&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
+          <a href="/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;02&#x2F;20&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;02&#x2F;20&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
+          <a href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;02&#x2F;20&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
         </li>
         <li class="links-of-recent-posts-item">
           <a href="/2024/02/20/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2024&#x2F;02&#x2F;20&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
