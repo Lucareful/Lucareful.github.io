@@ -231,6 +231,118 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/%E5%85%B3%E4%BA%8E%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81CPU%E5%AF%86%E9%9B%86%E5%9E%8B%20%E5%92%8C%20IO%20%E5%AF%86%E9%9B%86%E5%9E%8B%E7%9F%A5%E8%AF%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/20/%E5%85%B3%E4%BA%8E%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81CPU%E5%AF%86%E9%9B%86%E5%9E%8B%20%E5%92%8C%20IO%20%E5%AF%86%E9%9B%86%E5%9E%8B%E7%9F%A5%E8%AF%86/" class="post-title-link" itemprop="url">深入理解堆、栈、CPU密集型 和 I/O 密集型任务</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>关于堆、栈、CPU密集型 和 I/O 密集型知识</h1>
+<h2 id="程序中的内存分配方式（c-c-）">程序中的内存分配方式（c/c++）</h2>
+<ul>
+<li>1、栈区（stack）：由编译器自动分配释放 ，存放函数的参数值，局部变量的值等。其<br>
+操作方式类似于数据结构中的栈。</li>
+<li>2、堆区（heap）：一般由程序员分配释放， 若程序员不释放，程序结束时可能由OS回<br>
+收 。注意它与数据结构中的堆是两回事，分配方式倒是类似于链。</li>
+<li>3、全局区（静态区）（static）：全局变量和静态变量的存储是放在一块的，初始化的<br>
+全局变量和静态变量在一块区域， 未初始化的全局变量和未初始化的静态变量在相邻的另<br>
+一块区域。 - 程序结束后由系统释放。</li>
+<li>4、文字常量区：常量字符串就是放在这里的。 程序结束后由系统释放</li>
+<li>5、程序代码区：存放函数体的二进制代码。</li>
+</ul>
+<h2 id="python的堆栈解析">python的堆栈解析</h2>
+<p>因为是动态语言**，python中的所有变量内容都存在堆（heap）中**，而<strong>变量名只是堆中内容的引用，存放在栈（stack）中</strong>，便于用户去间接操作堆中的数据。</p>
+<p>堆与栈实际上是操作系统对进程占用的内存空间的两种管理方式，主要有如下几种区别：</p>
+<ul>
+<li>（1）管理方式不同。栈由操作系统自动分配释放，无需我们手动控制；堆的申请和释放工作由程序员控制，容易产生内存泄漏；</li>
+<li>（2）空间大小不同。每个进程拥有的栈的大小要远远小于堆的大小。理论上，程序员可申请的堆大小为虚拟内存的大小，进程栈的大小 64bits 的 Windows 默认 1MB，64bits 的 Linux 默认 10MB；</li>
+<li>（3）生长方向不同。堆的生长方向向上，内存地址由低到高；栈的生长方向向下，内存地址由高到低。</li>
+<li>（4）分配方式不同。堆都是动态分配的，没有静态分配的堆。栈有2种分配方式：静态分配和动态分配。静态分配是由操作系统完成的，比如局部变量的分配。动态分配由<code>malloc</code>函数进行分配，但是栈的动态分配和堆是不同的，他的动态分配是由操作系统进行释放，无需我们手工实现。</li>
+<li>（5）分配效率不同。栈由操作系统自动分配，会在硬件层级对栈提供支持：分配专门的寄存器存放栈的地址，压栈出栈都有专门的指令执行，这就决定了栈的效率比较高。堆则是由C/C++提供的库函数或运算符来完成申请与管理，实现机制较为复杂，频繁的内存申请容易产生内存碎片。显然，堆的效率比栈要低得多。</li>
+<li>（6）存放内容不同。栈存放的内容，函数返回地址、相关参数、局部变量和寄存器内容等。</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/20/%E5%85%B3%E4%BA%8E%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81CPU%E5%AF%86%E9%9B%86%E5%9E%8B%20%E5%92%8C%20IO%20%E5%AF%86%E9%9B%86%E5%9E%8B%E7%9F%A5%E8%AF%86/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/json%E3%80%81%E7%BB%93%E6%9E%84%E4%BD%93%E6%A0%87%E7%AD%BE%E5%92%8Crpc%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1362,132 +1474,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/20/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">行为型模式</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">软件工程</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>3.6k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>13 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>行为型模式</h1>
-<blockquote>
-<p>行为型模式，顾名思义，它主要关注的是对象的责任。</p>
-</blockquote>
-<ul>
-<li>它们关注对象之间的交互以及对象的响应性</li>
-<li>对象应该能够交互，同时仍然保持松散耦合</li>
-</ul>
-<h2 id="观察者模式">观察者模式</h2>
-<blockquote>
-<p>在观察者设计模式中，对象（主题）维护了一个依赖（观察者）列表，以便主题可以使用观察者定义的任何方法通知所有观察者它所发生的变化。</p>
-</blockquote>
-<ul>
-<li>它定义了对象之间的一对多的依赖关系，从而使得一个对象中的任何更改都将自动通知给其他对象</li>
-<li>它封装了主题的核心组件</li>
-</ul>
-<h3 id="UML图">UML图</h3>
-<p><a target="_blank" rel="noopener" href="https://gitee.com/luenci/RepoImg/raw/master/img/20210225223249.png"><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20210225223249.png" alt="image-20210225223249145"></a></p>
-<ul>
-<li>主题(Subject):类Subject需要了解Observe。Subject类具有许多方法，诸如register()和deregister()等，Observer可以通过这些方法注册到Subject类中。因此，一个Subject可以处理多个Observe。</li>
-<li>观察者(Observe)：它为关注主题的对象定义了一个接口。它定义了Observe需要实现的各个方法，以便在主题发生变化时能够获得相应的通知。</li>
-<li>具体观察者(ConcreteObserver):它用来保存应该与Subject的状态保持一致的状态。它实现了Observe接口以保持其状态与主题中的变化相一致。</li>
-</ul>
-<h3 id="代码案例">代码案例</h3>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Subject</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        self.__observer = []</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">register</span>(<span class="params">self, observer</span>):</span><br><span class="line">        self.__observer.append(observer)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">notifyAll</span>(<span class="params">self, *args, **kwargs</span>):</span><br><span class="line">        <span class="keyword">for</span> observer <span class="keyword">in</span> self.__observer:</span><br><span class="line">            observer.notify(self, *args, **kwargs)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Observer1</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, subject</span>):</span><br><span class="line">        subject.register(self)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">notify</span>(<span class="params">self, subject, *args</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;<span class="built_in">type</span>(self).__name__&#125;</span>:: Got, <span class="subst">&#123;args&#125;</span> from <span class="subst">&#123;subject&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Observer2</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, subject</span>):</span><br><span class="line">        subject.register(self)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">notify</span>(<span class="params">self, subject, *args</span>):</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;<span class="built_in">type</span>(self).__name__&#125;</span>:: Got, <span class="subst">&#123;args&#125;</span> from <span class="subst">&#123;subject&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    subject = Subject()</span><br><span class="line">    observer1 = Observer1(subject)</span><br><span class="line">    observer2 = Observer2(subject)</span><br><span class="line">    subject.notifyAll(<span class="string">&quot;notify~~~&quot;</span>)</span><br></pre></td></tr></table></figure>
-<h3 id="观察者模式的优点和缺点">观察者模式的优点和缺点</h3>
-<p>优点：</p>
-<ul>
-<li>它使得彼此交互的对象之间保持送耦合</li>
-<li>它使得我们可以在无需对主题或观察者进行任何修改的情况下高效地发送数据到其他对象</li>
-<li>可以随时添加/删除观察者</li>
-</ul>
-<p>缺点：</p>
-<ul>
-<li>观察者接口必须由具体观察者实现，这涉及继承。无法进行组合，因为观察者接口可以实例化</li>
-<li>如果实现不当的话，观察者可能会增加复杂性，并导致性能降低</li>
-<li>在软件应用程序中，通知有时可能是不可靠的，并导致竞争条件或不一致性</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/20/%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1559,7 +1545,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">136</span>
+          <span class="site-state-item-count">137</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1572,7 +1558,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-count">98</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1620,13 +1606,13 @@
           <a href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;02&#x2F;20&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
         </li>
         <li class="links-of-recent-posts-item">
+          <a href="/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;02&#x2F;20&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
+        </li>
+        <li class="links-of-recent-posts-item">
           <a href="/2024/02/20/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2024&#x2F;02&#x2F;20&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
         </li>
         <li class="links-of-recent-posts-item">
           <a href="/2024/02/20/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2024&#x2F;02&#x2F;20&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
-        </li>
-        <li class="links-of-recent-posts-item">
-          <a href="/2024/02/20/what-happens-when/" title="2024&#x2F;02&#x2F;20&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
         </li>
     </ul>
   </div>
@@ -1659,12 +1645,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">324k</span>
+    <span title="站点总字数">325k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">19:39</span>
+    <span title="站点阅读时长">19:43</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>

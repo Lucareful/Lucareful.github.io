@@ -426,6 +426,140 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">golang的coredump调试入门</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-02-20 04:18:08" itemprop="dateModified" datetime="2024-02-20T04:18:08+00:00">2024-02-20</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>core dump 概念</h1>
+<p>​	<code>core dump</code>文件实际上是进程在某个时间点时的内存映像，当时进程使用的内存是啥样就会被原样保存下来存在文件系统的某个位置上，这个时间点一般是触发了<code>SIGSEGV</code>或者<code>SIGABRT</code>这两个信号的时候，当进程的内存映像保存完毕后进程就会异常终止，也就是大家喜闻乐见的“程序崩了”和“段错误：核心已转储”。</p>
+<p>​	因此 <code>coredump</code> 就像是程序出错崩溃后的“第一现场”，是用来排查错误的主要资源。</p>
+<h1>golang 程序生成 coredump 方法</h1>
+<blockquote>
+<p>设置环境变量和在代码里调用相关的标准库接口</p>
+</blockquote>
+<p>​    在这之前先用ulimit命令检测下系统当前能不能生成coredump：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ulimit</span> -c</span><br><span class="line">unlimited</span><br></pre></td></tr></table></figure>
+<p>​	如果是unlimited就表示可以，如果是0那就不会生成，需要修改ulimit的设置。</p>
+<h2 id="修改GOTRACEBACK环境变量">修改GOTRACEBACK环境变量</h2>
+<p>​	<code>GOTRACEBACK</code>是用来控制panic发生时golang程序行为的，值是字符串，具体内容如下：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>none</td>
+<td>不打印任何堆栈跟踪信息，不过崩溃的原因和哪行代码触发的panic还是会打印</td>
+</tr>
+<tr>
+<td>single</td>
+<td>只打印当前正在运行的触发panic的goroutine的堆栈以及runtime的堆栈；如果panic是runtime里发出的，则打印所有goroutine的堆栈跟踪信息</td>
+</tr>
+<tr>
+<td>all</td>
+<td>打印所有用户创建的goroutine的堆栈信息（不包含runtime的）</td>
+</tr>
+<tr>
+<td>system</td>
+<td>在前面<code>all</code>的基础上把runtime相关的所有协程的堆栈信息也一起打印出来</td>
+</tr>
+<tr>
+<td>crash</td>
+<td>打印的内容和前面<code>system</code>一样，但还会额外生成对应操作系统上的 coredump 文件</td>
+</tr>
+</tbody>
+</table>
+<p>​	将这个环境变量设置成<code>crash</code>就可以获得信息最全面的coredump文件。</p>
+<h2 id="设置编译参数">设置编译参数</h2>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  <span class="string">&quot;fmt&quot;</span></span><br><span class="line">  <span class="string">&quot;math/rand&quot;</span></span><br><span class="line">)</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  arr := []<span class="type">int</span>&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>&#125;</span><br><span class="line">  <span class="keyword">for</span> &#123;</span><br><span class="line">    index := rand.Intn(<span class="number">11</span>)</span><br><span class="line">    fmt.Println(arr[index])</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go build -gcflags=&quot;all=-N -l&quot; main.go</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1172,107 +1306,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/20/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/" class="post-title-link" itemprop="url">Prometheus 入门实操</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-06-01 06:40:07" itemprop="dateModified" datetime="2023-06-01T06:40:07+00:00">2023-06-01</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%9B%91%E6%8E%A7/" itemprop="url" rel="index"><span itemprop="name">监控</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>539</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>Prometheus 入门实操</h1>
-<blockquote>
-<p>参考文章：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/lvzhenjiang/p/14377577.html">Prometheus监控Linux主机 - 吕振江 - 博客园 (cnblogs.com)</a></p>
-</blockquote>
-<h2 id="安装">安装</h2>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">下载</span></span><br><span class="line">wget https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">解压</span></span><br><span class="line">tar zxf prometheus-2.44.0.linux-amd64.tar.gz</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">移动</span></span><br><span class="line">mv prometheus-2.24.1.linux-amd64/* /usr/local/prometheus</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">将本机上报</span></span><br><span class="line">sed -i &#x27;s/localhost/你的主机ip/g&#x27; /usr/local/prometheus/prometheus.yml</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h3 id="启动-systemed，守护进程">启动(systemed，守护进程)</h3>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">cat &lt;&lt;EOF &gt; /usr/lib/systemd/system/prometheus.service</span><br><span class="line">[Unit]</span><br><span class="line">Description=prometheus</span><br><span class="line">After=network.target</span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">ExecStart=/usr/local/prometheus/prometheus --config.file=/usr/local/prometheus/prometheus.yml </span><br><span class="line">  --storage.tsdb.path=/usr/local/prometheus/data/ --web.enable-lifecycle </span><br><span class="line">  --storage.tsdb.retention.time=30d	</span><br><span class="line">Restart=on-failure</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line"></span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line"></span><br><span class="line">systemctl start prometheus</span><br><span class="line"></span><br><span class="line">systemctl status prometheus &amp;&amp; systemctl enable prometheus</span><br></pre></td></tr></table></figure>
-<h3 id="访问">访问</h3>
-<blockquote>
-<p>Ip:9090</p>
-</blockquote>
-<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601135045946.png" alt="image-20230601135045946"></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/20/Prometheus%20%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1344,7 +1377,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">136</span>
+          <span class="site-state-item-count">137</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1357,7 +1390,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">97</span>
+        <span class="site-state-item-count">98</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1405,13 +1438,13 @@
           <a href="/2024/02/20/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;02&#x2F;20&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
         </li>
         <li class="links-of-recent-posts-item">
+          <a href="/2024/02/20/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;02&#x2F;20&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
+        </li>
+        <li class="links-of-recent-posts-item">
           <a href="/2024/02/20/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2024&#x2F;02&#x2F;20&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
         </li>
         <li class="links-of-recent-posts-item">
           <a href="/2024/02/20/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2024&#x2F;02&#x2F;20&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
-        </li>
-        <li class="links-of-recent-posts-item">
-          <a href="/2024/02/20/what-happens-when/" title="2024&#x2F;02&#x2F;20&#x2F;what-happens-when&#x2F;">what-happens-when（浏览器一次请求的历程）</a>
         </li>
     </ul>
   </div>
@@ -1444,12 +1477,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">324k</span>
+    <span title="站点总字数">325k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">19:39</span>
+    <span title="站点阅读时长">19:43</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
