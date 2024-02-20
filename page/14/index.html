@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/12306%E8%87%AA%E5%8A%A8%E6%8A%A2%E7%A5%A8/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/02/20/12306%E8%87%AA%E5%8A%A8%E6%8A%A2%E7%A5%A8/" class="post-title-link" itemprop="url">12306自动化抢票实现</a>
+            <a href="/2024/02/20/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/" class="post-title-link" itemprop="url">Django参数和模板</a>
         </h2>
 
         <div class="post-meta">
@@ -262,7 +262,457 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/selenium%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">selenium知识</span></a>
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="render方法参数"><code>render</code>方法参数</h2>
+<ul>
+<li><code>request</code>: 是一个固定参数。</li>
+<li><code>template_name</code>: <code>templates</code> 中定义的文件, 要注意路径名. 比如<code>’templates\polls\index.html’</code>, 参数就要写<code>‘polls\index.html’</code></li>
+<li><code>context</code>: 要传入文件中用于渲染呈现的数据, 默认是字典格式</li>
+<li><code>content_type</code>: 生成的文档要使用的MIME 类型。默认为DEFAULT_CONTENT_TYPE 设置的值。</li>
+<li><code>status</code>: http的响应代码,默认是200.</li>
+<li><code>using</code>: 用于加载模板使用的模板引擎的名称。</li>
+</ul>
+<h2 id="request对象方法和属性"><code>request</code>对象方法和属性</h2>
+<ul>
+<li><code>request.scheme</code>   # 代表请求的方案,http或者https</li>
+<li><code>request.body</code># 原始HTTP请求主体为字节串。这对于以不同于常规HTML格式的方式处理数据很有用：二进制图像，XML有效负载等。对于处理常规格式的数据，请使用 <code>HttpRequest.POST</code>。</li>
+<li><code>request.path</code>   # 请求的路径,比如请求<code>127.0.0.1/org/list</code>,那这个值就是<code>/org/list</code></li>
+<li><code>request.get_full_path()</code> # 获取完整的请求路径</li>
+<li><code>request.method</code>  # 表示请求使用的http方法,GET或者POST请求</li>
+<li><code>request.encoding</code> # 表示提交数据的编码方式</li>
+<li><code>request.GET</code>     # 获取GET请求</li>
+<li><code>request.POST</code>    # 获取post的请求,比如前端提交的用户密码,可以通过<code>request.POST.get()</code>来获取</li>
+</ul>
+<blockquote>
+<p><strong>NOTICED：如果使用 POST 上传文件的话，文件信息将包含在 FILES 属性中</strong></p>
+</blockquote>
+<p><code>request.COOKIES</code> #包含所有的cookie</p>
+<p><code>request.META</code>   #一个标准的Python 字典，包含所有的HTTP 首部。具体的头部信息取决于客户端和服务器，下面是一些示例：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">CONTENT_LENGTH   —— 请求的正文的长度（是一个字符串）。</span><br><span class="line">CONTENT_TYPE   —— 请求的正文的MIME 类型。</span><br><span class="line">HTTP_ACCEPT   —— 响应可接收的Content-<span class="built_in">Type</span>。</span><br><span class="line">HTTP_ACCEPT_ENCODING —— 响应可接收的编码。</span><br><span class="line">HTTP_ACCEPT_LANGUAGE —— 响应可接收的语言。</span><br><span class="line">HTTP_HOST     —— 客服端发送的HTTP Host 头部。</span><br><span class="line">HTTP_REFERER   —— Referring 页面。</span><br><span class="line">HTTP_USER_AGENT —— 客户端的user-agent 字符串。</span><br><span class="line">QUERY_STRING   —— 单个字符串形式的查询字符串（未解析过的形式）。</span><br><span class="line">REMOTE_ADDR   —— 客户端的IP 地址。</span><br><span class="line">REMOTE_HOST   —— 客户端的主机名。</span><br><span class="line">REMOTE_USER   —— 服务器认证后的用户。</span><br><span class="line">REQUEST_METHOD  —— 一个字符串，例如&quot;GET&quot; 或&quot;POST&quot;。</span><br><span class="line">SERVER_NAME   —— 服务器的主机名。</span><br><span class="line">SERVER_PORT   —— 服务器的端口（是一个字符串）</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>request.user</code>   #一个 <code>AUTH_USER_MODEL</code> 类型的对象，表示当前登录的用户。
+<ul>
+<li>如果用户当前没有登录，user 将设置为 <code>django.contrib.auth.models.AnonymousUser</code> 的一个实例。你可以通过 <code>s_authenticated() </code>区分它们</li>
+<li>把<code>request</code>传给前端的时候,前端可以通过 <code> if request.user.is_authenticated</code>判断用户时候登录</li>
+</ul>
+</li>
+<li><code>request.session</code> #一个既可读又可写的类似于字典的对象，表示当前的会话</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/20/Django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/20/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/" class="post-title-link" itemprop="url">Python后端架构演进（转载）</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E5%90%8E%E7%AB%AF%E6%9E%B6%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">python后端架构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Python后端架构演进</h1>
+<p><em><strong>本文转自python社区：<a target="_blank" rel="noopener" href="https://www.pythontab.com/html/2018/pythonweb_0725/1329.html">https://www.pythontab.com/html/2018/pythonweb_0725/1329.html</a></strong></em></p>
+<h2 id="架构">架构</h2>
+<p>做了3年的后端开发, 经历一款SaaS产品从0到10(还没有到100, 哈哈哈)的过程, 3年间后端的架构逐步演变, 在微服务的实践过程中遇到的问题也越来越多, 在这里总结下.</p>
+<p>产品是一款服务于人力资源的SaaS在线服务, 面向HR有Web Android/iOS 小程序多个客户端, 后端采用RESTful风格API来提供服务. 主要使用Python语言, 方便快速迭代.</p>
+<p>架构的演进经历了4个大的阶段: 1. MVC 2. 服务拆分 3. 微服务架构 4. 领域驱动设计.</p>
+<h3 id="1-MVC">1. MVC</h3>
+<p>项目刚开始的时候, 后端同事不超过5个, 这个阶段主要的工作是实现产品的原型, 没有太多的考虑架构, 使用Django来快速实现功能, DB的表结构设计好之后, 抽象出功能View, 由于产品设计也很不完善, 后端需要很多的预留设计, 避免产品逻辑的变更带来整个表结构的变动, 在这个阶段代码上最重要的是确定适合团队的代码规范, 代码检查规则.</p>
+<p><img src="https://www.pythontab.com/uploadfile/other/90431532483907.jpg" alt="img"></p>
+<p>整体上架构如上图, Nginx负责负载均衡, 分发流量到多个Django服务, Django处理逻辑, 需要异步任务就交给Celery, 然后数据量比较大的地方使用Redis做缓存. 同时还有实时消息通知的需要使用了Nginx Push Module.</p>
+<p>问题与优化方式:</p>
+<p>Django并发性能差 使用uWSGI Master+Worker 配合 gevent 携程支持高并发</p>
+<p>Redis连接数过多 使用redis-py自带的连接池来实现连接复用</p>
+<p>MySQL连接数过多 使用djorm-ext-pool连接池复用连接</p>
+<p>Celery配置gevent支持并发任务</p>
+<p>随着开发的功能越来越多, Django下的app也越来越多, 这就带了发布上的不方便, 每次发布版本都需要重启所有的Django服务, 如果发布遇到问题, 只能加班解决了. 而且单个Django工程下的代码量也越来越多, 不好维护.</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/20/Django%E5%90%8E%E7%AB%AF%E6%BC%94%E5%8C%96/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/Django%E7%9A%84Cookie%E5%92%8CSession/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/20/Django%E7%9A%84Cookie%E5%92%8CSession/" class="post-title-link" itemprop="url">Cookie和Session知识</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Http%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">Http知识</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://juejin.im/post/5aa783b76fb9a028d663d70a">https://juejin.im/post/5aa783b76fb9a028d663d70a</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wj-1314/p/10496253.html">https://www.cnblogs.com/wj-1314/p/10496253.html</a></p>
+</blockquote>
+<ul>
+<li><strong>Session是存储在服务器端的，Cookie是存储在客户端的</strong></li>
+</ul>
+<h2 id="Cookie的概念">Cookie的概念</h2>
+<ul>
+<li>Cookie是客户端用户信息的一种机制，用来记录用户的一些信息，实际上Cookie是服务器在<strong>本地机器</strong>上存储的一小段文本，并随着每次请求发送到服务器。</li>
+</ul>
+<h2 id="Cookie与Session的区别">Cookie与Session的区别</h2>
+<ol>
+<li>cookie数据存放在客户的浏览器（客户端）上，session数据放在服务器上，但是服务端的session的实现对客户端的cookie有依赖关系的。</li>
+<li><strong>cookie不是很安全，别人可以分析存放在本地的COOKIE并进行COOKIE欺骗</strong>，考虑到安全应当使用session；</li>
+<li>session会在一定时间内保存在服务器上。当访问增多，会比较占用你服务器的性能。考虑到减轻服务器性能方面，应当使用COOKIE；</li>
+<li>一个服务器最多在客户端浏览器上保存20个Cookie；</li>
+<li>一个浏览器最多保存300个Cookie</li>
+<li>单个cookie在客户端的限制是3K，就是说一个站点在客户端存放的COOKIE不能超过3K；</li>
+</ol>
+<blockquote>
+<p>上面的数据只是HTTP的Cookie规范，但是在浏览器大战的今天，一些浏览器为了打败对手，为了展示自己的能力起见，可能对Cookie规范“扩展”了一些，例如每个Cookie的大小为8KB，最多可保存500个Cookie等！但也不会出现将你的硬盘占满的可能</p>
+</blockquote>
+<h2 id="Cookie与session的实现原理">Cookie与session的实现原理</h2>
+<p><img src="C:%5CUsers%5CLuenci%5CPictures%5C1226410-20190326171141383-1715230740.png" alt="img"></p>
+<p>上图很明显的展示了Django的session和cookie的实现原理。</p>
+<ul>
+<li>
+<p>服务器会生成两份相同的cookie字符串，一份保存在本地，一份发向请求的浏览器。</p>
+</li>
+<li>
+<p>浏览器将会受到的cookie字符串保存下来，当下次再发请求时，会将信息与这段cookie一同发送到服务器，服务器得到这段cookie会与本地保存的那份判断是否相同，如果相同就表示用户已经登录成功，保存用户登录成功的状态。</p>
+</li>
+<li>
+<p>Django的session保存在数据库中的数据相当于一个大字典，key为cookie的字符串，value仍是一个字典，字典的key和value为用户设置的相关信息，这样就可以方便的存取session里面的信息。</p>
+</li>
+</ul>
+<h2 id="cookie和session内容">cookie和session内容</h2>
+<ul>
+<li>cookie内容主要包括：key，value，过期时间，路径和域。路径和域一起构成了cookie的作用范围。</li>
+<li>cookie的使用由浏览器按照一定的规则在后台自动发送给服务器的，浏览器检查所在存储的cookie，如果某个cookie的作用范围大于等于将要请求的资源所在位置，将cookie附在请求资源的HTTP请求头上发给服务器。</li>
+<li>cookie的生命周期跟过期时间相关，如果不设置过期时间，成为会话cookie，保存在内存中，关闭浏览器窗口，cookie消失。如果设置过期时间，浏览器会把cookie写入硬盘，这些cookie仍然有效，知道超过设定的过期时间。</li>
+<li>存在硬盘上的cookie可以在同一个浏览器不同进程间共享，比如两个Chrome窗口。存在内存的，不同浏览器不同的处理方式</li>
+<li>session内容，服务器使用类似Python字典的key value 的形式存储，存储session方式很多，数据库，缓存，文件，加密cookie，数据库加缓存。</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/20/Django%E7%9A%84Cookie%E5%92%8CSession/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/20/Django%E7%9A%84Field%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Django的ORM字段介绍</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>595</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>Django的Field详解（转载）</h1>
+<blockquote>
+<p>本文转载于：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/ellisonzhang/p/10679054.html">https://www.cnblogs.com/ellisonzhang/p/10679054.html</a></p>
+</blockquote>
+<h2 id="字段">字段</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>、models.AutoField　　自增列 = <span class="built_in">int</span>(<span class="number">11</span>)</span><br><span class="line">　　如果没有的话，默认会生成一个名称为 <span class="built_in">id</span> 的列，如果要显示的自定义一个自增列，必须将给列设置为主键 primary_key=<span class="literal">True</span>。</span><br><span class="line"><span class="number">2</span>、models.CharField　　字符串字段</span><br><span class="line">　　必须 max_length 参数</span><br><span class="line"><span class="number">3</span>、models.BooleanField　　布尔类型=tinyint(<span class="number">1</span>)</span><br><span class="line">　　不能为空，Blank=<span class="literal">True</span></span><br><span class="line"><span class="number">4</span>、models.ComaSeparatedIntegerField　　用逗号分割的数字=varchar</span><br><span class="line">　　继承CharField，所以必须 max_lenght 参数</span><br><span class="line"><span class="number">5</span>、models.DateField　　日期类型 date</span><br><span class="line">　　对于参数，auto_now = <span class="literal">True</span> 则每次更新都会更新这个时间；auto_now_add 则只是第一次创建添加，之后的更新不再改变。</span><br><span class="line"><span class="number">6</span>、models.DateTimeField　　日期类型 datetime</span><br><span class="line">　　同DateField的参数</span><br><span class="line"><span class="number">7</span>、models.Decimal　　十进制小数类型 = decimal</span><br><span class="line">　　必须指定整数位max_digits和小数位decimal_places</span><br><span class="line"><span class="number">8</span>、models.EmailField　　字符串类型（正则表达式邮箱） =varchar</span><br><span class="line">　　对字符串进行正则表达式</span><br><span class="line"><span class="number">9</span>、models.FloatField　　浮点类型 = double</span><br><span class="line"><span class="number">10</span>、models.IntegerField　　整形</span><br><span class="line"><span class="number">11</span>、models.BigIntegerField　　长整形</span><br><span class="line">　　integer_field_ranges = &#123;</span><br><span class="line">　　　　<span class="string">&#x27;SmallIntegerField&#x27;</span>: (-<span class="number">32768</span>, <span class="number">32767</span>),</span><br><span class="line">　　　　<span class="string">&#x27;IntegerField&#x27;</span>: (-<span class="number">2147483648</span>, <span class="number">2147483647</span>),</span><br><span class="line">　　　　<span class="string">&#x27;BigIntegerField&#x27;</span>: (-<span class="number">9223372036854775808</span>, <span class="number">9223372036854775807</span>),</span><br><span class="line">　　　　<span class="string">&#x27;PositiveSmallIntegerField&#x27;</span>: (<span class="number">0</span>, <span class="number">32767</span>),</span><br><span class="line">　　　　<span class="string">&#x27;PositiveIntegerField&#x27;</span>: (<span class="number">0</span>, <span class="number">2147483647</span>),</span><br><span class="line">　　&#125;</span><br><span class="line"><span class="number">12</span>、models.IPAddressField　　字符串类型（ip4正则表达式）</span><br><span class="line"><span class="number">13</span>、models.GenericIPAddressField　　字符串类型（ip4和ip6是可选的）</span><br><span class="line">　　参数protocol可以是：both、ipv4、ipv6</span><br><span class="line">　　验证时，会根据设置报错</span><br><span class="line"><span class="number">14</span>、models.NullBooleanField　　允许为空的布尔类型</span><br><span class="line"><span class="number">15</span>、models.PositiveIntegerFiel　　正Integer</span><br><span class="line"><span class="number">16</span>、models.PositiveSmallIntegerField　　正smallInteger</span><br><span class="line"><span class="number">17</span>、models.SlugField　　减号、下划线、字母、数字</span><br><span class="line"><span class="number">18</span>、models.SmallIntegerField　　数字</span><br><span class="line">　　数据库中的字段有：tinyint、smallint、<span class="built_in">int</span>、bigint</span><br><span class="line"><span class="number">19</span>、models.TextField　　字符串=longtext</span><br><span class="line"><span class="number">20</span>、models.TimeField　　时间 HH:MM[:ss[.uuuuuu]]</span><br><span class="line"><span class="number">21</span>、models.URLField　　字符串，地址正则表达式</span><br><span class="line"><span class="number">22</span>、models.BinaryField　　二进制</span><br><span class="line"><span class="number">23</span>、models.ImageField   图片</span><br><span class="line"><span class="number">24</span>、models.FilePathField 文件</span><br></pre></td></tr></table></figure>
+<h2 id="参数">参数</h2>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>、null=True</span><br><span class="line">　　数据库中字段是否可以为空</span><br><span class="line"><span class="number">2</span>、blank=True</span><br><span class="line">　　django的 Admin 中添加数据时是否可允许空值</span><br><span class="line"><span class="number">3</span>、primary_key = False</span><br><span class="line">　　主键，对AutoField设置主键后，就会代替原来的自增 id 列</span><br><span class="line"><span class="number">4</span>、auto_now 和 auto_now_add</span><br><span class="line">　　auto_now   自动创建---无论添加或修改，都是当前操作的时间</span><br><span class="line">　　auto_now_add  自动创建---永远是创建时的时间</span><br><span class="line"><span class="number">5</span>、choices</span><br><span class="line">    sex_choice=((“F”,“FEMAL”),(“M”,’Male’),)　　　　#admin专用下拉选项    </span><br><span class="line">    gender=models.CharFiled(max_length=<span class="number">2</span>,choice=sex_choice)</span><br><span class="line"><span class="number">6</span>、max_length</span><br><span class="line"><span class="number">7</span>、default　　默认值</span><br><span class="line"><span class="number">8</span>、verbose_name　　Admin中字段的显示名称</span><br><span class="line"><span class="number">9</span>、name|db_column　　数据库中的字段名称</span><br><span class="line"><span class="number">10</span>、unique=True　　不允许重复</span><br><span class="line"><span class="number">11</span>、db_index = True　　数据库索引</span><br><span class="line"><span class="number">12</span>、editable=True　　在Admin里是否可编辑</span><br><span class="line"><span class="number">13</span>、error_messages=None　　错误提示</span><br><span class="line"><span class="number">14</span>、auto_created=False　　自动创建</span><br><span class="line"><span class="number">15</span>、help_text　　在Admin中提示帮助信息</span><br><span class="line"><span class="number">16</span>、validators=[]</span><br><span class="line"><span class="number">17</span>、upload-to</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/20/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/" class="post-title-link" itemprop="url">Django的ORM多表操作</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
                 </span>
             </span>
 
@@ -293,96 +743,75 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>selenium常用API</h1>
-<ul>
-<li><code>find_element_by_xxx</code>  返回第一个符合条件<code>WebElement</code>元素</li>
-<li><code>find_elements_by_xxx</code>  返回符合条件所有元素包含了 <code>WebEelemnt </code>列表</li>
-</ul>
+          <h1>ORM多表操作</h1>
+<h2 id="API">API</h2>
 <table>
 <thead>
 <tr>
 <th>函数</th>
-<th>作用</th>
+<th>说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>find_element_by_class_name</td>
-<td>通过class查询元素</td>
+<td>all()</td>
+<td>查询所有结果</td>
 </tr>
 <tr>
-<td>find_element_by_id</td>
-<td>通过ID查询元素</td>
+<td>filter(**kwargs)</td>
+<td>包含了与所给筛选条件相匹配的对象</td>
 </tr>
 <tr>
-<td>find_element_by_name</td>
-<td>通过name查询元素</td>
+<td>get(**kwargs)</td>
+<td>返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选条件的对象超过一个或者没有都会抛出错误。</td>
 </tr>
 <tr>
-<td>find_element_by_tag_name</td>
-<td>通过标签名称</td>
+<td>exclude(**kwargs)</td>
+<td>它包含了与所给筛选条件不匹配的对象</td>
 </tr>
 <tr>
-<td>find_element_by_css_selector</td>
-<td>css样式选择</td>
+<td>order_by(*field)</td>
+<td>对查询结果排序 用法:order_by (“price”)  <code>DESC</code> 降序</td>
 </tr>
 <tr>
-<td>find_element_by_link_text</td>
-<td>通过链接内容查找</td>
+<td>reverse():</td>
+<td>对查询结果反向排序</td>
 </tr>
 <tr>
-<td>find_element_by_partial_link_text</td>
-<td>通过链接内容包含的内容查找，模糊查询</td>
+<td>count()</td>
+<td>返回数据库中匹配查询(<code>QuerySet</code>)的对象数量</td>
 </tr>
 <tr>
-<td>find_element_by_xpath</td>
-<td>通过xpath查找数据</td>
+<td>first()</td>
+<td>返回第一条记录</td>
+</tr>
+<tr>
+<td>last()</td>
+<td>返回最后一条记录</td>
+</tr>
+<tr>
+<td>exists()</td>
+<td>如果<code>QuerySet</code>包含数据，就返回<code>True</code>，否则返回<code>False</code> 相当于<code>limit 1</code>(用途查询这个表中是否有值)</td>
+</tr>
+<tr>
+<td>values(*field)</td>
+<td>用法:<code>Book.objects.all.values(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[&#123;‘title’:‘aa’,‘pirce’:12&#125;,&#123;&#125;]</code></td>
+</tr>
+<tr>
+<td>values_list(*field):</td>
+<td>用法:<code>Book.objects.all.values_list(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[(‘aa’,12),(‘bb’,33)]</code></td>
+</tr>
+<tr>
+<td>distinct()</td>
+<td>从返回结果中剔除重复纪录 用法:<code>Book.objects.all.values(‘title’,‘price’).distinct()</code> 错误用法 <code>Book.objects.all.distinct()</code> 因为id不相同,其他相同,无法去重</td>
 </tr>
 </tbody>
 </table>
-<h1>获取元素属性和文本内容</h1>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#获取属性</span></span><br><span class="line">element.get_attribute（<span class="string">&#x27;属性名”）</span></span><br><span class="line"><span class="string">#获取文本内容</span></span><br><span class="line"><span class="string">element.text</span></span><br><span class="line"><span class="string"># 输入框输入内容</span></span><br><span class="line"><span class="string">input_element.send_keys（&#x27;</span>Luenci<span class="string">&#x27;）</span></span><br><span class="line"><span class="string"># 元素点击</span></span><br><span class="line"><span class="string">element.click()</span></span><br></pre></td></tr></table></figure>
-<h2 id="三种等待方式">三种等待方式</h2>
-<ul>
-<li>当控制浏览器时，浏览器正在加载页面同时又去获取数据导致浏览器寻找不到需要操作的元素引发异常。</li>
-<li>方式一：强制等待，浪费时间
-<ul>
-<li><code>time.sleep（秒数）</code></li>
-</ul>
-</li>
-<li>方式二：隐性等待，无法控制Ajax请求
-<ul>
-<li><code>browser.implicit1y_wait（等待时间）</code></li>
-</ul>
-</li>
-<li>方式三：显性等待，每个元素都可以自己定义检查条件。手动编写方式</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#显性等待-手动编写</span></span><br><span class="line">t = time.time（）</span><br><span class="line"><span class="comment">#定义超时时间</span></span><br><span class="line">timeout = <span class="number">60</span></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>：</span><br><span class="line">  <span class="keyword">try</span>：</span><br><span class="line">        <span class="comment">#超时时间间隔</span></span><br><span class="line">        time.sleep（<span class="number">0.1</span>）</span><br><span class="line">        ur1_element = browser.find_element_by_class_name（<span class="string">&quot;fav ur1&quot;</span>）</span><br><span class="line">    <span class="keyword">break</span> </span><br><span class="line">  <span class="keyword">except</span>：</span><br><span class="line">        <span class="comment">#超时处理</span></span><br><span class="line">        <span class="keyword">if</span> time.time（）- t &gt; timeout：</span><br><span class="line">          <span class="keyword">break</span> </span><br><span class="line">    <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
-<h2 id="系统提供显性等待API">系统提供显性等待API</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导入显性等待的API需要的模块</span></span><br><span class="line"><span class="comment"># 1等待对象模块</span></span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.support.wait <span class="keyword">import</span> WebDriverwait</span><br><span class="line"><span class="comment"># 2导入等待条件模块</span></span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.support <span class="keyword">import</span> expected_conditions <span class="keyword">as</span> EC</span><br><span class="line"><span class="comment"># 3导入查询元素模块</span></span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.common.by <span class="keyword">import</span> By</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1.创建等待对象</span></span><br><span class="line"><span class="comment"># 参数一浏览器对象</span></span><br><span class="line"><span class="comment"># 参数二超时时间</span></span><br><span class="line"><span class="comment"># 参数三检查元素时间间隔</span></span><br><span class="line">wait = WebDriverwait（browser，<span class="number">5.0</span>，<span class="number">0.5</span>）</span><br><span class="line"><span class="comment"># 2.通过等待对象获取元素</span></span><br><span class="line"><span class="comment"># presence_of_element_located 检查元素是否存在，如果存在就返回如果不存在就继续检查</span></span><br><span class="line"><span class="comment"># visibility_of_element_located 检查元素是否可见</span></span><br><span class="line">linkelement = s wait.until（EC.presence_of_element_located（（By.CLASS_NAME，<span class="string">&quot;favurl&quot;</span>）</span><br><span class="line">link_element.click（）</span><br></pre></td></tr></table></figure>
-<h1>12306爬虫实现</h1>
-<p>完成代码见：<a target="_blank" rel="noopener" href="https://github.com/Lucareful/12306_Tickets">https://github.com/Lucareful/12306_Tickets</a></p>
-<ul>
-<li>实现步骤
-<ul>
-<li>1.访问列表页</li>
-<li>2.通过时间判定选择点击预订</li>
-<li>3.点击账号登录</li>
-<li>4.输入用户名和密码（15523750230）</li>
-<li>5.截图获取验证码图片</li>
-<li>6.发送打码平台获取识别数字</li>
-<li>7.定义8个点击坐标</li>
-<li>8.模拟点击坐标</li>
-<li>9.点击登录</li>
-<li>10.点击选择人物</li>
-<li>11.点击提交订单</li>
-<li>12.点击确认订单</li>
-</ul>
-</li>
-</ul>
+<h2 id="模糊查询">模糊查询</h2>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">__exact   精确等于 like ‘aaa’</span><br><span class="line">__iexact   精确等于 忽略大小写 ilike ‘aaa’</span><br><span class="line">__contains  是否包含 like ‘<span class="variable">%aaa%</span>’</span><br><span class="line">__icontains 包含 忽略大小写 ilike ‘<span class="variable">%aaa%</span>’，但是对于sqlite来说，contains的作用效果等同于icontains。</span><br><span class="line">__gt     大于</span><br><span class="line">__gte     大于等于</span><br><span class="line">__lt     小于</span><br><span class="line">__lte     小于等于</span><br><span class="line">__in     存在于一个list范围内</span><br><span class="line">__startswith 以…开头</span><br><span class="line">__istartswith 以…开头 忽略大小写</span><br><span class="line">__endswith  以…结尾</span><br><span class="line">__iendswith 以…结尾，忽略大小写</span><br><span class="line">__range   在…范围内</span><br><span class="line">__year     日期字段的年份</span><br><span class="line">__month   日期字段的月份</span><br><span class="line">__day     日期字段的日</span><br><span class="line">__isnull=True/False</span><br><span class="line">__isnull=True 与 __exact=None的区别</span><br></pre></td></tr></table></figure>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/02/20/12306%E8%87%AA%E5%8A%A8%E6%8A%A2%E7%A5%A8/#more" rel="contents">
+              <a class="btn" href="/2024/02/20/Django%E7%9A%84ORM%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -406,7 +835,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%20void%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%BA%94%E7%94%A8/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/GIL%E9%94%81/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -420,7 +849,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/02/20/C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%20void%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%BA%94%E7%94%A8/" class="post-title-link" itemprop="url">C 语言中 void* 详解及应用</a>
+            <a href="/2024/02/20/GIL%E9%94%81/" class="post-title-link" itemprop="url">python解释器的GIL锁</a>
         </h2>
 
         <div class="post-meta">
@@ -437,7 +866,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C%E8%AF%AD%E8%A8%80%E7%BC%96%E7%A8%8B%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">C语言编程知识</span></a>
+                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
                 </span>
             </span>
 
@@ -449,7 +878,7 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.5k</span>
+              <span>1.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -468,563 +897,31 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1>C 语言中 void* 详解及应用</h1>
-<p>void 在英文中作为名词的解释为 <strong>“空虚、空间、空隙”</strong>，而在 C 语言中，void 被翻译为**“无类型”<strong>，相应的</strong>void *** 为**“无类型指针”**。</p>
-<p>void 似乎只有&quot;注释&quot;和限制程序的作用，当然，这里的&quot;注释&quot;不是为我们人提供注释，而是为编译器提供一种所谓的注释。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/20/C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%20void%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%BA%94%E7%94%A8/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/C%E8%AF%AD%E8%A8%80%E6%89%93%E5%8C%85%E6%8A%80%E8%89%BA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/20/C%E8%AF%AD%E8%A8%80%E6%89%93%E5%8C%85%E6%8A%80%E8%89%BA/" class="post-title-link" itemprop="url">C结构体打包技艺</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C%E8%AF%AD%E8%A8%80%E7%BC%96%E7%A8%8B%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">C语言编程知识</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.7k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>失传的 C 结构体打包技艺（转）</h1>
-<p>转自： <a target="_blank" rel="noopener" href="https://fishc.com.cn/forum.php?mod=viewthread&amp;tid=83418&amp;extra=page%3D2%26filter%3Dtypeid%26typeid%3D571">https://fishc.com.cn/forum.php?mod=viewthread&amp;tid=83418&amp;extra=page%3D2%26filter%3Dtypeid%26typeid%3D571</a></p>
-<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Eric_S._Raymond">作者：Eric S. Raymond</a><br>
-原文链接：<a target="_blank" rel="noopener" href="http://www.catb.org/esr/structure-packing">http://www.catb.org/esr/structure-packing</a></p>
-<h2 id="谁应阅读本文"><strong>谁应阅读本文</strong></h2>
-<p>如果你在内存容量受限的嵌入式系统中写程序，或者编写操作系统内核代码，就有必要了解这项技术。如果数据集巨大，应用时常逼近内存极限，这项技术会有所帮助。倘若你非常非常关心如何最大限度地减少处理器缓存段（cache-line）未命中情况的发生，这项技术也有所裨益。</p>
-<hr>
-<p>2013 年底，我大量应用了一项 C 语言优化技术，这项技术是我早在二十余年前就已掌握的，但彼时之后，鲜有使用。</p>
-<p>通过精心调整结构成体员的顺序，可以在这种情况下大幅减少内存占用。其效果显著——在上述案例中，可以减少 40% 的内存空间。程序应用于更大的软件仓库，也不会因内存耗尽而崩溃。</p>
-<p>事出有因。计算机科学课程（正确地）引导人们远离微观优化，转而寻求更理想的算法。计算成本一路走低，令压榨内存的必要性变得越来越低。旧日里，黑客们通过在陌生的硬件架构中跌跌撞撞学习 —— 如今已不多见。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/20/C%E8%AF%AD%E8%A8%80%E6%89%93%E5%8C%85%E6%8A%80%E8%89%BA/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B01/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/20/C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B01/" class="post-title-link" itemprop="url">c语言笔记（1）</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C%E8%AF%AD%E8%A8%80%E7%BC%96%E7%A8%8B%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">C语言编程知识</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>3.8k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>14 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><em>ps:先举三反一，再举一反三，学习就应该是这样，先模仿，再改进，最后实现自己的创意！					--小甲鱼论坛</em></p>
-<h2 id="C语言中各种数据类型所占用的存储空间的大小">C语言中各种数据类型所占用的存储空间的大小</h2>
-<ul>
-<li>
-<p>int—32位	四个字节</p>
-</li>
-<li>
-<p>float —32位	四个字节</p>
-</li>
-<li>
-<p>char—8位	一个字节</p>
-</li>
-<li>
-<p>double----64位	8个字节</p>
-</li>
-<li>
-<p>bool----16位	2个字节</p>
-</li>
-<li>
-<p>long----32位	四个字节</p>
-</li>
-</ul>
-<h3 id="整数类型">整数类型</h3>
-<p>下表列出了关于标准整数类型的存储大小和值范围的细节：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">类型</th>
-<th style="text-align:left">存储大小</th>
-<th style="text-align:left">值范围</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">char</td>
-<td style="text-align:left">1 字节</td>
-<td style="text-align:left">-128 到 127 或 0 到 255</td>
-</tr>
-<tr>
-<td style="text-align:left">unsigned char</td>
-<td style="text-align:left">1 字节</td>
-<td style="text-align:left">0 到 255</td>
-</tr>
-<tr>
-<td style="text-align:left">signed char</td>
-<td style="text-align:left">1 字节</td>
-<td style="text-align:left">-128 到 127</td>
-</tr>
-<tr>
-<td style="text-align:left">int</td>
-<td style="text-align:left">2 或 4 字节</td>
-<td style="text-align:left">-32,768 到 32,767 或 -2,147,483,648 到 2,147,483,647</td>
-</tr>
-<tr>
-<td style="text-align:left">unsigned int</td>
-<td style="text-align:left">2 或 4 字节</td>
-<td style="text-align:left">0 到 65,535 或 0 到 4,294,967,295</td>
-</tr>
-<tr>
-<td style="text-align:left">short</td>
-<td style="text-align:left">2 字节</td>
-<td style="text-align:left">-32,768 到 32,767</td>
-</tr>
-<tr>
-<td style="text-align:left">unsigned short</td>
-<td style="text-align:left">2 字节</td>
-<td style="text-align:left">0 到 65,535</td>
-</tr>
-<tr>
-<td style="text-align:left">long</td>
-<td style="text-align:left">4 字节</td>
-<td style="text-align:left">-2,147,483,648 到 2,147,483,647</td>
-</tr>
-<tr>
-<td style="text-align:left">unsigned long</td>
-<td style="text-align:left">4 字节</td>
-<td style="text-align:left">0 到 4,294,967,295</td>
-</tr>
-</tbody>
-</table>
-<h3 id="浮点类型">浮点类型</h3>
-<p>下表列出了关于标准浮点类型的存储大小、值范围和精度的细节：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">类型</th>
-<th style="text-align:left">存储大小</th>
-<th style="text-align:left">值范围</th>
-<th style="text-align:left">精度</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">float</td>
-<td style="text-align:left">4 字节</td>
-<td style="text-align:left">1.2E-38 到 3.4E+38</td>
-<td style="text-align:left">6 位小数</td>
-</tr>
-<tr>
-<td style="text-align:left">double</td>
-<td style="text-align:left">8 字节</td>
-<td style="text-align:left">2.3E-308 到 1.7E+308</td>
-<td style="text-align:left">15 位小数</td>
-</tr>
-<tr>
-<td style="text-align:left">long double</td>
-<td style="text-align:left">16 字节</td>
-<td style="text-align:left">3.4E-4932 到 1.1E+4932</td>
-<td style="text-align:left">19 位小数</td>
-</tr>
-</tbody>
-</table>
-<h3 id="void-类型">void 类型</h3>
-<p>void 类型指定没有可用的值。它通常用于以下三种情况下：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">序号</th>
-<th style="text-align:left">类型与描述</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">1</td>
-<td style="text-align:left"><strong>函数返回为空</strong> C 中有各种函数都不返回值，或者您可以说它们返回空。不返回值的函数的返回类型为空。例如 <strong>void exit (int status);</strong></td>
-</tr>
-<tr>
-<td style="text-align:left">2</td>
-<td style="text-align:left"><strong>函数参数为空</strong> C 中有各种函数不接受任何参数。不带参数的函数可以接受一个 void。例如 <strong>int rand(void);</strong></td>
-</tr>
-<tr>
-<td style="text-align:left">3</td>
-<td style="text-align:left"><strong>指针指向 void</strong> 类型为 void * 的指针代表对象的地址，而不是类型。例如，内存分配函数 <strong>void *malloc( size_t size );</strong> 返回指向 void 的指针，可以转换为任何数据类型。</td>
-</tr>
-</tbody>
-</table>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/20/C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B01/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B02/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/20/C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B02/" class="post-title-link" itemprop="url">c语言笔记（2）</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C%E8%AF%AD%E8%A8%80%E7%BC%96%E7%A8%8B%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">C语言编程知识</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><em>先举三反一，再举一反三，学习就应该是这样，先模仿，再改进，最后实现自己的创意！					--小甲鱼论坛</em></p>
-<h1>递归</h1>
-<ul>
-<li>调用函数本身</li>
-<li>设置递归结束条件</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Created by Luenci on 2019/10/11.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">fun</span><span class="params">(<span class="type">void</span>)</span>;</span><br><span class="line"><span class="type">long</span> <span class="title function_">fact</span><span class="params">(<span class="type">int</span> num)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">fun</span><span class="params">(<span class="type">void</span>)</span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> count = <span class="number">10</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Hi\n&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (count--)&#123;</span><br><span class="line">        fun();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">long</span> <span class="title function_">fact</span><span class="params">(<span class="type">int</span> num)</span>&#123;</span><br><span class="line">    <span class="type">long</span> result;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(num &gt; <span class="number">0</span>)&#123;</span><br><span class="line">        result = num * fact(num<span class="number">-1</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span>&#123;</span><br><span class="line">        result = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span>&#123;</span><br><span class="line"><span class="comment">//    fun();</span></span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="type">long</span> re;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;请输入您要求阶乘的数：&quot;</span>);</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;num);</span><br><span class="line"></span><br><span class="line">    re = fact(num);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, re);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1>汉罗塔</h1>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">hanoi</span><span class="params">(<span class="type">int</span> n, <span class="type">char</span> x, <span class="type">char</span> y, <span class="type">char</span> z)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">hanoi</span><span class="params">(<span class="type">int</span> n, <span class="type">char</span> x, <span class="type">char</span> y, <span class="type">char</span> z)</span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(n==<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%c --&gt; %c \n&quot;</span>, x,z);</span><br><span class="line">    &#125; <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="comment">// 将前n-1个圆盘借助z移动到y</span></span><br><span class="line">        hanoi(n<span class="number">-1</span>, x, z, y);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%c --&gt; %c \n&quot;</span>, x,z);</span><br><span class="line">        <span class="comment">// 将前n-1个圆盘借助x移动到z</span></span><br><span class="line">        hanoi(n<span class="number">-1</span>, y, x, z);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span>&#123;</span><br><span class="line">    <span class="type">int</span> n;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;请输入您的层数：&quot;</span>);</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;n);</span><br><span class="line">    hanoi(n, <span class="string">&#x27;X&#x27;</span>, <span class="string">&#x27;Y&#x27;</span>, <span class="string">&#x27;Z&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1>快速排序</h1>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Created by Luenci on 2019/10/11.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">quick_sort</span><span class="params">(<span class="type">int</span> <span class="built_in">array</span>[], <span class="type">int</span> left, <span class="type">int</span> right)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">quick_sort</span><span class="params">(<span class="type">int</span> <span class="built_in">array</span>[], <span class="type">int</span> left, <span class="type">int</span> right)</span> &#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = right;</span><br><span class="line">    <span class="type">int</span> temp;   <span class="comment">// 交换的中间变量</span></span><br><span class="line">    <span class="type">int</span> pivot; <span class="comment">// 基准点</span></span><br><span class="line"></span><br><span class="line">    pivot = <span class="built_in">array</span>[(left + right) / <span class="number">2</span>];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= j) &#123;</span><br><span class="line">        <span class="comment">// 从右往左找到大于等于基准点的元素</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="built_in">array</span>[i] &lt; pivot) &#123;</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 从右到左找到小于等于基准点的元素</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="built_in">array</span>[j] &gt; pivot) &#123;</span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 如果 i &lt;= j,则互换</span></span><br><span class="line">        <span class="keyword">if</span> (i &lt;= j) &#123;</span><br><span class="line">            temp = <span class="built_in">array</span>[i];</span><br><span class="line">            <span class="built_in">array</span>[i] = <span class="built_in">array</span>[j];</span><br><span class="line">            <span class="built_in">array</span>[j] = temp;</span><br><span class="line">            i++;</span><br><span class="line">            j++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (left &lt; j) &#123;</span><br><span class="line">        quick_sort(<span class="built_in">array</span>, left, j);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (i &lt; right) &#123;</span><br><span class="line">        quick_sort(<span class="built_in">array</span>, i, right);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span>&#123;</span><br><span class="line">    <span class="type">int</span> <span class="built_in">array</span>[] = &#123;<span class="number">73</span>, <span class="number">108</span>, <span class="number">111</span>, <span class="number">101</span>, <span class="number">78</span>, <span class="number">109</span>, <span class="number">66</span>, <span class="number">48</span>, <span class="number">88</span>, <span class="number">135</span>&#125;;</span><br><span class="line">    <span class="type">int</span> i, length;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算数组的长度</span></span><br><span class="line">    length = <span class="keyword">sizeof</span>(<span class="built_in">array</span>) / <span class="keyword">sizeof</span>(<span class="built_in">array</span>[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">    quick_sort(<span class="built_in">array</span>, <span class="number">0</span>, length<span class="number">-1</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;排序后的结果是：&quot;</span>);</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; length; i++)&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%d ,&quot;</span>, <span class="built_in">array</span>[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">putchar</span>(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/02/20/C%E8%AF%AD%E8%A8%80%E7%AC%94%E8%AE%B02/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/02/20/Django%20%E9%87%8D%E5%AE%9A%E5%90%91%E7%BB%88%E6%9E%81%E6%8C%87%E5%8D%97/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/20/Django%20%E9%87%8D%E5%AE%9A%E5%90%91%E7%BB%88%E6%9E%81%E6%8C%87%E5%8D%97/" class="post-title-link" itemprop="url">Django重定向指南（转载）</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%9A%84web%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">python的web框架</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>7.7k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>28 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>原文转载自：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/5e322fb5b61c%EF%BC%88%E7%AE%80%E4%B9%A6%EF%BC%9A">https://www.jianshu.com/p/5e322fb5b61c（简书：</a><a target="_blank" rel="noopener" href="https://www.jianshu.com/u/a4b0307eac4d">爱吃鱼de大猫</a>）</p>
+          <h2 id="GlL锁定义">GlL锁定义</h2>
+<p>Gll锁：Global Interpreter Lock，又称：全局解释器锁</p>
+<blockquote>
+<p>任何Python线程执行前，必须先获得GlL锁，然后，每执行100条字节码，解释器就自动释放GL锁，让别的线程有机会执行。这个GlL全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在Python中只能交替执行，即使100个线程跑在100核CPU上，也只能用到1个核。</p>
 </blockquote>
-<p>当你使用 Django 框架构建 Python Web 应用程序时，在某些时候需要将用户从一个URL重定向到另一个URL。本指南将提供 HTTP 重定向所需要了解的所有知识，以及在 Django 中该如何处理。</p>
-<p>完成本教程，你将学到：</p>
+<h2 id="GlL不是Python特性">GlL不是Python特性</h2>
+<p>GlL是Pythn解释器（Cpython）时引入的概念，在JPython、PyPy中没有GlL。GIL并不是Python的语言缺陷。是解释器层级的锁，跟Python语言特性无关</p>
+<blockquote>
+<p>言外之意，就是全局解释器就是为了锁定整个解释器内部的全局资源，每个线程想要运行首先获取GlL，而GlL本身又是一把互斥锁，造成所有线程只能一个一个one-by-one-并发-交替的执行。</p>
+</blockquote>
+<h2 id="GlL存在的原因">GlL存在的原因</h2>
 <ul>
-<li>能够将用户从一个URL重定向到另一个URL</li>
-<li>了解临时重定向和永久重定向之间的区别</li>
-<li>使用重定向时避免常见陷阱</li>
+<li>
+<p>早期计算机都是单核设计</p>
+</li>
+<li>
+<p>CPython在执行多线程的时候并不是线程安全的，所以为了程序的稳定性，加一把全局解释锁，能够确保任何时候都只有一个Python线程执行</p>
+</li>
 </ul>
-<p>本教程假设你熟悉Django应用程序的基本构建块，如视图和URL模式。</p>
-<h2 id="一个超简单的-Django-重定向例子">一个超简单的 Django 重定向例子</h2>
-<p>在 Django 中，通过从视图返回<code>HttpResponseRedirect</code>或<code>HttpResponsePermanentRedirect</code>的实例，可以将用户重定向到另一个URL。要做到这一点，最简单的方法是使用模块 <code>django.shortcuts</code> 中的函数 <code>redirect()</code>。比如：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># views.py</span></span><br><span class="line"><span class="keyword">from</span> django.shortcuts <span class="keyword">import</span> redirect</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">redirect_view</span>(<span class="params">request</span>):</span><br><span class="line">    response = redirect(<span class="string">&#x27;/redirect-success/&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> response</span><br></pre></td></tr></table></figure>
-<p>只需在你的视图中将新的 URL 作为参数调用 redirect() 即可搞定。 该视图函数将返回一个 HttpResponseRedirect 类。</p>
-<p>注意，如同其他视图一样，返回的重定向URL必须在你的 <a target="_blank" rel="noopener" href="http://urls.py">urls.py</a> 中注册：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># urls.py</span></span><br><span class="line"><span class="keyword">from</span> django.urls <span class="keyword">import</span> path</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> .views <span class="keyword">import</span> redirect_view</span><br><span class="line"></span><br><span class="line">urlpatterns = [</span><br><span class="line">    path(<span class="string">&#x27;/redirect/&#x27;</span>, redirect_view)</span><br><span class="line">    <span class="comment"># ... more URL patterns here</span></span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-<p>假定这个是 Django 项目的主 <a target="_blank" rel="noopener" href="http://urls.py">urls.py</a> 文件，现在 URL<code>/redirect/</code> 将被重定向到 <code>/redirect-success/</code>。此外，为避免硬编码 URL，你可以用视图、URL 模式或者模型的名字来调用 redirect() 。通过传递关键字参数<code>Permanent=True</code>来创建永久重定向。</p>
-<p>好了，你需要了解的 Django 重定向就这么多。为让这篇教程配得上“终极指南”这个标题，下面我们将进一步探讨 redirect() 函数、HTTP 状态码以及 <code>HttpRedirectResponse</code> 类型。我们从头开始，从一个基本的问题开始。</p>
-<h2 id="为什么要使用重定向？">为什么要使用重定向？</h2>
-<p>我们为什么要将用户的访问重定向到不同的 URL 地址？我们看看 Django 项目是怎么回答的：</p>
-<ul>
-<li>当你未登录并请求需要身份验证的URL(如Django管理员)时，Django会将你重定向到登录页面</li>
-<li>成功登录后，Django会将你重定向到最初请求的URL</li>
-<li>当你使用Django管理员更改密码时，系统会将你重定向到指示更改成功的页面</li>
-<li>当你在Django管理员中创建对象时，Django会将你重定向到对象列表。</li>
-</ul>
-<p>如果不使用重定向来实现会是什么样子？</p>
-<p>如果用户必须登录才能查看页面，则可以简单地显示类似“单击此处登录”之类的页面。这样子做也行，但它是对用户不友好的。</p>
-<p>另外，像 <a target="_blank" rel="noopener" href="http://bit.ly/">http://bit.ly</a> 这样的短网址是重定向派上用场的另一个例子：你在浏览器的地址栏中键入一个短URL，然后被重定向到一个长而笨重的URL的页面。</p>
-<p>此外，重定向不仅仅是为了方便。重定向是引导用户正确使用 Web 应用程序的基本工具。在用户进行带有副作用的操作(如创建或删除对象)后，最佳做法是重定向到另一个URL，以防止意外执行该操作两次。</p>
-<p>下面的代码示例演示通常是如何处理表单的，一个用户在成功提交表单后会被重定向到另一个URL：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django <span class="keyword">import</span> forms</span><br><span class="line"><span class="keyword">from</span> django.http <span class="keyword">import</span> HttpResponseRedirect</span><br><span class="line"><span class="keyword">from</span> django.shortcuts <span class="keyword">import</span> redirect, render</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">send_message</span>(<span class="params">name, message</span>):</span><br><span class="line">    <span class="comment"># Code for actually sending the message goes here</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ContactForm</span>(forms.Form):</span><br><span class="line">    name = forms.CharField()</span><br><span class="line">    message = forms.CharField(widget=forms.Textarea)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">contact_view</span>(<span class="params">request</span>):</span><br><span class="line">    <span class="comment"># The request method &#x27;POST&#x27; indicates</span></span><br><span class="line">    <span class="comment"># that the form was submitted</span></span><br><span class="line">    <span class="keyword">if</span> request.method == <span class="string">&#x27;POST&#x27;</span>:  <span class="comment"># 1</span></span><br><span class="line">        <span class="comment"># Create a form instance with the submitted data</span></span><br><span class="line">        form = ContactForm(request.POST)  <span class="comment"># 2</span></span><br><span class="line">        <span class="comment"># Validate the form</span></span><br><span class="line">        <span class="keyword">if</span> form.is_valid():  <span class="comment"># 3</span></span><br><span class="line">            <span class="comment"># If the form is valid, perform some kind of</span></span><br><span class="line">            <span class="comment"># operation, for example sending a message</span></span><br><span class="line">            send_message(</span><br><span class="line">                form.cleaned_data[<span class="string">&#x27;name&#x27;</span>],</span><br><span class="line">                form.cleaned_data[<span class="string">&#x27;message&#x27;</span>]</span><br><span class="line">            )</span><br><span class="line">            <span class="comment"># After the operation was successful,</span></span><br><span class="line">            <span class="comment"># redirect to some other page</span></span><br><span class="line">            <span class="keyword">return</span> redirect(<span class="string">&#x27;/success/&#x27;</span>)  <span class="comment"># 4</span></span><br><span class="line">    <span class="keyword">else</span>:  <span class="comment"># 5</span></span><br><span class="line">        <span class="comment"># Create an empty form instance</span></span><br><span class="line">        form = ContactForm()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> render(request, <span class="string">&#x27;contact_form.html&#x27;</span>, &#123;<span class="string">&#x27;form&#x27;</span>: form&#125;)</span><br></pre></td></tr></table></figure>
-<p>此视图的目的是用来处理和显示用户发送消息时的联系人表单。它有几个步骤：</p>
-<ol>
-<li>首先，视图查看请求方法。当用户访问连接到此视图的URL时，浏览器执行GET请求</li>
-<li>如果使用POST请求调用视图，则POST发送的数据将用于实例化<code>ContactForm</code>对象</li>
-<li>如果表单有效，则将表单数据传递给<code>send_message()</code>。此函数与此上下文无关，因此此处未显示</li>
-<li>发送消息后，视图返回到URL<code>/SUCCESS/</code>的重定向。这是我们重点关注的一步。为简单起见，这里对URL进行了硬编码（后面讲如何避免这种情况）</li>
-<li>如果视图接收到一个GET请求(或者确切地说，任何一种不是POST请求的请求)，它将创建一个<code>ContactForm</code>实例并使用<code>django.lowcuts.ender()</code>来呈现<code>Contact_form.html</code>模板</li>
-<li>如果用户现在刷新页面，则只重新加载/SUCCESS/URL。如果没有重定向，重新加载页面将重新提交表单并发送另一条消息</li>
-</ol>
+<blockquote>
+<p>GlL产生的背景在CPython解释内部运行多个线程的时候，每个线程都需要解释器内部申请相应的全局资源，由于C语言本身比较底层造成CPython在管理所有全局资源的时候并不能应对所有线程同时的资源请求，因此为了防止资源竞争而发生错误，对所有线程申请全局资源增加了限制-全局解释器锁。</p>
+</blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/02/20/Django%20%E9%87%8D%E5%AE%9A%E5%90%91%E7%BB%88%E6%9E%81%E6%8C%87%E5%8D%97/#more" rel="contents">
+              <a class="btn" href="/2024/02/20/GIL%E9%94%81/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
