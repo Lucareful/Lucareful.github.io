@@ -231,7 +231,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/GitOps%20%E5%8E%9F%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -245,7 +245,122 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/" class="post-title-link" itemprop="url">K8s的Pod创建历程</a>
+            <a href="/2024/05/03/GitOps%20%E5%8E%9F%E7%90%86/" class="post-title-link" itemprop="url">GitOps 介绍</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" itemprop="url" rel="index"><span itemprop="name">云原生</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>GitOps 介绍</h1>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://icloudnative.io/posts/what-is-gitops/">https://icloudnative.io/posts/what-is-gitops/</a></p>
+</blockquote>
+<h2 id="基础设施即代码">基础设施即代码</h2>
+<p>在理解 GitOps 之前，我们需要先理解什么是<strong>基础设施即代码</strong>。</p>
+<p>基础设施即代码（Infrastructure as Code, <strong>IaC</strong>），顾名思义，表示使用代码（而非手动流程）来定义基础设施，研发人员可以像对待应用软件一样对待基础设施，例如：</p>
+<ul>
+<li>可以创建包含基础架构规范的声明式配置文件，从而便于编辑和分发配置。</li>
+<li>可以确保每次配置的环境都完全相同。</li>
+<li>可以进行版本控制，所有的变更都会被记录下来，方便溯源。</li>
+<li>可以将基础设施划分为若干个模块化组件，并通过自动化以不同的方式进行组合。</li>
+</ul>
+<p>当然，广义上的 IaC 不仅仅只关于基础设施，还包含了<strong>网络</strong>、<strong>安全</strong>、<strong>配置</strong>等等，所以广义上的 IaC 又叫 <strong>X as Code</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/2022-07-02-16-10-zwMOq2.jpg" alt="img"></p>
+<p>​	比如你想在 AWS 中创建服务器，配置网络，部署 Kubernetes 集群以及各种工作负载，你只需要定义好 Terraform 或 Ansible 的声明式配置，以及 Kubernetes 的配置清单即可，免去一切繁杂的手动操作。</p>
+<h2 id="GitOps-是什么">GitOps 是什么</h2>
+<p>​	GitOps = IaC + Git + CI/CD，即基于 IaC 的版本化 CI/CD。它的核心是使用 Git 仓库来管理基础设施和应用的配置，并且<strong>以 Git 仓库作为基础设施和应用的单一事实来源</strong>，你从其他地方修改配置（比如手动改线上配置）一概不予通过。</p>
+<p><img src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/2022-07-02-16-34-pRb1Jc.jpg" alt="img"></p>
+<p>​	Git 仓库中的声明式配置描述了目标环境当前所需基础设施的期望状态，借助于 GitOps，如果集群的实际状态与 Git 仓库中定义的期望状态不匹配，Kubernetes reconcilers 会根据期望状态来调整当前的状态，最终使实际状态符合期望状态。</p>
+<p>​	另一方面，现代应用的开发更多关注的是迭代速度和规模，拥有成熟 DevOps 文化的组织每天可以将代码部署到生成环境中数百次，DevOps 团队可以通过版本控制、代码审查以及自动测试和部署的 CI/CD 流水线等最佳实践来实现这一目标，这就是 GitOps 干的事情。</p>
+<h2 id="GitOps-vs-DevOps">GitOps vs DevOps</h2>
+<p>​	从广义上来看，GitOps 与 DevOps 并不冲突，<strong>GitOps 是一种技术手段，而 DevOps 是一种文化</strong>。GitOps 是一种实现持续交付（Continuous Delivery）、持续部署（Continuous Deployment）和基础设施即代码（IaC）的工具和框架，它是支持 DevOps 文化的。</p>
+<p>从狭义上来看，GitOps 与 DevOps 有以下几个区别：</p>
+<p>​	首先，<strong>GitOps 是以目标为导向的</strong>。它使用 Git 来维护期望状态，并不断调整实际状态，最终与期望状态相匹配。而 <strong>DevOps 更多关注的是最佳实践</strong>，这些实践可以普遍应用于企业的每一个流程。</p>
+<p>​	其次，<strong>GitOps 采取声明式的操作方法，而 DevOps 同时接受声明式和命令式的方法</strong>，所以 DevOps 除了适用于容器环境之外，还适用于虚拟机和裸机环境。</p>
+<p>​	最后，<strong>GitOps 重新定义了云原生场景下的 CI/CD</strong>，它以 Git 作为中心的不可变状态声明，以加快持续部署速度。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/05/03/GitOps%20%E5%8E%9F%E7%90%86/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/05/03/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/" class="post-title-link" itemprop="url">K8s的Pod创建历程</a>
         </h2>
 
         <div class="post-meta">
@@ -329,7 +444,7 @@
 <p>​	如果要对k8s的部署文件进行进一步正确性校验，可以参看这个<a target="_blank" rel="noopener" href="https://github.com/instrumenta/kubeval">Kubeval</a></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/k8s%E5%88%9B%E5%BB%BAPod%E5%8E%86%E7%A8%8B/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -353,7 +468,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -367,7 +482,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/" class="post-title-link" itemprop="url">GO 代码风格指南</a>
+            <a href="/2024/05/03/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/" class="post-title-link" itemprop="url">GO 代码风格指南</a>
         </h2>
 
         <div class="post-meta">
@@ -427,7 +542,7 @@
 </ol>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/golang%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC%E6%8C%87%E5%8D%97/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -451,7 +566,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -465,7 +580,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" class="post-title-link" itemprop="url">聊聊链路追踪 OpenTracing</a>
+            <a href="/2024/05/03/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/" class="post-title-link" itemprop="url">聊聊链路追踪 OpenTracing</a>
         </h2>
 
         <div class="post-meta">
@@ -548,7 +663,7 @@
 <p>请求过程被采集之后，会以上图的形式呈现，横坐标是时间，圆角矩形是请求的执行的各个阶段。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/%E8%81%8A%E8%81%8A%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA%20OpenTracing/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -572,7 +687,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/golang%20go%20get%20%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/golang%20go%20get%20%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -586,7 +701,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/golang%20go%20get%20%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/" class="post-title-link" itemprop="url">go get 私有库解决方案</a>
+            <a href="/2024/05/03/golang%20go%20get%20%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/" class="post-title-link" itemprop="url">go get 私有库解决方案</a>
         </h2>
 
         <div class="post-meta">
@@ -644,7 +759,7 @@
 <p><img src="https://tonybai.com/wp-content/uploads/the-approach-to-go-get-private-go-module-in-house-9.png" alt="img"></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/golang%20go%20get%20%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/golang%20go%20get%20%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -668,7 +783,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/Sync.Once%20%E7%9A%84%E6%8E%A2%E7%A9%B6/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/Sync.Once%20%E7%9A%84%E6%8E%A2%E7%A9%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -682,7 +797,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/Sync.Once%20%E7%9A%84%E6%8E%A2%E7%A9%B6/" class="post-title-link" itemprop="url">Golang Sync.Once 的探究</a>
+            <a href="/2024/05/03/Sync.Once%20%E7%9A%84%E6%8E%A2%E7%A9%B6/" class="post-title-link" itemprop="url">Golang Sync.Once 的探究</a>
         </h2>
 
         <div class="post-meta">
@@ -747,7 +862,7 @@
 <p>​	<strong><code>once.Do</code> 接收一个函数作为参数，该函数不接受任何参数，不返回任何参数。具体做什么由使用方决定，错误处理也由使用方控制，对函数初始化的结果也由使用方进行保存</strong>。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/Sync.Once%20%E7%9A%84%E6%8E%A2%E7%A9%B6/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/Sync.Once%20%E7%9A%84%E6%8E%A2%E7%A9%B6/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -771,7 +886,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -785,7 +900,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" class="post-title-link" itemprop="url">服务配置和热更新</a>
+            <a href="/2024/05/03/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/" class="post-title-link" itemprop="url">服务配置和热更新</a>
         </h2>
 
         <div class="post-meta">
@@ -882,7 +997,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%92%8C%E7%83%AD%E6%9B%B4%E6%96%B0/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -906,7 +1021,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -920,7 +1035,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" class="post-title-link" itemprop="url">Go 变量声明指南</a>
+            <a href="/2024/05/03/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/" class="post-title-link" itemprop="url">Go 变量声明指南</a>
         </h2>
 
         <div class="post-meta">
@@ -991,7 +1106,7 @@
 </blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/%E6%B5%85%E6%9E%90%20Golang,make,new,=,var%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1015,7 +1130,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1029,7 +1144,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/" class="post-title-link" itemprop="url">Go Project Layout 最佳实践</a>
+            <a href="/2024/05/03/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/" class="post-title-link" itemprop="url">Go Project Layout 最佳实践</a>
         </h2>
 
         <div class="post-meta">
@@ -1089,7 +1204,7 @@
 <p>​     同样，在外圈中使用的数据格式不应该被内圈使用，特别是如果这些格式是由外圈中的框架生成的。我们不希望外圈的任何东西影响内圈。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/Golang%20%E5%90%8E%E7%AB%AF%E7%A8%8B%E5%BA%8F%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1113,7 +1228,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1127,7 +1242,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/15/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="post-title-link" itemprop="url">Golang error 处理最佳实践</a>
+            <a href="/2024/05/03/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="post-title-link" itemprop="url">Golang error 处理最佳实践</a>
         </h2>
 
         <div class="post-meta">
@@ -1199,104 +1314,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/15/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/04/15/Golang%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/04/15/Golang%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="post-title-link" itemprop="url">Golang并发编程最佳实践</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.3k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>Golang 并发编程最佳实践</h1>
-<h2 id="Goroutine-定义">Goroutine 定义</h2>
-<p>​    Goroutines 是与其他<a target="_blank" rel="noopener" href="https://golangbot.com/functions/">函数</a>或<a target="_blank" rel="noopener" href="https://golangbot.com/methods/">方法</a>同时运行的函数或方法。Goroutines 可以被认为是轻量级线程。与线程相比，创建 Goroutine 的成本很小。因此，Go 应用程序通常会同时运行数千个 Goroutine。</p>
-<h2 id="Goroutines-相对于线程的优势">Goroutines 相对于线程的优势</h2>
-<ul>
-<li>与线程相比，Goroutines 非常便宜。它们的堆栈大小只有几 kb，堆栈可以根据应用程序的需要增长和缩小，而在线程的情况下，堆栈大小必须指定并固定。</li>
-<li>Goroutine 被多路复用到更少数量的 OS 线程。一个包含数千个 Goroutine 的程序中可能只有一个线程。如果该线程中的任何 Goroutine 阻塞等待用户输入，则创建另一个 OS 线程并将剩余的 Goroutine 移动到新的 OS 线程。所有这些都由运行时处理，我们作为程序员从这些复杂的细节中抽象出来，并获得了一个干净的 API 来处理并发性。</li>
-<li>Goroutines 使用通道进行通信。通道通过设计防止在使用 Goroutine 访问共享内存时发生竞争条件。通道可以被认为是 Goroutine 进行通信的管道。</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/04/15/Golang%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/#more" rel="contents">
+              <a class="btn" href="/2024/05/03/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1387,7 +1405,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">137</span>
+          <span class="site-state-item-count">138</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1400,7 +1418,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">98</span>
+        <span class="site-state-item-count">99</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1442,19 +1460,19 @@
     </div>
     <ul class="links-of-recent-posts-list">
         <li class="links-of-recent-posts-item">
-          <a href="/2024/04/15/README/" title="2024&#x2F;04&#x2F;15&#x2F;README&#x2F;">写在前面</a>
+          <a href="/2024/05/03/README/" title="2024&#x2F;05&#x2F;03&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2024/04/15/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;04&#x2F;15&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
+          <a href="/2024/05/03/%E6%88%91%E7%9A%84%E7%BC%96%E7%A8%8B%E3%80%81%E7%83%AD%E7%88%B1%E3%80%81%E7%94%9F%E6%B4%BB/" title="2024&#x2F;05&#x2F;03&#x2F;我的编程、热爱、生活&#x2F;">我的编程、热爱、生活</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2024/04/15/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;04&#x2F;15&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
+          <a href="/2024/05/03/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;05&#x2F;03&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2024/04/15/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2024&#x2F;04&#x2F;15&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
+          <a href="/2024/05/03/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;05&#x2F;03&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
         </li>
         <li class="links-of-recent-posts-item">
-          <a href="/2024/04/15/Redis%E4%BA%94%E4%B8%AA%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="2024&#x2F;04&#x2F;15&#x2F;Redis五个使用场景&#x2F;">Redis五个使用场景</a>
+          <a href="/2024/05/03/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2024&#x2F;05&#x2F;03&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
         </li>
     </ul>
   </div>
@@ -1487,12 +1505,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">325k</span>
+    <span title="站点总字数">327k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">19:43</span>
+    <span title="站点阅读时长">19:48</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
