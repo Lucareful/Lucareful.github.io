@@ -231,6 +231,120 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/05/03/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">创建型模式</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">软件工程</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>预备知识</h1>
+<blockquote>
+<p>@abstractmethod：抽象方法，含abstractmethod方法的类不能实例化，继承了含abstractmethod方法的子类必须复写所有abstractmethod装饰的方法，未被装饰的可以不重写</p>
+<p>@ property：方法伪装属性，方法返回值及属性值，被装饰方法不能有参数，必须实例化后调用，类不能调用</p>
+<p>@ classmethod：类方法，可以通过实例对象和类对象调用，被该函数修饰的方法第一个参数代表类本身常用cls，被修饰函数内可调用类属性，不能调用实例属性</p>
+<p>@staticmethod：静态方法，可以通过实例对象和类对象调用，被装饰函数可无参数，被装饰函数内部通过类名.属性引用类属性或类方法，不能引用实例属性</p>
+</blockquote>
+<h2 id="创建型模式">创建型模式</h2>
+<p>创建型模式的工作原理是基于对象的创建机制的。由于这些模式隔离了对象的创建细节。所以使得代码能够与要创建的对象的类型互相独立。</p>
+<ul>
+<li>它们的运行机制基于对象的创建方式</li>
+<li>它们将对象创建的细节隔离开来</li>
+<li>代码与所创建的对象的类型无关</li>
+</ul>
+<h3 id="单例模式">单例模式</h3>
+<p>单例模式提供了这样一种机制，即确保类有且只有一个特定类型的对象，并提供全局访问点</p>
+<h4 id="UML图">UML图</h4>
+<p><a target="_blank" rel="noopener" href="https://gitee.com/luenci/RepoImg/raw/master/img/20210216171624.png"><img src="https://gitee.com/luenci/RepoImg/raw/master/img/20210216171624.png" alt="img"></a></p>
+<h4 id="代码实现">代码实现</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">1</span>]: <span class="keyword">class</span> <span class="title class_">Singleton</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">            <span class="string">&quot;&quot;&quot; 单例模式 &quot;&quot;&quot;</span></span><br><span class="line">   ...:     <span class="keyword">def</span> <span class="title function_">__new__</span>(<span class="params">cls</span>):</span><br><span class="line">   ...:         <span class="keyword">if</span> <span class="keyword">not</span> <span class="built_in">hasattr</span>(cls, <span class="string">&quot;instance&quot;</span>):</span><br><span class="line">   ...:             cls.instance = <span class="built_in">super</span>(Singleton, cls).__new__(cls)</span><br><span class="line">   ...:         <span class="keyword">return</span> cls.instance</span><br><span class="line">   ...:</span><br><span class="line"></span><br><span class="line">In [<span class="number">2</span>]: s = Singleton()</span><br><span class="line"></span><br><span class="line">In [<span class="number">3</span>]: s</span><br><span class="line">Out[<span class="number">3</span>]: &lt;__main__.Singleton at <span class="number">0x7fc32793ed90</span>&gt;</span><br><span class="line"></span><br><span class="line">In [<span class="number">4</span>]: s2 = Singleton()</span><br><span class="line"></span><br><span class="line">In [<span class="number">5</span>]: s2</span><br><span class="line">Out[<span class="number">5</span>]: &lt;__main__.Singleton at <span class="number">0x7fc32793ed90</span>&gt;</span><br><span class="line">In [<span class="number">21</span>]: <span class="keyword">class</span> <span class="title class_">Singletons</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">            <span class="string">&quot;&quot;&quot; 懒汉式加载 &quot;&quot;&quot;</span></span><br><span class="line">    ...:     __instance = <span class="literal">None</span></span><br><span class="line">    ...:     <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">    ...:         <span class="keyword">if</span> <span class="keyword">not</span> Singletons.__instance:</span><br><span class="line">    ...:             <span class="built_in">print</span>(<span class="string">&quot;__init__ method called..&quot;</span>)</span><br><span class="line">    ...:         <span class="keyword">else</span>:</span><br><span class="line">    ...:             <span class="built_in">print</span>(<span class="string">&quot;Instance alreadly created:&quot;</span>,self.getInstance())</span><br><span class="line">    ...:     @<span class="built_in">classmethod</span></span><br><span class="line">    ...:     <span class="keyword">def</span> <span class="title function_">getInstance</span>(<span class="params">cls</span>):</span><br><span class="line">    ...:         <span class="keyword">if</span> <span class="keyword">not</span> cls.__instance:</span><br><span class="line">    ...:             cls.__instance = Singletons()</span><br><span class="line">    ...:         <span class="keyword">return</span> cls.__instance</span><br><span class="line">    ...:</span><br><span class="line"></span><br><span class="line">In [<span class="number">22</span>]: a = Singletons()</span><br><span class="line">__init__ method called..</span><br><span class="line"></span><br><span class="line">In [<span class="number">23</span>]: a1 = Singletons()</span><br><span class="line">__init__ method called..</span><br><span class="line"></span><br><span class="line">In [<span class="number">24</span>]: a2 = Singletons()</span><br><span class="line">__init__ method called..</span><br><span class="line"></span><br><span class="line">In [<span class="number">25</span>]: a.getInstance()</span><br><span class="line">__init__ method called..</span><br><span class="line">Out[<span class="number">25</span>]: &lt;__main__.Singletons at <span class="number">0x7fc327b020d0</span>&gt;</span><br><span class="line"></span><br><span class="line">In [<span class="number">26</span>]: a</span><br><span class="line">Out[<span class="number">26</span>]: &lt;__main__.Singletons at <span class="number">0x7fc327e48ca0</span>&gt;</span><br><span class="line"></span><br><span class="line">In [<span class="number">27</span>]: a1</span><br><span class="line">Out[<span class="number">27</span>]: &lt;__main__.Singletons at <span class="number">0x7fc32763a250</span>&gt;</span><br><span class="line">In [<span class="number">1</span>]: <span class="keyword">class</span> <span class="title class_">MyMetaClass</span>(<span class="title class_ inherited__">type</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot; 元类实现单例模式 &quot;&quot;&quot;</span></span><br><span class="line">   ...:     _instances = &#123;&#125;</span><br><span class="line">   ...:     <span class="keyword">def</span> <span class="title function_">__call__</span>(<span class="params">cls,*args,**kwargs</span>):</span><br><span class="line">   ...:         <span class="built_in">print</span>(<span class="string">&quot;**** Here`s my MetaClass ****&quot;</span>)</span><br><span class="line">   ...:         <span class="keyword">if</span> cls <span class="keyword">not</span> <span class="keyword">in</span> cls._instances:</span><br><span class="line">   ...:             cls._instances[cls] = <span class="built_in">super</span>(MyMetaClass,cls).__call__(*args,**kwargs)</span><br><span class="line">   ...:         <span class="keyword">return</span> cls._instances[cls]</span><br><span class="line"></span><br><span class="line">In [<span class="number">2</span>]: <span class="keyword">class</span> <span class="title class_">test</span>(metaclass=MyMetaClass):</span><br><span class="line">   ...:     <span class="keyword">pass</span></span><br><span class="line">   ...:</span><br><span class="line"></span><br><span class="line">In [<span class="number">3</span>]: a = test()</span><br><span class="line">**** Here`s my MetaClass ****</span><br><span class="line"></span><br><span class="line">In [<span class="number">4</span>]: a2 = test()</span><br><span class="line">**** Here`s my MetaClass ****</span><br><span class="line"></span><br><span class="line">In [<span class="number">5</span>]: <span class="built_in">id</span>(a)</span><br><span class="line">Out[<span class="number">5</span>]: <span class="number">139837183079520</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">6</span>]: <span class="built_in">id</span>(a2)</span><br><span class="line">Out[<span class="number">6</span>]: <span class="number">139837183079520</span></span><br></pre></td></tr></table></figure>
+<p>虽然单例模式在许多情况下效果很好，但是由于单例模式具有全局访问权限，可能会存在一些问题</p>
+<ul>
+<li>全局变量可能在某处已经被更改，但是开发人员仍然认为它们没有发生变化，而改变量还在应用程序的其他位置被使用</li>
+<li>可能会对同一个对象创建多个应用（此单例类被多次实例化，实际只实例化一次就可以）</li>
+<li>所有依赖于全局变量的类都会由于一个类的改变而紧密耦合为全局数据，从而可能在无意中影响另一个类</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/05/03/%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1346,125 +1460,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/05/03/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">浅谈Python垃圾回收机制</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E8%BF%9B%E9%98%B6/" itemprop="url" rel="index"><span itemprop="name">python进阶</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li>目前垃圾回收比较通用的解决办法有三种，引用计数，标记清除以及分代回收。</li>
-</ul>
-<h2 id="引用计数">引用计数</h2>
-<ul>
-<li>引用计数也是一种最直观，最简单的垃圾收集技术。</li>
-<li><strong>在 Python 中，大多数对象的生命周期都是通过对象的引用计数来管理的。</strong></li>
-<li>其原理非常简单，我们为每个对象维护一个 ref 的字段用来记录对象被引用的次数，每当对象被创建或者被引用时将该对象的引用次数加一，当对象的引用被销毁时该对象的引用次数减一，当对象的引用次数减到零时说明程序中已经没有任何对象持有该对象的引用，换言之就是在以后的程序运行中不会再次使用到该对象了，那么其所占用的空间也就可以被释放了了。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> psutil</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">print_memory_info</span>(<span class="params">name</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    内存计算函数</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    pid = os.getpid()</span><br><span class="line">    p = psutil.Process(pid)</span><br><span class="line"></span><br><span class="line">    info = p.memory_full_info()</span><br><span class="line">    MB = <span class="number">1024</span> * <span class="number">1024</span></span><br><span class="line">    memory = info.uss / MB</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;%s used %d MB&#x27;</span> % (name, memory))</span><br><span class="line">   </span><br><span class="line"><span class="keyword">def</span> <span class="title function_">test</span>(): </span><br><span class="line">    print_memory_info(<span class="string">&#x27;test start&#x27;</span>)</span><br><span class="line">    length = <span class="number">1000</span> * <span class="number">1000</span></span><br><span class="line">    list1 = [i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)]</span><br><span class="line">    print_memory_info(<span class="string">&#x27;test end&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> list1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">res = test()</span><br><span class="line">print_memory_info(<span class="string">&quot;main end&quot;</span>)</span><br><span class="line"></span><br><span class="line">out:</span><br><span class="line">    test start used <span class="number">4</span> MB</span><br><span class="line">  test end used <span class="number">23</span> MB</span><br><span class="line">  main end used <span class="number">23</span> MB</span><br></pre></td></tr></table></figure>
-<p>由上述例子：如下情况会存在引用计数加一</p>
-<ul>
-<li>对象被创建（num=2）</li>
-<li>对象被引用（count=num）</li>
-<li>对象作为参数传递到函数内部</li>
-<li>对象作为一个元素添加到容器中</li>
-</ul>
-<p>而如下情况会导致引用次数减一：</p>
-<ul>
-<li>对象的别名被显式销毁（del num）</li>
-<li>对象的别名被赋予新的对象（num=30）</li>
-<li>对象离开它的作用域（函数局部变量）</li>
-<li>从容器中删除对象，或者容器被销毁</li>
-</ul>
-<p>引用计数的不足：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">test</span>():</span><br><span class="line">    print_memory_info(<span class="string">&quot;foo start&quot;</span>)</span><br><span class="line">    length = <span class="number">1000</span> * <span class="number">1000</span></span><br><span class="line">    list_a = [i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)]</span><br><span class="line">    list_b = [i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)]</span><br><span class="line">    list_a.append(list_b)</span><br><span class="line">    list_b.append(list_a)</span><br><span class="line">    print_memory_info(<span class="string">&quot;foo end&quot;</span>)</span><br><span class="line"></span><br><span class="line">out:</span><br><span class="line">    test start used <span class="number">4</span> MB</span><br><span class="line">  test end used <span class="number">42</span> MB</span><br><span class="line">  main end used <span class="number">42</span> MB</span><br></pre></td></tr></table></figure>
-<p>分析：</p>
-<blockquote>
-<p>在函数 test内部生成了两个列表 list_a 和 list_b，然后将两个列表分别添加到另外一个中。由结果可以看出，即使 foo 函数结束之后其所占用的内存空间依然未被释放。这是因为对于 list_a 和 list_b 来说虽然没有被任何外部对象引用，但因为二者之间交叉引用，以至于每个对象的引用计数都不为零，这也就造成了其所占用的空间永远不会被回收的尴尬局面。这个缺点是致命的。</p>
-</blockquote>
-<p><strong>为了解决交叉引用的问题，Python 引入了标记清除算法和分代回收算法。</strong></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/05/03/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1536,20 +1531,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-count">139</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">52</span>
+        <span class="site-state-item-count">53</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">99</span>
+        <span class="site-state-item-count">100</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1594,6 +1589,9 @@
           <a href="/2024/05/03/README/" title="2024&#x2F;05&#x2F;03&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
+          <a href="/2024/05/03/%E5%A3%B0%E6%98%8E%E5%BC%8F%E5%92%8C%E5%91%BD%E4%BB%A4%E5%BC%8F%E7%BC%96%E7%A8%8B/" title="2024&#x2F;05&#x2F;03&#x2F;声明式和命令式编程&#x2F;">我的编程、热爱、生活</a>
+        </li>
+        <li class="links-of-recent-posts-item">
           <a href="/2024/05/03/%E6%88%91%E7%9A%84%E7%BC%96%E7%A8%8B%E3%80%81%E7%83%AD%E7%88%B1%E3%80%81%E7%94%9F%E6%B4%BB/" title="2024&#x2F;05&#x2F;03&#x2F;我的编程、热爱、生活&#x2F;">我的编程、热爱、生活</a>
         </li>
         <li class="links-of-recent-posts-item">
@@ -1601,9 +1599,6 @@
         </li>
         <li class="links-of-recent-posts-item">
           <a href="/2024/05/03/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;05&#x2F;03&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
-        </li>
-        <li class="links-of-recent-posts-item">
-          <a href="/2024/05/03/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2024&#x2F;05&#x2F;03&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
         </li>
     </ul>
   </div>
@@ -1636,12 +1631,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">327k</span>
+    <span title="站点总字数">330k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">19:48</span>
+    <span title="站点阅读时长">19:58</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>

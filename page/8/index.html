@@ -231,6 +231,125 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/05/03/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">浅谈Python垃圾回收机制</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E8%BF%9B%E9%98%B6/" itemprop="url" rel="index"><span itemprop="name">python进阶</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ul>
+<li>目前垃圾回收比较通用的解决办法有三种，引用计数，标记清除以及分代回收。</li>
+</ul>
+<h2 id="引用计数">引用计数</h2>
+<ul>
+<li>引用计数也是一种最直观，最简单的垃圾收集技术。</li>
+<li><strong>在 Python 中，大多数对象的生命周期都是通过对象的引用计数来管理的。</strong></li>
+<li>其原理非常简单，我们为每个对象维护一个 ref 的字段用来记录对象被引用的次数，每当对象被创建或者被引用时将该对象的引用次数加一，当对象的引用被销毁时该对象的引用次数减一，当对象的引用次数减到零时说明程序中已经没有任何对象持有该对象的引用，换言之就是在以后的程序运行中不会再次使用到该对象了，那么其所占用的空间也就可以被释放了了。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> psutil</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">print_memory_info</span>(<span class="params">name</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    内存计算函数</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    pid = os.getpid()</span><br><span class="line">    p = psutil.Process(pid)</span><br><span class="line"></span><br><span class="line">    info = p.memory_full_info()</span><br><span class="line">    MB = <span class="number">1024</span> * <span class="number">1024</span></span><br><span class="line">    memory = info.uss / MB</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;%s used %d MB&#x27;</span> % (name, memory))</span><br><span class="line">   </span><br><span class="line"><span class="keyword">def</span> <span class="title function_">test</span>(): </span><br><span class="line">    print_memory_info(<span class="string">&#x27;test start&#x27;</span>)</span><br><span class="line">    length = <span class="number">1000</span> * <span class="number">1000</span></span><br><span class="line">    list1 = [i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)]</span><br><span class="line">    print_memory_info(<span class="string">&#x27;test end&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> list1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">res = test()</span><br><span class="line">print_memory_info(<span class="string">&quot;main end&quot;</span>)</span><br><span class="line"></span><br><span class="line">out:</span><br><span class="line">    test start used <span class="number">4</span> MB</span><br><span class="line">  test end used <span class="number">23</span> MB</span><br><span class="line">  main end used <span class="number">23</span> MB</span><br></pre></td></tr></table></figure>
+<p>由上述例子：如下情况会存在引用计数加一</p>
+<ul>
+<li>对象被创建（num=2）</li>
+<li>对象被引用（count=num）</li>
+<li>对象作为参数传递到函数内部</li>
+<li>对象作为一个元素添加到容器中</li>
+</ul>
+<p>而如下情况会导致引用次数减一：</p>
+<ul>
+<li>对象的别名被显式销毁（del num）</li>
+<li>对象的别名被赋予新的对象（num=30）</li>
+<li>对象离开它的作用域（函数局部变量）</li>
+<li>从容器中删除对象，或者容器被销毁</li>
+</ul>
+<p>引用计数的不足：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">test</span>():</span><br><span class="line">    print_memory_info(<span class="string">&quot;foo start&quot;</span>)</span><br><span class="line">    length = <span class="number">1000</span> * <span class="number">1000</span></span><br><span class="line">    list_a = [i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)]</span><br><span class="line">    list_b = [i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)]</span><br><span class="line">    list_a.append(list_b)</span><br><span class="line">    list_b.append(list_a)</span><br><span class="line">    print_memory_info(<span class="string">&quot;foo end&quot;</span>)</span><br><span class="line"></span><br><span class="line">out:</span><br><span class="line">    test start used <span class="number">4</span> MB</span><br><span class="line">  test end used <span class="number">42</span> MB</span><br><span class="line">  main end used <span class="number">42</span> MB</span><br></pre></td></tr></table></figure>
+<p>分析：</p>
+<blockquote>
+<p>在函数 test内部生成了两个列表 list_a 和 list_b，然后将两个列表分别添加到另外一个中。由结果可以看出，即使 foo 函数结束之后其所占用的内存空间依然未被释放。这是因为对于 list_a 和 list_b 来说虽然没有被任何外部对象引用，但因为二者之间交叉引用，以至于每个对象的引用计数都不为零，这也就造成了其所占用的空间永远不会被回收的尴尬局面。这个缺点是致命的。</p>
+</blockquote>
+<p><strong>为了解决交叉引用的问题，Python 引入了标记清除算法和分代回收算法。</strong></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/05/03/%E6%B5%85%E8%B0%88%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1131,235 +1250,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/05/03/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/" class="post-title-link" itemprop="url">模块、迭代器，生成器和装饰器</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">python编程</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>module模块和包的介绍</h1>
-<h2 id="模块的介绍">模块的介绍</h2>
-<ul>
-<li><code>python</code>给我们提供了十分简单的方法去创建一个模块，我们只需要写一个<code>python</code>文件即可，也就是说写一个<code>.py</code>为后缀的文件。</li>
-</ul>
-<h2 id="包的介绍">包的介绍</h2>
-<ul>
-<li>简单来说，包就是多个模块的集合。当项目较大，模块较多时，我们就可以把模块放在包中，便于管理。</li>
-<li>我们在包中一般带有<code>__init__.py</code>文件，随你建包的时候就默认生成。</li>
-</ul>
-<h1>迭代器和生成器</h1>
-<h3 id="迭代器">迭代器</h3>
-<ul>
-<li>迭代器只不过是一个实现迭代器协议的容器对象。它基于两个方法：
-<ul>
-<li><code>next</code>  ：返回容器的下一个项目
-<ul>
-<li>在<code>3.x</code>的版本中为<code>__next__</code>或者<code>next(可迭代对象)</code></li>
-</ul>
-</li>
-<li><code>__iter__</code> : 返回迭代器本身</li>
-</ul>
-</li>
-<li>迭代器可以通过使用一个<code>iter</code>内建函数和一个序列来创建，示例如下。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">21</span>]: a = [<span class="string">&#x27;a&#x27;</span>,<span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>]</span><br><span class="line">In [<span class="number">22</span>]: a = <span class="built_in">iter</span>(a)</span><br><span class="line"></span><br><span class="line">In [<span class="number">23</span>]: <span class="built_in">next</span>(a)</span><br><span class="line">Out[<span class="number">23</span>]: <span class="string">&#x27;a&#x27;</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">24</span>]: a.__next__()</span><br><span class="line">Out[<span class="number">24</span>]: <span class="string">&#x27;b&#x27;</span></span><br></pre></td></tr></table></figure>
-<h3 id="生成器">生成器</h3>
-<ul>
-<li>生成器</li>
-<li>从<code>Python2.2</code>起，生成器提供了一种出色的方法，使得需要返回一系列元素的函数所需的代码更加简单、高效。基于yield指令，可以暂停一个函数并返回中间结果。该函数将保存执行环境并且可以在必要时恢复。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">25</span>]: <span class="keyword">def</span> <span class="title function_">fibonanci</span>():</span><br><span class="line">    ...:     a, b = <span class="number">0</span>, <span class="number">1</span></span><br><span class="line">    ...:     <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    ...:         <span class="keyword">yield</span> b</span><br><span class="line">    ...:         a, b = b, a + b</span><br><span class="line">    ...:</span><br><span class="line"></span><br><span class="line">In [<span class="number">26</span>]: fib = fibonanci()</span><br><span class="line"></span><br><span class="line">In [<span class="number">28</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">28</span>]: <span class="number">1</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">29</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">29</span>]: <span class="number">1</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">30</span>]: fib.__next__()</span><br><span class="line">Out[<span class="number">30</span>]: <span class="number">2</span></span><br><span class="line"></span><br><span class="line">In [<span class="number">31</span>]: fib.__next__()</span><br></pre></td></tr></table></figure>
-<ul>
-<li><code>yield</code>可以理解为<code>return</code>,每次调用<code>next()</code>就<code>yield</code>值,下次<code>next()</code>从上次的yield处开始运行</li>
-<li>该函数将返回一个特殊的迭代器，也就是generator对象，它知道如何保存执行环境。对它的调用是不确定的，每次都将产生序列中的下一个元素。这种语法很简洁，算法的不确定特性并没有影响代码的可读性。不必提供使函数可停止的方法。实际上，这看上去像是用伪代码设计的序列一样。</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/05/03/python%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Luenci">
-      <meta itemprop="description" content="Debug Myself">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Luenci">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/05/03/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" class="post-title-link" itemprop="url">Vue.js的基本知识</a>
-        </h2>
-
-        <div class="post-meta">
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%89%8D%E7%AB%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">前端学习</span></a>
-                </span>
-            </span>
-
-          
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1><code>Vue.js</code>概念</h1>
-<ul>
-<li><code>Vue.js </code>是目前最火的一个前端框架，<code>React</code>是最流行的一个前端框架（React除了开发网站，还可以开发手机<code>App</code>，<code>Vue</code>语法也是可以用于进行手机<code>App</code>开发的，需要借助于<code>Weex</code>）</li>
-<li><code>Vue.js</code> 是前端的主流框架之一，和<code>Angularjs</code>、<code>Reactjs</code>一起，并成为前端三大主流框架！·</li>
-<li><code>Vue.js</code> 是一套构建用户界面的框架，只关注视图层，它不仅易于上手，还便于与第三方库或既有项目整合。（<code>Vue</code>有配套的第三方类库，可以整合起来做大型项目的开发）</li>
-</ul>
-<h1>框架和库的区别</h1>
-<ul>
-<li>框架：是一套完整的解决方案；对项目的侵入性较大，项目如果需要更换框架，则需要重新架构整个项目。</li>
-<li>库（插件）：提供某一个小功能，对项目的侵入性较小，如果某个库无法完成某些需求，可以很容易切换到其它库实现需求。</li>
-</ul>
-<h1>后端中的<code>MVC</code>与前端中的<code>MVVM</code>之间的区别</h1>
-<ul>
-<li><code>MVC</code>是后端的分层开发概念；</li>
-<li><code>MVVM</code>是前端视图层的概念，主要关注于视图层分离，也就是说：<code>MVVM</code>把前端的视图层，分为了三部分<code>Model</code>，<code>View</code>，<code>VM</code> ,<code>ViewModel</code></li>
-</ul>
-<p><img src="https://upload.cc/i1/2019/12/25/XTm4Gf.png" alt="image-20191225111448702"></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/05/03/vue%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/windows%20%E9%85%8D%E7%BD%AE%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%20Gitlab%E3%80%81Github%E3%80%81Gitee(%E7%A0%81%E4%BA%91)%20%E5%85%B1%E5%AD%98%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1494,6 +1384,128 @@
   
   
 
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/05/03/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/05/03/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/" class="post-title-link" itemprop="url">京东全网爬虫</a>
+        </h2>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/python%E7%88%AC%E8%99%AB/" itemprop="url" rel="index"><span itemprop="name">python爬虫</span></a>
+                </span>
+            </span>
+
+          
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>完整代码见： <a target="_blank" rel="noopener" href="https://github.com/Lucareful/JingDongSpider">https://github.com/Lucareful/JingDongSpider</a></p>
+<p>写在前面：</p>
+<blockquote>
+<p>折腾了很久的用python做爬虫项目到现在也该告一段落了，看视频学，遇到bug自己查找，代码思路不对重新写，环境不对自己配置…一路上跌跌撞撞，过程很艰苦，所幸结果为好。</p>
+<p>代码就像一面明镜，照见我自身的不足。继续加油</p>
+</blockquote>
+<h2 id="需求">需求</h2>
+<ul>
+<li>抓取首页的分类信息
+<ul>
+<li>大分类的url</li>
+<li>中分类的url</li>
+<li>小分类的url</li>
+</ul>
+</li>
+<li>抓取商品信息
+<ul>
+<li>商品名称</li>
+<li>价格</li>
+<li>评论信息</li>
+<li>店铺</li>
+<li>促销</li>
+<li>选项</li>
+<li>图片</li>
+</ul>
+</li>
+</ul>
+<h2 id="开发环境和技术">开发环境和技术</h2>
+<ul>
+<li>技术选择：</li>
+<li>由于全网爬虫，抓取页面非常多，为了提高抓的速度，选择使用<code>scrapy</code>框架+<code>scrapy_redis</code>分布式组件</li>
+<li>由于京东全网的数据量达到了亿级，存储又是结构化数据，</li>
+<li>数据库，选择使用MongoDB；</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/05/03/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
 
   
   <nav class="pagination">
@@ -1565,20 +1577,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-count">139</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">52</span>
+        <span class="site-state-item-count">53</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">99</span>
+        <span class="site-state-item-count">100</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1623,6 +1635,9 @@
           <a href="/2024/05/03/README/" title="2024&#x2F;05&#x2F;03&#x2F;README&#x2F;">写在前面</a>
         </li>
         <li class="links-of-recent-posts-item">
+          <a href="/2024/05/03/%E5%A3%B0%E6%98%8E%E5%BC%8F%E5%92%8C%E5%91%BD%E4%BB%A4%E5%BC%8F%E7%BC%96%E7%A8%8B/" title="2024&#x2F;05&#x2F;03&#x2F;声明式和命令式编程&#x2F;">我的编程、热爱、生活</a>
+        </li>
+        <li class="links-of-recent-posts-item">
           <a href="/2024/05/03/%E6%88%91%E7%9A%84%E7%BC%96%E7%A8%8B%E3%80%81%E7%83%AD%E7%88%B1%E3%80%81%E7%94%9F%E6%B4%BB/" title="2024&#x2F;05&#x2F;03&#x2F;我的编程、热爱、生活&#x2F;">我的编程、热爱、生活</a>
         </li>
         <li class="links-of-recent-posts-item">
@@ -1630,9 +1645,6 @@
         </li>
         <li class="links-of-recent-posts-item">
           <a href="/2024/05/03/golang%20%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="2024&#x2F;05&#x2F;03&#x2F;golang 构造方法入参出参最佳实践&#x2F;">golang 构造方法入参出参最佳实践</a>
-        </li>
-        <li class="links-of-recent-posts-item">
-          <a href="/2024/05/03/VictoriaMetricsn%20%E5%8E%9F%E7%90%86%E5%85%A5%E9%97%A8/" title="2024&#x2F;05&#x2F;03&#x2F;VictoriaMetricsn 原理入门&#x2F;">VictoriaMetricsn 原理入门</a>
         </li>
     </ul>
   </div>
@@ -1665,12 +1677,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">327k</span>
+    <span title="站点总字数">330k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">19:48</span>
+    <span title="站点阅读时长">19:58</span>
 </div>
 
 <span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
