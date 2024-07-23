@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="golang error 处理最佳实践 错误类型定义  Go 中error 类型是一个接口类型  123type error interface &amp;#123;    Error() string&amp;#125; 基本上，error 是实现该接口任何内容，它将错误消息作为字符串返回。 构造错误 ​    可以使用 Go 的内置或包动态构造错误。 ​    例如，以下函数使用包返回带有静态错误消息的新错误">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang error 处理最佳实践">
+<meta property="og:url" content="https://luenci.me/2024/07/23/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="golang error 处理最佳实践 错误类型定义  Go 中error 类型是一个接口类型  123type error interface &amp;#123;    Error() string&amp;#125; 基本上，error 是实现该接口任何内容，它将错误消息作为字符串返回。 构造错误 ​    可以使用 Go 的内置或包动态构造错误。 ​    例如，以下函数使用包返回带有静态错误消息的新错误">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-07-23T07:22:47.025Z">
+<meta property="article:modified_time" content="2023-02-06T12:51:59.000Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="错误处理">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://luenci.me/2024/07/23/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '404,φ(*￣0￣),Waiting for you.';
+      visible = '200,(✿◡‿◡),Welcome back!';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
+
+  <title>Golang error 处理最佳实践 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/07/23/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Golang error 处理最佳实践
+        </h1>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2024/07/23/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2024/07/23/golang%20error%20%E5%A4%84%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>golang error 处理最佳实践</h1>
+<h2 id="错误类型定义">错误类型定义</h2>
+<ul>
+<li>Go 中<code>error</code> 类型是一个接口类型</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="type">error</span> <span class="keyword">interface</span> &#123;</span><br><span class="line">    Error() <span class="type">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>基本上，<code>error</code> 是实现该接口任何内容，它将错误消息作为字符串返回。</p>
+<h2 id="构造错误">构造错误</h2>
+<p>​    可以使用 Go 的内置或包动态构造错误。</p>
+<p>​    例如，以下函数使用包返回带有静态错误消息的新错误：<code>errors fmt errors</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;errors&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">DoSomething</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> errors.New(<span class="string">&quot;something didn&#x27;t work&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​	同样，该包可用于向错误添加动态数据。</p>
+<p>​	例如：<code>fmt int string error</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;fmt&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Divide</span><span class="params">(a, b <span class="type">int</span>)</span></span> (<span class="type">int</span>, <span class="type">error</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> b == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>, fmt.Errorf(<span class="string">&quot;can&#x27;t divide &#x27;%d&#x27; by zero&quot;</span>, a)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> a / b, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请注意，当用于用格式动词包装另一个错误时，这将非常有用 <code>fmt.Errorf %w</code></p>
+<p>在上面的示例中，还有其他一些重要事项需要注意。</p>
+<ul>
+<li>错误可以返回为<code>nil</code> ，它是 Go 中 <code>error</code> 的默认值或<code>零值</code>。这很重要，因为检查是确定是否遇到错误的惯用方法（替换您可能在其他编程语言中熟悉的 / 语句）。<code>if err != nil </code></li>
+<li>错误通常作为函数中的最后一个参数返回。因此，在上面的示例中，我们按该顺序返回 <code>int</code>和 <code>nil</code> 。</li>
+<li>当我们返回错误时，函数返回的其他参数通常作为其默认的<code>零值</code>返回。函数的用户可能期望，如果返回非<code>nil</code> 错误，则返回的其他参数不相关。</li>
+<li>最后，错误消息通常以小写形式编写，不以标点符号结尾。但是可以例外，例如，当包含专有名词，以大写字母开头的函数名称等。</li>
+</ul>
+<span id="more"></span>
+<h2 id="定义预期错误">定义预期错误</h2>
+<p>​    <code>Go</code> 中的另一个重要技术是定义预期的错误，以便可以在代码的其他部分中显式检查它们。当遇到某种类型的错误时需要执行不同的代码分支时，这将非常有用。</p>
+<h3 id="关于-errors-Is-和-errors-As">关于  <code>errors.Is()</code> 和 <code>errors.As() </code></h3>
+<blockquote>
+<p>如果我们想检查给定错误是否与另一个特定错误匹配，我们需要使用包中<code>Is()</code>的函数<code>errors</code>。如果我们对错误是否属于给定类型感兴趣，我们应该调用该<code>As()</code>函数。<code>errors.Is()</code></p>
+</blockquote>
+<h4 id="errors-Is-功能"><code>errors.Is()</code>功能</h4>
+<blockquote>
+<p>此函数适合没有经过包装的错误</p>
+</blockquote>
+<p>​    在下面的示例中，我们可以看到该函数<code>validateInput</code>为<code>badInput</code>. 此错误<code>ErrBadInput</code>包含在由<code>fmt.Errorf()</code>.</p>
+<p>​     使用该<code>Is(err, target error) bool</code>函数，我们可以检测到<code>ErrBadInput</code>它是否被包装，因为该函数检查包装错误链中的任何错误是否与目标匹配。</p>
+<p>因此，这种形式应该比<code>if err == ErrBadInput</code>更可取。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;errors&quot;</span></span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> badInput = <span class="string">&quot;abc&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> ErrBadInput = errors.New(<span class="string">&quot;bad input&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">validateInput</span><span class="params">(input <span class="type">string</span>)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> input == badInput &#123;</span><br><span class="line">        <span class="keyword">return</span> fmt.Errorf(<span class="string">&quot;validateInput: %w&quot;</span>, ErrBadInput)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    input := badInput</span><br><span class="line"></span><br><span class="line">    err := validateInput(input)</span><br><span class="line">    <span class="keyword">if</span> errors.Is(err, ErrBadInput) &#123;</span><br><span class="line">        fmt.Println(<span class="string">&quot;bad input error&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bad input error</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  <span class="string">&quot;errors&quot;</span></span><br><span class="line">  <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> ErrorString1 = errors.New(<span class="string">&quot;test b&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">  err := <span class="function"><span class="keyword">func</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> fmt.Errorf(<span class="string">&quot;I am %w&quot;</span>, ErrorString1)</span><br><span class="line">  &#125;()</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> errors.Is(err, ErrorString1) &#123;</span><br><span class="line">    fmt.Println(<span class="string">&quot;err b&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">err b</span><br></pre></td></tr></table></figure>
+<h4 id="errors-As-功能"><code>errors.As()</code>功能</h4>
+<blockquote>
+<p>此函数将错误进行了包装</p>
+</blockquote>
+<p>​    与 类似<code>Is()</code>，<code>As(err error, target interface&#123;&#125;) bool</code>检查包装错误链中的任何错误是否与目标匹配。不同之处在于此函数检查错误是否具有特定类型，不像<code>Is()</code>，它检查它是否是特定的错误对象。</p>
+<p>因为<code>As</code>考虑到整个错误链，它应该比类型断言更可取<code>if e, ok := err.(*BadInputError); ok</code>。</p>
+<blockquote>
+<p>target<code>函数的参数``As(err error, target interface&#123;&#125;) bool</code>应该<strong>是指向错误类型的指针</strong>，在这种情况下是<code>*BadInputError</code></p>
+</blockquote>
+<p>复制</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;errors&quot;</span></span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> badInput = <span class="string">&quot;abc&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> BadInputError <span class="keyword">struct</span> &#123;</span><br><span class="line">    input <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *BadInputError)</span></span> Error() <span class="type">string</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> fmt.Sprintf(<span class="string">&quot;bad input: %s&quot;</span>, e.input)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">validateInput</span><span class="params">(input <span class="type">string</span>)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> input == badInput &#123;</span><br><span class="line">        <span class="keyword">return</span> fmt.Errorf(<span class="string">&quot;validateInput: %w&quot;</span>, &amp;BadInputError&#123;input: input&#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    input := badInput</span><br><span class="line"></span><br><span class="line">    err := validateInput(input)</span><br><span class="line">    <span class="keyword">var</span> badInputErr *BadInputError</span><br><span class="line">    <span class="keyword">if</span> errors.As(err, &amp;badInputErr) &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;bad input error occured: %s\n&quot;</span>, badInputErr)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="定义哨兵错误">定义哨兵错误</h3>
+<p>​    基于前面的函数，我们可以通过预先定义<code>Sentinel</code>错误来改进错误信令。调用函数可以使用以下命令显式检查此错误：<code>errors.Is</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;errors&quot;</span></span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> ErrDivideByZero = errors.New(<span class="string">&quot;divide by zero&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Divide</span><span class="params">(a, b <span class="type">int</span>)</span></span> (<span class="type">int</span>, <span class="type">error</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> b == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>, ErrDivideByZero</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> a / b, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    a, b := <span class="number">10</span>, <span class="number">0</span></span><br><span class="line">    result, err := Divide(a, b)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> &#123;</span><br><span class="line">        <span class="keyword">case</span> errors.Is(err, ErrDivideByZero):</span><br><span class="line">            fmt.Println(<span class="string">&quot;divide by zero error&quot;</span>)</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            fmt.Printf(<span class="string">&quot;unexpected division error: %s\n&quot;</span>, err)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fmt.Printf(<span class="string">&quot;%d / %d = %d\n&quot;</span>, a, b, result)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="定义自定义错误类型">定义自定义错误类型</h3>
+<p>使用上述策略可以涵盖许多错误处理用例，但是，有时您可能需要更多功能。也许您希望错误携带其他数据字段，或者错误的消息在打印时应使用动态值填充自身。这些可以通过自定义错误类型实现</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;errors&quot;</span></span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> DivisionError <span class="keyword">struct</span> &#123;</span><br><span class="line">    IntA <span class="type">int</span></span><br><span class="line">    IntB <span class="type">int</span></span><br><span class="line">    Msg  <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *DivisionError)</span></span> Error() <span class="type">string</span> &#123; </span><br><span class="line">    <span class="keyword">return</span> e.Msg</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Divide</span><span class="params">(a, b <span class="type">int</span>)</span></span> (<span class="type">int</span>, <span class="type">error</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> b == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>, &amp;DivisionError&#123;</span><br><span class="line">            Msg: fmt.Sprintf(<span class="string">&quot;cannot divide &#x27;%d&#x27; by zero&quot;</span>, a),</span><br><span class="line">            IntA: a, IntB: b,</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> a / b, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    a, b := <span class="number">10</span>, <span class="number">0</span></span><br><span class="line">    result, err := Divide(a, b)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> divErr *DivisionError</span><br><span class="line">        <span class="keyword">switch</span> &#123;</span><br><span class="line">        <span class="keyword">case</span> errors.As(err, &amp;divErr):</span><br><span class="line">            fmt.Printf(<span class="string">&quot;%d / %d is not mathematically valid: %s\n&quot;</span>,</span><br><span class="line">              divErr.IntA, divErr.IntB, divErr.Error())</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            fmt.Printf(<span class="string">&quot;unexpected division error: %s\n&quot;</span>, err)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fmt.Printf(<span class="string">&quot;%d / %d = %d\n&quot;</span>, a, b, result)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="error-are-value">error are value</h2>
+<blockquote>
+<p>无论你做什么，都要始终检查你的错误！</p>
+</blockquote>
+<h3 id="bufio的设计"><code>bufio</code>的设计</h3>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">scanner := bufio.NewScanner(input)</span><br><span class="line"><span class="keyword">for</span> scanner.Scan() &#123;</span><br><span class="line">    token := scanner.Text()</span><br><span class="line">    <span class="comment">// process token</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> err := scanner.Err(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="comment">// process the error</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Scanner)</span></span> Scan() (token []<span class="type">byte</span>, <span class="type">error</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">scanner := bufio.NewScanner(input)</span><br><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">    token, err := scanner.Scan()</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err <span class="comment">// or maybe break</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// process token</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="文件error处理">文件<code>error</code>处理</h3>
+<p>​    改进前</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">_, err = fd.Write(p0[a:b])</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br><span class="line">_, err = fd.Write(p1[c:d])</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br><span class="line">_, err = fd.Write(p2[e:f])</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// and so on</span></span><br></pre></td></tr></table></figure>
+<p>​    改进方法1</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> errWriter <span class="keyword">struct</span> &#123;</span><br><span class="line">    w   io.Writer</span><br><span class="line">    err <span class="type">error</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ew *errWriter)</span></span> write(buf []<span class="type">byte</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> ew.err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    _, ew.err = ew.w.Write(buf)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">ew := &amp;errWriter&#123;w: fd&#125;</span><br><span class="line">ew.write(p0[a:b])</span><br><span class="line">ew.write(p1[c:d])</span><br><span class="line">ew.write(p2[e:f])</span><br><span class="line"><span class="comment">// and so on</span></span><br><span class="line"><span class="keyword">if</span> ew.err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> ew.err</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>​    改进方法2(<code>bufio</code>的设计)</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">b := bufio.NewWriter(fd)</span><br><span class="line">b.Write(p0[a:b])</span><br><span class="line">b.Write(p1[c:d])</span><br><span class="line">b.Write(p2[e:f])</span><br><span class="line"><span class="comment">// and so on</span></span><br><span class="line"><span class="keyword">if</span> b.Flush() != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> b.Flush()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Error-handling-and-Go">Error handling and Go</h2>
+<blockquote>
+<p>合理的对错误进行包装，给错误一个模板（参考定义预期错误）</p>
+</blockquote>
+<h2 id="简化重复的错误处理">简化重复的错误处理</h2>
+<p>​    原始程序</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">    http.HandleFunc(<span class="string">&quot;/view&quot;</span>, viewRecord)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">viewRecord</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">    c := appengine.NewContext(r)</span><br><span class="line">    </span><br><span class="line">    key := datastore.NewKey(c, <span class="string">&quot;Record&quot;</span>, r.FormValue(<span class="string">&quot;id&quot;</span>), <span class="number">0</span>, <span class="literal">nil</span>)</span><br><span class="line">    record := <span class="built_in">new</span>(Record)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> err := datastore.Get(c, key, record); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        http.Error(w, err.Error(), <span class="number">500</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> err := viewTemplate.Execute(w, record); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        http.Error(w, err.Error(), <span class="number">500</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>封装函数对错误处理</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">viewRecord</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    c := appengine.NewContext(r)</span><br><span class="line">    </span><br><span class="line">    key := datastore.NewKey(c, <span class="string">&quot;Record&quot;</span>, r.FormValue(<span class="string">&quot;id&quot;</span>), <span class="number">0</span>, <span class="literal">nil</span>)</span><br><span class="line">    </span><br><span class="line">    record := <span class="built_in">new</span>(Record)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> err := datastore.Get(c, key, record); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> viewTemplate.Execute(w, record)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>外层对重复错误的处理</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(fn appHandler)</span></span> ServeHTTP(w http.ResponseWriter, r *http.Request) &#123;</span><br><span class="line">    <span class="keyword">if</span> err := fn(w, r); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        http.Error(w, err.Error(), <span class="number">500</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="一个http服务的错误封装">一个<code>http</code>服务的错误封装</h4>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> appError <span class="keyword">struct</span> &#123;</span><br><span class="line">    Error   <span class="type">error</span></span><br><span class="line">    Message <span class="type">string</span></span><br><span class="line">    Code    <span class="type">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> appHandler <span class="function"><span class="keyword">func</span><span class="params">(http.ResponseWriter, *http.Request)</span></span> *appError</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(fn appHandler)</span></span> ServeHTTP(w http.ResponseWriter, r *http.Request) &#123;</span><br><span class="line">    <span class="keyword">if</span> e := fn(w, r); e != <span class="literal">nil</span> &#123; <span class="comment">// e is *appError, not os.Error.</span></span><br><span class="line">        c := appengine.NewContext(r)</span><br><span class="line">        c.Errorf(<span class="string">&quot;%v&quot;</span>, e.Error)</span><br><span class="line">        http.Error(w, e.Message, e.Code)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">viewRecord</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> *appError &#123;</span><br><span class="line">    c := appengine.NewContext(r)</span><br><span class="line">    key := datastore.NewKey(c, <span class="string">&quot;Record&quot;</span>, r.FormValue(<span class="string">&quot;id&quot;</span>), <span class="number">0</span>, <span class="literal">nil</span>)</span><br><span class="line">    record := <span class="built_in">new</span>(Record)</span><br><span class="line">    <span class="keyword">if</span> err := datastore.Get(c, key, record); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> &amp;appError&#123;err, <span class="string">&quot;Record not found&quot;</span>, <span class="number">404</span>&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> err := viewTemplate.Execute(w, record); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> &amp;appError&#123;err, <span class="string">&quot;Can&#x27;t display record&quot;</span>, <span class="number">500</span>&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="毛剑老师的课程的建议">毛剑老师的课程的建议</h2>
+<h3 id="panic">panic</h3>
+<ul>
+<li>在程序启动的时候，如果有强依赖的服务出现故障时 <code>panic</code> 退出</li>
+<li>在程序启动的时候，如果发现有配置明显不符合要求， 可以 <code>panic</code> 退出（防御编程）</li>
+<li>其他情况下只要不是不可恢复的程序错误，都不应该直接 <code>panic</code> 应该返回 <code>error</code></li>
+<li>在程序入口处，例如 <code>gin</code> 中间件需要使用 <code>recover</code> 预防 <code>panic</code> 程序退出</li>
+<li>在程序中我们应该避免使用野生的 <code>goroutine</code>
+<ul>
+<li>如果是在请求中需要执行异步任务，应该使用异步 <code>worker</code> ，消息通知的方式进行处理，避免请求量大时大量 <code>goroutine</code> 创建</li>
+<li>如果需要使用 <code>goroutine</code> 时，应该使用同一的 <code>Go</code> 函数进行创建，这个函数中会进行 <code>recover</code> ，避免因为野生 <code>goroutine</code> panic 导致主进程退出</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Go</span><span class="params">(f <span class="keyword">func</span>()</span></span>)&#123;</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">            <span class="keyword">if</span> err := <span class="built_in">recover</span>(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">                log.Printf(<span class="string">&quot;panic: %+v&quot;</span>, err)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;()</span><br><span class="line"></span><br><span class="line">        f()</span><br><span class="line">    &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="error">error</h3>
+<ol>
+<li>
+<p>我们在应用程序中使用 <code>github.com/pkg/errors</code> 处理应用错误，<strong>注意在公共库当中，我们一般不使用这个</strong></p>
+</li>
+<li>
+<p><code>error</code>应该是函数的最后一个返回值，当<code>error</code>不为<code>nil</code> 时，函数的其他返回值是不可用的状态，不应该对其他返回值做任何期待</p>
+<ol>
+<li><code>func f() (io.Reader, *S1, error)</code> 在这里，我们不知道 <code>io.Reader</code> 中是否有数据，可能有，也有可能有一部分</li>
+</ol>
+</li>
+<li>
+<p>错误处理的时候应该先判断错误， <code>if err != nil</code> 出现错误及时返回，使代码是一条流畅的直线，避免过多的嵌套.</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// good case</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    a, err := A()</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... 其他逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// bad case</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    a, err := A()</span><br><span class="line">    <span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="comment">// 其他逻辑</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>在<strong>应用程序</strong>中出现错误时，使用 <code>errors.New</code> 或者 <code>errors.Errorf</code> 返回错误</p>
+</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u *usecese)</span></span> usecase1() <span class="type">error</span> &#123;</span><br><span class="line">    money := u.repo.getMoney(uid)</span><br><span class="line">    <span class="keyword">if</span> money &lt; <span class="number">10</span> &#123;</span><br><span class="line">        errors.Errorf(<span class="string">&quot;用户余额不足, uid: %d, money: %d&quot;</span>, uid, money)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 其他逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>如果是调用<strong>应用程序的</strong>其他函数出现错误，请直接返回，如果需要携带信息，请使用 <code>errors.WithMessage</code></li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u *usecese)</span></span> usecase2() <span class="type">error</span> &#123;</span><br><span class="line">    name, err := u.repo.getUserName(uid)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> errors.WithMessage(err, <span class="string">&quot;其他附加信息&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 其他逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>如果是调用其他库（标准库、企业公共库、开源第三方库等）获取到错误时，请使用<code>errors.Wrap</code>添加堆栈信息
+<ol>
+<li>切记，不要每个地方都是用 <code>errors.Wrap</code> 只需要在错误第一次出现时进行 <code>errors.Wrap</code> 即可</li>
+<li>根据场景进行判断是否需要将其他库的原始错误吞掉，例如可以把 <code>repository</code> 层的数据库相关错误吞掉，返回业务错误码，避免后续我们分割微服务或者更换 <code>ORM</code> 库时需要去修改上层代码</li>
+<li>注意我们在基础库，被大量引入的第三方库编写时一般不使用 <code>errors.Wrap</code> 避免堆栈信息重复</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    err := json.Unmashal(&amp;a, data)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> errors.Wrap(err, <span class="string">&quot;其他附加信息&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 其他逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li><strong>禁止</strong>每个出错的地方都打日志，<strong>只需要</strong>在进程的最开始的地方使用 <code>%+v</code> 进行统一打印，例如 <code>http/rpc </code>服务的中间件</li>
+<li>错误判断使用 <code>errors.Is</code> 进行比较</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    err := A()</span><br><span class="line">    <span class="keyword">if</span> errors.Is(err, io.EOF)&#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 其他逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="9">
+<li>错误类型判断，使用 <code>errors.As</code> 进行赋值</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    err := A()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> errA errorA</span><br><span class="line">    <span class="keyword">if</span> errors.As(err, &amp;errA)&#123;</span><br><span class="line">      <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 其他逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="10">
+<li>如何判定错误的信息是否足够，想一想当你的代码出现问题需要排查的时候你的错误信息是否可以帮助你快速的定位问题，例如我们在请求中一般会输出参数信息，用于辅助判断错误</li>
+<li>对于业务错误，推荐在一个统一的地方创建一个错误字典，错误字典里面应该包含错误的 code，并且在日志中作为独立字段打印，方便做业务告警的判断，错误必须有清晰的错误文档</li>
+<li>不需要返回，<strong>被忽略的错误必须输出日志信息</strong></li>
+<li>同一个地方不停的报错，最好不要不停输出错误日志，这样可能会导致被大量的错误日志信息淹没，无法排查问题，比较好的做法是打印一次错误详情，然后打印出错误出现的次数</li>
+<li>对同一个类型的错误，采用相同的模式，例如参数错误，不要有的返回 404 有的返回 200</li>
+<li>处理错误的时候，需要处理已分配的资源，使用 <code>defer</code> 进行清理，例如文件句柄</li>
+</ol>
+<h3 id="panic-or-error">panic or error</h3>
+<ol>
+<li>在 Go 中 panic 会导致程序直接退出，是一个致命的错误，如果使用 <code>panic</code>,<code>recover</code> 进行处理的话，会存在很多问题
+<ol>
+<li>性能问题，频繁 <code>panic</code>, <code>recover</code> 性能不好</li>
+<li>容易导致程序异常退出，只要有一个地方没有处理到就会导致程序进程整个退出</li>
+<li>不可控，一旦 panic 就将处理逻辑移交给了外部，我们并不能预设外部包一定会进行处理</li>
+</ol>
+</li>
+<li>什么时候使用 panic 呢？
+<ol>
+<li>对于真正意外的情况，那些表示不可恢复的程序错误，例如索引越界、不可恢复的环境问题、栈溢出，我们才使用 panic</li>
+</ol>
+</li>
+<li>使用 error 处理有哪些好处？
+<ol>
+<li>简单。</li>
+<li>考虑失败，而不是成功(Plan for failure, not success)。</li>
+<li>没有隐藏的控制流。</li>
+<li>完全交给你来控制 error。</li>
+<li>Error are values。</li>
+</ol>
+</li>
+</ol>
+<h1>参考链接</h1>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://go.dev/blog/errors-are-values">Errors are values - The Go Programming Language</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://go.dev/blog/error-handling-and-go">Error handling and Go - The Go Programming Language</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://lailin.xyz/post/go-training-03.html">https://lailin.xyz/post/go-training-03.html</a></p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86/" rel="tag"># 错误处理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/07/23/golang%20go%20get%20%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/" rel="prev" title="go get 私有库解决方案">
+      <i class="fa fa-chevron-left"></i> go get 私有库解决方案
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/07/23/git%E5%91%BD%E4%BB%A4/" rel="next" title="Git命令集合">
+      Git命令集合 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">golang error 处理最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E7%B1%BB%E5%9E%8B%E5%AE%9A%E4%B9%89"><span class="nav-number">1.1.</span> <span class="nav-text">错误类型定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E9%80%A0%E9%94%99%E8%AF%AF"><span class="nav-number">1.2.</span> <span class="nav-text">构造错误</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89%E9%A2%84%E6%9C%9F%E9%94%99%E8%AF%AF"><span class="nav-number">1.3.</span> <span class="nav-text">定义预期错误</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E-errors-Is-%E5%92%8C-errors-As"><span class="nav-number">1.3.1.</span> <span class="nav-text">关于  errors.Is() 和 errors.As() </span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#errors-Is-%E5%8A%9F%E8%83%BD"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">errors.Is()功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#errors-As-%E5%8A%9F%E8%83%BD"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">errors.As()功能</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89%E5%93%A8%E5%85%B5%E9%94%99%E8%AF%AF"><span class="nav-number">1.3.2.</span> <span class="nav-text">定义哨兵错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89%E8%87%AA%E5%AE%9A%E4%B9%89%E9%94%99%E8%AF%AF%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.3.3.</span> <span class="nav-text">定义自定义错误类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#error-are-value"><span class="nav-number">1.4.</span> <span class="nav-text">error are value</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#bufio%E7%9A%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.4.1.</span> <span class="nav-text">bufio的设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6error%E5%A4%84%E7%90%86"><span class="nav-number">1.4.2.</span> <span class="nav-text">文件error处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Error-handling-and-Go"><span class="nav-number">1.5.</span> <span class="nav-text">Error handling and Go</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E5%8C%96%E9%87%8D%E5%A4%8D%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86"><span class="nav-number">1.6.</span> <span class="nav-text">简化重复的错误处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E4%B8%AAhttp%E6%9C%8D%E5%8A%A1%E7%9A%84%E9%94%99%E8%AF%AF%E5%B0%81%E8%A3%85"><span class="nav-number">1.6.0.1.</span> <span class="nav-text">一个http服务的错误封装</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AF%9B%E5%89%91%E8%80%81%E5%B8%88%E7%9A%84%E8%AF%BE%E7%A8%8B%E7%9A%84%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.7.</span> <span class="nav-text">毛剑老师的课程的建议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#panic"><span class="nav-number">1.7.1.</span> <span class="nav-text">panic</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#error"><span class="nav-number">1.7.2.</span> <span class="nav-text">error</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#panic-or-error"><span class="nav-number">1.7.3.</span> <span class="nav-text">panic or error</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">140</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">54</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/README/" title="2024&#x2F;07&#x2F;23&#x2F;README&#x2F;">写在前面</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/Golang%20pprof%20%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E5%8D%97/" title="2024&#x2F;07&#x2F;23&#x2F;Golang pprof 性能分析指南&#x2F;">Golang pprof 性能分析指南</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/%E5%A3%B0%E6%98%8E%E5%BC%8F%E5%92%8C%E5%91%BD%E4%BB%A4%E5%BC%8F%E7%BC%96%E7%A8%8B/" title="2024&#x2F;07&#x2F;23&#x2F;声明式和命令式编程&#x2F;">声明式和命令式编程</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/%E6%88%91%E7%9A%84%E7%BC%96%E7%A8%8B%E3%80%81%E7%83%AD%E7%88%B1%E3%80%81%E7%94%9F%E6%B4%BB/" title="2024&#x2F;07&#x2F;23&#x2F;我的编程、热爱、生活&#x2F;">我的编程、热爱、生活</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;07&#x2F;23&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">332k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">20:07</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>

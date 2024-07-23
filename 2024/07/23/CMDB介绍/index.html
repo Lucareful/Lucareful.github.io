@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/L.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/L.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-loading-bar.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"luenci.me","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="CMDB介绍 CMDB含义  CMDB代表配置管理数据库，通常被称为任何ITSM系统的心脏。   ​	简而言之，CMDB是一个存储库，用于存储有关构成IT基础架构的组件的信息。 这些组件通常称为CI（可配置项）。 据ITIL称，CI是为交付IT服务而需要进行管理的任何资产。 通常，CMDB包括CI的列表，它们的属性以及它们之间的关系。 CMDB的核心功能之一是支持服务管理流程，主要包括：事件，问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CMDB 介绍">
+<meta property="og:url" content="https://luenci.me/2024/07/23/CMDB%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="Luenci">
+<meta property="og:description" content="CMDB介绍 CMDB含义  CMDB代表配置管理数据库，通常被称为任何ITSM系统的心脏。   ​	简而言之，CMDB是一个存储库，用于存储有关构成IT基础架构的组件的信息。 这些组件通常称为CI（可配置项）。 据ITIL称，CI是为交付IT服务而需要进行管理的任何资产。 通常，CMDB包括CI的列表，它们的属性以及它们之间的关系。 CMDB的核心功能之一是支持服务管理流程，主要包括：事件，问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/CMDB-Diagram-1030x539-1.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/CMDB-vs.-Asset-Management-966x1030-1.png">
+<meta property="article:published_time" content="2024-07-23T07:22:47.021Z">
+<meta property="article:modified_time" content="2023-02-06T12:51:59.000Z">
+<meta property="article:author" content="Luenci">
+<meta property="article:tag" content="运维开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/CMDB-Diagram-1030x539-1.png">
+
+<link rel="canonical" href="https://luenci.me/2024/07/23/CMDB%E4%BB%8B%E7%BB%8D/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    
+      if (NexT.utils.hasMobileUA()) return;
+    
+    let time, hidden, visible, title = document.title;
+    let favicon = document.querySelector('link[rel="icon"]');
+    
+      hidden = '404,φ(*￣0￣),Waiting for you.';
+      visible = '200,(✿◡‿◡),Welcome back!';
+    
+    let random = t => t[Math.floor(Math.random() * t.length)];
+    const change = () => {
+      if (document.hidden) {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = hidden;
+        
+        clearTimeout(time);
+      } else {
+        favicon.setAttribute('href', '/images/L.png');
+        
+          document.title = visible;
+        
+        time = setTimeout(() => {
+          document.title = title;
+        }, 2019);
+      }
+    }
+    document.addEventListener('visibilitychange', change, false);
+  });
+</script>
+
+  <title>CMDB 介绍 | Luenci</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Luenci" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a target="_blank" rel="noopener" href="https://github.com/Lucareful" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z">
+    </path>
+    <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Luenci</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://luenci.me/2024/07/23/CMDB%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Luenci">
+      <meta itemprop="description" content="Debug Myself">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Luenci">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CMDB 介绍
+        </h1>
+
+        <div class="post-meta">
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-06 12:51:59" itemprop="dateModified" datetime="2023-02-06T12:51:59+00:00">2023-02-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">运维开发</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2024/07/23/CMDB%E4%BB%8B%E7%BB%8D/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2024/07/23/CMDB%E4%BB%8B%E7%BB%8D/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>CMDB介绍</h1>
+<h2 id="CMDB含义">CMDB含义</h2>
+<blockquote>
+<p>CMDB代表配置管理数据库，通常被称为任何ITSM系统的心脏。</p>
+</blockquote>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/CMDB-Diagram-1030x539-1.png" alt="CMDB 图"></p>
+<p>​	简而言之，CMDB是一个存储库，用于存储有关构成IT基础架构的组件的信息。 这些组件通常称为CI（可配置项）。 据ITIL称，CI是为交付IT服务而需要进行管理的任何资产。</p>
+<p>通常，CMDB包括CI的列表，它们的属性以及它们之间的关系。</p>
+<p>CMDB的<strong>核心功能之一是支持服务管理流程</strong>，主要包括：事件，问题，变更，发布和资产管理。</p>
+<span id="more"></span>
+<h3 id="CMDB如何工作？">CMDB如何工作？</h3>
+<blockquote>
+<p>如前所述，CMDB是数据库。 它的独特之处在于它包含配置项的信息和关系，通常以列表的形式表示。</p>
+</blockquote>
+<ul>
+<li>
+<p>配置管理系统（CMS）负责管理此类CI所需的技术能力，该管理系统是可以具有多个CMDB的逻辑数据模型。</p>
+</li>
+<li>
+<p>在组织中，通常发现CMDB是 <a target="_blank" rel="noopener" href="https://www.motadata.com/zh-CN/itsm-software/">ITSM解决方案</a>，为资产和配置管理提供支持。</p>
+</li>
+<li>
+<p>CMDB提供了查看和使用资产和可配置项目的通用场所。 该信息通常与其他ITSM流程（事件，问题和变更）结合使用，以创建有意义的关系。</p>
+</li>
+<li>
+<p>使用发现和导出工具填充CMDB中的数据。 在Motadata ServiceOps ITSM平台中，我们支持无代理和基于代理的发现以填充CMDB。</p>
+</li>
+<li>
+<p>由于数据量巨大，以行的形式，很少有人直接访问CMDB。 在Motadata ServiceOps ITSM中，用户可以使用报告模块将其CMDB数据有意义地组织到报告中。</p>
+</li>
+</ul>
+<h2 id="CMDB用处">CMDB用处</h2>
+<h4 id="CMDB是所有IT资产的参考点">CMDB是所有IT资产的参考点</h4>
+<ul>
+<li><strong>CMDB是所有硬件和软件资产的中央数据库</strong></li>
+</ul>
+<h4 id="CMDB允许跟踪IT基础架构中的更改">CMDB允许跟踪IT基础架构中的更改</h4>
+<ul>
+<li>如前所述，CMDB 通常作为 ITSM 解决方案的一部分存在。 在 Motadata ServiceOps ITSM 中，变更管理与 CMDB 紧密集成，允许使用变更模型跟踪变更。</li>
+</ul>
+<h4 id="CMDB允许跟踪IT基础架构中的更改-2">CMDB允许跟踪IT基础架构中的更改</h4>
+<ul>
+<li>如前所述，CMDB 通常作为 ITSM 解决方案的一部分存在。 在 Motadata ServiceOps ITSM 中，变更管理与 CMDB 紧密集成，允许使用变更模型跟踪变更。</li>
+</ul>
+<h4 id="CMDB有助于知识管理过程">CMDB有助于知识管理过程</h4>
+<p>强大的知识管理需要高质量的数据输入。 使用适当的CMDB，可以在知识库中建立大量解决方案，因为：</p>
+<ul>
+<li>CMDB具有外来资产与事件，问题和变更管理的关系记录，允许对任何问题进行根本原因分析。</li>
+<li>它维护对资产所做的所有更改的日志，以使技术人员能够识别不良更改。</li>
+<li>CMDB保存资产的属性详细信息，使技术人员可以方便地访问它们。</li>
+</ul>
+<h4 id="CMDB有助于ITSM流程">CMDB有助于ITSM流程</h4>
+<ul>
+<li>当针对资产创建故障单时，通常将其与CMDB中的CI记录相关联。 该协会通过问题和变更管理继续发挥着至关重要的作用。</li>
+</ul>
+<h2 id="CMDB与资产管理">CMDB与资产管理</h2>
+<p><img src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/CMDB-vs.-Asset-Management-966x1030-1.png" alt="CMDB 与资产管理"></p>
+<p>​	谈论CMDB和资产管理引起了很多混乱，因为这两个术语在概念上是相关的。 但是有明显的区别。</p>
+<ul>
+<li>
+<p>当资产在IT环境中处于活动状态时，CMDB专注于用于管理资产的信息。 它涉及识别资产的组成，用途以及与其他资产的关联方式。</p>
+</li>
+<li>
+<p>资产管理是一组过程，例如采购管理，硬件资产管理，软件许可证管理，合同管理等，用于管理从采购到报废的资产的整个生命周期。</p>
+</li>
+<li>
+<p>CMDB与资产管理之间的主要区别在于，CMDB将资产包括为配置项（CI），而在资产管理中，资产是对企业具有潜在财务价值的单个元素。</p>
+</li>
+<li>
+<p>CMDB的目的是对组织中的所有IT资产有一个全面而正确的视图。 这使组织可以在一个地方管理所有资产，而不必分别处理每个资产。 这使CMDB成为建立有效资产管理策略的重要工具。</p>
+</li>
+</ul>
+<h2 id="CMDB管理信息的分类">CMDB管理信息的分类</h2>
+<ul>
+<li><strong>固定信息</strong> 很多数据都可以通过一些程序，或者是自动化的手段进行自动的录入，几乎是不会变的，但需要有一个比较好的规范，比如像机房或者交换机这样一些信息，自动化工具是抽取不出来的，所以我们采用了一个变通的方法，统一交换机的命名规范，统一采用机房+机柜的命名规范，然后通过脚本抓包的方式把网络结构还原出来。如果主机也是基于这样的规范命名的话，甚至还可以把机柜还原出来。</li>
+<li>可变信息
+<ul>
+<li>人员信息：包括像联系方式的等信息，主要是为监控系统提供相应的数据；</li>
+<li>状态信息：包括资源上线状况、下线状况，主要是为自动化上线提供相应的信息；</li>
+<li>环境信息：包括生产环境还是测试的环境，主要是为监控系统及自动化系统提供相应的信息；</li>
+<li>项目信息：在跟一些业务系统做一对接时，项目信息是非常重要的，比如说业务系统需要知道某一个项目有哪一些IP都需要从这里面取数据，同时也是自动化系统的支撑，有了项目归属，服务器才知道应该去做哪些部署。</li>
+</ul>
+</li>
+</ul>
+<h2 id="CMDB的挑战">CMDB的挑战</h2>
+<ul>
+<li>来自各种来源的数据聚合以填充CMDB可能会非常昂贵。</li>
+<li>由于CMDB是组织的一部分，并且组织倾向于发展和变化，因此使CMDB保持最新是一个挑战。</li>
+<li>仅仅拥有数据是没有用的。 一个人必须获得意义。 这就是为什么CMDB通常与其他工具（如ITSM或独立的报告工具）结合使用的原因。 拥有多个工具会大大增加成本。 幸运的是，Motadata ServiceOps ITSM具有内置的报告工具，可用于分析CMDB。</li>
+</ul>
+<h2 id="CMDB的价值">CMDB的价值</h2>
+<p>按照CMDB不同层来说：</p>
+<ul>
+<li>接口层的价值 支撑整个运维平台的建设，尽量做到自动化，中心化的管理。</li>
+<li>展示层的价值 通过一个展示就很方便地知道我现在的物理服务器，虚拟机等的比例是多少，亦或者可以知道我们每个机柜的容量是多少，只要数据是准确的，有价值的，基于这些数据，我们就可以做出非常多的组合。</li>
+</ul>
+<p>按照通用的运维工作的价值维度来说：</p>
+<ul>
+<li>稳定 信息的维护越少人工干预，就越稳定。</li>
+<li>效率 如果按照中心化的思路去做CMDB话，有很多信息就不需要多处变更了，从这个维度来说，也就提高了我们的效率，提高效率的同时也保证整个系统的稳定，因为人工操作难免都会出现一些问题的。</li>
+<li>成本 我们可以根据CPU和内存去推算我的这个月这台服务器支出是多少，有了这些数据就可以得到每个月的机房支出，计算资源利用率。那么就可以很方便地进行。</li>
+</ul>
+<h2 id="涉及的工具">涉及的工具</h2>
+<ul>
+<li>Ansible</li>
+</ul>
+<p>​	简单的自动化IT工具。这个工具的目标有这么几项：自动化部署APP；自动化管理配置项；自动化的持续交互；自动化的（AWS）云服务管理。所有的这几个目标从本质上来说都是在一个台或者几台服务器上，执行一系列的命令而已。</p>
+<ul>
+<li>SALTSTACK</li>
+</ul>
+<p>​	一种全新的基础设施管理方式，部署轻松，在几分钟内可运行起来，扩展性好，很容易管理上万台服务器，速度够快，服务器之间秒级通讯。</p>
+<p>底层采用动态的连接总线，使其可以用于编配，远程执行， 配置管理等等。</p>
+<h1>参考链接</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.motadata.com/zh-CN/blog/what-is-cmdb/">💬1 - 什么是CMDB？ | 它为什么如此重要？ | 元数据 (motadata.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://maxwellyue.gitbooks.io/cmdb/content/devops/cmdb/cmdb-shi-shi-mo.html">CMDB是什么 · DevOps (gitbooks.io)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    <div>
+  
+  <div style="text-align:center;color: #ccc;font-size:14px;">------ 😸 本文结束, 感谢您的阅读 😸 ------</div>
+  
+</div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%BF%90%E7%BB%B4%E5%BC%80%E5%8F%91/" rel="tag"># 运维开发</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/07/23/Context%E7%9A%84%E6%AD%A3%E7%A1%AE%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8A%BF/" rel="prev" title="Context 正确使用姿势（推荐）">
+      <i class="fa fa-chevron-left"></i> Context 正确使用姿势（推荐）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/07/23/C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%20void%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%BA%94%E7%94%A8/" rel="next" title="C 语言中 void* 详解及应用">
+      C 语言中 void* 详解及应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">CMDB介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CMDB%E5%90%AB%E4%B9%89"><span class="nav-number">1.1.</span> <span class="nav-text">CMDB含义</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CMDB%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%EF%BC%9F"><span class="nav-number">1.1.1.</span> <span class="nav-text">CMDB如何工作？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMDB%E7%94%A8%E5%A4%84"><span class="nav-number">1.2.</span> <span class="nav-text">CMDB用处</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CMDB%E6%98%AF%E6%89%80%E6%9C%89IT%E8%B5%84%E4%BA%A7%E7%9A%84%E5%8F%82%E8%80%83%E7%82%B9"><span class="nav-number">1.2.0.1.</span> <span class="nav-text">CMDB是所有IT资产的参考点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CMDB%E5%85%81%E8%AE%B8%E8%B7%9F%E8%B8%AAIT%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E4%B8%AD%E7%9A%84%E6%9B%B4%E6%94%B9"><span class="nav-number">1.2.0.2.</span> <span class="nav-text">CMDB允许跟踪IT基础架构中的更改</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CMDB%E5%85%81%E8%AE%B8%E8%B7%9F%E8%B8%AAIT%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E4%B8%AD%E7%9A%84%E6%9B%B4%E6%94%B9-2"><span class="nav-number">1.2.0.3.</span> <span class="nav-text">CMDB允许跟踪IT基础架构中的更改</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CMDB%E6%9C%89%E5%8A%A9%E4%BA%8E%E7%9F%A5%E8%AF%86%E7%AE%A1%E7%90%86%E8%BF%87%E7%A8%8B"><span class="nav-number">1.2.0.4.</span> <span class="nav-text">CMDB有助于知识管理过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CMDB%E6%9C%89%E5%8A%A9%E4%BA%8EITSM%E6%B5%81%E7%A8%8B"><span class="nav-number">1.2.0.5.</span> <span class="nav-text">CMDB有助于ITSM流程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMDB%E4%B8%8E%E8%B5%84%E4%BA%A7%E7%AE%A1%E7%90%86"><span class="nav-number">1.3.</span> <span class="nav-text">CMDB与资产管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMDB%E7%AE%A1%E7%90%86%E4%BF%A1%E6%81%AF%E7%9A%84%E5%88%86%E7%B1%BB"><span class="nav-number">1.4.</span> <span class="nav-text">CMDB管理信息的分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMDB%E7%9A%84%E6%8C%91%E6%88%98"><span class="nav-number">1.5.</span> <span class="nav-text">CMDB的挑战</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMDB%E7%9A%84%E4%BB%B7%E5%80%BC"><span class="nav-number">1.6.</span> <span class="nav-text">CMDB的价值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%89%E5%8F%8A%E7%9A%84%E5%B7%A5%E5%85%B7"><span class="nav-number">1.7.</span> <span class="nav-text">涉及的工具</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Luenci"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Luenci</p>
+  <div class="site-description" itemprop="description">Debug Myself</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">140</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">54</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">101</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Lucareful" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Lucareful" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/Luenci379" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;Luenci379" rel="noopener" target="_blank"><i class="fab fa-c fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/lu-er-ye-70-61/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;lu-er-ye-70-61&#x2F;activities" rel="noopener" target="_blank"><i class="fa fa-zhihu fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lucarful@gmail.com" title="E-Mail → mailto:lucarful@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://hexo.io/" title="https:&#x2F;&#x2F;hexo.io" rel="noopener" target="_blank">Hexo</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.js.org/" title="https:&#x2F;&#x2F;theme-next.js.org&#x2F;" rel="noopener" target="_blank">NexT</a>
+        </li>
+    </ul>
+  </div>
+
+  <div class="links-of-recent-posts motion-element">
+    <div class="links-of-recent-posts-title">
+      <i class="fa fa-history fa-fw"></i>
+      最近文章
+    </div>
+    <ul class="links-of-recent-posts-list">
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/README/" title="2024&#x2F;07&#x2F;23&#x2F;README&#x2F;">写在前面</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/Golang%20pprof%20%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E5%8D%97/" title="2024&#x2F;07&#x2F;23&#x2F;Golang pprof 性能分析指南&#x2F;">Golang pprof 性能分析指南</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/%E5%A3%B0%E6%98%8E%E5%BC%8F%E5%92%8C%E5%91%BD%E4%BB%A4%E5%BC%8F%E7%BC%96%E7%A8%8B/" title="2024&#x2F;07&#x2F;23&#x2F;声明式和命令式编程&#x2F;">声明式和命令式编程</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/%E6%88%91%E7%9A%84%E7%BC%96%E7%A8%8B%E3%80%81%E7%83%AD%E7%88%B1%E3%80%81%E7%94%9F%E6%B4%BB/" title="2024&#x2F;07&#x2F;23&#x2F;我的编程、热爱、生活&#x2F;">我的编程、热爱、生活</a>
+        </li>
+        <li class="links-of-recent-posts-item">
+          <a href="/2024/07/23/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/" title="2024&#x2F;07&#x2F;23&#x2F;golang的coredump调试入门&#x2F;">golang的coredump调试入门</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luenci</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">332k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">20:07</span>
+</div>
+
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt = new Date("08/9/2018 17:38:00"); //在此处修改你的建站时间
+        now.setTime(now.getTime() + 250);
+        days = (now - grt) / 1000 / 60 / 60 / 24;
+        dnum = Math.floor(days);
+        hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+        hnum = Math.floor(hours);
+        if (String(hnum).length == 1) {
+            hnum = "0" + hnum;
+        }
+        minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+        mnum = Math.floor(minutes);
+        if (String(mnum).length == 1) {
+            mnum = "0" + mnum;
+        }
+        seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+        snum = Math.round(seconds);
+        if (String(snum).length == 1) {
+            snum = "0" + snum;
+        }
+        document.getElementById("timeDate").innerHTML =
+            "本站已运行 " + dnum + " 天 ";
+        document.getElementById("times").innerHTML =
+            hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+    setInterval("createtime()", 250);
+</script>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        访客数：<span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        阅读量：<span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="[object Object]"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '1yc5oJblYhuDOVUJ71pHwrTW-gzGzoHsz',
+      appKey     : 'yOAm4FuYux7D9hI5MOGRvqDw',
+      placeholder: "请在此输入您的留言",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+  
+  
+
+  <script async src="/js/cursor/firework.js"></script>
+
+</body>
+</html>
