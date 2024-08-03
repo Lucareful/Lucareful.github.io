@@ -1,0 +1,602 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Consul on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/consul/</link>
+    <description>Recent content in Consul on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/consul/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>consul服务发现</title>
+      <link>https://Lucareful.github.io/en/posts/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/consul%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/</guid>
+      <description>&lt;h1 id=&#34;consul服务发现&#34;&gt;consul服务发现&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Consul是由HashiCorp开发的一个支持多数据中心的分布式服务发现和键值对存储服务的开源软件，被大量应用于基于微服务的软件架构当中。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;服务发现流程图&#34;&gt;服务发现流程图&lt;/h2&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://gitee.com/luenci/RepoImg/raw/master/img/20210607214102.png&#34; alt=&#34;image-20210607214102612&#34;  /&gt;
+&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;服务发现，也可以看做一个“服务”，是给“服务”提供服务的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;服务发现种类&#34;&gt;服务发现种类&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;consul：常用于go-micro中&lt;/li&gt;
+&lt;li&gt;mdns：go-micro中默认的服务发现&lt;/li&gt;
+&lt;li&gt;etcd：k8s内嵌的服务发现&lt;/li&gt;
+&lt;li&gt;zookeeper：java中常用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;consul关键特性&#34;&gt;Consul关键特性&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;服务发现：consul提供服务，服务端主动向consul发起注册。&lt;/li&gt;
+&lt;li&gt;健康检查：定时发送消息，类似于“心跳包”，保证客户端获取到的一定是健康的服务。&lt;/li&gt;
+&lt;li&gt;键值存储：consul提供，但常用于redis。&lt;/li&gt;
+&lt;li&gt;多数据中心：可以轻松加入集群。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;consul-参数&#34;&gt;Consul 参数&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;安装好 Consul 后，在启动程序之前，需要掌握一些配置参数，通过掌握这些参数，可以一次性的成功运行 Consul 服务器集群，常用的参数如下：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;参数名称&lt;/th&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;用途&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;-server&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;此标志用于控制代理是运行于服务器/客户端模式，每个 Consul 集群至少有一个服务器，正常情况下不超过5个，使用此标记的服务器参与 Raft一致性算法、选举等事务性工作&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;-http-port=8500&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;consul自带的一个web访问端口，默认为8500&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;-client&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;表示 Consul 绑定客户端接口的IP地址，默认值为：127.0.0.1，当你有多块网卡的时候，最好指定IP地址，不要使用默认值&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;-bootstrap-expect&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;预期的服务器集群的数量，整数，如 -bootstrap-expect=3，表示集群服务器数量为3台，设置该参数后，Consul将等待指定数量的服务器全部加入集群可用后，才开始引导集群正式开始工作，此参数必须与 -server 一起使用&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;-data-dir&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;存储数据的目录，该目录在 Consul 程序重启后数据不会丢失，指定此目录时，应确保运行 Consul 程序的用户对该目录具有读写权限&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;-config-dir=XX&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;所有服务主动注册的配置文件&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;- node&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;当前服务器在集群中的名称，该值在整个 Consul 集群中必须唯一，默认值为当前主机名称&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;- bind&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;Consul 在当前服务器侦听的地址，如果您有多块网卡，请务必指定一个IP地址（IPv4/IPv6)，默认值为：0.0.0.0，也可用使用[::]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</description>
+      <content:encoded><![CDATA[<h1 id="consul服务发现">consul服务发现</h1>
+<blockquote>
+<p>Consul是由HashiCorp开发的一个支持多数据中心的分布式服务发现和键值对存储服务的开源软件，被大量应用于基于微服务的软件架构当中。</p>
+</blockquote>
+<h2 id="服务发现流程图">服务发现流程图</h2>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/20210607214102.png" alt="image-20210607214102612"  />
+</p>
+<ul>
+<li>服务发现，也可以看做一个“服务”，是给“服务”提供服务的</li>
+</ul>
+<h2 id="服务发现种类">服务发现种类</h2>
+<ul>
+<li>consul：常用于go-micro中</li>
+<li>mdns：go-micro中默认的服务发现</li>
+<li>etcd：k8s内嵌的服务发现</li>
+<li>zookeeper：java中常用</li>
+</ul>
+<h2 id="consul关键特性">Consul关键特性</h2>
+<ul>
+<li>服务发现：consul提供服务，服务端主动向consul发起注册。</li>
+<li>健康检查：定时发送消息，类似于“心跳包”，保证客户端获取到的一定是健康的服务。</li>
+<li>键值存储：consul提供，但常用于redis。</li>
+<li>多数据中心：可以轻松加入集群。</li>
+</ul>
+<h2 id="consul-参数">Consul 参数</h2>
+<ul>
+<li>安装好 Consul 后，在启动程序之前，需要掌握一些配置参数，通过掌握这些参数，可以一次性的成功运行 Consul 服务器集群，常用的参数如下：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">参数名称</th>
+<th style="text-align:center">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">-server</td>
+<td style="text-align:center">此标志用于控制代理是运行于服务器/客户端模式，每个 Consul 集群至少有一个服务器，正常情况下不超过5个，使用此标记的服务器参与 Raft一致性算法、选举等事务性工作</td>
+</tr>
+<tr>
+<td style="text-align:center">-http-port=8500</td>
+<td style="text-align:center">consul自带的一个web访问端口，默认为8500</td>
+</tr>
+<tr>
+<td style="text-align:center">-client</td>
+<td style="text-align:center">表示 Consul 绑定客户端接口的IP地址，默认值为：127.0.0.1，当你有多块网卡的时候，最好指定IP地址，不要使用默认值</td>
+</tr>
+<tr>
+<td style="text-align:center">-bootstrap-expect</td>
+<td style="text-align:center">预期的服务器集群的数量，整数，如 -bootstrap-expect=3，表示集群服务器数量为3台，设置该参数后，Consul将等待指定数量的服务器全部加入集群可用后，才开始引导集群正式开始工作，此参数必须与 -server 一起使用</td>
+</tr>
+<tr>
+<td style="text-align:center">-data-dir</td>
+<td style="text-align:center">存储数据的目录，该目录在 Consul 程序重启后数据不会丢失，指定此目录时，应确保运行 Consul 程序的用户对该目录具有读写权限</td>
+</tr>
+<tr>
+<td style="text-align:center">-config-dir=XX</td>
+<td style="text-align:center">所有服务主动注册的配置文件</td>
+</tr>
+<tr>
+<td style="text-align:center">- node</td>
+<td style="text-align:center">当前服务器在集群中的名称，该值在整个 Consul 集群中必须唯一，默认值为当前主机名称</td>
+</tr>
+<tr>
+<td style="text-align:center">- bind</td>
+<td style="text-align:center">Consul 在当前服务器侦听的地址，如果您有多块网卡，请务必指定一个IP地址（IPv4/IPv6)，默认值为：0.0.0.0，也可用使用[::]</td>
+</tr>
+</tbody>
+</table>
+<h2 id="启动consul">启动consul</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>consul agent -server -bootstrap-expect <span style="color:#a5d6ff">1</span> -data-dir /tmp/consul -node<span style="color:#ff7b72;font-weight:bold">=</span>consul1 -bind<span style="color:#ff7b72;font-weight:bold">=</span>172.16.249.181 -ui -rejoin -config-dir /etc/consul.d/ -client 0.0.0.0
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>如果第一次启动 请先创建 <code>/etc/consul.d/</code> 文件夹</li>
+<li>consul leave — 优雅退出consul</li>
+<li>consul members  — 查看consul成员</li>
+<li>consul info — 查看consul信息</li>
+</ul>
+<h2 id="注册服务到consul">注册服务到consul</h2>
+<ul>
+<li>增加配置在 <code>/etc/consul.d/demo.json</code></li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#7ee787">&#34;service&#34;</span>:{
+</span></span><span style="display:flex;"><span>                <span style="color:#7ee787">&#34;name&#34;</span>:<span style="color:#a5d6ff">&#34;luenci&#34;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#7ee787">&#34;tags&#34;</span>:[<span style="color:#a5d6ff">&#34;study&#34;</span>],
+</span></span><span style="display:flex;"><span>                <span style="color:#7ee787">&#34;port&#34;</span>:<span style="color:#a5d6ff">8880</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>curl 命令查看注册的服务</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>root@Luenci:~# curl -s 127.0.0.1:8500/v1/catalog/service/luenci | python -m json.tool
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">[</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;Address&#34;</span>: <span style="color:#a5d6ff">&#34;172.16.249.181&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;CreateIndex&#34;</span>: 44,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;Datacenter&#34;</span>: <span style="color:#a5d6ff">&#34;dc1&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ID&#34;</span>: <span style="color:#a5d6ff">&#34;c3908dfa-4fdf-4a57-686f-a3fc620fc5b7&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ModifyIndex&#34;</span>: 44,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;Node&#34;</span>: <span style="color:#a5d6ff">&#34;consul1&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;NodeMeta&#34;</span>: <span style="color:#ff7b72;font-weight:bold">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;consul-network-segment&#34;</span>: <span style="color:#a5d6ff">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72;font-weight:bold">}</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceAddress&#34;</span>: <span style="color:#a5d6ff">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceConnect&#34;</span>: <span style="color:#ff7b72;font-weight:bold">{}</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceEnableTagOverride&#34;</span>: false,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceID&#34;</span>: <span style="color:#a5d6ff">&#34;luenci&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceKind&#34;</span>: <span style="color:#a5d6ff">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceMeta&#34;</span>: <span style="color:#ff7b72;font-weight:bold">{}</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceName&#34;</span>: <span style="color:#a5d6ff">&#34;luenci&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServicePort&#34;</span>: 8880,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceProxy&#34;</span>: <span style="color:#ff7b72;font-weight:bold">{}</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceProxyDestination&#34;</span>: <span style="color:#a5d6ff">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceTags&#34;</span>: <span style="color:#ff7b72;font-weight:bold">[</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;study&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72;font-weight:bold">]</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;ServiceWeights&#34;</span>: <span style="color:#ff7b72;font-weight:bold">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;Passing&#34;</span>: 1,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;Warning&#34;</span>: <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72;font-weight:bold">}</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;TaggedAddresses&#34;</span>: <span style="color:#ff7b72;font-weight:bold">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;lan&#34;</span>: <span style="color:#a5d6ff">&#34;172.16.249.181&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;wan&#34;</span>: <span style="color:#a5d6ff">&#34;172.16.249.181&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72;font-weight:bold">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="健康检查">健康检查</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#f85149">root@Luenci:~#</span> <span style="color:#f85149">cat</span> <span style="color:#f85149">/etc/consul.d/sweetie.json</span> <span style="color:#f85149">|</span> <span style="color:#f85149">python</span> <span style="color:#f85149">-m</span> <span style="color:#f85149">json.tool</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#7ee787">&#34;service&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#7ee787">&#34;check&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#7ee787">&#34;http&#34;</span>: <span style="color:#a5d6ff">&#34;&lt;http://172.16.249.181:8001&gt;&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#7ee787">&#34;id&#34;</span>: <span style="color:#a5d6ff">&#34;api&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#7ee787">&#34;interval&#34;</span>: <span style="color:#a5d6ff">&#34;10s&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#7ee787">&#34;name&#34;</span>: <span style="color:#a5d6ff">&#34;check sweetie api&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#7ee787">&#34;timeout&#34;</span>: <span style="color:#a5d6ff">&#34;2s&#34;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#7ee787">&#34;name&#34;</span>: <span style="color:#a5d6ff">&#34;sweetie&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#7ee787">&#34;port&#34;</span>: <span style="color:#a5d6ff">8001</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#7ee787">&#34;tags&#34;</span>: [
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;fast-api&#34;</span>
+</span></span><span style="display:flex;"><span>        ]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>consul 健康检查必须是<code>Script</code>, <code>HTTP</code> ,  <code>TCP</code> , <code>TTL</code> 中的一种</li>
+</ul>
+<h2 id="使用go注册服务python做服务发现">使用go注册服务，python做服务发现</h2>
+<p><strong>服务注册</strong>，就是将提供某个服务的模块信息(通常是这个服务的ip和端口)注册到1个公共的组件上去。</p>
+<p><strong>服务发现</strong>，就是新注册的这个服务模块能够及时的被其他调用者发现。不管是服务新增和服务删减都能实现自动发现。</p>
+<h3 id="protoc文件">protoc文件</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-prolog" data-lang="prolog"><span style="display:flex;"><span><span style="color:#a5d6ff">syntax</span> <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#34;proto3&#34;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">//</span> <span style="color:#a5d6ff">指定所在包名</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">package</span> <span style="color:#a5d6ff">study</span>.<span style="color:#a5d6ff">consul</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">option</span> <span style="color:#a5d6ff">go_package</span> <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#34;./proto&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">message</span> <span style="color:#79c0ff">Human</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#a5d6ff">string</span> <span style="color:#a5d6ff">name</span> <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a5d6ff">int32</span> <span style="color:#a5d6ff">age</span> <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">2</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">service</span> <span style="color:#79c0ff">SayName</span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#a5d6ff">rpc</span> <span style="color:#79c0ff">Hello</span> (<span style="color:#79c0ff">Human</span>) <span style="color:#d2a8ff;font-weight:bold">returns</span> (<span style="color:#79c0ff">Human</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="server-consulgo实现">server-consul（go实现）</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">68
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">69
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">70
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">71
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">72
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">73
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">74
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
+</span></span><span style="display:flex;"><span>   <span style="color:#a5d6ff">&#34;context&#34;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#a5d6ff">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#a5d6ff">&#34;github.com/hashicorp/consul/api&#34;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#a5d6ff">&#34;google.golang.org/grpc&#34;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#a5d6ff">&#34;log&#34;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#a5d6ff">&#34;net&#34;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#a5d6ff">&#34;study.consul/proto&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Person <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>   proto.UnimplementedSayNameServer
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Person) <span style="color:#d2a8ff;font-weight:bold">Hello</span>(ctx context.Context, args <span style="color:#ff7b72;font-weight:bold">*</span>proto.Human) (<span style="color:#ff7b72;font-weight:bold">*</span>proto.Human, <span style="color:#ff7b72">error</span>) {
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 通过编译出来的rpc.pb.go解析String类型数据
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   args.Name <span style="color:#ff7b72;font-weight:bold">+=</span> <span style="color:#a5d6ff">&#34; is coding!&#34;</span>
+</span></span><span style="display:flex;"><span>   args.Age <span style="color:#ff7b72;font-weight:bold">+=</span> <span style="color:#a5d6ff">3</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#ff7b72">return</span> args, <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">/* ------------------- 注册服务到consul ---------------------*/</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 初始化consul配置
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   consulConfig <span style="color:#ff7b72;font-weight:bold">:=</span> api.<span style="color:#d2a8ff;font-weight:bold">DefaultConfig</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 创建consul对象
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   consulClient, err <span style="color:#ff7b72;font-weight:bold">:=</span> api.<span style="color:#d2a8ff;font-weight:bold">NewClient</span>(consulConfig)
+</span></span><span style="display:flex;"><span>   <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>      fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;api NewClient err&#34;</span>, err)
+</span></span><span style="display:flex;"><span>      <span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 注册服务，服务的常规信息
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   regInfo <span style="color:#ff7b72;font-weight:bold">:=</span> api.AgentServiceRegistration{
+</span></span><span style="display:flex;"><span>      ID:      <span style="color:#a5d6ff">&#34;go grpc&#34;</span>,
+</span></span><span style="display:flex;"><span>      Tags:    []<span style="color:#ff7b72">string</span>{<span style="color:#a5d6ff">&#34;grpc&#34;</span>, <span style="color:#a5d6ff">&#34;consul&#34;</span>},
+</span></span><span style="display:flex;"><span>      Name:    <span style="color:#a5d6ff">&#34;go grpc server&#34;</span>,
+</span></span><span style="display:flex;"><span>      Address: <span style="color:#a5d6ff">&#34;127.0.0.1&#34;</span>,
+</span></span><span style="display:flex;"><span>      Port:    <span style="color:#a5d6ff">5001</span>,
+</span></span><span style="display:flex;"><span>      Check: <span style="color:#ff7b72;font-weight:bold">&amp;</span>api.AgentServiceCheck{
+</span></span><span style="display:flex;"><span>         CheckID:  <span style="color:#a5d6ff">&#34;consul check grpc test&#34;</span>,
+</span></span><span style="display:flex;"><span>         TCP:      <span style="color:#a5d6ff">&#34;127.0.0.1:5001&#34;</span>,
+</span></span><span style="display:flex;"><span>         Timeout:  <span style="color:#a5d6ff">&#34;2s&#34;</span>,
+</span></span><span style="display:flex;"><span>         Interval: <span style="color:#a5d6ff">&#34;3s&#34;</span>,
+</span></span><span style="display:flex;"><span>      },
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 注册 grpc 服务到 consul 上
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   consulClient.<span style="color:#d2a8ff;font-weight:bold">Agent</span>().<span style="color:#d2a8ff;font-weight:bold">ServiceRegister</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>regInfo)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;注册成功...&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">/* ------------------- grpc 远程调用 ---------------------*/</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 初始化框架
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   grpcServer <span style="color:#ff7b72;font-weight:bold">:=</span> grpc.<span style="color:#d2a8ff;font-weight:bold">NewServer</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 注册服务
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   proto.<span style="color:#d2a8ff;font-weight:bold">RegisterSayNameServer</span>(grpcServer, new(Person))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 定义端口监听服务
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   lis, err <span style="color:#ff7b72;font-weight:bold">:=</span> net.<span style="color:#d2a8ff;font-weight:bold">Listen</span>(<span style="color:#a5d6ff">&#34;tcp&#34;</span>, <span style="color:#a5d6ff">&#34;127.0.0.1:5001&#34;</span>)
+</span></span><span style="display:flex;"><span>   <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>      log.<span style="color:#d2a8ff;font-weight:bold">Fatal</span>(err)
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>   <span style="color:#ff7b72">defer</span> lis.<span style="color:#d2a8ff;font-weight:bold">Close</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>   fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;服务启动...&#34;</span>)
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">// 开启监听
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   grpcServer.<span style="color:#d2a8ff;font-weight:bold">Serve</span>(lis)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="clien-consulpython实现">clien-consul(python实现)</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># -*- coding: UTF-8 -*-</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># pip install python-consul</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># python 编译 protoc</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># python -m grpc_tools.protoc --python_out=. --grpc_python_out=. -I. rpc.proto</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">consul</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">grpc</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">test_pb2</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">test_pb2_grpc</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>c <span style="color:#ff7b72;font-weight:bold">=</span> consul<span style="color:#ff7b72;font-weight:bold">.</span>Consul(<span style="color:#a5d6ff">&#34;XX.XX.XX.XX&#34;</span>, <span style="color:#a5d6ff">&#34;port&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># print(c.catalog.service(&#34;go grpc server&#34;))</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 从 consul 中拿到健康的服务</span>
+</span></span><span style="display:flex;"><span>service <span style="color:#ff7b72;font-weight:bold">=</span> c<span style="color:#ff7b72;font-weight:bold">.</span>health<span style="color:#ff7b72;font-weight:bold">.</span>service(<span style="color:#a5d6ff">&#34;go grpc server&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># print(type(service))</span>
+</span></span><span style="display:flex;"><span>addr <span style="color:#ff7b72;font-weight:bold">=</span> service[<span style="color:#a5d6ff">1</span>][<span style="color:#a5d6ff">0</span>][<span style="color:#a5d6ff">&#34;Service&#34;</span>][<span style="color:#a5d6ff">&#34;Address&#34;</span>]
+</span></span><span style="display:flex;"><span>port <span style="color:#ff7b72;font-weight:bold">=</span> service[<span style="color:#a5d6ff">1</span>][<span style="color:#a5d6ff">0</span>][<span style="color:#a5d6ff">&#34;Service&#34;</span>][<span style="color:#a5d6ff">&#34;Port&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 获取健康的服务 ip + port</span>
+</span></span><span style="display:flex;"><span>health_service <span style="color:#ff7b72;font-weight:bold">=</span> str(addr) <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#34;:&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> str(port)
+</span></span><span style="display:flex;"><span>print(health_service)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 连接 rpc 服务器</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> grpc<span style="color:#ff7b72;font-weight:bold">.</span>insecure_channel(health_service)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 调用rpc服务,通过编译出来的rpc_pb2_grpc的HelloService接口定义HelloServiceStub接口,接收来自channel的数据</span>
+</span></span><span style="display:flex;"><span>stub <span style="color:#ff7b72;font-weight:bold">=</span> test_pb2_grpc<span style="color:#ff7b72;font-weight:bold">.</span>SayNameStub(channel)
+</span></span><span style="display:flex;"><span>print(stub)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 通过接口的rpc获取String类型数据，并获取值</span>
+</span></span><span style="display:flex;"><span>response <span style="color:#ff7b72;font-weight:bold">=</span> stub<span style="color:#ff7b72;font-weight:bold">.</span>Hello(test_pb2<span style="color:#ff7b72;font-weight:bold">.</span>Human(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;luenci&#39;</span>, age<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">19</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#34;Greeter client received: &#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> response<span style="color:#ff7b72;font-weight:bold">.</span>name)
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#34;Greeter client received: &#34;</span>, response<span style="color:#ff7b72;font-weight:bold">.</span>age)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>扩展阅读：<a href="https://my.oschina.net/daba0007/blog/3189858">python与golang通过grpc进行通信</a></p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

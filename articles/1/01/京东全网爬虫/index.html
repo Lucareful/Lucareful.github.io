@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>京东全网爬虫 | Luenci</title>
+<meta name="keywords" content="scrapy框架">
+<meta name="description" content="完整代码见： https://github.com/Lucareful/JingDongSpider 写在前面： 折腾了很久的用python做爬虫项目到现在也该告一段落了，看视频学，遇到bug自己查找，代码思路不对重新写，环境不对自己配置&hellip;.一路上跌跌撞撞，过程很艰苦，所幸结果为好。 代码就像一面明镜，照见我自身的不足。继续加油 需求 抓取首页的分类信息 大分类的url 中分类的url 小分类的url 抓取商品信息 商品名称 价格 评论信息 店铺 促销 选项 图片 开发环境和技术 技术选择： 由于全网爬虫">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="http://localhost:1313/articles/1/01/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.54405a410796490bc874ab6181fac9b675753cc2b91375d8f882566459eca428.css" integrity="sha256-VEBaQQeWSQvIdKthgfrJtnV1PMK5E3XY&#43;IJWZFnspCg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/articles/1/01/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Luenci (Alt + H)">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/index.xml" title="RSS Feed">
+                    <span>RSS Feed</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      京东全网爬虫
+    </h1>
+    <div class="post-meta">Luenci
+
+</div>
+  </header> 
+  <div class="post-content"><p>完整代码见： <a href="https://github.com/Lucareful/JingDongSpider">https://github.com/Lucareful/JingDongSpider</a></p>
+<p>写在前面：</p>
+<blockquote>
+<p>折腾了很久的用python做爬虫项目到现在也该告一段落了，看视频学，遇到bug自己查找，代码思路不对重新写，环境不对自己配置&hellip;.一路上跌跌撞撞，过程很艰苦，所幸结果为好。</p>
+<p>代码就像一面明镜，照见我自身的不足。继续加油</p>
+</blockquote>
+<h2 id="需求">需求<a hidden class="anchor" aria-hidden="true" href="#需求">#</a></h2>
+<ul>
+<li>抓取首页的分类信息
+<ul>
+<li>大分类的url</li>
+<li>中分类的url</li>
+<li>小分类的url</li>
+</ul>
+</li>
+<li>抓取商品信息
+<ul>
+<li>商品名称</li>
+<li>价格</li>
+<li>评论信息</li>
+<li>店铺</li>
+<li>促销</li>
+<li>选项</li>
+<li>图片</li>
+</ul>
+</li>
+</ul>
+<h2 id="开发环境和技术">开发环境和技术<a hidden class="anchor" aria-hidden="true" href="#开发环境和技术">#</a></h2>
+<ul>
+<li>技术选择：</li>
+<li>由于全网爬虫，抓取页面非常多，为了提高抓的速度，选择使用<code>scrapy</code>框架+<code>scrapy_redis</code>分布式组件</li>
+<li>由于京东全网的数据量达到了亿级，存储又是结构化数据，</li>
+<li>数据库，选择使用MongoDB；</li>
+</ul>
+<!-- raw HTML omitted -->
+<h1 id="京东全网爬虫的实现步骤">京东全网爬虫的实现步骤<a hidden class="anchor" aria-hidden="true" href="#京东全网爬虫的实现步骤">#</a></h1>
+<ul>
+<li>采取广度优先策略，我们把类别和商品信息的抓取分开来做</li>
+</ul>
+<blockquote>
+<p>优点，提高程序的稳定性</p>
+</blockquote>
+<ul>
+<li>总体设计</li>
+</ul>
+<p><img loading="lazy" src="https://i.ibb.co/FDqW9vd/image-20191120143929099.png" alt="image-20191120143929099"  />
+</p>
+<h2 id="实现步骤">实现步骤<a hidden class="anchor" aria-hidden="true" href="#实现步骤">#</a></h2>
+<ol>
+<li>创建爬虫项目</li>
+<li>根据需求，定义数据数据模型</li>
+<li>实现分类起虫</li>
+<li>保存分类信息</li>
+<li>实现商品爬虫</li>
+<li>保存商品信息</li>
+<li>实现随机User-Agent和代理IP下载器中间件，解决IP反爬。</li>
+</ol>
+<h2 id="创建爬虫项目">创建爬虫项目<a hidden class="anchor" aria-hidden="true" href="#创建爬虫项目">#</a></h2>
+<p><code>scrapy startproject jingDong</code></p>
+<h2 id="定义数据模型要抓取的数据">定义数据模型（要抓取的数据）<a hidden class="anchor" aria-hidden="true" href="#定义数据模型要抓取的数据">#</a></h2>
+<h3 id="类别数据模型类">类别数据模型类<a hidden class="anchor" aria-hidden="true" href="#类别数据模型类">#</a></h3>
+<ul>
+<li>
+<p>用于存储类别信息（Category）-字段：</p>
+</li>
+<li>
+<p><code>b.category_name</code>：大类别名称。</p>
+</li>
+<li>
+<p><code>b_category_url</code>：大类别URL。</p>
+</li>
+<li>
+<p><code>m_category_name</code>：中分类名称。</p>
+</li>
+<li>
+<p><code>m_category_url</code>：中分类URL。</p>
+</li>
+<li>
+<p><code>s_category_name</code>：小分类名称</p>
+</li>
+<li>
+<p><code>s_category_url</code>：小分类URL</p>
+</li>
+</ul>
+<h3 id="商品数据模型">商品数据模型<a hidden class="anchor" aria-hidden="true" href="#商品数据模型">#</a></h3>
+<ul>
+<li>商品数据模型类：用于存储商品信息（Product）字段：</li>
+<li>oproduct_category：商品类别</li>
+<li>product_sku_id：商品ID</li>
+<li>product_name：商品名称</li>
+<li>product_img_url：商品图片URL</li>
+<li>product_book_info：图书信息，作者，出版社</li>
+<li>product_option：商品选项</li>
+<li>product_shop：商品店铺</li>
+<li>product_comments：商品评论数量</li>
+<li>product_ad：商品促销</li>
+<li>product_price：商品价格</li>
+</ul>
+<h2 id="商品的分类爬虫">商品的分类爬虫<a hidden class="anchor" aria-hidden="true" href="#商品的分类爬虫">#</a></h2>
+<ul>
+<li>创建爬虫</li>
+<li>进入项目目录：cd mall_spider</li>
+<li>创建爬虫：scrapy genslider category_spider jd.com</li>
+<li>指定起始URL</li>
+<li>修改起始URL: <a href="https://dc.3.cn/category/get">https://dc.3.cn/category/get</a></li>
+</ul>
+<h2 id="实现保存分类的pipeline类">实现保存分类的pipeline类<a hidden class="anchor" aria-hidden="true" href="#实现保存分类的pipeline类">#</a></h2>
+<ul>
+<li>open_spider 方法中，链接MongoDB数据库，获取要操作的集合</li>
+<li>process_item 方法中，向MongoDB中插入类别数据</li>
+<li>close_spider 方法中，关闭MongoDB的链接</li>
+</ul>
+<h1 id="实现商品爬虫">实现商品爬虫<a hidden class="anchor" aria-hidden="true" href="#实现商品爬虫">#</a></h1>
+<ul>
+<li>
+<p>步骤</p>
+<ul>
+<li>分析，确定数据所在的URL</li>
+<li>代码实现（核心）</li>
+<li>商品爬虫实现分布式</li>
+</ul>
+</li>
+<li>
+<p>分析，确定数据所在的URL</p>
+<ul>
+<li>解析列表页，提取商品sku_id，实现翻页，确定翻页的URL</li>
+<li>获取商品的基本信息，通过手机抓包（APP），确定URL</li>
+<li>PC详情页面，确定商品的促销信息的URL</li>
+<li>PC详情页面，确定评论信息的URL</li>
+<li>PC详情页面，确定商品价格信息的URL</li>
+</ul>
+</li>
+<li>
+<p>代码实现</p>
+</li>
+<li>
+<p>1.重写start_requests方法，根据分类信息构建列表页的请求</p>
+</li>
+<li>
+<p>2.解析列表页，提取商品的skuid，构建商品基本的信息请求；实现列表翻页</p>
+<p>1.确定商品基本的信息请求</p>
+<p>1.URL:https://cdnware.m.jd.com/c1/skuDetail/apple/7.3.0/32962088964.json
+2.请求方法：GET
+3.参数/数据：32962088964商品的skuid
+2.解析列表页，提取商品的skuid
+3.构建商品基本的信息请求
+4.实现列表翻页</p>
+</li>
+<li>
+<p>解析促销信息，构建商品评价信息的请求</p>
+</li>
+<li>
+<p>1.解析促销信息</p>
+<ul>
+<li>
+<p>1.produft_ad：商品促销</p>
+</li>
+<li>
+<p>2.构建商品评价信息的请求</p>
+<ul>
+<li>1.准备评价信息的请求</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>解析商品评价信息，构建价格信息的请求</p>
+</li>
+<li>
+<p>解析商品评价信息</p>
+<ul>
+<li>1.product_comments：商品评论数量</li>
+<li>2.评价数量，好评数量，差拜数量，好评率</li>
+<li>2.构建价格信息的请求</li>
+</ul>
+</li>
+<li>
+<p>准备价格请求：</p>
+<ul>
+<li>1.URL:https://p.3.cn/prices/mgets?skulds=J_69334292.</li>
+<li>2.请求方法：GET</li>
+<li>3.参数：skulds=J_6933429，j后跟这个商品的sku_id</li>
+</ul>
+</li>
+<li>
+<p>解析价格信息</p>
+<ul>
+<li>1.product_price：商品价格</li>
+<li>2.把商品数据交给引擎</li>
+</ul>
+</li>
+</ul>
+<h1 id="商品爬虫实现分布式">商品爬虫实现分布式<a hidden class="anchor" aria-hidden="true" href="#商品爬虫实现分布式">#</a></h1>
+<ul>
+<li>修改爬虫类
+<ul>
+<li>修改继承关系</li>
+<li>指定redis_key</li>
+<li>把重写start_requests改为重写make_request from data I</li>
+</ul>
+</li>
+<li>在settings文件中配置scrapy_redis
+<ul>
+<li>直接拷贝scrapy_redis配置信息，到settings.py中.</li>
+</ul>
+</li>
+<li>写一个程序用于把MongoDB中分类信息，放入到爬虫redis_key指定的列表中</li>
+</ul>
+<h1 id="保存商品数据">保存商品数据<a hidden class="anchor" aria-hidden="true" href="#保存商品数据">#</a></h1>
+<ul>
+<li>实现存储商品Pipeline类
+<ul>
+<li>在open_spider方法，建立MongoDB数据库连接，获取要操作的集合</li>
+<li>在process_item方法，把数据插入到MongoDB中</li>
+<li>在close_spider方法，关闭数据库连接</li>
+</ul>
+</li>
+<li>在settings.py中开启这个管道</li>
+</ul>
+<h1 id="实现下载器中间件">实现下载器中间件<a hidden class="anchor" aria-hidden="true" href="#实现下载器中间件">#</a></h1>
+<ul>
+<li>
+<p>实现随机User-Agent的中间件</p>
+</li>
+<li>
+<p>在settings.py中开启上面的下载器中间
+件</p>
+</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/scrapy%E6%A1%86%E6%9E%B6/">Scrapy框架</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Go 变量声明指南 | Luenci</title>
+<meta name="keywords" content="syntax">
+<meta name="description" content="golang var、:=、new、make区别及使用
+​    go里面的几大变量“类型”(不严谨，只是个人在使用的时候常用到的结构的一个划分)
+
+（1） 值类型： int， string， struct 等
+（2） 引用类型：主要是 map, slice,chan 这三个引用（make创建内存的）
+（3）指针类型：*int64， *struct等
+
+var vs :=
+​	对于值类型的变量，我们通过var 声明(包括结构体)，系统会默认为他分配内存空间，并赋该类型的零值。
+如下，我们声明一个int类型变量i，输出为0。
+
+
+1
+2
+
+
+var i int
+fmt.Println(i) // i = 0 (类型零值)
+
+
+var和:=之间实际上存在差异，采用:=允许重新声明变量。
+
+与常规变量声明不同，:=声明可以重新声明变量，前提是它们最初在同一块中以相同类型声明，并且至少有一个非空白变量是新的。因此，重新声明只能出现在多变量短声明中。
+重新声明不引入新变量；它只是为原始值分配一个新值。
+
+
+
+1
+2
+3
+4
+
+
+field1, offset := nextField(str, 0)
+field2, offset := nextField(str, offset)  // 重新声明偏移量(可重入)
+
+a, a := 1, 2                              // 非法：如果在别处声明了 a，则双重声明 a 或没有新变量
+
+
+所以我会说:=运算符不是纯粹的声明，而是更像声明和分配。不允许在顶层重新声明，因此也不允许短声明。另一个原因可能是语法简单。type在 Go 中，所有顶级表单都以var 或 func 开头。
+
+建议：重复声明的变量用 :=，比如 err 的声明，使用的值或全局变量（不推荐大量使用）用 var， 如 var fields []string
+">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="http://localhost:1313/articles/1/01/go-%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E%E6%8C%87%E5%8D%97/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.54405a410796490bc874ab6181fac9b675753cc2b91375d8f882566459eca428.css" integrity="sha256-VEBaQQeWSQvIdKthgfrJtnV1PMK5E3XY&#43;IJWZFnspCg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/articles/1/01/go-%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E%E6%8C%87%E5%8D%97/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Luenci (Alt + H)">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/index.xml" title="RSS Feed">
+                    <span>RSS Feed</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Go 变量声明指南
+    </h1>
+    <div class="post-meta">Luenci
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="golang-varnewmake区别及使用">golang var、:=、new、make区别及使用<a hidden class="anchor" aria-hidden="true" href="#golang-varnewmake区别及使用">#</a></h1>
+<p>​    go里面的几大变量“类型”(不严谨，只是个人在使用的时候常用到的结构的一个划分)</p>
+<ul>
+<li>（1） 值类型：<code> int</code>， <code>string</code>， <code>struct</code> 等</li>
+<li>（2） 引用类型：主要是 <code>map</code>, <code>slice</code>,<code>chan</code> 这三个引用（<code>make</code>创建内存的）</li>
+<li>（3）指针类型：<code>*int64</code>， <code>*struct</code>等</li>
+</ul>
+<h2 id="var-vs-"><code>var</code> vs <code>:=</code><a hidden class="anchor" aria-hidden="true" href="#var-vs-">#</a></h2>
+<p>​	对于值类型的变量，我们通过var 声明(包括结构体)，系统会默认为他分配内存空间，并赋该类型的零值。</p>
+<p>如下，我们声明一个int类型变量i，输出为0。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">var</span> i <span style="color:#8be9fd">int</span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#50fa7b">Println</span>(i) <span style="color:#6272a4">// i = 0 (类型零值)
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>var</code>和<code>:=</code>之间实际上存在差异，<strong>采用<code>:=</code>允许重新声明变量</strong>。</p>
+<blockquote>
+<p>与常规变量声明不同，<code>:=</code>声明可以重新声明变量，前提是它们最初在同一块中以相同类型声明，并且至少有一个非空白变量是新的。因此，重新声明只能出现在多变量短声明中。</p>
+<p>重新声明不引入新变量；它只是为原始值分配一个新值。</p>
+</blockquote>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>field1, offset <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">nextField</span>(str, <span style="color:#bd93f9">0</span>)
+</span></span><span style="display:flex;"><span>field2, offset <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">nextField</span>(str, offset)  <span style="color:#6272a4">// 重新声明偏移量(可重入)
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span>a, a <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">2</span>                              <span style="color:#6272a4">// 非法：如果在别处声明了 a，则双重声明 a 或没有新变量
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>所以我会说<code>:=</code>运算符不是纯粹的声明，而是更像声明和分配。不允许在顶层重新声明，因此也不允许短声明。另一个原因可能是语法简单。<code>type</code>在 Go 中，所有顶级表单都以<code>var</code> 或 <code>func</code> 开头。</p>
+<blockquote>
+<p>建议：重复声明的变量用 <code>:=</code>，比如 err 的声明，使用的值或全局变量（不推荐大量使用）用 var， 如 var fields []string</p>
+</blockquote>
+<h2 id="new函数"><strong>new函数</strong><a hidden class="anchor" aria-hidden="true" href="#new函数">#</a></h2>
+<p>来看一下new函数的签名：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#8be9fd;font-style:italic">new</span>(Type)<span style="color:#ff79c6">*</span>Type
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	它只接受一个参数，这个参数是一个类型，分配好内存后，返回一个指向该类型内存地址的指针。同时把分配的内存置为零，也就是类型的零值。但是实际在工程使用中，通常是直接声明指针使用，不需要 new 操作。</p>
+<p>如果我们声明一个指针类型的变量，系统不会为他分配内存，默认就是<code>nil</code>。此时如果你想直接使用，那么系统会抛异常。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">var</span> j <span style="color:#ff79c6">*</span><span style="color:#8be9fd">int</span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#50fa7b">Println</span>(j)
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">*</span>j = <span style="color:#bd93f9">10</span>  <span style="color:#6272a4">//invalid memory address or nil pointer dereference
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// 也就是说，空指针还没有内存分配，是不能使用的。那么要想使用，此时就需要new出场啦。
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">var</span> j <span style="color:#ff79c6">*</span><span style="color:#8be9fd">int</span>
+</span></span><span style="display:flex;"><span>j = <span style="color:#8be9fd;font-style:italic">new</span>(<span style="color:#8be9fd">int</span>)  <span style="color:#6272a4">// 让j里面的内容指向一块分配好的内存地址，地址里面设置int的零值：0
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>fmt.<span style="color:#50fa7b">Println</span>(j)
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#50fa7b">Println</span>(<span style="color:#ff79c6">*</span>j)
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">*</span>j = <span style="color:#bd93f9">10</span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#50fa7b">Println</span>(<span style="color:#ff79c6">*</span>j)
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// 声明指针类型变量后，通过new为他分配内存，有了内存空间，这个变量就可以自由的使用了。
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="make函数"><strong>Make函数</strong><a hidden class="anchor" aria-hidden="true" href="#make函数">#</a></h2>
+<blockquote>
+<p><code>make</code>和<code>new</code>不同，<code>make</code> 用于 <code>map</code>, <code>slice</code>,<code>chan</code> 的内存创建，因为他们三个是引用类型，直接返回这三个类型本身。</p>
+</blockquote>
+<p>make签名是：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#8be9fd;font-style:italic">make</span>(t Type, size <span style="color:#ff79c6">...</span>IntegerType) Type
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>make 是<strong>分配内存并初始化，初始化并不是置为零值(而是将地址空间的值二进制为都设置为0)</strong>。</p>
+<p>与new一样，它的第一个参数也是一个类型，但是不一样的是，make返回的是传入的类型，而不是指针！</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">var</span> c <span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd">int</span> <span style="color:#6272a4">//声明管道类型变量c，此时c还是nil，不可用
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;%#v \\n&#34;</span>,c) <span style="color:#6272a4">//(chan int)(nil)
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span>c = <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd">int</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;%#v&#34;</span>, c) <span style="color:#6272a4">//(chan int)(0xc000062060)
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>声明管道类型变量c，此时c还是nil，不可用；通过make来分配内存并初始化，c就获得了内存可以使用了。所以，我们在使用map, slice,chan 的时候，需要先对他们用make初始化，然后在进行操作。</p>
+<h1 id="总结"><strong>总结</strong><a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h1>
+<ul>
+<li><code>new </code>和<code>make</code>都是Go语言的两个内建函数，用于分配内存</li>
+<li><code>new</code> 一般用来返回指针类型（一般不用），make返回引用类型（<code>map</code>,<code> slice</code>,<code>chan </code>这三个引用)</li>
+<li><code>var</code>声明的 基本类型和<code>struct</code>这种已经分配了内存，并且赋零值了。</li>
+</ul>
+<h1 id="参考链接">参考链接<a hidden class="anchor" aria-hidden="true" href="#参考链接">#</a></h1>
+<ul>
+<li><a href="https://stackoverflow.com/questions/21657446/var-vs-in-go">https://stackoverflow.com/questions/21657446/var-vs-in-go</a></li>
+<li><a href="https://stackoverflow.com/questions/25358130/what-is-the-difference-between-new-and-make">https://stackoverflow.com/questions/25358130/what-is-the-difference-between-new-and-make</a></li>
+<li><a href="https://stackoverflow.com/questions/9320862/why-would-i-make-or-new?noredirect=1&amp;lq=1">https://stackoverflow.com/questions/9320862/why-would-i-make-or-new?noredirect=1&amp;lq=1</a></li>
+</ul>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/syntax/">Syntax</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

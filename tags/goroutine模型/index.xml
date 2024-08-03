@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Goroutine模型 on Luenci</title>
+    <link>http://localhost:1313/tags/goroutine%E6%A8%A1%E5%9E%8B/</link>
+    <description>Recent content in Goroutine模型 on Luenci</description>
+    <generator>Hugo -- 0.129.0</generator>
+    <language>en-us</language>
+    <atom:link href="http://localhost:1313/tags/goroutine%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang 并发模型 &amp; Goroutine 详解</title>
+      <link>http://localhost:1313/articles/1/01/golang-%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B-goroutine-%E8%AF%A6%E8%A7%A3/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/golang-%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B-goroutine-%E8%AF%A6%E8%A7%A3/</guid>
+      <description>&lt;h1 id=&#34;golang-并发模型--goroutine-详解&#34;&gt;&lt;code&gt;Golang&lt;/code&gt; 并发模型 &amp;amp; Goroutine 详解&lt;/h1&gt;
+&lt;p&gt;💡 &lt;strong&gt;并发不是并行，并发关乎结构，并行关乎执行&lt;/strong&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;操作系统的基本调度与执行单元是进程(process)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;操作系统&lt;/strong&gt;的&lt;strong&gt;最小调度&lt;/strong&gt;单位是线程-&lt;code&gt;线程可作为执行单元可被独立调度到处理器上运行&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;csp-communicationing-sequential-processes通信顺序进程并发模型&#34;&gt;**&lt;code&gt;CSP&lt;/code&gt;( Communicationing Sequential Processes，通信顺序进程)**并发模型&lt;/h2&gt;
+&lt;p&gt;Tony Hoare 的 &lt;code&gt;CSP&lt;/code&gt; 模型旨在简化并发程序的编写，让并发程序的编写与编写顺序程序一样简单。Tony Hoare 认为输入输出应该是基本的编程原语，数据处理逻辑(也就是 &lt;code&gt;CSP&lt;/code&gt;中的 P)只需调用输入原语获取数据，顺序地处理数据，并将结果数据通过输出原语输出就可以了。因此，在 Tony Hoare 眼中，&lt;strong&gt;一个符合 &lt;code&gt;CSP&lt;/code&gt; 模型的并发程序应该是一组通过输入输出原语连接起来的 P 的集合&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;从这个角度来看，&lt;code&gt;CSP&lt;/code&gt;理论不仅是一个并发参考模型，也是一种并发程序的程序组织方法。它的组合思想与 Go 的设计哲学不谋而合。&lt;/p&gt;
+&lt;p&gt;Tony Hoare 的 &lt;code&gt;CSP&lt;/code&gt; 理论中的 P，也就是“Process(进程)”，是一个抽象概念，它代表任何顺序处理逻辑的封装，它获取输入数据(或从其他 P 的输出获取)，并生产出可以被其他 P 消费的输出数据。这里我们可以简单看下 &lt;code&gt;CSP&lt;/code&gt; 通信模型的示意图:&lt;/p&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://gitee.com/luenci/RepoImg/raw/master/img/202202112129599.png&#34; alt=&#34;image-20220211212946539&#34;  /&gt;
+&lt;/p&gt;
+&lt;p&gt;注意了，这里的 P 并不一定与操作系统的进程或线程划等号。在 Go 中，与“Process”对 应的是 &lt;code&gt;goroutine&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;为了实现 &lt;code&gt;CSP&lt;/code&gt; 并发模型中的输入和输出原语，Go 还引入了 &lt;code&gt;goroutine&lt;/code&gt;(P)之间的通信原语channel。goroutine 可以从 channel 获取输入数据， 再将处理后得到的结果数据通过 channel 输出。通过 channel 将 goroutine(P)组合连 接在一起，让设计和编写大型并发系统变得更加简单和清晰，我们再也不用为那些传统共 享内存并发模型中的问题而伤脑筋了。&lt;/p&gt;
+&lt;h2 id=&#34;goroutine-的优势&#34;&gt;&lt;code&gt;Goroutine&lt;/code&gt; 的优势&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;资源占用小，每个 goroutine 的初始栈大小仅为 2k;&lt;/li&gt;
+&lt;li&gt;由 Go 运行时而不是操作系统调度，goroutine 上下文切换在用户层完成，开销更小;&lt;/li&gt;
+&lt;li&gt;在语言层面而不是通过标准库提供。goroutine 由go关键字创建，一退出就会被回收或 销毁，开发体验更佳&lt;/li&gt;
+&lt;li&gt;语言内置 channel 作为 goroutine 间通信原语，为并发设计提供了强大支撑。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;goroutine-调度器&#34;&gt;&lt;strong&gt;&lt;code&gt;Goroutine&lt;/code&gt; 调度器&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;一个 Go 程序对于操作系统来说只是一个&lt;strong&gt;用户层程序&lt;/strong&gt;，操作系统眼中只有线程，它甚至不知道有一种叫 &lt;strong&gt;Goroutine&lt;/strong&gt; 的事物存在。所以，Goroutine 的调度全要靠 Go 自己完成。那么，实现 Go 程序内 Goroutine 之间“公平”竞争“CPU”资源的任务，就落到了Go 运行时(runtime)头上了。要知道在一个 Go 程序中，除了用户层代码，剩下的就是Go 运行时了。&lt;/p&gt;
+&lt;p&gt;于是，Goroutine 的调度问题就演变为，Go 运行时如何将程序内的众多 Goroutine，按照一定算法调度到“CPU”资源上运行的问题了。&lt;/p&gt;
+&lt;p&gt;💡 &lt;strong&gt;可是，在操作系统层面，线程竞争的“CPU”资源是真实的物理 CPU，但在 Go 程序层 面，各个 Goroutine 要竞争的“CPU”资源又是什么呢?&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Go 程序是用户层程序，它本身就是整体运行在一个或多个操作系统线程上的。所以这个答案就出来了: &lt;strong&gt;Goroutine 们要竞争的“CPU”资源就是操作系统线程&lt;/strong&gt;。这样，Goroutine调度器的任务也就明确了: &lt;strong&gt;将 Goroutine 按照一定算法放到不同的操作系统线程中去执行&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;</description>
+    </item>
+  </channel>
+</rss>

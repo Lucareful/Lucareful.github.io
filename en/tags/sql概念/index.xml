@@ -1,0 +1,866 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>SQL概念 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/sql%E6%A6%82%E5%BF%B5/</link>
+    <description>Recent content in SQL概念 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/sql%E6%A6%82%E5%BF%B5/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL数据库引擎和数据类型</title>
+      <link>https://Lucareful.github.io/en/posts/mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E%E5%92%8C%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</guid>
+      <description>&lt;h2 id=&#34;数据库引擎介绍&#34;&gt;&lt;strong&gt;数据库引擎介绍&lt;/strong&gt;&lt;/h2&gt;
+&lt;h3 id=&#34;前言&#34;&gt;前言&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;1、存储引擎其实就是对于数据库文件的一种存取机制，如何实现存储数据，如何为存储的数据建立索引以及如何更新，查询数据等技术实现的方法。&lt;/li&gt;
+&lt;li&gt;2、MySQL中的数据用各种不同的技术存储在文件（或内存）中，这些技术中的每一种技术都使用不同的存储机制，索引技巧，锁定水平并且最终提供广泛的不同功能和能力。在MySQL中将这些不同的技术及配套的相关功能称为存储引擎。&lt;/li&gt;
+&lt;li&gt;3、根据需求可以在表中设置不同的存储引擎。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;查看mysql中的引擎&#34;&gt;查看mysql中的引擎&lt;/h3&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200605131656597.png&#34; alt=&#34;查看引擎&#34;  /&gt;
+&lt;/p&gt;
+&lt;h3 id=&#34;mysql中常用的几种存储引擎&#34;&gt;MySQL中常用的几种存储引擎&lt;/h3&gt;
+&lt;h3 id=&#34;1myisam存储引擎&#34;&gt;1．&lt;code&gt;MyISAM&lt;/code&gt;存储引擎&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;存放的位置&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MySQL如果使用&lt;code&gt;MyISAM&lt;/code&gt;存储引擎，数据库文件类型就包括&lt;code&gt;.frm&lt;/code&gt;、&lt;code&gt;.MYD&lt;/code&gt;、&lt;code&gt;.MYI&lt;/code&gt;，默认存放位置是&lt;code&gt;C:\Documentsand Settings\All Users\Application Data\MySQL\MySQL Server 5.1\data&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;存放的方式&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MyISAM&lt;/code&gt; 这种存储引擎不支持事务，不支持行级锁，只支持并发插入的表锁，主要用于高负载的select。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;索引的方式&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MyISAM&lt;/code&gt;也是使用B+tree索引但是和&lt;code&gt;Innodb&lt;/code&gt;的在具体实现上有些不同。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;该引擎基于&lt;code&gt;ISAM&lt;/code&gt;数据库引擎，除了提供&lt;code&gt;ISAM&lt;/code&gt;里所没有的索引和字段管理等大量功能，&lt;code&gt;MyISAM&lt;/code&gt;还使用一种表格锁定的机制来优化多个并发的读写操作，但是需要经常运行OPTIMIZE TABLE命令，来恢复被更新机制所浪费的空间，否则碎片也会随之增加，最终影响数据访问性能。&lt;code&gt;MyISAM&lt;/code&gt;还有一些有用的扩展，例如用来修复数据库文件的&lt;code&gt;MyISAMChk&lt;/code&gt;工具和用来恢复浪费空间的 &lt;code&gt;MyISAMPack&lt;/code&gt;工具。&lt;code&gt;MyISAM&lt;/code&gt;强调了快速读取操作，主要用于高负载的select，这可能也是MySQL深受Web开发的主要原因：在Web开发中进行的大量数据操作都是读取操作，所以大多数虚拟主机提供商和Internet平台提供商（Internet Presence Provider, &lt;code&gt;IPP&lt;/code&gt;）只允许使用&lt;code&gt;MyISAM&lt;/code&gt;格式。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;MyISAM&lt;/code&gt;类型的表支持三种不同的存储结构：静态型、动态型、压缩型。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;静态型：指定义的表列的大小是固定（即不含有：&lt;code&gt;xblob&lt;/code&gt;、&lt;code&gt;xtext&lt;/code&gt;、&lt;code&gt;varchar&lt;/code&gt;等长度可变的数据类型），这样MySQL就会自动使用静态&lt;code&gt;MyISAM&lt;/code&gt;格式。使用静态格式的表的性能比较高，因为在维护和访问以预定格式存储数据时需要的开销很低；但这种高性能是以空间为代价换来的，因为在定义的时候是固定的，所以不管列中的值有多大，都会以最大值为准，占据了整个空间。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;动态型：如果列（即使只有一列）定义为动态的（&lt;code&gt;xblob&lt;/code&gt;, &lt;code&gt;xtext&lt;/code&gt;, &lt;code&gt;varchar&lt;/code&gt;等数据类型），这时&lt;code&gt;MyISAM&lt;/code&gt;就自动使用动态型，虽然动态型的表占用了比静态型表较少的空间，但带来了性能的降低，因为如果某个字段的内容发生改变则其位置很可能需要移动，这样就会导致碎片的产生，随着数据变化的增多，碎片也随之增加，数据访问性能会随之降低。
+对于因碎片增加而降低数据访问性这个问题，有两种解决办法：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;a、尽可能使用静态数据类型；&lt;/li&gt;
+&lt;li&gt;b、经常使用&lt;code&gt;optimize table table_name&lt;/code&gt;语句整理表的碎片，恢复由于表数据的更新和删除导致的空间丢失。如果存储引擎不支持&lt;code&gt; optimize table table_name&lt;/code&gt;则可以转储并 重新加载数据，这样也可以减少碎片；&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;压缩型：如果在数据库中创建在整个生命周期内只读的表，则应该使用&lt;code&gt;MyISAM&lt;/code&gt;的压缩型表来减少空间的占用。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;优缺点：&lt;code&gt;MyISAM&lt;/code&gt;的优势在于占用空间小，处理速度快。缺点是不支持事务的完整性和并发性。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;2innodb存储引擎&#34;&gt;2．&lt;code&gt;innoDB&lt;/code&gt;存储引擎&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;存储位置&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MySQL如果使用&lt;code&gt;InnoDB&lt;/code&gt;存储引擎，数据库文件类型就包括&lt;code&gt;.frm&lt;/code&gt;、&lt;code&gt;ibdata1&lt;/code&gt;、&lt;code&gt;.ibd&lt;/code&gt;，存放位置有两个，&lt;code&gt;.frm&lt;/code&gt;文件默认存放位置是&lt;code&gt;C:\Documents and Settings\All Users\ApplicationData\MySQL\MySQL Server 5.1\data&lt;/code&gt;，&lt;code&gt;ibdata1&lt;/code&gt;、&lt;code&gt;.ibd&lt;/code&gt;文件默认存放位置是MySQL安装目录下的data文件夹。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;innodb&lt;/code&gt;存储引擎的mysql表提供了事务，回滚以及系统崩溃修复能力和多版本迸发控制的事务的安全。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;innodb&lt;/code&gt;支持自增长列（auto_increment）,自增长列的值不能为空，如果在使用的时候为空的话怎会进行自动存现有的值开始增值，如果有但是比现在的还大，则就保存这个值。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;innodb&lt;/code&gt;存储引擎支持外键（foreign key） ,外键所在的表称为子表而所依赖的表称为父表。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;innodb&lt;/code&gt;存储引擎最重要的是支持事务，以及事务相关联功能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;innodb&lt;/code&gt;存储引擎支持&lt;code&gt;mvcc&lt;/code&gt;的行级锁。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;innodb&lt;/code&gt;存储引擎索引使用的是B+Tree&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;优缺点：&lt;code&gt;InnoDB&lt;/code&gt;的优势在于提供了良好的事务处理、崩溃修复能力和并发控制。缺点是读写效率较差，占用的数据空间相对较大。&lt;/p&gt;
+&lt;/blockquote&gt;</description>
+      <content:encoded><![CDATA[<h2 id="数据库引擎介绍"><strong>数据库引擎介绍</strong></h2>
+<h3 id="前言">前言</h3>
+<ul>
+<li>1、存储引擎其实就是对于数据库文件的一种存取机制，如何实现存储数据，如何为存储的数据建立索引以及如何更新，查询数据等技术实现的方法。</li>
+<li>2、MySQL中的数据用各种不同的技术存储在文件（或内存）中，这些技术中的每一种技术都使用不同的存储机制，索引技巧，锁定水平并且最终提供广泛的不同功能和能力。在MySQL中将这些不同的技术及配套的相关功能称为存储引擎。</li>
+<li>3、根据需求可以在表中设置不同的存储引擎。</li>
+</ul>
+<h3 id="查看mysql中的引擎">查看mysql中的引擎</h3>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200605131656597.png" alt="查看引擎"  />
+</p>
+<h3 id="mysql中常用的几种存储引擎">MySQL中常用的几种存储引擎</h3>
+<h3 id="1myisam存储引擎">1．<code>MyISAM</code>存储引擎</h3>
+<ul>
+<li>
+<p>存放的位置</p>
+<ul>
+<li>MySQL如果使用<code>MyISAM</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>.MYD</code>、<code>.MYI</code>，默认存放位置是<code>C:\Documentsand Settings\All Users\Application Data\MySQL\MySQL Server 5.1\data</code></li>
+</ul>
+</li>
+<li>
+<p>存放的方式</p>
+<ul>
+<li><code>MyISAM</code> 这种存储引擎不支持事务，不支持行级锁，只支持并发插入的表锁，主要用于高负载的select。</li>
+</ul>
+</li>
+<li>
+<p>索引的方式</p>
+<ul>
+<li><code>MyISAM</code>也是使用B+tree索引但是和<code>Innodb</code>的在具体实现上有些不同。</li>
+</ul>
+</li>
+</ul>
+<p>该引擎基于<code>ISAM</code>数据库引擎，除了提供<code>ISAM</code>里所没有的索引和字段管理等大量功能，<code>MyISAM</code>还使用一种表格锁定的机制来优化多个并发的读写操作，但是需要经常运行OPTIMIZE TABLE命令，来恢复被更新机制所浪费的空间，否则碎片也会随之增加，最终影响数据访问性能。<code>MyISAM</code>还有一些有用的扩展，例如用来修复数据库文件的<code>MyISAMChk</code>工具和用来恢复浪费空间的 <code>MyISAMPack</code>工具。<code>MyISAM</code>强调了快速读取操作，主要用于高负载的select，这可能也是MySQL深受Web开发的主要原因：在Web开发中进行的大量数据操作都是读取操作，所以大多数虚拟主机提供商和Internet平台提供商（Internet Presence Provider, <code>IPP</code>）只允许使用<code>MyISAM</code>格式。</p>
+<ul>
+<li>
+<p><code>MyISAM</code>类型的表支持三种不同的存储结构：静态型、动态型、压缩型。</p>
+</li>
+<li>
+<p>静态型：指定义的表列的大小是固定（即不含有：<code>xblob</code>、<code>xtext</code>、<code>varchar</code>等长度可变的数据类型），这样MySQL就会自动使用静态<code>MyISAM</code>格式。使用静态格式的表的性能比较高，因为在维护和访问以预定格式存储数据时需要的开销很低；但这种高性能是以空间为代价换来的，因为在定义的时候是固定的，所以不管列中的值有多大，都会以最大值为准，占据了整个空间。</p>
+</li>
+<li>
+<p>动态型：如果列（即使只有一列）定义为动态的（<code>xblob</code>, <code>xtext</code>, <code>varchar</code>等数据类型），这时<code>MyISAM</code>就自动使用动态型，虽然动态型的表占用了比静态型表较少的空间，但带来了性能的降低，因为如果某个字段的内容发生改变则其位置很可能需要移动，这样就会导致碎片的产生，随着数据变化的增多，碎片也随之增加，数据访问性能会随之降低。
+对于因碎片增加而降低数据访问性这个问题，有两种解决办法：</p>
+<ul>
+<li>a、尽可能使用静态数据类型；</li>
+<li>b、经常使用<code>optimize table table_name</code>语句整理表的碎片，恢复由于表数据的更新和删除导致的空间丢失。如果存储引擎不支持<code> optimize table table_name</code>则可以转储并 重新加载数据，这样也可以减少碎片；</li>
+</ul>
+</li>
+<li>
+<p>压缩型：如果在数据库中创建在整个生命周期内只读的表，则应该使用<code>MyISAM</code>的压缩型表来减少空间的占用。</p>
+</li>
+</ul>
+<blockquote>
+<p>优缺点：<code>MyISAM</code>的优势在于占用空间小，处理速度快。缺点是不支持事务的完整性和并发性。</p>
+</blockquote>
+<h3 id="2innodb存储引擎">2．<code>innoDB</code>存储引擎</h3>
+<ul>
+<li>
+<p>存储位置</p>
+<ul>
+<li>MySQL如果使用<code>InnoDB</code>存储引擎，数据库文件类型就包括<code>.frm</code>、<code>ibdata1</code>、<code>.ibd</code>，存放位置有两个，<code>.frm</code>文件默认存放位置是<code>C:\Documents and Settings\All Users\ApplicationData\MySQL\MySQL Server 5.1\data</code>，<code>ibdata1</code>、<code>.ibd</code>文件默认存放位置是MySQL安装目录下的data文件夹。</li>
+</ul>
+</li>
+<li>
+<p><code>innodb</code>存储引擎的mysql表提供了事务，回滚以及系统崩溃修复能力和多版本迸发控制的事务的安全。</p>
+</li>
+<li>
+<p><code>innodb</code>支持自增长列（auto_increment）,自增长列的值不能为空，如果在使用的时候为空的话怎会进行自动存现有的值开始增值，如果有但是比现在的还大，则就保存这个值。</p>
+</li>
+<li>
+<p><code>innodb</code>存储引擎支持外键（foreign key） ,外键所在的表称为子表而所依赖的表称为父表。</p>
+</li>
+<li>
+<p><code>innodb</code>存储引擎最重要的是支持事务，以及事务相关联功能。</p>
+</li>
+<li>
+<p><code>innodb</code>存储引擎支持<code>mvcc</code>的行级锁。</p>
+</li>
+<li>
+<p><code>innodb</code>存储引擎索引使用的是B+Tree</p>
+</li>
+</ul>
+<blockquote>
+<p>优缺点：<code>InnoDB</code>的优势在于提供了良好的事务处理、崩溃修复能力和并发控制。缺点是读写效率较差，占用的数据空间相对较大。</p>
+</blockquote>
+<h3 id="3memory存储引擎">3．<code>MEMORY</code>存储引擎</h3>
+<ul>
+<li>
+<p><code>memory</code>存储引擎相比前面的一些存储引擎，有点不一样，其使用存储在内从中的数据来创建表，而且所有的数据也都存储在内存中。</p>
+</li>
+<li>
+<p>每个基于memory存储引擎的表实际对应一个磁盘文件，该文件的文件名和表名是相同的，类型为<code>.frm</code>。该文件只存储表的结构，而其数据文件，都是存储在内存中，这样有利于对数据的快速处理，提高整个表的处理能力。</p>
+</li>
+<li>
+<p><code>memory</code>存储引擎默认使用哈希（HASH）索引，其速度比使用<code>B-+ Tree</code>型要快，如果读者希望使用B树型，则在创建的时候可以引用。</p>
+</li>
+<li>
+<p><code>memory</code>存储引擎文件数据都存储在内存中，如果<code>mysqld</code>进程发生异常，重启或关闭机器这些数据都会消失。所以<code>memory</code>存储引擎中的表的生命周期很短，一般只使用一次。</p>
+</li>
+</ul>
+<h3 id="4archive存储引擎">4．<code>ARCHIVE</code>存储引擎</h3>
+<ul>
+<li>该存储引擎非常适合存储大量独立的、作为历史记录的数据。</li>
+<li>区别于<code>InnoDB</code>和<code>MyISAM</code>这两种引擎，ARCHIVE提供了压缩功能，拥有高效的插入速度，但是这种引擎不支持索引，所以查询性能较差一些。</li>
+</ul>
+<h2 id="四种存储引擎比较">四种存储引擎比较</h2>
+<ul>
+<li>
+<p><code>InnoDB</code>：支持事务处理，支持外键，支持崩溃修复能力和并发控制。如果需要对事务的完整性要求比较高（比如银行），要求实现并发控制（比如售票），那选择<code>InnoDB</code>有很大的优势。如果需要频繁的更新、删除操作的数据库，也可以选择<code>InnoDB</code>，因为支持事务的提交（commit）和回滚（rollback）。</p>
+</li>
+<li>
+<p><code>MyISAM</code>：插入数据快，空间和内存使用比较低。如果表主要是用于插入新记录和读出记录，那么选择<code>MyISAM</code>能实现处理高效率。如果应用的完整性、并发性要求比 较低，也可以使用。如果数据表主要用来插入和查询记录，则<code>MyISAM</code>引擎能提供较高的处理效率</p>
+</li>
+<li>
+<p><code>MEMORY</code>：所有的数据都在内存中，数据的处理速度快，但是安全性不高。如果需要很快的读写速度，对数据的安全性要求较低，可以选择<code>MEMOEY</code>。它对表的大小有要求，不能建立太大的表。所以，这类数据库只使用在相对较小的数据库表。如果只是临时存放数据，数据量不大，并且不需要较高的数据安全性，可以选择将数据保存在内存中的<code>Memory</code>引擎，MySQL中使用该引擎作为临时表，存放查询的中间结果</p>
+</li>
+<li>
+<p>如果只有<code>INSERT</code>和<code>SELECT</code>操作，可以选择<code>Archive</code>，<code>Archive</code>支持高并发的插入操作，但是本身不是事务安全的。</p>
+</li>
+<li>
+<p><code>Archive</code>非常适合存储归档数据，如记录日志信息可以使用<code>Archiv</code></p>
+</li>
+</ul>
+<blockquote>
+<p>注意，同一个数据库也可以使用多种存储引擎的表。如果一个表要求比较高的事务处理，可以选择<code>InnoDB</code>。这个数据库中可以将查询要求比较高的表选择<code>MyISAM</code>存储。如果该数据库需要一个用于查询的临时表，可以选择MEMORY存储引擎。</p>
+</blockquote>
+<h2 id="数据类型">数据类型</h2>
+<h3 id="数值类型">数值类型</h3>
+<p>MySQL支持所有标准SQL数值数据类型。</p>
+<p>这些类型包括严格数值数据类型(INTEGER、SMALLINT、DECIMAL和NUMERIC)，以及近似数值数据类型(FLOAT、REAL和DOUBLE PRECISION)。</p>
+<p>关键字INT是INTEGER的同义词，关键字DEC是DECIMAL的同义词。</p>
+<p>BIT数据类型保存位字段值，并且支持MyISAM、MEMORY、InnoDB和BDB表。</p>
+<p>作为SQL标准的扩展，MySQL也支持整数类型TINYINT、MEDIUMINT和BIGINT。下面的表显示了需要的每个整数类型的存储和范围。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">类型</th>
+<th style="text-align:left">大小</th>
+<th style="text-align:left">范围（有符号）</th>
+<th style="text-align:left">范围（无符号）</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">TINYINT</td>
+<td style="text-align:left">1 byte</td>
+<td style="text-align:left">(-128，127)</td>
+<td style="text-align:left">(0，255)</td>
+<td style="text-align:left">小整数值</td>
+</tr>
+<tr>
+<td style="text-align:left">SMALLINT</td>
+<td style="text-align:left">2 bytes</td>
+<td style="text-align:left">(-32 768，32 767)</td>
+<td style="text-align:left">(0，65 535)</td>
+<td style="text-align:left">大整数值</td>
+</tr>
+<tr>
+<td style="text-align:left">MEDIUMINT</td>
+<td style="text-align:left">3 bytes</td>
+<td style="text-align:left">(-8 388 608，8 388 607)</td>
+<td style="text-align:left">(0，16 777 215)</td>
+<td style="text-align:left">大整数值</td>
+</tr>
+<tr>
+<td style="text-align:left">INT或INTEGER</td>
+<td style="text-align:left">4 bytes</td>
+<td style="text-align:left">(-2 147 483 648，2 147 483 647)</td>
+<td style="text-align:left">(0，4 294 967 295)</td>
+<td style="text-align:left">大整数值</td>
+</tr>
+<tr>
+<td style="text-align:left">BIGINT</td>
+<td style="text-align:left">8 bytes</td>
+<td style="text-align:left">(-9,223,372,036,854,775,808，9 223 372 036 854 775 807)</td>
+<td style="text-align:left">(0，18 446 744 073 709 551 615)</td>
+<td style="text-align:left">极大整数值</td>
+</tr>
+<tr>
+<td style="text-align:left">FLOAT</td>
+<td style="text-align:left">4 bytes</td>
+<td style="text-align:left">(-3.402 823 466 E+38，-1.175 494 351 E-38)，0，(1.175 494 351 E-38，3.402 823 466 351 E+38)</td>
+<td style="text-align:left">0，(1.175 494 351 E-38，3.402 823 466 E+38)</td>
+<td style="text-align:left">单精度 浮点数值</td>
+</tr>
+<tr>
+<td style="text-align:left">DOUBLE</td>
+<td style="text-align:left">8 bytes</td>
+<td style="text-align:left">(-1.797 693 134 862 315 7 E+308，-2.225 073 858 507 201 4 E-308)，0，(2.225 073 858 507 201 4 E-308，1.797 693 134 862 315 7 E+308)</td>
+<td style="text-align:left">0，(2.225 073 858 507 201 4 E-308，1.797 693 134 862 315 7 E+308)</td>
+<td style="text-align:left">双精度 浮点数值</td>
+</tr>
+<tr>
+<td style="text-align:left">DECIMAL</td>
+<td style="text-align:left">对DECIMAL(M,D) ，如果M&gt;D，为M+2否则为D+2</td>
+<td style="text-align:left">依赖于M和D的值</td>
+<td style="text-align:left">依赖于M和D的值</td>
+<td style="text-align:left">小数值</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="日期和时间类型">日期和时间类型</h3>
+<p>表示时间值的日期和时间类型为DATETIME、DATE、TIMESTAMP、TIME和YEAR。</p>
+<p>每个时间类型有一个有效值范围和一个&quot;零&quot;值，当指定不合法的MySQL不能表示的值时使用&quot;零&quot;值。</p>
+<p>TIMESTAMP类型有专有的自动更新特性，将在后面描述。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">类型</th>
+<th style="text-align:left">大小 ( bytes)</th>
+<th style="text-align:left">范围</th>
+<th style="text-align:left">格式</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">DATE</td>
+<td style="text-align:left">3</td>
+<td style="text-align:left">1000-01-01/9999-12-31</td>
+<td style="text-align:left">YYYY-MM-DD</td>
+<td style="text-align:left">日期值</td>
+</tr>
+<tr>
+<td style="text-align:left">TIME</td>
+<td style="text-align:left">3</td>
+<td style="text-align:left">&lsquo;-838:59:59&rsquo;/&lsquo;838:59:59&rsquo;</td>
+<td style="text-align:left">HH:MM:SS</td>
+<td style="text-align:left">时间值或持续时间</td>
+</tr>
+<tr>
+<td style="text-align:left">YEAR</td>
+<td style="text-align:left">1</td>
+<td style="text-align:left">1901/2155</td>
+<td style="text-align:left">YYYY</td>
+<td style="text-align:left">年份值</td>
+</tr>
+<tr>
+<td style="text-align:left">DATETIME</td>
+<td style="text-align:left">8</td>
+<td style="text-align:left">1000-01-01 00:00:00/9999-12-31 23:59:59</td>
+<td style="text-align:left">YYYY-MM-DD HH:MM:SS</td>
+<td style="text-align:left">混合日期和时间值</td>
+</tr>
+<tr>
+<td style="text-align:left">TIMESTAMP</td>
+<td style="text-align:left">4</td>
+<td style="text-align:left">1970-01-01 00:00:00/2038结束时间是第 <strong>2147483647</strong> 秒，北京时间 <strong>2038-1-19 11:14:07</strong>，格林尼治时间 2038年1月19日 凌晨 03:14:07</td>
+<td style="text-align:left">YYYYMMDD HHMMSS</td>
+<td style="text-align:left">混合日期和时间值，时间戳</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="字符串类型">字符串类型</h3>
+<p>字符串类型指CHAR、VARCHAR、BINARY、VARBINARY、BLOB、TEXT、ENUM和SET。该节描述了这些类型如何工作以及如何在查询中使用这些类型。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">类型</th>
+<th style="text-align:left">大小</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">CHAR</td>
+<td style="text-align:left">0-255 bytes</td>
+<td style="text-align:left">定长字符串</td>
+</tr>
+<tr>
+<td style="text-align:left">VARCHAR</td>
+<td style="text-align:left">0-65535 bytes</td>
+<td style="text-align:left">变长字符串</td>
+</tr>
+<tr>
+<td style="text-align:left">TINYBLOB</td>
+<td style="text-align:left">0-255 bytes</td>
+<td style="text-align:left">不超过 255 个字符的二进制字符串</td>
+</tr>
+<tr>
+<td style="text-align:left">TINYTEXT</td>
+<td style="text-align:left">0-255 bytes</td>
+<td style="text-align:left">短文本字符串</td>
+</tr>
+<tr>
+<td style="text-align:left">BLOB</td>
+<td style="text-align:left">0-65 535 bytes</td>
+<td style="text-align:left">二进制形式的长文本数据</td>
+</tr>
+<tr>
+<td style="text-align:left">TEXT</td>
+<td style="text-align:left">0-65 535 bytes</td>
+<td style="text-align:left">长文本数据</td>
+</tr>
+<tr>
+<td style="text-align:left">MEDIUMBLOB</td>
+<td style="text-align:left">0-16 777 215 bytes</td>
+<td style="text-align:left">二进制形式的中等长度文本数据</td>
+</tr>
+<tr>
+<td style="text-align:left">MEDIUMTEXT</td>
+<td style="text-align:left">0-16 777 215 bytes</td>
+<td style="text-align:left">中等长度文本数据</td>
+</tr>
+<tr>
+<td style="text-align:left">LONGBLOB</td>
+<td style="text-align:left">0-4 294 967 295 bytes</td>
+<td style="text-align:left">二进制形式的极大文本数据</td>
+</tr>
+<tr>
+<td style="text-align:left">LONGTEXT</td>
+<td style="text-align:left">0-4 294 967 295 bytes</td>
+<td style="text-align:left">极大文本数据</td>
+</tr>
+</tbody>
+</table>
+<p><strong>注意</strong>：char(n) 和 varchar(n) 中括号中 n 代表字符的个数，并不代表字节个数，比如 CHAR(30) 就可以存储 30 个字符。</p>
+<p>CHAR 和 VARCHAR 类型类似，但它们保存和检索的方式不同。它们的最大长度和是否尾部空格被保留等方面也不同。在存储或检索过程中不进行大小写转换。</p>
+<p>BINARY 和 VARBINARY 类似于 CHAR 和 VARCHAR，不同的是它们包含二进制字符串而不要非二进制字符串。也就是说，它们包含字节字符串而不是字符字符串。这说明它们没有字符集，并且排序和比较基于列值字节的数值值。</p>
+<p>BLOB 是一个二进制大对象，可以容纳可变数量的数据。有 4 种 BLOB 类型：TINYBLOB、BLOB、MEDIUMBLOB 和 LONGBLOB。它们区别在于可容纳存储范围不同。</p>
+<p>有 4 种 TEXT 类型：TINYTEXT、TEXT、MEDIUMTEXT 和 LONGTEXT。对应的这 4 种 BLOB 类型，可存储的最大长度不同，可根据实际情况选择。</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>MySQL索引和事务</title>
+      <link>https://Lucareful.github.io/en/posts/%E7%B4%A2%E5%BC%95%E5%92%8C%E4%BA%8B%E5%8A%A1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/%E7%B4%A2%E5%BC%95%E5%92%8C%E4%BA%8B%E5%8A%A1/</guid>
+      <description>&lt;h1 id=&#34;索引&#34;&gt;索引&lt;/h1&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;索引特点：创建与维护索引会消耗很多时间与磁盘空间，但查询速度大大提高！&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在关系数据库中，如果有上万甚至上亿条记录，在查找记录的时候，想要获得非常快的速度，就需要使用索引。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;索引是关系数据库中对某一列或多个列的值进行预排序的数据结构。通过使用索引，可以让数据库系统不必扫描整个表，而是直接定位到符合条件的记录，这样就大大加快了查询速度。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;例如，对于&lt;code&gt;students&lt;/code&gt;表：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;id&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;class_id&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;name&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;gender&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;score&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;1&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;1&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;小明&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;M&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;90&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;2&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;1&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;小红&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;F&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;95&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;3&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;1&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;小军&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;M&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;88&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;如果要经常根据&lt;code&gt;score&lt;/code&gt;列进行查询，就可以对&lt;code&gt;score&lt;/code&gt;列创建索引：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ALTER TABLE students
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ADD INDEX idx_score (score);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;使用&lt;code&gt;ADD INDEX idx_score (score)&lt;/code&gt;就创建了一个名称为&lt;code&gt;idx_score&lt;/code&gt;，使用列&lt;code&gt;score&lt;/code&gt;的索引。索引名称是任意的，索引如果有多列，可以在括号里依次写上，例如：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ALTER TABLE students
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ADD INDEX idx_name_score (name, score);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;索引的效率取决于索引列的值是否散列，即该列的值如果越互不相同，那么索引效率越高。反过来，如果记录的列存在大量相同的值，例如&lt;code&gt;gender&lt;/code&gt;列，大约一半的记录值是&lt;code&gt;M&lt;/code&gt;，另一半是&lt;code&gt;F&lt;/code&gt;，因此，对该列创建索引就没有意义。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;可以对一张表创建多个索引。索引的优点是提高了查询效率，缺点是在插入、更新和删除记录时，需要同时修改索引，因此，索引越多，插入、更新和删除记录的速度就越慢。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;对于主键，关系数据库会自动对其创建主键索引。使用主键索引的效率是最高的，因为主键会保证绝对唯一。&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;mysql索引的类型&#34;&gt;MySQL索引的类型&lt;/h2&gt;
+&lt;h3 id=&#34;1-普通索引&#34;&gt;1. 普通索引&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;这是最基本的索引，它没有任何限制，比如上文中为title字段创建的索引就是一个普通索引，&lt;code&gt;MyIASM&lt;/code&gt;中默认的&lt;code&gt;BTREE&lt;/code&gt;类型的索引，也是我们大多数情况下用到的索引。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 2
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 3
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 4
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 5
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 6
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 7
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 8
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 9
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;10
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;11
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;12
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;13
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;14
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;15
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;16
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;17
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;18
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;01&lt;/span&gt;  –直接创建索引
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;02&lt;/span&gt;  CREATE INDEX index_name ON table&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;column&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;length&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;))&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;03&lt;/span&gt;  –修改表结构的方式添加索引
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;04&lt;/span&gt;  ALTER TABLE table_name ADD INDEX index_name ON &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;column&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;length&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;))&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;05&lt;/span&gt;  –创建表的时候同时创建索引
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;06&lt;/span&gt;  CREATE TABLE &lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt;table&lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt; &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;07&lt;/span&gt;      &lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt;id&lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt; int&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;11&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;)&lt;/span&gt; NOT NULL AUTO_INCREMENT ,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;08&lt;/span&gt;      &lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt;title&lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt; char&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;255&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;)&lt;/span&gt; CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;09&lt;/span&gt;      &lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt;content&lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt; text CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;10&lt;/span&gt;      &lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt;time&lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt; int&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;10&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;)&lt;/span&gt; NULL DEFAULT NULL ,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;11&lt;/span&gt;       PRIMARY KEY &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt;id&lt;span style=&#34;color:#a5d6ff&#34;&gt;`&lt;/span&gt;&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;)&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;12&lt;/span&gt;       INDEX index_name &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;title&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;(&lt;/span&gt;length&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;))&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;13&lt;/span&gt;  &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;14&lt;/span&gt;  –删除索引
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;15&lt;/span&gt;  DROP INDEX index_name ON table
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;</description>
+      <content:encoded><![CDATA[<h1 id="索引">索引</h1>
+<ul>
+<li>
+<p>索引特点：创建与维护索引会消耗很多时间与磁盘空间，但查询速度大大提高！</p>
+</li>
+<li>
+<p>在关系数据库中，如果有上万甚至上亿条记录，在查找记录的时候，想要获得非常快的速度，就需要使用索引。</p>
+</li>
+<li>
+<p>索引是关系数据库中对某一列或多个列的值进行预排序的数据结构。通过使用索引，可以让数据库系统不必扫描整个表，而是直接定位到符合条件的记录，这样就大大加快了查询速度。</p>
+</li>
+</ul>
+<p>例如，对于<code>students</code>表：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">id</th>
+<th style="text-align:left">class_id</th>
+<th style="text-align:left">name</th>
+<th style="text-align:left">gender</th>
+<th style="text-align:left">score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">1</td>
+<td style="text-align:left">小明</td>
+<td style="text-align:left">M</td>
+<td style="text-align:left">90</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">1</td>
+<td style="text-align:left">小红</td>
+<td style="text-align:left">F</td>
+<td style="text-align:left">95</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">1</td>
+<td style="text-align:left">小军</td>
+<td style="text-align:left">M</td>
+<td style="text-align:left">88</td>
+</tr>
+</tbody>
+</table>
+<p>如果要经常根据<code>score</code>列进行查询，就可以对<code>score</code>列创建索引：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>ALTER TABLE students
+</span></span><span style="display:flex;"><span>ADD INDEX idx_score (score);
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>使用<code>ADD INDEX idx_score (score)</code>就创建了一个名称为<code>idx_score</code>，使用列<code>score</code>的索引。索引名称是任意的，索引如果有多列，可以在括号里依次写上，例如：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>ALTER TABLE students
+</span></span><span style="display:flex;"><span>ADD INDEX idx_name_score (name, score);
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>
+<p>索引的效率取决于索引列的值是否散列，即该列的值如果越互不相同，那么索引效率越高。反过来，如果记录的列存在大量相同的值，例如<code>gender</code>列，大约一半的记录值是<code>M</code>，另一半是<code>F</code>，因此，对该列创建索引就没有意义。</p>
+</li>
+<li>
+<p>可以对一张表创建多个索引。索引的优点是提高了查询效率，缺点是在插入、更新和删除记录时，需要同时修改索引，因此，索引越多，插入、更新和删除记录的速度就越慢。</p>
+</li>
+</ul>
+<blockquote>
+<p><strong>对于主键，关系数据库会自动对其创建主键索引。使用主键索引的效率是最高的，因为主键会保证绝对唯一。</strong></p>
+</blockquote>
+<h2 id="mysql索引的类型">MySQL索引的类型</h2>
+<h3 id="1-普通索引">1. 普通索引</h3>
+<ul>
+<li>这是最基本的索引，它没有任何限制，比如上文中为title字段创建的索引就是一个普通索引，<code>MyIASM</code>中默认的<code>BTREE</code>类型的索引，也是我们大多数情况下用到的索引。</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#a5d6ff">01</span>  –直接创建索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">02</span>  CREATE INDEX index_name ON table<span style="color:#ff7b72;font-weight:bold">(</span>column<span style="color:#ff7b72;font-weight:bold">(</span>length<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">03</span>  –修改表结构的方式添加索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">04</span>  ALTER TABLE table_name ADD INDEX index_name ON <span style="color:#ff7b72;font-weight:bold">(</span>column<span style="color:#ff7b72;font-weight:bold">(</span>length<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">05</span>  –创建表的时候同时创建索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">06</span>  CREATE TABLE <span style="color:#a5d6ff">`</span>table<span style="color:#a5d6ff">`</span> <span style="color:#ff7b72;font-weight:bold">(</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">07</span>      <span style="color:#a5d6ff">`</span>id<span style="color:#a5d6ff">`</span> int<span style="color:#ff7b72;font-weight:bold">(</span>11<span style="color:#ff7b72;font-weight:bold">)</span> NOT NULL AUTO_INCREMENT ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">08</span>      <span style="color:#a5d6ff">`</span>title<span style="color:#a5d6ff">`</span> char<span style="color:#ff7b72;font-weight:bold">(</span>255<span style="color:#ff7b72;font-weight:bold">)</span> CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">09</span>      <span style="color:#a5d6ff">`</span>content<span style="color:#a5d6ff">`</span> text CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">10</span>      <span style="color:#a5d6ff">`</span>time<span style="color:#a5d6ff">`</span> int<span style="color:#ff7b72;font-weight:bold">(</span>10<span style="color:#ff7b72;font-weight:bold">)</span> NULL DEFAULT NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">11</span>       PRIMARY KEY <span style="color:#ff7b72;font-weight:bold">(</span><span style="color:#a5d6ff">`</span>id<span style="color:#a5d6ff">`</span><span style="color:#ff7b72;font-weight:bold">)</span>,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">12</span>       INDEX index_name <span style="color:#ff7b72;font-weight:bold">(</span>title<span style="color:#ff7b72;font-weight:bold">(</span>length<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">13</span>  <span style="color:#ff7b72;font-weight:bold">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">14</span>  –删除索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">15</span>  DROP INDEX index_name ON table
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="2-唯一索引">2. 唯一索引</h3>
+<ul>
+<li>与普通索引类似，不同的就是：索引列的值必须唯一，<strong>但允许有空值（注意和主键不同）</strong>。</li>
+<li>如果是组合索引，则列值的组合必须唯一，创建方法和普通索引类似。</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#a5d6ff">01</span>  –创建唯一索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">02</span>  CREATE UNIQUE INDEX indexName ON table<span style="color:#ff7b72;font-weight:bold">(</span>column<span style="color:#ff7b72;font-weight:bold">(</span>length<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">03</span>  –修改表结构
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">04</span>  ALTER TABLE table_name ADD UNIQUE indexName ON <span style="color:#ff7b72;font-weight:bold">(</span>column<span style="color:#ff7b72;font-weight:bold">(</span>length<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">05</span>  –创建表的时候直接指定
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">06</span>  CREATE TABLE <span style="color:#a5d6ff">`</span>table<span style="color:#a5d6ff">`</span> <span style="color:#ff7b72;font-weight:bold">(</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">07</span>      <span style="color:#a5d6ff">`</span>id<span style="color:#a5d6ff">`</span> int<span style="color:#ff7b72;font-weight:bold">(</span>11<span style="color:#ff7b72;font-weight:bold">)</span> NOT NULL AUTO_INCREMENT ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">08</span>      <span style="color:#a5d6ff">`</span>title<span style="color:#a5d6ff">`</span> char<span style="color:#ff7b72;font-weight:bold">(</span>255<span style="color:#ff7b72;font-weight:bold">)</span> CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">09</span>      <span style="color:#a5d6ff">`</span>content<span style="color:#a5d6ff">`</span> text CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">10</span>      <span style="color:#a5d6ff">`</span>time<span style="color:#a5d6ff">`</span> int<span style="color:#ff7b72;font-weight:bold">(</span>10<span style="color:#ff7b72;font-weight:bold">)</span> NULL DEFAULT NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">11</span>      PRIMARY KEY <span style="color:#ff7b72;font-weight:bold">(</span><span style="color:#a5d6ff">`</span>id<span style="color:#a5d6ff">`</span><span style="color:#ff7b72;font-weight:bold">)</span>,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">12</span>      UNIQUE indexName <span style="color:#ff7b72;font-weight:bold">(</span>title<span style="color:#ff7b72;font-weight:bold">(</span>length<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">13</span>  <span style="color:#ff7b72;font-weight:bold">)</span>;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="3-全文索引fulltext">3. 全文索引（<code>FULLTEXT</code>）</h3>
+<ul>
+<li>MySQL从3.23.23版开始支持全文索引和全文检索，<code>FULLTEXT</code>索引仅可用于 <code>MyISAM </code>表；</li>
+<li>他们可以从<code>CHAR</code>、<code>VARCHAR</code>或<code>TEXT</code>列中作为<code>CREATE TABLE</code>语句的一部分被创建，或是随后使用<code>ALTER TABLE </code>或<code>CREATE INDEX</code>被添加。</li>
+<li>对于较大的数据集，将你的资料输入一个没有<code>FULLTEXT</code>索引的表中，然后创建索引，其速度比把资料输入现有<code>FULLTEXT</code>索引的中速度更为快。</li>
+<li>不过切记对于大容量的数据表，生成全文索引是一个非常消耗时间非常消耗硬盘空间的做法。</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#a5d6ff">01</span>  –创建表的适合添加全文索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">02</span>  CREATE TABLE <span style="color:#a5d6ff">`</span>table<span style="color:#a5d6ff">`</span> <span style="color:#ff7b72;font-weight:bold">(</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">03</span>    <span style="color:#a5d6ff">`</span>id<span style="color:#a5d6ff">`</span> int<span style="color:#ff7b72;font-weight:bold">(</span>11<span style="color:#ff7b72;font-weight:bold">)</span> NOT NULL AUTO_INCREMENT ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">04</span>    <span style="color:#a5d6ff">`</span>title<span style="color:#a5d6ff">`</span> char<span style="color:#ff7b72;font-weight:bold">(</span>255<span style="color:#ff7b72;font-weight:bold">)</span> CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">05</span>    <span style="color:#a5d6ff">`</span>content<span style="color:#a5d6ff">`</span> text CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">06</span>    <span style="color:#a5d6ff">`</span>time<span style="color:#a5d6ff">`</span> int<span style="color:#ff7b72;font-weight:bold">(</span>10<span style="color:#ff7b72;font-weight:bold">)</span> NULL DEFAULT NULL ,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">07</span>    PRIMARY KEY <span style="color:#ff7b72;font-weight:bold">(</span><span style="color:#a5d6ff">`</span>id<span style="color:#a5d6ff">`</span><span style="color:#ff7b72;font-weight:bold">)</span>,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">08</span>    FULLTEXT <span style="color:#ff7b72;font-weight:bold">(</span>content<span style="color:#ff7b72;font-weight:bold">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">09</span>  <span style="color:#ff7b72;font-weight:bold">)</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">10</span>  –修改表结构添加全文索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">11</span>  ALTER TABLE article ADD FULLTEXT index_content<span style="color:#ff7b72;font-weight:bold">(</span>content<span style="color:#ff7b72;font-weight:bold">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">12</span>  –直接创建索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">13</span>  CREATE FULLTEXT INDEX index_content ON article<span style="color:#ff7b72;font-weight:bold">(</span>content<span style="color:#ff7b72;font-weight:bold">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="4-单列索引多列索引">4. 单列索引、多列索引</h3>
+<ul>
+<li>多个单列索引与单个多列索引的查询效果不同，因为执行查询时，MySQL只能使用一个索引，会从多个索引中选择一个限制最为严格的索引。</li>
+</ul>
+<h3 id="5-组合索引最左前缀">5. 组合索引（最左前缀）</h3>
+<ul>
+<li>平时用的SQL查询语句一般都有比较多的限制条件，所以为了进一步榨取MySQL的效率，就要考虑建立组合索引。例如上表中针对title和time建立一个组合索引：<code>ALTER TABLE article ADD INDEX index_titme_time (title(50),time(10))</code>。</li>
+<li>建立这样的组合索引，其实是相当于分别建立了下面两组组合索引：</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>–title,time
+</span></span><span style="display:flex;"><span>–title
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>为什么没有time这样的组合索引呢？这是因为MySQL组合索引“最左前缀”的结果。简单的理解就是只从最左面的开始组合。并不是只要包含这两列的查询都会用到该组合索引，如下面的几个SQL所示：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#a5d6ff">1</span>   –使用到上面的索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">2</span>   SELECT * FROM article WHREE <span style="color:#79c0ff">title</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;测试&#39;</span> AND <span style="color:#79c0ff">time</span><span style="color:#ff7b72;font-weight:bold">=</span>1234567890;
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">3</span>   SELECT * FROM article WHREE <span style="color:#79c0ff">utitle</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;测试&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">4</span>   –不使用上面的索引
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">5</span>   SELECT * FROM article WHREE <span style="color:#79c0ff">time</span><span style="color:#ff7b72;font-weight:bold">=</span>1234567890;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="小结">小结</h3>
+<ul>
+<li>
+<p>通过对数据库表创建索引，可以提高查询速度。</p>
+</li>
+<li>
+<p>通过创建唯一索引，可以保证某一列的值具有唯一性。</p>
+</li>
+<li>
+<p>数据库索引对于用户和应用程序来说都是透明的。</p>
+</li>
+</ul>
+<blockquote>
+<p>有几个索引就有几组排序，索引越多占用空间越大，插入速度越慢查询的时候数据库自动分析然后挑一个最合适的索引</p>
+</blockquote>
+<h1 id="mysql-事务">MySQL 事务</h1>
+<blockquote>
+<p><strong>事务指逻辑上的一组操作，组成这个操作的各个单元，要么都成功，要么都不成功</strong></p>
+</blockquote>
+<p>MySQL 事务主要用于处理操作量大，复杂度高的数据。比如说，在人员管理系统中，你删除一个人员，你既需要删除人员的基本资料，也要删除和该人员相关的信息，如信箱，文章等等，这样，这些数据库操作语句就构成一个事务！</p>
+<ul>
+<li>在 MySQL 中只有使用了 <code>Innodb</code> 数据库引擎的数据库或表才支持事务。</li>
+<li>事务处理可以用来维护数据库的完整性，保证成批的 SQL 语句要么全部执行，要么全部不执行。</li>
+<li>事务用来管理 <code>insert</code>,<code>update</code>,<code>delete</code> 语句</li>
+</ul>
+<p>一般来说，事务是必须满足4个条件（ACID）：：原子性（<strong>A</strong>tomicity，或称不可分割性）、一致性（<strong>C</strong>onsistency）、隔离性（<strong>I</strong>solation，又称独立性）、持久性（<strong>D</strong>urability）。</p>
+<ul>
+<li>**原子性：**一个事务（transaction）中的所有操作，要么全部完成，要么全部不完成，不会结束在中间某个环节。事务在执行过程中发生错误，会被回滚（Rollback）到事务开始前的状态，就像这个事务从来没有执行过一样。</li>
+<li>**一致性：**在事务开始之前和事务结束以后，数据库的完整性没有被破坏。这表示写入的资料必须完全符合所有的预设规则，这包含资料的精确度、串联性以及后续数据库可以自发性地完成预定的工作。</li>
+<li>**隔离性：**数据库允许多个并发事务同时对其数据进行读写和修改的能力，隔离性可以防止多个事务并发执行时由于交叉执行而导致数据的不一致。事务隔离分为不同级别，包括读未提交（<code>Read uncommitted</code>）、读提交（<code>read committed</code>）、可重复读（<code>repeatable read</code>）和串行化（<code>Serializable</code>）。</li>
+<li>**持久性：**事务处理结束后，对数据的修改就是永久的，即便系统故障也不会丢失。</li>
+</ul>
+<blockquote>
+<p>在 MySQL 命令行的默认设置下，事务都是自动提交的，即执行 SQL 语句后就会马上执行 COMMIT 操作。因此要显式地开启一个事务务须使用命令 <code>BEGIN </code>或 <code>START TRANSACTION</code>，或者执行命令 <code>SET AUTOCOMMIT=0</code>，用来禁止使用当前会话的自动提交。</p>
+</blockquote>
+<h2 id="事务控制语句">事务控制语句</h2>
+<ul>
+<li><code>BEGIN</code> 或 <code>START TRANSACTION </code>显式地开启一个事务；</li>
+<li><code>COMMIT</code> 也可以使用<code> COMMIT WORK</code>，不过二者是等价的。<code>COMMIT </code>会提交事务，并使已对数据库进行的所有修改成为永久性的；</li>
+<li><code>ROLLBACK</code> 也可以使用 <code>ROLLBACK WORK</code>，不过二者是等价的。回滚会结束用户的事务，并撤销正在进行的所有未提交的修改；</li>
+<li><code>SAVEPOINT identifier</code>，<code>SAVEPOINT</code> 允许在事务中创建一个保存点，一个事务中可以有多个<code> SAVEPOINT</code>；</li>
+<li><code>RELEASE SAVEPOINT identifier</code> 删除一个事务的保存点，当没有指定的保存点时，执行该语句会抛出一个异常；</li>
+<li><code>ROLLBACK TO identifier</code> 把事务回滚到标记点；</li>
+<li><code>SET TRANSACTION</code> 用来设置事务的隔离级别。<code>InnoDB</code> 存储引擎提供事务的隔离级别有<code>READ UNCOMMITTED</code>、<code>READ COMMITTED</code>、<code>REPEATABLE READ</code> 和<code> SERIALIZABLE</code>。</li>
+</ul>
+<h2 id="mysql-事务处理方法">MYSQL 事务处理方法</h2>
+<p>1、用 BEGIN, ROLLBACK, COMMIT来实现</p>
+<ul>
+<li><strong>BEGIN</strong> 开始一个事务</li>
+<li><strong>ROLLBACK</strong> 事务回滚</li>
+<li><strong>COMMIT</strong> 事务确认</li>
+</ul>
+<p>2、直接用 SET 来改变 MySQL 的自动提交模式:</p>
+<ul>
+<li><code>SET AUTOCOMMIT=0</code> 禁止自动提交</li>
+<li><code>SET AUTOCOMMIT=1</code> 开启自动提交</li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>k8s核心数据结构（1） | Luenci</title>
+<meta name="keywords" content="k8s">
+<meta name="description" content="Kubernetes 核心数据结构（1）
+
+参考书籍：《Kubernetes源码剖析-郑旭东著》
+K8s 是一个完全以资源为中心的系统
+
+Group、Version、Resource 核心数据结构
+​	Kuberetes 系统虽然有相当复杂和众多的 功能，但它本质 上是一个资源控制系统——注册、管理、调度资源 并维护资源的状态。
+​	Kuberetes 将资源再次分组和版本化，形成 Group（资源组）、Version（资源版本）、Resource（资源）
+
+Group: 被称为资源组，在Kubernetes API Server 中也可称其为 APIGroup。
+Version: 被称为资源版本，在Kubernetes API Server 中也可称其为 APIVersions。
+Resource: 被称为资源，在Kubernetes API Server 中也可称其为 APIResource。
+Kind: 资源种类，描述 Resource 的种类，与 Resource 为同一级别。
+
+
+
+​
+​	Kubernetes 系统支持多个Group，每个Group 支持多个Version，每个Version 支 持多个Resource，其中部分资源同时会拥有自己的子资源(即SubResource )。例如， Deployment资源拥有Status 子资源。
+​	资源组、资源版本、资源、子资源的完整表现形式&lt;group&gt;/&lt;version&gt;/&lt;resource&gt;/ &lt;subresource&gt;。以常用的 Deployment 资源为例，其完整表现形式为apps/v1/deployments/status
+​	另外资源对象(Resource Object )在本书中也是 一个常用概念，由“ 资源组&#43; 资源版本&#43;资源种类” 组成，并在实例化后表达一个资源对象，例如 Deployment 资源实例化后拥有资源组、资源版本及资源种类，其表现形式为&lt;group&gt;/&lt;version&gt;, Kind=&lt;kind&gt;，例如apps/v1, Kind=Deployment.
+​	每一个资源都拥有一定数量的资源操作方法(即 Verbs )，资源操作方法用于 Etcd 集群存储中对资源对象的增、删、改、查操作。目前 Kubemetes 系统支持8 种资源操作方法，分别是 create、delete、delete、collection、get、list、patch、update、watch 操作方法。
+​	每一个资源都至少有两个版本，分别是外部版本(External Version)和内部版本 ( Internal Version )。外部版本用于对外暴露给用户请求的接又所使用的资源对象。内部版本不对外暴露，仅在Kubernetes API Server 内部使用。
+​	Kubernetes 资源也可分为两种， 分别是Kubernetes Resource (Kubermetes 内罝资源 ) 和 Custom Resource( 自 定 义 资 源 )。 开 发 者 通 过 C R D ( 即 Custom Resource Definitions )可实现自定义资源，它允许用户将自己定义的资源添加到 Kubernetes 系统中，并像使用 Kubernetes 内置资源 一样使用它们。">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="http://localhost:1313/articles/1/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.54405a410796490bc874ab6181fac9b675753cc2b91375d8f882566459eca428.css" integrity="sha256-VEBaQQeWSQvIdKthgfrJtnV1PMK5E3XY&#43;IJWZFnspCg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/articles/1/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Luenci (Alt + H)">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/index.xml" title="RSS Feed">
+                    <span>RSS Feed</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      k8s核心数据结构（1）
+    </h1>
+    <div class="post-meta">Luenci
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="kubernetes-核心数据结构1">Kubernetes 核心数据结构（1）<a hidden class="anchor" aria-hidden="true" href="#kubernetes-核心数据结构1">#</a></h1>
+<blockquote>
+<p>参考书籍：《Kubernetes源码剖析-郑旭东著》</p>
+<p>K8s 是一个完全以资源为中心的系统</p>
+</blockquote>
+<h2 id="groupversionresource-核心数据结构">Group、Version、Resource 核心数据结构<a hidden class="anchor" aria-hidden="true" href="#groupversionresource-核心数据结构">#</a></h2>
+<p>​	Kuberetes 系统虽然有相当复杂和众多的 功能，但它本质 上是一个资源控制系统——注册、管理、调度资源 并维护资源的状态。</p>
+<p>​	Kuberetes 将资源再次分组和版本化，形成 Group（资源组）、Version（资源版本）、Resource（资源）</p>
+<ul>
+<li>Group: 被称为资源组，在Kubernetes API Server 中也可称其为 APIGroup。</li>
+<li>Version: 被称为资源版本，在Kubernetes API Server 中也可称其为 APIVersions。</li>
+<li>Resource: 被称为资源，在Kubernetes API Server 中也可称其为 APIResource。</li>
+<li>Kind: 资源种类，描述 Resource 的种类，与 Resource 为同一级别。</li>
+</ul>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230410172134645.png" alt="image-20230410172134645"  />
+</p>
+<p>​</p>
+<p>​	Kubernetes 系统支持多个Group，每个Group 支持多个Version，每个Version 支 持多个Resource，其中部分资源同时会拥有自己的子资源(即SubResource )。例如， Deployment资源拥有Status 子资源。
+​	资源组、资源版本、资源、子资源的完整表现形式<code>&lt;group&gt;/&lt;version&gt;/&lt;resource&gt;/ &lt;subresource&gt;</code>。以常用的 Deployment 资源为例，其完整表现形式为<code>apps/v1/deployments/status</code></p>
+<p>​	另外资源对象(Resource Object )在本书中也是 一个常用概念，由“ 资源组+ 资源版本+资源种类” 组成，并在实例化后表达一个资源对象，例如 Deployment 资源实例化后拥有资源组、资源版本及资源种类，其表现形式为<code>&lt;group&gt;/&lt;version&gt;, Kind=&lt;kind&gt;</code>，例如<code>apps/v1, Kind=Deployment</code>.</p>
+<p>​	每一个资源都拥有一定数量的资源操作方法(即 Verbs )，资源操作方法用于 Etcd 集群存储中对资源对象的增、删、改、查操作。目前 Kubemetes 系统支持8 种资源操作方法，分别是 create、delete、delete、collection、get、list、patch、update、watch 操作方法。</p>
+<p>​	每一个资源都至少有两个版本，分别是外部版本(External Version)和内部版本 ( Internal Version )。外部版本用于对外暴露给用户请求的接又所使用的资源对象。内部版本不对外暴露，仅在Kubernetes API Server 内部使用。</p>
+<p>​	Kubernetes 资源也可分为两种， 分别是Kubernetes Resource (Kubermetes 内罝资源 ) 和 Custom Resource( 自 定 义 资 源 )。 开 发 者 通 过 C R D ( 即 Custom Resource Definitions )可实现自定义资源，它允许用户将自己定义的资源添加到 Kubernetes 系统中，并像使用 Kubernetes 内置资源 一样使用它们。</p>
+<h3 id="resourcelist">ResourceList<a hidden class="anchor" aria-hidden="true" href="#resourcelist">#</a></h3>
+<p>​	Kubernetes Group、 Version、Resource 等核心数据结构存放在<code>staging/src/k8s.io/apimachinery/pkg/apis/meta/v1</code> 目录中。它包含了Kubernetes
+集群中所有组件使用的通 用核心数据结构，例如APIGroup、APIVersions、APIResource 等。其
+中，我们可以 通过 APIResourceList 数据结构描述所有Group、Version、Resource 的结构。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> APIResourceList <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	TypeMeta <span style="color:#f1fa8c">`json:&#34;,inline&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// groupVersion is the group and version this APIResourceList is for.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	GroupVersion <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;groupVersion&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// resources contains the name of the resources and if they are namespaced.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	APIResources []APIResource <span style="color:#f1fa8c">`json:&#34;resources&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> TypeMeta <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	Kind <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;kind,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	APIVersion <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;apiVersion,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> APIResource <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// name is the plural name of the resource.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Name <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;name&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// The singularName is more correct for reporting status on a single item and both singular and plural are allowed
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// from the kubectl CLI interface.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	SingularName <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;singularName&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// namespaced indicates if a resource is namespaced or not.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Namespaced <span style="color:#8be9fd">bool</span> <span style="color:#f1fa8c">`json:&#34;namespaced&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// group is the preferred group of the resource.  Empty implies the group of the containing resource list.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// For subresources, this may have a different value, for example: Scale&#34;.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Group <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;group,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// version is the preferred version of the resource.  Empty implies the version of the containing resource list
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// For subresources, this may have a different value, for example: v1 (while inside a v1beta1 version of the core resource&#39;s group)&#34;.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Version <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;version,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// kind is the kind for the resource (e.g. &#39;Foo&#39; is the kind for a resource &#39;foo&#39;)
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Kind <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;kind&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// verbs is a list of supported kube verbs (this includes get, list, watch, create,
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// update, patch, delete, deletecollection, and proxy)
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Verbs Verbs <span style="color:#f1fa8c">`json:&#34;verbs&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// shortNames is a list of suggested short names of the resource.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	ShortNames []<span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;shortNames,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// categories is a list of the grouped resources this resource belongs to (e.g. &#39;all&#39;)
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Categories []<span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;categories,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	
+</span></span><span style="display:flex;"><span>	StorageVersionHash <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;storageVersionHash,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	Kubernetes的每个资源可使用<code>metav1.APIResource</code> 结构进行描述，它描述资源的基本信息，例如资源名称 (即 Name 字段)、资源所属的命名空间(即 Namespaced 字段)、资源种类(即 Kind 字段)、资源可操作的方法列表(即 Verbs 字段)。</p>
+<p>​	每一个资源都属于一个或多个资源版本， 资源所属的版本通过 <code>metavl.APIVersions</code> 结构描述，一个或多个资源版本通过<code>Versions []string</code> 字符串数组进行存储。</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230411111820480.png" alt="image-20230411111820480"  />
+</p>
+<h3 id="group">Group<a hidden class="anchor" aria-hidden="true" href="#group">#</a></h3>
+<p>​	Group ( 资源组)，在Kubernetes API Server 中也可称其为 APIGroup。Kubernetes 系统中定义了许多资源组，这些资源组按照不同功能将资源进行了划分，资源组特点如下。</p>
+<ul>
+<li>将众多资源按照功能划分成不同的资源组，并允许单独启用/ 禁用资源组。 当然也可以单独启用/禁用资源组中的资源。</li>
+<li>支持不同资源组中拥有不同的资源版本。这方便组内的资源根据版本进行迭代升级。</li>
+<li>支持同名的资源种类 (即 Kind ) 存在于不同的资源组内 。</li>
+<li>资源组与资源版本通过 Kubernetes API Server 对外暴露，允许开发者通过 HTTP 协议进行交互并通过动态客户端( 即 DynamicClient )进行资源发现。</li>
+<li>支持CRD 自定 义资源扩展。</li>
+<li>用户交互简单，例如在使用kubectl 命令行工具时，可以不填写资源组名称</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> APIGroup <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	TypeMeta <span style="color:#f1fa8c">`json:&#34;,inline&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// name is the name of the group.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Name <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;name&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源组下所支持的资源版本.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Versions []GroupVersionForDiscovery <span style="color:#f1fa8c">`json:&#34;versions&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 首选版本。 当一个资源组内存在多个资源版本时， Kubernetes API Server 在使用资源时会选择一 个首选版本作为当前版本
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	PreferredVersion GroupVersionForDiscovery <span style="color:#f1fa8c">`json:&#34;preferredVersion,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// a map of client CIDR to server address that is serving this group.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// This is to help clients reach servers in the most network-efficient way possible.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// Clients can use the app ropriate server address as per the CIDR that they match.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// In case of multiple matches, clients should use the longest matching CIDR.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// The server returns only those CIDRs that it thinks that the client can match.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// For example: the master will return an internal IP CIDR only, if the client reaches the server using an internal IP.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// Server looks at X-Forwarded-For header or X-Real-Ip header or request.RemoteAddr (in that order) to get the client IP.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	ServerAddressByClientCIDRs []ServerAddressByClientCIDR <span style="color:#f1fa8c">`json:&#34;serverAddressByClientCIDRs,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	在当前的Kubernetes 系统中，支持两类资源组，分别是拥有组名的资源组和没有组名的资源组。</p>
+<ul>
+<li>
+<p><strong>拥有组名的资源组</strong>: 其表现形式为<code>&lt;group&gt;/&lt;version&gt;/&lt;resource&gt;</code>，例如 <code>apps/v1/deployments</code></p>
+</li>
+<li>
+<p><strong>没有组名的资源组</strong>:  被称为 Core Groups ( 即核心资源组)或 Legacy Groups , 也可被称为 Group Less ( 即无组 )。 其表现形式为<code> /&lt;version&gt;/&lt;resource&gt;</code> ， 例 如 <code>/v1/pods</code></p>
+<p>两类资源组表现形式不同， 形成的 HTTP PATH 路径也不同。 拥有组名的资源组的 HTTP PATH 以<code>/apis</code> 为前缀，其表现形式为<code>/apis/&lt;group&gt;/&lt;version&gt;/&lt;resource&gt;</code>，例如 <code>http://localhost:8080/apis/apps/v1/deployments</code>。没有组名的资源组的 HTTP PATH 以 <code>api</code> 为前缀，其表现形式为<code>/api/&lt;version&gt;/&lt;resource&gt;</code>，例如 <code>http://localhost:8080/api/vl/pods</code>.</p>
+</li>
+</ul>
+<h3 id="version">Version<a hidden class="anchor" aria-hidden="true" href="#version">#</a></h3>
+<p>​	Kubernetes 的资源版本控制可分为了种，分别是 Alpha、Beta、Stable，它们之间的迭代顺序为<code>Alpha -&gt; Beta -&gt; Stable</code>，其通常用来表示软件测试过程中的 了个阶段。 Alpha是第1个阶段，一般用于内部测试; Beta 是第2 个阶段，该版本已经修复了大 部分不完善之处，但仍有可能存在缺陷和漏洞， 一般由特定的用户群来进行测试; Stable 是第了个阶段，此时基本形成了产品并达到了一定的成熟度，可稳定运行。 Kubernetes 资源版本控制详情如下:</p>
+<ul>
+<li>Alpha 版本</li>
+</ul>
+<p>​    Alpha 版本为内部测试版本，用于Kubernetes 开发者内部测试，该版本是不稳定的，可能存在很多缺陷和漏洞，官方随时可能会放弃支持该版本。在默认的情况下， 处于Alpha 版本的功能会被禁用。Alpha 版本名称一般为 vlalphal、vlalpha2、v2alphal 等。</p>
+<ul>
+<li>Beta 版本</li>
+</ul>
+<p>​    Beta 版本为相对稳定的版本， Beta 版本经过官方和社区很多次测试 ， 当功能迭代时，该版本会有较小的改变，但不会被删除。在默认的情况下，处于Beta 版本的功能是开启状态的。Beta 版本命名一般为 v1betal、v1beta2、v2betal。</p>
+<ul>
+<li>Stable 版本</li>
+</ul>
+<p>​    Stable 版本为正式发布的版本, Stable 版本基本形成了产品 ，该版本不会被删除。 在默认的情况下 ，处于 stable 版本的功能全部处于开启状态 。Stable 版本命名一般为  v1、v2、 v3。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> APIVersions <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	TypeMeta <span style="color:#f1fa8c">`json:&#34;,inline&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 所支持的资源版本列表.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Versions []<span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;versions&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// a map of client CIDR to server address that is serving this group.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// This is to help clients reach servers in the most network-efficient way possible.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// Clients can use the appropriate server address as per the CIDR that they match.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// In case of multiple matches, clients should use the longest matching CIDR.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// The server returns only those CIDRs that it thinks that the client can match.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// For example: the master will return an internal IP CIDR only, if the client reaches the server using an internal IP.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// Server looks at X-Forwarded-For header or X-Real-Ip header or request.RemoteAddr (in that order) to get the client IP.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	ServerAddressByClientCIDRs []ServerAddressByClientCIDR <span style="color:#f1fa8c">`json:&#34;serverAddressByClientCIDRs&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>CIDR（Classless Inter-Domain Routing）是一个用于给用户分配<a href="https://zh.wikipedia.org/wiki/IP%E5%9C%B0%E5%9D%80">IP地址</a>以及在<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91">互联网</a>上有效地路由IP<a href="https://zh.wikipedia.org/wiki/%E6%95%B0%E6%8D%AE%E5%8C%85">数据包</a>的对IP地址进行归类的方法。与传统的A类、B类和C类寻址模式相比，CIDR在IP地址分配方面更为高效。CIDR采用斜线记法，表示为：IP地址/网络ID的位数。</p>
+<ul>
+<li>
+<p>示例一：CIDR格式换算为IP地址网段</p>
+<p>例如10.0.0.0/8，换算为32位二进制地址：00001010.00000000.00000000.00000000。其中/8表示8位网络ID，即32位二进制地址中前8位是固定不变的，对应网段为：00001010.00000000.00000000.00000000<del>00001010.11111111.11111111.11111111。则换算为十进制后，10.0.0.0/8表示：子网掩码为255.0.0.0，对应网段为10.0.0.0</del>10.255.255.255。</p>
+</li>
+<li>
+<p>示例二：IP地址网段换算为CIDR格式</p>
+<p>例如192.168.0.0<del>192.168.31.255，后两段IP换算为二进制地址：00000000.00000000</del>00011111.11111111，可以得出前19位（8*2+3）是固定不变的，则换算为CIDR格式后，表示为：192.168.0.0/19</p>
+</li>
+</ul>
+</blockquote>
+<h3 id="resource">Resource<a hidden class="anchor" aria-hidden="true" href="#resource">#</a></h3>
+<p>​	一 个资源被实例化后会表达为一 个资源对象(即Resource Object )。在 Kuberetes 系统中定义并运行着各式各样的资源对象，Kubernetes 资源对象如图所示。所有资源对象都是 Entity 。 Entity 翻译成中 文为 “ 实 体” ，Kubernetes 使用这些 Entity 来表示当前状态。可以通过 Kubernetes API Server 进行查询和更新每一个资源对象。 Kubernetes 目前支持两种 Entity，分别介绍如下</p>
+<ul>
+<li>
+<p><strong>持久性实体(Persistent Entity)</strong>: 在资源对象被创建后，Kubernetes 会持久确保该资源对象存在。大部分资源对象属于持久性实体，例如 Deployment 资源对象</p>
+</li>
+<li>
+<p><strong>短暂性实体(Ephemeral Entity</strong>): 也可称其为非持久性实体(Non-Persistent Entity ) 。 在资源对象被创建后，如果出现故障或调度失败 ，不会重新创建该资源对象，例如 Pod 资源对象</p>
+</li>
+<li>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230411115903185.png" alt="image-20230411115903185"  />
+</p>
+</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> APIResource <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// name is the plural name of the resource.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Name <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;name&#34; protobuf:&#34;bytes,1,opt,name=name&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源的单数名称，它必须由小写字母组成，默认使用资源种类(Kind)的小写形式进行命名。例如，Pod 资源的单数名称为pod, 复数名称为pods
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	SingularName <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;singularName&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源是否拥有所属命名空间
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>  Namespaced <span style="color:#8be9fd">bool</span> <span style="color:#f1fa8c">`json:&#34;namespaced&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源所在的资源组名称
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Group <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;group,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源所在的资源版本
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Version <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;version,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源种类
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>  Kind <span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;kind&#34; `</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源可操作的方法列表，例如get 、list、delete、create、update 等
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>  Verbs Verbs <span style="color:#f1fa8c">`json:&#34;verbs&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// 资源的简称，例如 Pod 资源的简称为 po
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>  ShortNames []<span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;shortNames,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#6272a4">// 该资源所属的分组资源列表（例如“全部”)
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Categories []<span style="color:#8be9fd">string</span> <span style="color:#f1fa8c">`json:&#34;categories,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">...</span>	
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="资源外部版本与内部版本">资源外部版本与内部版本<a hidden class="anchor" aria-hidden="true" href="#资源外部版本与内部版本">#</a></h4>
+<p>​	Kubernetes 资源代码定义在 <code>pkg/apis</code> 目录下， 在详解资源代码定义之前， 先来了解一下资源的外部版本(ExternalVersion )与内部版本(Internal Version )。在 Kubernetes 系统中，同 一资源对应着两个版本，分别是外部版本和内部版本。例如，Deployment 资源，它所属的外部版本表现形式为<code>apps/ v1</code>，内部版本表现形式为<code>apps/_internal</code>'</p>
+<ul>
+<li>
+<p>ExternalObject:  外部版本资源对象，也称为 Versioned Object ( 即拥有资源版本的资源对象)。外部版本用于对外暴露给用户请求的接又所使用的资源对象，例如，用户在通过 YAML 或 JSON 格式的描述文件创建资源对象时，所使用的是外部版本的资源对象。外部版本的资源对象通过资源版本( Alpha 、Beta 、Stable )进行标识</p>
+</li>
+<li>
+<p>Internal Object: 内部版本资源对象。内部版本不对外暴露，仅在 Kubernetes API Server 内部使用。内部版本用于多资源版本的转换，例如将 v1betal 版本转换为 v1 版本，其过程为 <code>v1betal--internal - v1</code>，即先将 v1betal 转换为内部版本(internal )，再由内部版本(internal)转换为V1版本。内部版本资源对象通过 <code>runtime. APIVersionlnternal</code>  (即  internal )进行标识。</p>
+<p>资源的外部版本代码定义在 <code>pkg/apis/&lt;group&gt;/&lt;version&gt;/</code>目录下，资源的内部版本代码定义在 <code>pkg/apis/&lt;group&gt;/</code>日 录 下。 例 如 ， Deployment 资源 ，它的外部版本定义在
+<code>pkg/apis/apps/{v1,V1betal, v1beta2}/</code> 目录下， 它的内部版本定义在<code>pkg/apis/apps/</code>目录下(内部版本一般与资源组在同一级目录下)。资源的外部版本与内部版本如图所示。</p>
+</li>
+</ul>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230411141133099.png" alt="image-20230411141133099"  />
+</p>
+<p><strong>资源的外部版本和内部版本是需要相互转换的</strong>，而用于转换的函数需要事先初始化到资源注册表 (Scheme) 中 。 多个外部版本 ( External Version ) 之间的资源进行相互转换，都需要通过内部版本 (Internal Version )进行中转。这也是Kubernetes 能实现多资源版本转换的关键.</p>
+<p>​	资源的外部版本与内部版本的代码定义也不太一样，外部版本的资源需要对外暴露给用户请求的接又，所以资源代码定义了 <code>JSONTags </code>和 <code>Proto Tags</code>，用于请求的序列化和反序列化操作。内部版本的资源不对外暴露，所以没有任何的 JSON Tags 和ProtoTags定义。以Pod 资源代码定义为例，代码示例如下</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span> <span style="color:#6272a4">// staging/src/k8s.io/api/core/v1/types.go 外部使用
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> Pod <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	metav1.TypeMeta <span style="color:#f1fa8c">`json:&#34;,inline&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// Standard object&#39;s metadata.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// +optional
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	metav1.ObjectMeta <span style="color:#f1fa8c">`json:&#34;metadata,omitempty&#34; protobuf:&#34;bytes,1,opt,name=metadata&#34;`</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// Specification of the desired behavior of the pod.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// +optional
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Spec PodSpec <span style="color:#f1fa8c">`json:&#34;spec,omitempty&#34; protobuf:&#34;bytes,2,opt,name=spec&#34;`</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// Most recently observed status of the pod.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// This data may not be up to date.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// Populated by the system.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// Read-only.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// +optional
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Status PodStatus <span style="color:#f1fa8c">`json:&#34;status,omitempty&#34; protobuf:&#34;bytes,3,opt,name=status&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// pkg/apis/core/types.go  内部使用
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> Pod <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	metav1.TypeMeta
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// +optional
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	metav1.ObjectMeta
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// Spec defines the behavior of a pod.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// +optional
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Spec PodSpec
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// Status represents the current information about a pod. This data may not be up
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// to date.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// +optional
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	Status PodStatus
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="资源代码定义">资源代码定义<a hidden class="anchor" aria-hidden="true" href="#资源代码定义">#</a></h4>
+<p>​    Kubernetes资源代码定义在<code>pkg/apis</code>目录下，<strong>同一资源对应着内部版本和外部版本，内部版本和外部版本的资源代码结构并不相同</strong>。</p>
+<p>​	资源的内部版本定义了所支持的资源类型 ( types.go)、资源验证方法( validation.go )、资源注册至资源注册表的方法 ( install/install.go) 等 。 而资源的外部版本定义了资源的转换方法 (conversion.go )、资源的默认值 (defaults.go) 等。</p>
+<p>​	以 Deployment 资源为例，它的内部版本定义在 <code>pkg/apis/apps/</code>目录下，其资源代码结构为</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>.
+</span></span><span style="display:flex;"><span>├── OWNERS
+</span></span><span style="display:flex;"><span>├── doc.go 
+</span></span><span style="display:flex;"><span>├── fuzzer
+</span></span><span style="display:flex;"><span>├── install
+</span></span><span style="display:flex;"><span>├── register.go
+</span></span><span style="display:flex;"><span>├── types.go
+</span></span><span style="display:flex;"><span>├── v1
+</span></span><span style="display:flex;"><span>├── v1beta1
+</span></span><span style="display:flex;"><span>├── v1beta2
+</span></span><span style="display:flex;"><span>├── validation
+</span></span><span style="display:flex;"><span>└── zz_generated.deepcopy.go
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>doc.go: GoDoc 文件，定义了当前包的注释信息。在 Kubernetes 资源包中， 它还担当了代码生成器的全局 Tags 描述文件</li>
+<li>register. go : 定义了资源组、资源版本及资源的注册信息 。</li>
+<li>types.go: 定义了在当前资源组、资源版本下所支持的资源类型。</li>
+<li>v1、v1betal 、v1beta2 :  定义了资源组下拥有的资源版本的资源 (即外部版本)。</li>
+<li>install :  把当前资源组下的所有资源注册到资源注册表中。</li>
+<li>validation: 定义了资源的验证方法。</li>
+<li>zz_generated.deepcopy-go: 定义了资源的深复制操作，该文件由代码生成器自动生成</li>
+</ul>
+<p>​    每一个 Kubernetes 资源目录，都通过 register.go 代码文件定义所属的资源组和资源版本，内部版本资源对象通过<code>runtime.APIVersionInternal</code> (即 _internal ) 标识 ，代码示例如下:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// pkg/apis/apps/types.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> Deployment <span style="color:#8be9fd;font-style:italic">struct</span>{ <span style="color:#ff79c6">...</span> }
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> DeploymentSpec <span style="color:#8be9fd;font-style:italic">struct</span> {<span style="color:#ff79c6">...</span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">...</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	以 Deployment 资源为例，它的外部版本定义在 <code>pkg/apis/apps/{vl,v1betal, v1beta2 } </code>目录下，其资源代码结构如下:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>.
+</span></span><span style="display:flex;"><span>├── conversion.go
+</span></span><span style="display:flex;"><span>├── conversion_test.go
+</span></span><span style="display:flex;"><span>├── defaults.go
+</span></span><span style="display:flex;"><span>├── defaults_test.go
+</span></span><span style="display:flex;"><span>├── doc.go
+</span></span><span style="display:flex;"><span>├── register.go
+</span></span><span style="display:flex;"><span>├── zz_generated.conversion.go
+</span></span><span style="display:flex;"><span>└── zz_generated.defaults.go
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>conversion.go</code> :  定义了资源的转换函数 (默认转换函数 )，并将默认转换函数注册到资源注册表中。</li>
+<li><code>zz_generated.conversion.go</code>: 定义了资源的转换西数(自动生成的转换函 数)，并将生成的转换两数注册到资源注册表中。该文件由代码生成器自 动生成。</li>
+<li><code>defaults.go</code>: 定义了资源的默认值函 数 ，并将默认值函数注册到资源注册表中</li>
+<li><code>zz_generated.defaults.go</code>: 定义了资源的默认值函数(自动生成的默认值函数 )，并将生成的默认值两数注册到资源注册表中。该文件由代码生成器自动生成</li>
+</ul>
+<p>​    外部版本与内部版本资源类型相同，都通过 <code>register.go</code>代码文件定义所属的资源组和资源版本，外部版本资源对象通过资源版本( Alpha、Beta、Stable)标识，代码</p>
+<p>示例如下</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// GroupName is the group name use in this package
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">const</span> GroupName = <span style="color:#f1fa8c">&#34;apps&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// SchemeGroupVersion is group version used to register these objects
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">var</span> SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: <span style="color:#f1fa8c">&#34;v1&#34;</span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="将资源注册到资源注册表中">将资源注册到资源注册表中<a hidden class="anchor" aria-hidden="true" href="#将资源注册到资源注册表中">#</a></h4>
+<p>​	在每一个Kubernetes资源组目录中，都拥有一个<code>instal/install.go</code> 代码文件，它负责将资源信息注册到资源注册表(Scheme)中。以 core 核心资源组为例，代码示例如下:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// pkg/apis/core/install/install.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">init</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#50fa7b">Install</span>(legacyscheme.Scheme)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// Install registers the API group and adds types to a scheme
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">Install</span>(scheme <span style="color:#ff79c6">*</span>runtime.Scheme) {
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(core.<span style="color:#50fa7b">AddToScheme</span>(scheme))
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(v1.<span style="color:#50fa7b">AddToScheme</span>(scheme))
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(scheme.<span style="color:#50fa7b">SetVersionPriority</span>(v1.SchemeGroupVersion))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​    <code>legacyscheme.Scheme</code> 是<code>kube-apiserver</code> 组件的全局资源注册表，Kubernetes 的所有资源信息都交给资源注册表统一管理。<code>core. AddToScheme</code>函数注册<code>core</code>资源组内部版本的资源。<code>v1.AddToScheme</code> 函数注册 <code>core</code> 资源组外部版本的资源。 <code>scheme.SetVersionPriority</code>两数注册资源组的版本顺序，如有多个资源版本，排在最前面的为资源首选版本。</p>
+<h4 id="资源首选版本">资源首选版本<a hidden class="anchor" aria-hidden="true" href="#资源首选版本">#</a></h4>
+<p>​    首选版本( Preferred Version )，也称优选版本( Priority Version)，一个资源组下拥有多个资源版本，例如，apps资源组拥有v1、v1betal、v1beta2 等资源版本。当我们使用 apps 资源组下的Deployment 资源时，在一些场景下，如不指定资源版本，则使用该资源的首选版本。</p>
+<p>​	以apps 资源组为例，注册资源时会注册多个资源版本，分别是v1、v1beta2、 v1betal ，代码示例如下：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// pkg/apis/apps/install/install.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">Install</span>(scheme <span style="color:#ff79c6">*</span>runtime.Scheme) {
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(apps.<span style="color:#50fa7b">AddToScheme</span>(scheme))
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(v1beta1.<span style="color:#50fa7b">AddToScheme</span>(scheme))
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(v1beta2.<span style="color:#50fa7b">AddToScheme</span>(scheme))
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(v1.<span style="color:#50fa7b">AddToScheme</span>(scheme))
+</span></span><span style="display:flex;"><span>	utilruntime.<span style="color:#50fa7b">Must</span>(scheme.<span style="color:#50fa7b">SetVersionPriority</span>(v1.SchemeGroupVersion, v1beta2.SchemeGroupVersion, v1beta1.SchemeGroupVersion))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	<code>scheme.SetVersionPriority</code> 注册版本顺序很重要，apps 资源组的注册版本顺序为 v1 、v1beta2 、v1betal ，那么在资源注册表的 <code>version Priority</code> 结构中 ，资源的首选版本</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">func</span> (s <span style="color:#ff79c6">*</span>Scheme) <span style="color:#50fa7b">SetVersionPriority</span>(versions <span style="color:#ff79c6">...</span>schema.GroupVersion) <span style="color:#8be9fd">error</span> {
+</span></span><span style="display:flex;"><span>	groups <span style="color:#ff79c6">:=</span> sets.String{}
+</span></span><span style="display:flex;"><span>	order <span style="color:#ff79c6">:=</span> []<span style="color:#8be9fd">string</span>{}
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">for</span> _, version <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">range</span> versions {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">len</span>(version.Version) <span style="color:#ff79c6">==</span> <span style="color:#bd93f9">0</span> <span style="color:#ff79c6">||</span> version.Version <span style="color:#ff79c6">==</span> APIVersionInternal {
+</span></span><span style="display:flex;"><span>			<span style="color:#ff79c6">return</span> fmt.<span style="color:#50fa7b">Errorf</span>(<span style="color:#f1fa8c">&#34;internal versions cannot be prioritized: %v&#34;</span>, version)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		groups.<span style="color:#50fa7b">Insert</span>(version.Group)
+</span></span><span style="display:flex;"><span>		order = <span style="color:#8be9fd;font-style:italic">append</span>(order, version.Version)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">len</span>(groups) <span style="color:#ff79c6">!=</span> <span style="color:#bd93f9">1</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff79c6">return</span> fmt.<span style="color:#50fa7b">Errorf</span>(<span style="color:#f1fa8c">&#34;must register versions for exactly one group: %v&#34;</span>, strings.<span style="color:#50fa7b">Join</span>(groups.<span style="color:#50fa7b">List</span>(), <span style="color:#f1fa8c">&#34;, &#34;</span>))
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	s.versionPriority[groups.<span style="color:#50fa7b">List</span>()[<span style="color:#bd93f9">0</span>]] = order
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="资源操作方法">资源操作方法<a hidden class="anchor" aria-hidden="true" href="#资源操作方法">#</a></h4>
+<p>​	在 Kubernetes 系统中 ，针对每一个资源都有一定的操作方法 ( 即 Verbs )，例如 ，对于 Pod 资源对象，可以通过kubectl 命令行工具对其执行 create、delete、get 等操 作。Kubernetes 系统所支持的操作方法目前有8 种操作，分别是 create、delete、 deletecollection、get、list、patch、update、watch。这些操作方法可分为四大类，分别属于增、删、改、查，对资源进行创建、删除、更新和查询。资源操作方法如图</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230411161222986.png" alt="image-20230411161222986"  />
+</p>
+<p>​	资源操作方法可以通过<code>metav1.Verbs</code> 数据结构进行描述，代码示例如下:</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> Verbs []<span style="color:#8be9fd">string</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">func</span> (vs Verbs) <span style="color:#50fa7b">String</span>() <span style="color:#8be9fd">string</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">return</span> fmt.<span style="color:#50fa7b">Sprintf</span>(<span style="color:#f1fa8c">&#34;%v&#34;</span>, []<span style="color:#8be9fd;font-style:italic">string</span>(vs))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	不同资源拥有不同的操作方法，例如，针对 Pod 资源对象与 pod logs 子资源对象，Pod 资源对象拥有create、delete、deletecollection、get、list、patch、update、watch 等操作方法，pod/logs 子资源对象只拥有get操作方法，因为日志只需要执行查看操作。Pod 资源对象与pod/ logs 子资源对象的操作方法分别通过 metav1. Verbs 进行描述。</p>
+<p>​	资源对象的操作方法与存储 (Storage )相关联，增、删、改、查实际上都是针对存储的操作。如何解 一个资源对象拥有哪些可操作的方法呢 ?</p>
+<p>​	需要查看与存储相关联的源码包 <code>registry</code> ，其定义在 <code>vendor/k8s.io/apiserver/pkg/registry/ </code>目录下。 每种操作方法对应一个操作方法接又 (Interface)，资源对象操作方法接口说明：</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230411162803191.png" alt="image-20230411162803191"  />
+</p>
+<h4 id="资源与命名空间">资源与命名空间<a hidden class="anchor" aria-hidden="true" href="#资源与命名空间">#</a></h4>
+<p>​	Kubernetes 系统支持命名空间(Namespace)，其用来解決Kubernetes 集群中资源对象过多导致管理复杂的问题 。 每个命名空间相当于一个 “ 虚 拟 集 群 ” ，不同命名空间之间可以进行隔离，当然也可以通过某种方式跨命名空间通信。</p>
+<p>​	Kubernetes 系统中默认内置了4个命名空间 ，分别介绍如下。</p>
+<ul>
+<li>
+<p>default: 所有未指定命名空间的资源对象都会被分配给该命名空间</p>
+</li>
+<li>
+<p>kube-system: 所有由 Kubernetes 系统创建的资源对象都会被分配给该命名空间</p>
+</li>
+<li>
+<p>kube-public: 此命名空间下的资源对象可以被所有人访问 (包括未认证用户)</p>
+</li>
+<li>
+<p>kube-node-lease: 此命名空间下存放来自节点的心跳记录(节点租约信息)</p>
+<p>通过运行 <code>kubectl get namespace</code> 命令查看 <code>Kubernetes</code> 系统上所有的命名空间信息 。另外，在Kubernetes 系统中，大部分资源对象都存在于某些命名空间中(例如Pod 资源对象)。但并不是所有的资源对象都存在于某个命名空间中(例如 Node 资源对象)。决定资源对象属于哪个命名空间，可通过资源对象的 <code>ObjectMeta.Namespace</code>描述</p>
+</li>
+</ul>
+<h4 id="自定义资源">自定义资源<a hidden class="anchor" aria-hidden="true" href="#自定义资源">#</a></h4>
+<p>​	Kubenetes 系统拥有强大的高扩展功能 ，其中自定义资源 (CustomResource ) 就是一种常见的扩展方式，即可将自己定义的资源添加到 Kubemetes 系统中。Kubernetes 系统附带了许多内置资源，但是仍有些需求需要使用自定义资源来扩展 Kubernetes 的功能。</p>
+<p>​	开发者通过 CRD 可以实现自定义资源，它允许用户将自己定义的资源添加到 Kubernetes 系统中，并像使用 Kubernetes 内置资源一样使用 这些资源，例如，在 YAML/JSON 文件中带有 Spec 的资源定义都是对 Kubernetes 中的资源对象的定义，所有的自定义资源都可以与 Kubernetes 系统中的内置资源一样使用 kubectl 或 client- go 进行操作</p>
+<h4 id="资源对象描述文件定义">资源对象描述文件定义<a hidden class="anchor" aria-hidden="true" href="#资源对象描述文件定义">#</a></h4>
+<p>​	Kubernetes 资源可分为内置资源(Kubernetes Resources )和自定义资源(Custom Resources)，它们都通过资源对象描述文件(Manifest File)进行定义，资源对象描述文件如图</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230411171215994.png" alt="image-20230411171215994"  />
+</p>
+<p>​	一个资源对象需要用5 个字段来描述它分别是Group/Version、KindMetaData、 Spec、Status。这些字段定义在YAML或JSON 文件中。Kubernetes系统中的所有的 资源对象都可以采用YAML或JSON格式的描述文件来定义，下面是某个Pod 文件的资源对象描述文件 。 YAML Manifest File Example 代码示例如下：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ff79c6">apiVersion</span>: apps/v1
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">kind</span>: Deployment
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">name</span>: nginx-deployment
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">selector</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">matchLabels</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">app</span>: nginx
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">replicas</span>: <span style="color:#bd93f9">2</span> <span style="color:#6272a4"># 告知 Deployment 运行 2 个与该模板匹配的 Pod</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">template</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">metadata</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">labels</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#ff79c6">app</span>: nginx
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">spec</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">containers</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#ff79c6">name</span>: nginx
+</span></span><span style="display:flex;"><span>        <span style="color:#ff79c6">image</span>: nginx:1.14.2
+</span></span><span style="display:flex;"><span>        <span style="color:#ff79c6">ports</span>:
+</span></span><span style="display:flex;"><span>        - <span style="color:#ff79c6">containerPort</span>: <span style="color:#bd93f9">80</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>apiversion: 指定创建资源对象的资源组和资源版本， 其表现形式为 <code>&lt;group&gt;/&lt;version&gt;</code>， 若是<code>core</code>资源组 (即核心资源组 ) 下的资源对象 ，其表现形式为<code>&lt;version&gt;</code></li>
+<li>kind:  指定创建资源对象的种类</li>
+<li>metadata: 描述创建资源对象的元数据信息，例如名称、命名空间等</li>
+<li>spee: 包含有关Deployment 资源对象的核心信息，告诉Kubernetes 期望的资源状态、副本数量、环境变量、 卷等信息</li>
+<li>status: 包含有关正在运行的 Deployment 资源对象的信息</li>
+</ul>
+<p>​	每一个Kubernetes 资源对象都包含两个嵌套字段，即 spec 字段和 status 字段。 其中spec 字段是必需的，它描述了资源对象的“期望状态”(DesiredState)，而status 字段用于描述资源对象的“ 实际状态” (Actual State) ，它是由Kubernetes 系统提供 和更新的。在任何时刻，Kubernetes控制器一直努力地管理着对象的实际状态以与期望状态相匹配。</p>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/k8s/">K8s</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

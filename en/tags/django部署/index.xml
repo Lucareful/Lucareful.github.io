@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Django部署 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/django%E9%83%A8%E7%BD%B2/</link>
+    <description>Recent content in Django部署 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/django%E9%83%A8%E7%BD%B2/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>django&#43;nginx&#43;uwsgi部署漫谈</title>
+      <link>https://Lucareful.github.io/en/posts/django&#43;nginx&#43;uwsgi%E9%83%A8%E7%BD%B2%E6%BC%AB%E8%B0%88/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/django&#43;nginx&#43;uwsgi%E9%83%A8%E7%BD%B2%E6%BC%AB%E8%B0%88/</guid>
+      <description>写在前面：关于Django的部署问题网上有很多教程，但是每个人的配置环境和遇到的情况都一样，所以在此记录下我部署过程中遇到的问题 **看官方文</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>写在前面：关于Django的部署问题网上有很多教程，但是每个人的配置环境和遇到的情况都一样，所以在此记录下我部署过程中遇到的问题</p>
+</blockquote>
+<p>**看官方文档：**<a href="https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html">https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html</a>（特别重要！！！）</p>
+<h2 id="环境介绍">环境介绍</h2>
+<ul>
+<li>阿里云主机（<code>Ubuntu</code>系统）</li>
+<li><code>virtualenv</code>虚拟环境
+<ul>
+<li>python3版本</li>
+<li>Django 2.0.3 版本</li>
+<li>uwsgi 2.0.19版本</li>
+</ul>
+</li>
+<li>Nginx/1.10.3 (<code>Ubuntu</code>)</li>
+</ul>
+<h2 id="nginx目录介绍">nginx目录介绍</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span>.
+</span></span><span style="display:flex;"><span>├── [drwxr-xr-x]  conf.d
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  fastcgi.conf
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  fastcgi_params
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  koi-utf
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  koi-win
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  mime.types
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  nginx.conf
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  proxy_params
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  scgi_params
+</span></span><span style="display:flex;"><span>├── [drwxr-xr-x]  sites-available
+</span></span><span style="display:flex;"><span>│   └── [-rw-r--r--]  default
+</span></span><span style="display:flex;"><span>├── [drwxr-xr-x]  sites-enabled
+</span></span><span style="display:flex;"><span>│   └── [lrwxrwxrwx]  default -&gt; /etc/nginx/sites-available/default
+</span></span><span style="display:flex;"><span>├── [drwxr-xr-x]  snippets
+</span></span><span style="display:flex;"><span>│   ├── [-rw-r--r--]  fastcgi-php.conf
+</span></span><span style="display:flex;"><span>│   └── [-rw-r--r--]  snakeoil.conf
+</span></span><span style="display:flex;"><span>├── [-rw-r--r--]  uwsgi_params
+</span></span><span style="display:flex;"><span>└── [-rw-r--r--]  win-utf
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span>相关目录和文件作用
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>client_body_temp  # Nginx所有配置文件的目录
+</span></span><span style="display:flex;"><span>conf   	#配置文件目录（.default 文件为对应的默认文件）
+</span></span><span style="display:flex;"><span>fastcgi.conf    # fastcgi相关参数的配置文件
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>fastcgi_params  # fastcgi的参数文件
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>koi-utf    		# 媒体类型
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>koi-win   		# 媒体类型
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>mime.types #当 Web 服务器收到静态的资源文件请求时，依据请求文件的后缀名在服务器的 MIME 配置文件中找到对应的 MIME Type，再根据 MIME Type 设置 HTTP Response 的Content-Type，然后浏览器根据 Content-Type 的值处理文件
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>nginx.conf   #Nginx主配置文件
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>scgi_params  # scgi的配置文件
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>uwsgi_params  # uwsgi 和 nginx的通信文件
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>win-utf   #
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>html 		#默认解析的静态文件目录
+</span></span><span style="display:flex;"><span>50x.html   	#错误页面优雅替代文件 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>index.html  #网站首页配置文件 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>logs 		#日志目录
+</span></span><span style="display:flex;"><span>access.log  #访问日志，包含所有访问记录
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>error.log   #错误日志，包含访问出错的记录
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>nginx.pid     Nginx运行的进程号，同ps -ef | grep nginx 第一行的进程号
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sbin #Nginx可执行文件目录
+</span></span><span style="display:flex;"><span>nginx #Nginx 启动文件
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>koi-utf、koi-win、win-utf 是与编码转换有关的配置文件
+</span></span><span style="display:flex;"><span>其他带 temp 的为临时目录
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>ASGI 是为了支持异步网络服务器和应用而新出现的Python 标准。</p>
+</blockquote>
+<!-- more --->
+<h2 id="注意问题">注意问题</h2>
+<ul>
+<li>在阿里云上面部署的时候，需要注意nginx的配置</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span># nginx的配置
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>server_name 你的主机ip;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        location / {
+</span></span><span style="display:flex;"><span>                # First attempt to serve request as file, then
+</span></span><span style="display:flex;"><span>                # as directory, then fall back to displaying a 404.
+</span></span><span style="display:flex;"><span>                #try_files $uri $uri/ =404;
+</span></span><span style="display:flex;"><span>                include  uwsgi_params;
+</span></span><span style="display:flex;"><span>                        uwsgi_pass  你的主机ip:端口;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        location /static {
+</span></span><span style="display:flex;"><span>                 alias /home/myblog/static;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>        location /media {
+</span></span><span style="display:flex;"><span>                alias /home/myblog/media;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>虚拟环境的问题：</p>
+<ul>
+<li>
+<p>在阿里云主机上如果直接用<code>virtualenv</code>创建虚拟环境会出现一些问题，因为系统默认的是<code>python2</code>的版本，需要指定版本</p>
+<ul>
+<li>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>virtualenv <span style="color:#ff7b72;font-weight:bold">-</span>p <span style="color:#ff7b72;font-weight:bold">/</span>usr<span style="color:#ff7b72;font-weight:bold">/</span>bin<span style="color:#ff7b72;font-weight:bold">/</span>python3 venv<span style="color:#ff7b72;font-weight:bold">/</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+</li>
+</ul>
+<h2 id="后记">后记</h2>
+<ul>
+<li>安装配置的过程是漫长痛苦的，尤其是找不到思路的时候。所以要静下心来，多读官方文档！！！多读官方文档！！！多读官方文档！！！仔细的检查配置，项目跑起来的那一刻是很激动开心的。</li>
+</ul>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

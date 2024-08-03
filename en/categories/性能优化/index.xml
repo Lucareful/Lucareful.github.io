@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>性能优化 on Luenci</title>
+    <link>https://Lucareful.github.io/en/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</link>
+    <description>Recent content in 性能优化 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 03 Aug 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://Lucareful.github.io/en/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang pprof 性能分析指南</title>
+      <link>https://Lucareful.github.io/en/posts/golang-pprof-%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E5%8D%97/</link>
+      <pubDate>Sat, 03 Aug 2024 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/golang-pprof-%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E5%8D%97/</guid>
+      <description>&lt;h1 id=&#34;golang-pprof-性能分析指南&#34;&gt;Golang pprof 性能分析指南&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;pprof 是一个用于可视化和分析分析数据的工具。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;采样方式&#34;&gt;采样方式&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;方式名称&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;如何使用&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;优点&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;缺点&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;使用场景&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;runtime/pprof&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;手动调用【runtime.StartCPUProfile、runtime.SweightCPUProfile】等&lt;strong&gt;API&lt;/strong&gt;来进行数据的采集。采集程序（非 Server）的指定区块的运行数据进行分析。&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;灵活性高&lt;/strong&gt;、按需采集。&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;工具型应用&lt;/strong&gt;（比如说定制化的分析小工具、集成到公司监控系统）。这种应用运行一段时间就结束。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;net/http/pprof&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;通过&lt;strong&gt;http&lt;/strong&gt;服务来获取Profile采样文件。 &lt;code&gt;import _ &amp;quot;net/http/pprof&amp;quot;&lt;/code&gt;。基于 HTTP Server 运行，并且可以采集运行时数据进行分析。&lt;code&gt;net/http/pprof中只是使用runtime/pprof包来进行封装了一下，并在http端口上暴露出来&lt;/code&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;简单易用&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;在线服务（一直运行着的程序）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;go test&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;通过命令&lt;code&gt;go test -bench . -cpuprofile cpu.prof&lt;/code&gt;来进行采集数据。&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;针对性强&lt;/strong&gt;、细化到函数&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;进行某函数的性能测试&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;指标解释&#34;&gt;指标解释&lt;/h2&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://github.com/user-attachments/assets/c2182bee-333f-4ec3-94cb-7a36440bb105&#34; alt=&#34;image&#34;  /&gt;
+&lt;/p&gt;
+&lt;p&gt;常用指标如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;allocs：所有时刻的内存使用情况，包括正在使用的及已经回收的&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;block：导致在同步原语上发生阻塞的堆栈跟踪&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;cmdline： 当前程序的命令行的完整调用路径。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;goroutine：目前的 goroutine 数量及运行情况&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;heap：当前时刻的内存使用情况&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;mutex：查看导致互斥锁的竞争持有者的堆栈跟踪&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;profile：默认进行 30s 的 CPU Profiling，得到一个分析用的 profile 文件&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;threadcreate：查看创建新 OS 线程的堆栈跟踪。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;trance：当前程序执行的追踪，可以在秒数的 GET 参数中指定持续时间。在获取追踪文件后，请使用 go 工具的 trace 命令来调查追踪。（&lt;a href=&#34;https://mp.weixin.qq.com/s/I9xSMxy32cALSNQAN8wlnQ&#34;&gt;深入浅出 Go trace (qq.com)&lt;/a&gt;）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;注意，默认情况下是不追踪block和mutex的信息的，如果想要看这两个信息，需要在代码中加上两行：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;runtime.&lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;SetBlockProfileRate&lt;/span&gt;(&lt;span style=&#34;color:#a5d6ff&#34;&gt;1&lt;/span&gt;) &lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;// 开启对阻塞操作的跟踪，block  
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;&lt;/span&gt;runtime.&lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;SetMutexProfileFraction&lt;/span&gt;(&lt;span style=&#34;color:#a5d6ff&#34;&gt;1&lt;/span&gt;) &lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;// 开启对锁调用的跟踪，mutex
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/blockquote&gt;
+&lt;p&gt;​	注意，上文的所有信息都是实时的，如果你刷新一下，是可以看到数字在变化的。此时如果点击蓝色的连接，可以看到一些协程的栈信息，这些信息并不容易阅读。如果想要更加清晰的数据，需要将信息保存下来，在本地进行分析。&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="golang-pprof-性能分析指南">Golang pprof 性能分析指南</h1>
+<blockquote>
+<p>pprof 是一个用于可视化和分析分析数据的工具。</p>
+</blockquote>
+<h2 id="采样方式">采样方式</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">方式名称</th>
+<th style="text-align:left">如何使用</th>
+<th style="text-align:left">优点</th>
+<th style="text-align:left">缺点</th>
+<th style="text-align:left">使用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">runtime/pprof</td>
+<td style="text-align:left">手动调用【runtime.StartCPUProfile、runtime.SweightCPUProfile】等<strong>API</strong>来进行数据的采集。采集程序（非 Server）的指定区块的运行数据进行分析。</td>
+<td style="text-align:left"><strong>灵活性高</strong>、按需采集。</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><strong>工具型应用</strong>（比如说定制化的分析小工具、集成到公司监控系统）。这种应用运行一段时间就结束。</td>
+</tr>
+<tr>
+<td style="text-align:left">net/http/pprof</td>
+<td style="text-align:left">通过<strong>http</strong>服务来获取Profile采样文件。 <code>import _ &quot;net/http/pprof&quot;</code>。基于 HTTP Server 运行，并且可以采集运行时数据进行分析。<code>net/http/pprof中只是使用runtime/pprof包来进行封装了一下，并在http端口上暴露出来</code></td>
+<td style="text-align:left"><strong>简单易用</strong></td>
+<td style="text-align:left"></td>
+<td style="text-align:left">在线服务（一直运行着的程序）</td>
+</tr>
+<tr>
+<td style="text-align:left">go test</td>
+<td style="text-align:left">通过命令<code>go test -bench . -cpuprofile cpu.prof</code>来进行采集数据。</td>
+<td style="text-align:left"><strong>针对性强</strong>、细化到函数</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">进行某函数的性能测试</td>
+</tr>
+</tbody>
+</table>
+<h2 id="指标解释">指标解释</h2>
+<p><img loading="lazy" src="https://github.com/user-attachments/assets/c2182bee-333f-4ec3-94cb-7a36440bb105" alt="image"  />
+</p>
+<p>常用指标如下：</p>
+<ul>
+<li>
+<p>allocs：所有时刻的内存使用情况，包括正在使用的及已经回收的</p>
+</li>
+<li>
+<p>block：导致在同步原语上发生阻塞的堆栈跟踪</p>
+</li>
+<li>
+<p>cmdline： 当前程序的命令行的完整调用路径。</p>
+</li>
+<li>
+<p>goroutine：目前的 goroutine 数量及运行情况</p>
+</li>
+<li>
+<p>heap：当前时刻的内存使用情况</p>
+</li>
+<li>
+<p>mutex：查看导致互斥锁的竞争持有者的堆栈跟踪</p>
+</li>
+<li>
+<p>profile：默认进行 30s 的 CPU Profiling，得到一个分析用的 profile 文件</p>
+</li>
+<li>
+<p>threadcreate：查看创建新 OS 线程的堆栈跟踪。</p>
+</li>
+<li>
+<p>trance：当前程序执行的追踪，可以在秒数的 GET 参数中指定持续时间。在获取追踪文件后，请使用 go 工具的 trace 命令来调查追踪。（<a href="https://mp.weixin.qq.com/s/I9xSMxy32cALSNQAN8wlnQ">深入浅出 Go trace (qq.com)</a>）</p>
+</li>
+</ul>
+<blockquote>
+<p>注意，默认情况下是不追踪block和mutex的信息的，如果想要看这两个信息，需要在代码中加上两行：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>runtime.<span style="color:#d2a8ff;font-weight:bold">SetBlockProfileRate</span>(<span style="color:#a5d6ff">1</span>) <span style="color:#8b949e;font-style:italic">// 开启对阻塞操作的跟踪，block  
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>runtime.<span style="color:#d2a8ff;font-weight:bold">SetMutexProfileFraction</span>(<span style="color:#a5d6ff">1</span>) <span style="color:#8b949e;font-style:italic">// 开启对锁调用的跟踪，mutex
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div></blockquote>
+<p>​	注意，上文的所有信息都是实时的，如果你刷新一下，是可以看到数字在变化的。此时如果点击蓝色的连接，可以看到一些协程的栈信息，这些信息并不容易阅读。如果想要更加清晰的数据，需要将信息保存下来，在本地进行分析。</p>
+<h2 id="理解指标">理解指标</h2>
+<ul>
+<li>flat：函数自身的运行耗时。</li>
+<li>flat%：函数自身在 CPU 运行耗时总比例。</li>
+<li>sum%：函数自身累积使用 CPU 总比例。</li>
+<li>cum：函数自身及其调用函数的运行总耗时。</li>
+<li>cum%：函数自身及其调用函数的运行耗时总比例。</li>
+</ul>
+<h3 id="flat-flat"><code>flat flat%</code></h3>
+<p>​	一个函数内的 directly 操作的物理耗时。例如</p>
+<blockquote>
+<p>flat只会记录 step2 和 step3 的时间</p>
+</blockquote>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">foo</span>(){
+</span></span><span style="display:flex;"><span>     <span style="color:#d2a8ff;font-weight:bold">a</span>()                                        <span style="color:#8b949e;font-style:italic">// step1
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>     largeArray <span style="color:#ff7b72;font-weight:bold">:=</span> [math.MaxInt64]<span style="color:#ff7b72">int64</span>{}       <span style="color:#8b949e;font-style:italic">// step2
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>     <span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; math.MaxInt64; i<span style="color:#ff7b72;font-weight:bold">++</span> {       <span style="color:#8b949e;font-style:italic">// step3
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>             <span style="color:#d2a8ff;font-weight:bold">c</span>()                                <span style="color:#8b949e;font-style:italic">// step4
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>     }
+</span></span><span style="display:flex;"><span> }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	flat%即是 <code>flat/总运行时间</code>。内存等参数同理。<strong>所有的 flat 相加即是总采样时间</strong>，所有的flat%相加应该等于100%。</p>
+<p>​	flat一般是我们最关注的。其代表一个函数可能非常耗时，或者调用了非常多次，或者两者兼而有之，从而导致这个函数消耗了最多的时间。</p>
+<p>​	如果是我们自己编写的代码，则很可能有一些无脑 for 循环、复杂的计算、字符串操作、频繁申请内存等等。</p>
+<p>​	如果是第三方库的代码，则很可能我们过于频繁地调用了这些第三方库，或者以不正确的方式使用了这些第三方库。</p>
+<h3 id="cum-cum"><code>cum cum%</code></h3>
+<p>​	相比 flat，cum则是这个函数内所有操作的物理耗时，比如包括了上述的 step1、2、3、4。</p>
+<p>​	cum%即是<code>cum的时间/总运行时间</code>。内存等参数同理。</p>
+<p>​	一般cum是我们次关注的，且需要结合flat来看。</p>
+<p><strong>flat 可以让我们知道哪个函数耗时多，而 cum 可以帮助我们找到是哪些函数调用了这些耗时的（flat 值大的）函数。</strong></p>
+<h3 id="sum"><code>sum%</code></h3>
+<p>​	其上所有行的flat%的累加。可以视为，这一行及其以上行，其所有的 directly 操作一共占了多少物理时间。</p>
+<h2 id="案例分析">案例分析</h2>
+<h2 id="go-test">go test</h2>
+<ul>
+<li>cpu 使用分析：<code>-cpuprofile=cpu.pprof</code></li>
+<li>内存使用分析：<code>-benchmem -memprofile=mem.pprof</code></li>
+<li>block分析：<code>-blockprofile=block.pprof</code></li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>go test -bench<span style="color:#ff7b72;font-weight:bold">=</span>. -run<span style="color:#ff7b72;font-weight:bold">=</span>none -benchmem -memprofile<span style="color:#ff7b72;font-weight:bold">=</span>mem.pprof 
+</span></span><span style="display:flex;"><span>go test -bench<span style="color:#ff7b72;font-weight:bold">=</span>. -run<span style="color:#ff7b72;font-weight:bold">=</span>none -blockprofile<span style="color:#ff7b72;font-weight:bold">=</span>block.pprof 
+</span></span><span style="display:flex;"><span>go test -bench<span style="color:#ff7b72;font-weight:bold">=</span>. -run<span style="color:#ff7b72;font-weight:bold">=</span>none -benchmem -memprofile<span style="color:#ff7b72;font-weight:bold">=</span>mem.pprof -cpuprofile<span style="color:#ff7b72;font-weight:bold">=</span>cpu.pprof s
+</span></span><span style="display:flex;"><span>go test -bench<span style="color:#ff7b72;font-weight:bold">=</span>. -run<span style="color:#ff7b72;font-weight:bold">=</span>none -benchmem -memprofile<span style="color:#ff7b72;font-weight:bold">=</span>mem.pprof -cpuprofsile<span style="color:#ff7b72;font-weight:bold">=</span>cpu.pprof -blockprofile<span style="color:#ff7b72;font-weight:bold">=</span>block.pprof
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="runtimepprof">runtime/pprof</h2>
+<p>除了注入 http handler 和 go test 以外，我们还可以在程序中通过 pprof 所提供的 Lookup 方法来进行相关内容的采集和调用，其一共支持六种类型，分别是：goroutine、threadcreate、heap、block、mutex，代码如下：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> LookupType <span style="color:#ff7b72">int8</span> 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> ( 
+</span></span><span style="display:flex;"><span>    LookupGoroutine LookupType = <span style="color:#79c0ff">iota</span> 
+</span></span><span style="display:flex;"><span>    LookupThreadcreate LookupHeap 
+</span></span><span style="display:flex;"><span>    LookupAllocs LookupBlock LookupMutex ) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">pprofLookup</span>(lookupType LookupType, w io.Writer) <span style="color:#ff7b72">error</span> { 
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">var</span> err <span style="color:#ff7b72">error</span> 
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">switch</span> lookupType { 
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">case</span> LookupGoroutine: 
+</span></span><span style="display:flex;"><span>        	p <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">Lookup</span>(<span style="color:#a5d6ff">&#34;goroutine&#34;</span>) 
+</span></span><span style="display:flex;"><span>        err = p.<span style="color:#d2a8ff;font-weight:bold">WriteTo</span>(w, <span style="color:#a5d6ff">2</span>) 
+</span></span><span style="display:flex;"><span>    	<span style="color:#ff7b72">case</span> LookupThreadcreate: 
+</span></span><span style="display:flex;"><span>        	p <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">Lookup</span>(<span style="color:#a5d6ff">&#34;threadcreate&#34;</span>) 
+</span></span><span style="display:flex;"><span>        err = p.<span style="color:#d2a8ff;font-weight:bold">WriteTo</span>(w, <span style="color:#a5d6ff">2</span>) 
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">case</span> LookupHeap: 
+</span></span><span style="display:flex;"><span>        	p <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">Lookup</span>(<span style="color:#a5d6ff">&#34;heap&#34;</span>) 
+</span></span><span style="display:flex;"><span>        err = p.<span style="color:#d2a8ff;font-weight:bold">WriteTo</span>(w, <span style="color:#a5d6ff">2</span>) 
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">case</span> LookupAllocs: 
+</span></span><span style="display:flex;"><span>        	p <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">Lookup</span>(<span style="color:#a5d6ff">&#34;allocs&#34;</span>) 
+</span></span><span style="display:flex;"><span>        	err = p.<span style="color:#d2a8ff;font-weight:bold">WriteTo</span>(w, <span style="color:#a5d6ff">2</span>) 
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">case</span> LookupBlock: 
+</span></span><span style="display:flex;"><span>        	p <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">Lookup</span>(<span style="color:#a5d6ff">&#34;block&#34;</span>) 
+</span></span><span style="display:flex;"><span>        	err = p.<span style="color:#d2a8ff;font-weight:bold">WriteTo</span>(w, <span style="color:#a5d6ff">2</span>) 
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">case</span> LookupMutex: 
+</span></span><span style="display:flex;"><span>        	p <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">Lookup</span>(<span style="color:#a5d6ff">&#34;mutex&#34;</span>) 
+</span></span><span style="display:flex;"><span>        	err = p.<span style="color:#d2a8ff;font-weight:bold">WriteTo</span>(w, <span style="color:#a5d6ff">2</span>) 
+</span></span><span style="display:flex;"><span>    	} 
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> err 
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	接下来我们只需要对该方法进行调用就好了，其提供了 <code>io.Writer</code> 接口，也就是只要实现了对应的 Write 方法，我们可以将其写到任何支持地方去，如下：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">init</span>() { 
+</span></span><span style="display:flex;"><span>    runtime.<span style="color:#d2a8ff;font-weight:bold">SetMutexProfileFraction</span>(<span style="color:#a5d6ff">1</span>) 
+</span></span><span style="display:flex;"><span>    runtime.<span style="color:#d2a8ff;font-weight:bold">SetBlockProfileRate</span>(<span style="color:#a5d6ff">1</span>) 
+</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() { 
+</span></span><span style="display:flex;"><span>    http.<span style="color:#d2a8ff;font-weight:bold">HandleFunc</span>(<span style="color:#a5d6ff">&#34;/lookup/heap&#34;</span>, <span style="color:#ff7b72">func</span>(w http.ResponseWriter, r <span style="color:#ff7b72;font-weight:bold">*</span>http.Request) {
+</span></span><span style="display:flex;"><span>        _ = <span style="color:#d2a8ff;font-weight:bold">pprofLookup</span>(LookupHeap, os.Stdout) }) 
+</span></span><span style="display:flex;"><span>    http.<span style="color:#d2a8ff;font-weight:bold">HandleFunc</span>(<span style="color:#a5d6ff">&#34;/lookup/threadcreate&#34;</span>, <span style="color:#ff7b72">func</span>(w http.ResponseWriter, r <span style="color:#ff7b72;font-weight:bold">*</span>http.Request) { 
+</span></span><span style="display:flex;"><span>        _ = <span style="color:#d2a8ff;font-weight:bold">pprofLookup</span>(LookupThreadcreate, os.Stdout) }) 
+</span></span><span style="display:flex;"><span>    http.<span style="color:#d2a8ff;font-weight:bold">HandleFunc</span>(<span style="color:#a5d6ff">&#34;/lookup/block&#34;</span>, <span style="color:#ff7b72">func</span>(w http.ResponseWriter, r <span style="color:#ff7b72;font-weight:bold">*</span>http.Request) { 
+</span></span><span style="display:flex;"><span>        _ = <span style="color:#d2a8ff;font-weight:bold">pprofLookup</span>(LookupBlock, os.Stdout) }) 
+</span></span><span style="display:flex;"><span>    http.<span style="color:#d2a8ff;font-weight:bold">HandleFunc</span>(<span style="color:#a5d6ff">&#34;/lookup/goroutine&#34;</span>, <span style="color:#ff7b72">func</span>(w http.ResponseWriter, r <span style="color:#ff7b72;font-weight:bold">*</span>http.Request) { 
+</span></span><span style="display:flex;"><span>        _ = <span style="color:#d2a8ff;font-weight:bold">pprofLookup</span>(LookupGoroutine, os.Stdout) }) 
+</span></span><span style="display:flex;"><span>   
+</span></span><span style="display:flex;"><span>    _ = http.<span style="color:#d2a8ff;font-weight:bold">ListenAndServe</span>(<span style="color:#a5d6ff">&#34;0.0.0.0:6060&#34;</span>, <span style="color:#79c0ff">nil</span>) 
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="采集cpucpu-占用过高">采集CPU(CPU 占用过高)</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">CollectCpu</span>() { 
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 创建分析文件，在当前目录下 
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	file, err <span style="color:#ff7b72;font-weight:bold">:=</span> os.<span style="color:#d2a8ff;font-weight:bold">Create</span>(<span style="color:#a5d6ff">&#34;./cpu.prof&#34;</span>) 
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> { 
+</span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;创建采集文件失败, err:%v\n&#34;</span>, err) 
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> 
+</span></span><span style="display:flex;"><span>	} 
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 进行 cpu 数据的获取 
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	pprof.<span style="color:#d2a8ff;font-weight:bold">StartCPUProfile</span>(file) 
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">defer</span> pprof.<span style="color:#d2a8ff;font-weight:bold">SweightCPUProfile</span>() 
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 执行一段有问题的代码 
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; <span style="color:#a5d6ff">4</span>; i<span style="color:#ff7b72;font-weight:bold">++</span> { s
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">go</span> <span style="color:#d2a8ff;font-weight:bold">do1</span>() 
+</span></span><span style="display:flex;"><span>	} 
+</span></span><span style="display:flex;"><span>	time.<span style="color:#d2a8ff;font-weight:bold">Sleep</span>(<span style="color:#a5d6ff">10</span> <span style="color:#ff7b72;font-weight:bold">*</span> time.Second) 
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="nethttppprof">net/http/pprof</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gdscript3" data-lang="gdscript3"><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic"># 网页，运行该命令让程序开始半分钟（默认值）的CPU采样 服务开启了 pprof</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">$</span> go <span style="color:#ff7b72">tool</span> pprof http:<span style="color:#ff7b72;font-weight:bold">//</span><span style="color:#a5d6ff">127.0</span><span style="color:#ff7b72;font-weight:bold">.</span><span style="color:#a5d6ff">0.1</span>:<span style="color:#a5d6ff">8080</span><span style="color:#ff7b72;font-weight:bold">/</span>debug<span style="color:#ff7b72;font-weight:bold">/</span>pprof<span style="color:#ff7b72;font-weight:bold">/</span>profile
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><img loading="lazy" src="https://github.com/user-attachments/assets/d56c6bdc-d272-4960-8ac0-943f42b46e54" alt="image"  />
+</p>
+<h3 id="扩展参数选项">扩展参数选项</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">选项名</th>
+<th style="text-align:left">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">alloc_objects</td>
+<td style="text-align:left">分析应用程序的内存临时分配情况</td>
+</tr>
+<tr>
+<td style="text-align:left">alloc_space</td>
+<td style="text-align:left">查看每个函数分配的内存空间大小</td>
+</tr>
+<tr>
+<td style="text-align:left">inuse_space</td>
+<td style="text-align:left">分析应用程序的常驻内存占用情况</td>
+</tr>
+<tr>
+<td style="text-align:left">inuse_objects</td>
+<td style="text-align:left">查看每个函数所分配的对象数量</td>
+</tr>
+</tbody>
+</table>
+<h3 id="常用命令">常用命令</h3>
+<h4 id="web-连线图">web （连线图）</h4>
+<blockquote>
+<p>通过Web浏览器可视化图</p>
+</blockquote>
+<blockquote>
+<p><code>web</code> 将会生成一张svg格式的图片，并用默认打开程序打开（一般是浏览器）。渲染图片需要下载 <a href="https://graphviz.org/download/">Download | Graphviz</a></p>
+</blockquote>
+<p><img loading="lazy" src="https://github.com/user-attachments/assets/f919098b-a923-4cbd-8349-89f0e3a0d52b" alt="image"  />
+</p>
+<p>​	节点的颜色越红，其cum和cum%越大。其颜色越灰白，则cum和cum%越小。</p>
+<p>​	节点越大，其flat和flat%越大；其越小，则flat和flat%越小</p>
+<p>​	线条代表了函数的调用链，线条越粗，代表指向的函数消耗了越多的资源。反之亦然。</p>
+<p>​	线条的样式代表了调用关系。实线代表直接调用；虚线代表中间少了几个节点；带有inline字段表示该函数被内联进了调用方（不用在意，可以理解成实线）。</p>
+<blockquote>
+<p>对于一些代码行比较少的函数，编译器倾向于将它们在编译期展开从而消除函数调用，这种行为就是内联。</p>
+</blockquote>
+<h4 id="weight">weight</h4>
+<blockquote>
+<p><code>weight</code>默认按flat排序，打印出消耗前10的函数。也可以选择消耗前N的函数，比如<code>weight5</code>，<code>weight20</code>。</p>
+</blockquote>
+<p><img loading="lazy" src="https://github.com/user-attachments/assets/a1c83317-3d82-4bfe-aaf7-4abfebd1884f" alt="image"  />
+</p>
+<h4 id="list">list</h4>
+<blockquote>
+<p>当发现某个函数资源占用情况可疑时，可以通过 <code>list 函数名</code> 定位到具体的代码位置。比如:<code> list Fire</code></p>
+</blockquote>
+<p><img loading="lazy" src="https://github.com/user-attachments/assets/87007000-e59a-43d1-bcce-2c8e5fe79a9c" alt="image"  />
+</p>
+<h3 id="火焰图">火焰图</h3>
+<p>​	调用顺序<strong>由上到下</strong>，每一块代表一个函数，越大代表占用 CPU 的时间更长。同时它也可以支持点击块深入进行分析。</p>
+<p><img loading="lazy" src="https://github.com/user-attachments/assets/4992c35f-ac6f-4e44-8246-a99ce6302bfb" alt="image"  />
+</p>
+<h2 id="代码优化建议">代码优化建议</h2>
+<p>以下是一些从其它项目借鉴或者自己总结的实践经验，它们只是建议，而不是准则，实际项目中应该以性能分析数据来作为优化的参考，<strong>避免过早优化</strong>。</p>
+<ol>
+<li>对频繁分配的小对象，使用 <a href="https://golang.org/pkg/sync/#Pool">sync.Pool</a> 对象池避免分配</li>
+<li>自动化的 DeepCopy 是非常耗时的，其中涉及到反射，内存分配，容器(如 map)扩展等，大概比手动拷贝慢一个数量级</li>
+<li>用 atomic.Load/StoreXXX，atomic.Value, sync.Map 等代替 Mutex。(优先级递减)</li>
+<li>使用高效的第三方库，如用<a href="https://github.com/valyala/fasthttp">fasthttp</a>替代 net/http</li>
+<li>在开发环境加上<code>-race</code>编译选项进行竞态检查</li>
+<li>在开发环境开启 net/http/pprof，方便实时 pprof</li>
+<li>将所有外部IO(网络IO，磁盘IO)做成异步ss</li>
+</ol>
+<h2 id="参考文章">参考文章</h2>
+<ul>
+<li><a href="https://wxsm.space/2023/go-pprof-note/">Go 语言性能调试与分析工具：pprof 用法简介 | wxsm&rsquo;s pace</a></li>
+<li><a href="https://juejin.cn/post/7122473470424219656">golang pprof实用使用指南 - 掘金 (juejin.cn)</a></li>
+<li><a href="https://nyadgar.com/posts/go-profiling-like-a-pro/">Profiling in Go: A Practical Guide | nyadgar.com</a></li>
+<li><a href="https://debug-lixiwen.github.io/2021/07/18/shi-zhan/">golang的pprof与火焰图实战 | wish (debug-lixiwen.github.io)</a></li>
+<li><a href="https://blog.wolfogre.com/posts/go-ppof-practice/">golang pprof 实战 | Wolfogre&rsquo;s Blog</a></li>
+<li><a href="https://farmerchillax.github.io/2023/07/04/Go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/">Go性能分析工具 | Farmer (farmerchillax.github.io)</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

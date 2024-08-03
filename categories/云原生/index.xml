@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>云原生 on Luenci</title>
+    <link>http://localhost:1313/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</link>
+    <description>Recent content in 云原生 on Luenci</description>
+    <generator>Hugo -- 0.129.0</generator>
+    <language>en-us</language>
+    <atom:link href="http://localhost:1313/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>K8s的Pod创建历程</title>
+      <link>http://localhost:1313/articles/1/01/k8s%E7%9A%84pod%E5%88%9B%E5%BB%BA%E5%8E%86%E7%A8%8B/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/k8s%E7%9A%84pod%E5%88%9B%E5%BB%BA%E5%8E%86%E7%A8%8B/</guid>
+      <description>&lt;h1 id=&#34;k8s创建pod的历程&#34;&gt;K8s创建Pod的历程&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;参考原文：https://icloudnative.io/posts/what-happens-when-k8s/#span-idinline-toc1span-kubectl&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;1-kubectl&#34;&gt;1. kubectl&lt;/h2&gt;
+&lt;h3 id=&#34;验证和生成器&#34;&gt;验证和生成器&lt;/h3&gt;
+&lt;p&gt;​	当敲下回车键以后，&lt;code&gt;kubectl&lt;/code&gt; 首先会执行一些客户端验证操作，以确保不合法的请求（例如，创建不支持的资源或使用格式错误的镜像名称）将会快速失败，也不会发送给 &lt;code&gt;kube-apiserver&lt;/code&gt;。通过减少不必要的负载来提高系统性能。&lt;/p&gt;
+&lt;p&gt;​	验证通过之后， kubectl 开始将发送给 kube-apiserver 的 HTTP 请求进行封装。&lt;code&gt;kube-apiserver&lt;/code&gt; 与 etcd 进行通信，所有尝试访问或更改 Kubernetes 系统状态的请求都会通过 kube-apiserver 进行，kubectl 也不例外。kubectl 使用生成器（ &lt;a href=&#34;https://kubernetes.io/docs/user-guide/kubectl-conventions/#generators&#34;&gt;generators&lt;/a&gt;）来构造 HTTP 请求。生成器是一个用来处理序列化的抽象概念。&lt;/p&gt;
+&lt;p&gt;​	通过 &lt;code&gt;kubectl run&lt;/code&gt; 不仅可以运行 &lt;code&gt;deployment&lt;/code&gt;，还可以通过指定参数 &lt;code&gt;--generator&lt;/code&gt; 来部署其他多种资源类型。如果没有指定 &lt;code&gt;--generator&lt;/code&gt; 参数的值，kubectl 将会自动判断资源的类型。&lt;/p&gt;
+&lt;p&gt;​	例如，带有参数 &lt;code&gt;--restart-policy=Always&lt;/code&gt; 的资源将被部署为 Deployment，而带有参数 &lt;code&gt;--restart-policy=Never&lt;/code&gt; 的资源将被部署为 Pod。同时 kubectl 也会检查是否需要触发其他操作，例如记录命令（用来进行回滚或审计）。&lt;/p&gt;
+&lt;p&gt;​	在 kubectl 判断出要创建一个 Deployment 后，它将使用 &lt;code&gt;DeploymentV1Beta1&lt;/code&gt; 生成器从我们提供的参数中生成一个 &lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/7650665059e65b4b22375d1e28da5306536a12fb/pkg/kubectl/run.go#L59&#34;&gt;运行时对象&lt;/a&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;api-版本协商与-api-组&#34;&gt;API 版本协商与 API 组&lt;/h3&gt;
+&lt;p&gt;​	为了更容易地消除字段或者重新组织资源结构，Kubernetes 支持多个 API 版本，每个版本都在不同的 API 路径下，例如 &lt;code&gt;/api/v1&lt;/code&gt; 或者 &lt;code&gt;/apis/extensions/v1beta1&lt;/code&gt;。不同的 API 版本表明不同的稳定性和支持级别，更详细的描述可以参考 &lt;a href=&#34;https://k8smeetup.github.io/docs/reference/api-overview/&#34;&gt;Kubernetes API 概述&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;​	API 组旨在对类似资源进行分类，以便使得 Kubernetes API 更容易扩展。API 的组名在 REST 路径或者序列化对象的 &lt;code&gt;apiVersion&lt;/code&gt; 字段中指定。例如，Deployment 的 API 组名是 &lt;code&gt;apps&lt;/code&gt;，最新的 API 版本是 &lt;code&gt;v1beta2&lt;/code&gt;，这就是为什么你要在 Deployment manifests 顶部输入 &lt;code&gt;apiVersion: apps/v1beta2&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;​	kubectl 在生成运行时对象后，开始为它 &lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/7650665059e65b4b22375d1e28da5306536a12fb/pkg/kubectl/cmd/run.go#L580-L597&#34;&gt;找到适当的 API 组和 API 版本&lt;/a&gt;，然后 &lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/7650665059e65b4b22375d1e28da5306536a12fb/pkg/kubectl/cmd/run.go#L598&#34;&gt;组装成一个版本化客户端&lt;/a&gt;，该客户端知道资源的各种 REST 语义。该阶段被称为版本协商，kubectl 会扫描 &lt;code&gt;remote API&lt;/code&gt; 上的 &lt;code&gt;/apis&lt;/code&gt; 路径来检索所有可能的 API 组。由于 kube-apiserver 在 &lt;code&gt;/apis&lt;/code&gt; 路径上公开了 OpenAPI 格式的规范文档， 因此客户端很容易找到合适的 API。&lt;/p&gt;
+&lt;p&gt;​	为了提高性能，kubectl &lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/7650665059e65b4b22375d1e28da5306536a12fb/pkg/kubectl/cmd/util/factory_client_access.go#L117&#34;&gt;将 OpenAPI 规范缓存&lt;/a&gt;到了 &lt;code&gt;~/.kube/cache&lt;/code&gt; 目录。如果你想了解 API 发现的过程，请尝试删除该目录并在运行 kubectl 命令时将 &lt;code&gt;-v&lt;/code&gt; 参数的值设为最大值，然后你将会看到所有试图找到这些 API 版本的HTTP 请求。参考 &lt;a href=&#34;https://k8smeetup.github.io/docs/reference/kubectl/cheatsheet/&#34;&gt;kubectl 备忘单&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;​	最后一步才是真正地发送 HTTP 请求。一旦请求发送之后获得成功的响应，kubectl 将会根据所需的输出格式打印 success message。&lt;/p&gt;
+&lt;h3 id=&#34;客户端身份认证&#34;&gt;客户端身份认证&lt;/h3&gt;
+&lt;p&gt;在发送 HTTP 请求之前还要进行客户端认证，这是之前没有提到的，现在可以来看一下。&lt;/p&gt;
+&lt;p&gt;为了能够成功发送请求，kubectl 需要先进行身份认证。用户凭证保存在 &lt;code&gt;kubeconfig&lt;/code&gt; 文件中，kubectl 通过以下顺序来找到 kubeconfig 文件：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如果提供了 &lt;code&gt;--kubeconfig&lt;/code&gt; 参数， kubectl 就使用 –kubeconfig 参数提供的 kubeconfig 文件。&lt;/li&gt;
+&lt;li&gt;如果没有提供 –kubeconfig 参数，但设置了环境变量 &lt;code&gt;$KUBECONFIG&lt;/code&gt;，则使用该环境变量提供的 kubeconfig 文件。&lt;/li&gt;
+&lt;li&gt;如果 –kubeconfig 参数和环境变量 &lt;code&gt;$KUBECONFIG&lt;/code&gt; 都没有提供，kubectl 就使用默认的 kubeconfig 文件 &lt;code&gt;$HOME/.kube/config&lt;/code&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;解析完 kubeconfig 文件后，kubectl 会确定当前要使用的上下文、当前指向的群集以及与当前用户关联的任何认证信息。如果用户提供了额外的参数（例如 –username），则优先使用这些参数覆盖 kubeconfig 中指定的值。一旦拿到这些信息之后， kubectl 就会把这些信息填充到将要发送的 HTTP 请求头中：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;x509 证书使用 &lt;a href=&#34;https://github.com/kubernetes/client-go/blob/82aa063804cf055e16e8911250f888bc216e8b61/rest/transport.go#L80-L89&#34;&gt;tls.TLSConfig&lt;/a&gt; 发送（包括 CA 证书）。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;bearer tokens&lt;/code&gt; 在 HTTP 请求头 &lt;code&gt;Authorization&lt;/code&gt; 中 &lt;a href=&#34;https://github.com/kubernetes/client-go/blob/c6f8cf2c47d21d55fa0df928291b2580544886c8/transport/round_trippers.go#L314&#34;&gt;发送&lt;/a&gt;。&lt;/li&gt;
+&lt;li&gt;用户名和密码通过 HTTP 基本认证 &lt;a href=&#34;https://github.com/kubernetes/client-go/blob/c6f8cf2c47d21d55fa0df928291b2580544886c8/transport/round_trippers.go#L223&#34;&gt;发送&lt;/a&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;OpenID&lt;/code&gt; 认证过程是由用户事先手动处理的，产生一个像 bearer token 一样被发送的 token。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;小结补充&#34;&gt;小结补充&lt;/h3&gt;
+&lt;p&gt;​	如果要对k8s的部署文件进行进一步正确性校验，可以参看这个&lt;a href=&#34;https://github.com/instrumenta/kubeval&#34;&gt;Kubeval&lt;/a&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Giweights 介绍</title>
+      <link>http://localhost:1313/articles/1/01/giweights-%E4%BB%8B%E7%BB%8D/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/giweights-%E4%BB%8B%E7%BB%8D/</guid>
+      <description>&lt;h1 id=&#34;giweights-介绍&#34;&gt;Giweights 介绍&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a href=&#34;https://icloudnative.io/posts/what-is-giweights/&#34;&gt;https://icloudnative.io/posts/what-is-giweights/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;基础设施即代码&#34;&gt;基础设施即代码&lt;/h2&gt;
+&lt;p&gt;在理解 Giweights 之前，我们需要先理解什么是&lt;strong&gt;基础设施即代码&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;基础设施即代码（Infrastructure as Code, &lt;strong&gt;IaC&lt;/strong&gt;），顾名思义，表示使用代码（而非手动流程）来定义基础设施，研发人员可以像对待应用软件一样对待基础设施，例如：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;可以创建包含基础架构规范的声明式配置文件，从而便于编辑和分发配置。&lt;/li&gt;
+&lt;li&gt;可以确保每次配置的环境都完全相同。&lt;/li&gt;
+&lt;li&gt;可以进行版本控制，所有的变更都会被记录下来，方便溯源。&lt;/li&gt;
+&lt;li&gt;可以将基础设施划分为若干个模块化组件，并通过自动化以不同的方式进行组合。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当然，广义上的 IaC 不仅仅只关于基础设施，还包含了&lt;strong&gt;网络&lt;/strong&gt;、&lt;strong&gt;安全&lt;/strong&gt;、&lt;strong&gt;配置&lt;/strong&gt;等等，所以广义上的 IaC 又叫 &lt;strong&gt;X as Code&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/2022-07-02-16-10-zwMOq2.jpg&#34; alt=&#34;img&#34;  /&gt;
+&lt;/p&gt;
+&lt;p&gt;​	比如你想在 AWS 中创建服务器，配置网络，部署 Kubernetes 集群以及各种工作负载，你只需要定义好 Terraform 或 Ansible 的声明式配置，以及 Kubernetes 的配置清单即可，免去一切繁杂的手动操作。&lt;/p&gt;
+&lt;h2 id=&#34;giweights-是什么&#34;&gt;Giweights 是什么&lt;/h2&gt;
+&lt;p&gt;​	Giweights = IaC + Git + CI/CD，即基于 IaC 的版本化 CI/CD。它的核心是使用 Git 仓库来管理基础设施和应用的配置，并且&lt;strong&gt;以 Git 仓库作为基础设施和应用的单一事实来源&lt;/strong&gt;，你从其他地方修改配置（比如手动改线上配置）一概不予通过。&lt;/p&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/2022-07-02-16-34-pRb1Jc.jpg&#34; alt=&#34;img&#34;  /&gt;
+&lt;/p&gt;
+&lt;p&gt;​	Git 仓库中的声明式配置描述了目标环境当前所需基础设施的期望状态，借助于 Giweights，如果集群的实际状态与 Git 仓库中定义的期望状态不匹配，Kubernetes reconcilers 会根据期望状态来调整当前的状态，最终使实际状态符合期望状态。&lt;/p&gt;
+&lt;p&gt;​	另一方面，现代应用的开发更多关注的是迭代速度和规模，拥有成熟 DevOps 文化的组织每天可以将代码部署到生成环境中数百次，DevOps 团队可以通过版本控制、代码审查以及自动测试和部署的 CI/CD 流水线等最佳实践来实现这一目标，这就是 Giweights 干的事情。&lt;/p&gt;
+&lt;h2 id=&#34;giweights-vs-devops&#34;&gt;Giweights vs DevOps&lt;/h2&gt;
+&lt;p&gt;​	从广义上来看，Giweights 与 DevOps 并不冲突，&lt;strong&gt;Giweights 是一种技术手段，而 DevOps 是一种文化&lt;/strong&gt;。Giweights 是一种实现持续交付（Continuous Delivery）、持续部署（Continuous Deployment）和基础设施即代码（IaC）的工具和框架，它是支持 DevOps 文化的。&lt;/p&gt;
+&lt;p&gt;从狭义上来看，Giweights 与 DevOps 有以下几个区别：&lt;/p&gt;
+&lt;p&gt;​	首先，&lt;strong&gt;Giweights 是以目标为导向的&lt;/strong&gt;。它使用 Git 来维护期望状态，并不断调整实际状态，最终与期望状态相匹配。而 &lt;strong&gt;DevOps 更多关注的是最佳实践&lt;/strong&gt;，这些实践可以普遍应用于企业的每一个流程。&lt;/p&gt;
+&lt;p&gt;​	其次，&lt;strong&gt;Giweights 采取声明式的操作方法，而 DevOps 同时接受声明式和命令式的方法&lt;/strong&gt;，所以 DevOps 除了适用于容器环境之外，还适用于虚拟机和裸机环境。&lt;/p&gt;
+&lt;p&gt;​	最后，&lt;strong&gt;Giweights 重新定义了云原生场景下的 CI/CD&lt;/strong&gt;，它以 Git 作为中心的不可变状态声明，以加快持续部署速度。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>k8s架构介绍</title>
+      <link>http://localhost:1313/articles/1/01/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/k8s%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D/</guid>
+      <description>&lt;h1 id=&#34;k8s-架构&#34;&gt;K8s 架构&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;参考文章：Kubernetes源码剖析&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;架构概览&#34;&gt;架构概览&lt;/h2&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/architecture.png&#34; alt=&#34;Kubernetes（k8s）中文文档 Kubernetes设计架构_Kubernetes中文社区&#34;  /&gt;
+&lt;/p&gt;
+&lt;p&gt;​	Kubernetes 系统架构遵循客户端 / 服务端 （ C/S ） 架构 ， 系统架构分为 Master 和 Node 两部分 ， Master 作为服务端 ， Node 作为客户端 。 Kubernetes 系统具有多个 Master 服务端 ， 可以实现高可用 。 在默认的情况下 ， 一个 Master 服务端即可完成所有工作 。&lt;/p&gt;
+&lt;p&gt;服务端也被称为主控节点 ， 它在集群中主要负责如下任务 。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;集群的 “ 大脑 ” ， 负责管理所有节点 (Node）。&lt;/li&gt;
+&lt;li&gt;负责调度 Pod 在哪些节点上运行 。&lt;/li&gt;
+&lt;li&gt;负责控制集群运行过程中的所有状态 。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Node 客户端也被称为工作节点 ， 它在集群中主要负责如下任务 。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;负责管理所有容器 （ container ) 。&lt;/li&gt;
+&lt;li&gt;负责监控 / 上报所有 Pod 的运行状态 。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;组件概览&#34;&gt;组件概览&lt;/h2&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230402142654737.png&#34; alt=&#34;image-20230402142654737&#34;  /&gt;
+&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>k8s核心数据结构（1）</title>
+      <link>http://localhost:1313/articles/1/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%841/</guid>
+      <description>&lt;h1 id=&#34;kubernetes-核心数据结构1&#34;&gt;Kubernetes 核心数据结构（1）&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;参考书籍：《Kubernetes源码剖析-郑旭东著》&lt;/p&gt;
+&lt;p&gt;K8s 是一个完全以资源为中心的系统&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;groupversionresource-核心数据结构&#34;&gt;Group、Version、Resource 核心数据结构&lt;/h2&gt;
+&lt;p&gt;​	Kuberetes 系统虽然有相当复杂和众多的 功能，但它本质 上是一个资源控制系统——注册、管理、调度资源 并维护资源的状态。&lt;/p&gt;
+&lt;p&gt;​	Kuberetes 将资源再次分组和版本化，形成 Group（资源组）、Version（资源版本）、Resource（资源）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Group: 被称为资源组，在Kubernetes API Server 中也可称其为 APIGroup。&lt;/li&gt;
+&lt;li&gt;Version: 被称为资源版本，在Kubernetes API Server 中也可称其为 APIVersions。&lt;/li&gt;
+&lt;li&gt;Resource: 被称为资源，在Kubernetes API Server 中也可称其为 APIResource。&lt;/li&gt;
+&lt;li&gt;Kind: 资源种类，描述 Resource 的种类，与 Resource 为同一级别。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230410172134645.png&#34; alt=&#34;image-20230410172134645&#34;  /&gt;
+&lt;/p&gt;
+&lt;p&gt;​&lt;/p&gt;
+&lt;p&gt;​	Kubernetes 系统支持多个Group，每个Group 支持多个Version，每个Version 支 持多个Resource，其中部分资源同时会拥有自己的子资源(即SubResource )。例如， Deployment资源拥有Status 子资源。
+​	资源组、资源版本、资源、子资源的完整表现形式&lt;code&gt;&amp;lt;group&amp;gt;/&amp;lt;version&amp;gt;/&amp;lt;resource&amp;gt;/ &amp;lt;subresource&amp;gt;&lt;/code&gt;。以常用的 Deployment 资源为例，其完整表现形式为&lt;code&gt;apps/v1/deployments/status&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;​	另外资源对象(Resource Object )在本书中也是 一个常用概念，由“ 资源组+ 资源版本+资源种类” 组成，并在实例化后表达一个资源对象，例如 Deployment 资源实例化后拥有资源组、资源版本及资源种类，其表现形式为&lt;code&gt;&amp;lt;group&amp;gt;/&amp;lt;version&amp;gt;, Kind=&amp;lt;kind&amp;gt;&lt;/code&gt;，例如&lt;code&gt;apps/v1, Kind=Deployment&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;​	每一个资源都拥有一定数量的资源操作方法(即 Verbs )，资源操作方法用于 Etcd 集群存储中对资源对象的增、删、改、查操作。目前 Kubemetes 系统支持8 种资源操作方法，分别是 create、delete、delete、collection、get、list、patch、update、watch 操作方法。&lt;/p&gt;
+&lt;p&gt;​	每一个资源都至少有两个版本，分别是外部版本(External Version)和内部版本 ( Internal Version )。外部版本用于对外暴露给用户请求的接又所使用的资源对象。内部版本不对外暴露，仅在Kubernetes API Server 内部使用。&lt;/p&gt;
+&lt;p&gt;​	Kubernetes 资源也可分为两种， 分别是Kubernetes Resource (Kubermetes 内罝资源 ) 和 Custom Resource( 自 定 义 资 源 )。 开 发 者 通 过 C R D ( 即 Custom Resource Definitions )可实现自定义资源，它允许用户将自己定义的资源添加到 Kubernetes 系统中，并像使用 Kubernetes 内置资源 一样使用它们。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>k8s核心数据结构（2）</title>
+      <link>http://localhost:1313/articles/1/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/k8s%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%842/</guid>
+      <description>&lt;h1 id=&#34;k8s-核心数据结构2&#34;&gt;K8s 核心数据结构（2）&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;参考书籍：《Kubernetes源码剖析-郑旭东著》&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;kubernetes-内置资源概览&#34;&gt;Kubernetes 内置资源概览&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;资源组&lt;/th&gt;
+&lt;th&gt;资源种类&lt;/th&gt;
+&lt;th&gt;说明&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;apiextensions.k8s.io&lt;/td&gt;
+&lt;td&gt;CustomResourceDefinition&lt;/td&gt;
+&lt;td&gt;自定义资源类型 ， 由 APIExtensions Server 负责管理该资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;apiregistration.k8s.io&lt;/td&gt;
+&lt;td&gt;APIService&lt;/td&gt;
+&lt;td&gt;聚合资源类型，由 AggregatorServer 负责管理该资源类&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;admissionregistration.k8s.io&lt;/td&gt;
+&lt;td&gt;MutatingWebhookConfiguration&lt;/td&gt;
+&lt;td&gt;变更准入控制器资源类型( Webhook)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;ValidatingWebhookConfiguration&lt;/td&gt;
+&lt;td&gt;验证准入控制器资源类型 ( Webhook)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;apps&lt;/td&gt;
+&lt;td&gt;ControllerRevision&lt;/td&gt;
+&lt;td&gt;记录资源对象所有的历史版本的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;DaemonSet&lt;/td&gt;
+&lt;td&gt;在 Pod 资源对象的基础上提供守护进程的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Deployment&lt;/td&gt;
+&lt;td&gt;在 Pod资源对象的基础上提供支持无状态服务的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;ReplicaSet&lt;/td&gt;
+&lt;td&gt;在 Pod 资源对象的基础上提供一组 Pod 副本的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;StatefulSet&lt;/td&gt;
+&lt;td&gt;在 Pod资源对象的基础上提供支持有状态服务的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;auditregistration.k8s.io&lt;/td&gt;
+&lt;td&gt;AuditSink&lt;/td&gt;
+&lt;td&gt;审计资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;authentication.k8s.io&lt;/td&gt;
+&lt;td&gt;TokenReview&lt;/td&gt;
+&lt;td&gt;认证资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;authorization.k8s.io&lt;/td&gt;
+&lt;td&gt;LocalSubjectAccessReview&lt;/td&gt;
+&lt;td&gt;授权检查用户是否可以在指定的命名空间中执行操作&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;SelfSubjectAccessReview&lt;/td&gt;
+&lt;td&gt;授权检查用户是否可以执行操作(若不指定 spec.namespace，则在所有的命名空间中执行操作）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;SelfSubjectRulesReview&lt;/td&gt;
+&lt;td&gt;授权枚举用户可以在指定的命名空间中执行一组操作&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;SubjectAccessReview&lt;/td&gt;
+&lt;td&gt;授 权检查用户是否可以执行操作&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;autoscaling&lt;/td&gt;
+&lt;td&gt;HorizontalPodAutoscaler&lt;/td&gt;
+&lt;td&gt;在 Pod 资源对象的基础上提供水平自动伸缩资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;batch&lt;/td&gt;
+&lt;td&gt;Job&lt;/td&gt;
+&lt;td&gt;提供一次性任务的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;CronJob&lt;/td&gt;
+&lt;td&gt;提供定时任务的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;certificates.k8s.io&lt;/td&gt;
+&lt;td&gt;CertificateSigningRequest&lt;/td&gt;
+&lt;td&gt;提供证书管理的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;coordination.k8s.io&lt;/td&gt;
+&lt;td&gt;Leases&lt;/td&gt;
+&lt;td&gt;提供领导者选举机制的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;core&lt;/td&gt;
+&lt;td&gt;ComponentStatus&lt;/td&gt;
+&lt;td&gt;该资源类型已被奔用，其用于提供获取 Kuberetes 组件运行状况的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;ConfigMap&lt;/td&gt;
+&lt;td&gt;提供容器内应用程序配置管理的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Endpoints&lt;/td&gt;
+&lt;td&gt;提供将外部服务器映射为内部服务的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Event&lt;/td&gt;
+&lt;td&gt;提供 Kubernetes 集群事件管理的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;LimitRange&lt;/td&gt;
+&lt;td&gt;为命名空间中的每种资源对象设置资源(硬件资源)使 用限制&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Namespace&lt;/td&gt;
+&lt;td&gt;提供资源对象所在的命名空间的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Node&lt;/td&gt;
+&lt;td&gt;提供 Kubernetes 集群中管理工作节点的资源类型。每个节点都有一个唯一标识符&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;PersistentVolume&lt;/td&gt;
+&lt;td&gt;提供 PV 存储的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;PersistentVolumeClaim&lt;/td&gt;
+&lt;td&gt;提供 PVC 存储的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Pod&lt;/td&gt;
+&lt;td&gt;提供容器集合管理的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;PodTemplate&lt;/td&gt;
+&lt;td&gt;提供用于描述预定义 Pod 资源对象副本数模板的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;ReplicationController&lt;/td&gt;
+&lt;td&gt;在 Pod资源对象的基础上提供副本数保持不变的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;ResourceQuota&lt;/td&gt;
+&lt;td&gt;提供每个命名空间配额限制的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Secret&lt;/td&gt;
+&lt;td&gt;提供存储密码 、Token 、密钥等敏感数据的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Service&lt;/td&gt;
+&lt;td&gt;提供负载均衡器为 Pod 资源对象的代理服务的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;ServiceAccount&lt;/td&gt;
+&lt;td&gt;提供 ServiceAccount 认证的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;events.k8s.io&lt;/td&gt;
+&lt;td&gt;Event&lt;/td&gt;
+&lt;td&gt;提供Kuberetes集群事件管理的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;networking.k8s.io&lt;/td&gt;
+&lt;td&gt;RuntimeClass&lt;/td&gt;
+&lt;td&gt;提供容器运行时功能的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Ingress&lt;/td&gt;
+&lt;td&gt;提供 从Kubernetes 集群外部访问集群内部服务管理的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;node.k8s.io&lt;/td&gt;
+&lt;td&gt;RuntimeClass&lt;/td&gt;
+&lt;td&gt;提供容器运行时功能的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;policy&lt;/td&gt;
+&lt;td&gt;Evictions&lt;/td&gt;
+&lt;td&gt;在 Pod 资源对象的基础上提供驱逐策略的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;PodDisruptionBudget&lt;/td&gt;
+&lt;td&gt;提供限制同时中断 Pod 的数量 ，以保证集群的高可用性&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;PodSecurityPolicy&lt;/td&gt;
+&lt;td&gt;提供控制 Pod 资源安全相关策略的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;rbac.authorization.k8s.io&lt;/td&gt;
+&lt;td&gt;ClusterRole&lt;/td&gt;
+&lt;td&gt;提供 RBAC 集群角色的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;ClusterRoleBinding&lt;/td&gt;
+&lt;td&gt;提供 RBAC 集群角色鄉定的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Role&lt;/td&gt;
+&lt;td&gt;提供 RBAC 角色的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;RoleBinding&lt;/td&gt;
+&lt;td&gt;提供 RBAC 角色绑定的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;scheduling.k8s.io&lt;/td&gt;
+&lt;td&gt;PriorityClass&lt;/td&gt;
+&lt;td&gt;提供 Pod 资源对象优先级管理的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;settings.k8s.10&lt;/td&gt;
+&lt;td&gt;PodPreset&lt;/td&gt;
+&lt;td&gt;在创建 Pod 资源对象时，可以将特定信息注入 Pod 资源对象中&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;storage.k8s.io&lt;/td&gt;
+&lt;td&gt;StorageClass&lt;/td&gt;
+&lt;td&gt;提供动态设置PV存储参数的资源类&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;VolumeAttachment&lt;/td&gt;
+&lt;td&gt;供触发 CSI ControllerPublish 和 ControllerUnpublish 操作的资源类型&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;</description>
+    </item>
+    <item>
+      <title>k8s 核心组件介绍</title>
+      <link>http://localhost:1313/articles/1/01/k8s-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/k8s-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D/</guid>
+      <description>Etcd 储存核心实现 ​ Eted 集群是分布式KV存储集群，提供了可靠的强一致性服务发现。Etcd 集群存储 Kubernetes 系统的集群状态和元数据，其中包括所有 Kubemetes 资源对象信息、 资源对象状态、集群节点信息等。Kubernetes 将所有数据存储至 Etcd 集群前缀为 /registry 的目录下。 Etcd 存储架构设计 ​ Kuberetes 系统对Etcd 存储进行了大量封装，其架构是分层的，而每一层的封 装设计又拥有高度的可扩展性。 1. RESTStorage ​ 实现了RESTful 风格的对外资源存储服务的 API 接口。</description>
+    </item>
+  </channel>
+</rss>

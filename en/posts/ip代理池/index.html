@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>基于Python语言的IP代理池 | Luenci</title>
+<meta name="keywords" content="爬虫实践">
+<meta name="description" content="环境：python3.6
+MongoDB
+flask
+requests等第三方库
+完整代码见： https://github.com/Lucareful/IPProxyPool
+代理池概述
+什么是代理池
+
+代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP
+
+为什么要实现代理池
+我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；
+
+使用IP代理池是其中一个比较常用的方案
+免费代理都是非常不稳定的，有10%是可用就很不错了
+一些收费代理稳定性也不好
+
+目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用
+代理池开发环境
+
+
+python3开发语言
+
+
+requests：发送请求，获取页面数据
+
+
+lxml：使用XPATH从页面提取我们想要的书籍
+
+
+pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用
+
+
+Flask：用于提供WEB服务
+
+
+代理池工作流程
+
+
+1.代理池工作渡程描述：
+
+代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中
+代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库
+代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；
+">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="https://Lucareful.github.io/en/posts/ip%E4%BB%A3%E7%90%86%E6%B1%A0/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://Lucareful.github.io/images/L.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://Lucareful.github.io/images/L.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://Lucareful.github.io/images/L.png">
+<link rel="apple-touch-icon" href="https://Lucareful.github.io/L.png">
+<link rel="mask-icon" href="https://Lucareful.github.io/L.png">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://Lucareful.github.io/en/posts/ip%E4%BB%A3%E7%90%86%E6%B1%A0/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+  
+
+<meta property="og:title" content="基于Python语言的IP代理池" />
+<meta property="og:description" content="环境：python3.6
+MongoDB
+flask
+requests等第三方库
+完整代码见： https://github.com/Lucareful/IPProxyPool
+代理池概述
+什么是代理池
+
+代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP
+
+为什么要实现代理池
+我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；
+
+使用IP代理池是其中一个比较常用的方案
+免费代理都是非常不稳定的，有10%是可用就很不错了
+一些收费代理稳定性也不好
+
+目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用
+代理池开发环境
+
+
+python3开发语言
+
+
+requests：发送请求，获取页面数据
+
+
+lxml：使用XPATH从页面提取我们想要的书籍
+
+
+pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用
+
+
+Flask：用于提供WEB服务
+
+
+代理池工作流程
+
+
+1.代理池工作渡程描述：
+
+代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中
+代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库
+代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；
+" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://Lucareful.github.io/en/posts/ip%E4%BB%A3%E7%90%86%E6%B1%A0/" /><meta property="article:section" content="posts" />
+
+<meta property="og:site_name" content="(〃&#39;▽&#39;〃)" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="基于Python语言的IP代理池"/>
+<meta name="twitter:description" content="环境：python3.6
+MongoDB
+flask
+requests等第三方库
+完整代码见： https://github.com/Lucareful/IPProxyPool
+代理池概述
+什么是代理池
+
+代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP
+
+为什么要实现代理池
+我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；
+
+使用IP代理池是其中一个比较常用的方案
+免费代理都是非常不稳定的，有10%是可用就很不错了
+一些收费代理稳定性也不好
+
+目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用
+代理池开发环境
+
+
+python3开发语言
+
+
+requests：发送请求，获取页面数据
+
+
+lxml：使用XPATH从页面提取我们想要的书籍
+
+
+pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用
+
+
+Flask：用于提供WEB服务
+
+
+代理池工作流程
+
+
+1.代理池工作渡程描述：
+
+代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中
+代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库
+代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；
+"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://Lucareful.github.io/en/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "基于Python语言的IP代理池",
+      "item": "https://Lucareful.github.io/en/posts/ip%E4%BB%A3%E7%90%86%E6%B1%A0/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于Python语言的IP代理池",
+  "name": "基于Python语言的IP代理池",
+  "description": "环境：python3.6\nMongoDB\nflask\nrequests等第三方库\n完整代码见： https://github.com/Lucareful/IPProxyPool\n代理池概述 什么是代理池 代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP 为什么要实现代理池 我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；\n使用IP代理池是其中一个比较常用的方案 免费代理都是非常不稳定的，有10%是可用就很不错了 一些收费代理稳定性也不好 目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用\n代理池开发环境 python3开发语言\nrequests：发送请求，获取页面数据\nlxml：使用XPATH从页面提取我们想要的书籍\npymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用\nFlask：用于提供WEB服务\n代理池工作流程 1.代理池工作渡程描述：\n代理IP采集模块-\u0026gt;采集代理IP-\u0026gt;检测代理IP-\u0026gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-\u0026gt;存入数据库中 代理IP检测模块-\u0026gt;从数据库中获取所有代理IP-\u0026gt;检测代理IP-\u0026gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库 代理API模块-\u0026gt;从数据库中高可用的代理IP给爬虫使用； ",
+  "keywords": [
+    "爬虫实践"
+  ],
+  "articleBody": "环境：python3.6\nMongoDB\nflask\nrequests等第三方库\n完整代码见： https://github.com/Lucareful/IPProxyPool\n代理池概述 什么是代理池 代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP 为什么要实现代理池 我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；\n使用IP代理池是其中一个比较常用的方案 免费代理都是非常不稳定的，有10%是可用就很不错了 一些收费代理稳定性也不好 目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用\n代理池开发环境 python3开发语言\nrequests：发送请求，获取页面数据\nlxml：使用XPATH从页面提取我们想要的书籍\npymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用\nFlask：用于提供WEB服务\n代理池工作流程 1.代理池工作渡程描述：\n代理IP采集模块-\u003e采集代理IP-\u003e检测代理IP-\u003e如果不可用用，直接过滤掉，如果可用，指定默认分数-\u003e存入数据库中 代理IP检测模块-\u003e从数据库中获取所有代理IP-\u003e检测代理IP-\u003e如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库 代理API模块-\u003e从数据库中高可用的代理IP给爬虫使用； 代理池的模块及其作用 五大核心模块\n爬虫模块 从代理IP网站上采集代理IP 进行校验（获取代理响应速度，协议类型，匿名类型） 把可用代理IP存储到数据库中 代理IP的校验模块：获取指定代理的响应速度，支持的协议以及匿名程度 原因：网站上所标注的响应速度，协议类型和匿名类型是不准确的 这里使用httpbin.org进行检测 数据库模块：实现对代理IP的增删改查操作 这里使用MongoDB来存储代理IP 检测模块：定时的对代理池中代理进行检测，保证代理池中代理的可用性. 从数据库读取所有的代理IP 对代理IP进行逐一检测，可用开启多个协程，以提高检测速度 如果该代理不可用，就让这个代理分数-1，当代理的分数到0了，就删除该代理；如果检测到代理可用就恢复为满分. 代理IP服务接口：提供高可用的代理IP给爬虫使用 根据协议类型和域名获取随机一个高质量代理IP 根据协议类型和域名获取多个高质量代理IP 根据代理IP不可用域名，告诉代理池这个代理IP在该域名下不可用，下次获取这个域名的代理IP时候，就不会再获取这个代理IP了，从而保证代理IP高可用性. 代理池的其它模块\n数据模型：domain.py 代理IP的数据模型，用于封装代理IP相关信息，比如ip，端口号，响应速度，协议类型，匿名类型，分数等 程序启动入口：main.py·代理池提供一个统一的启动入口 工具模块：、 日志模块：用于记录日志信息 http模块：用于获取随机User-Agent的请求头 配置文件：settings.py 用于默认代理的分数，配置日志格式，文件，启动的爬虫，检验的间隔时间等. 代理池的项目结构 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 --IPProxyPoo1 --core --db --__init__.py --mongo_pool.py --proxy_validate --__init__.py --httpbin_validator.py --proxy_spider --__init__.py --base_spider.py --proxy_kpiders.py --run_spiders.py --proxy_test.py --proxy_api.py --domain.py --utils --__init__.py --http.py --log.py --main.py --settings.py 定义代理IP的数据模型类 定义Proxy类，继承object 实现_init_方法，负责初始化，包含如下字段： ip：代理的IP地址 port：代理IP的端口号 protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2 nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2 speed：代理IP的响应速度，单位s area：代理IP所在地区 score：代理IP的评分，用于衡量代理的可用性；默认分值可以通过配置文件进行配置.在进行代理可用性检查的时候，每遇到一次请求失败就减1份，减到0的时候从池中删除.如果检查代理可用，就恢复默认分值 disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下可用 在配置文件：settings.py中定义MAX_SCORE=50，表示代理IP的默认最高分数 提供_str方法，返回数据字符串 代理池的工具模块 日志模块\nhttp模块\n日志模块 能够方便的对程序进行调试\n能够方便记录程序的运行状态\n能够方便记录错误信息\n日志的实现\n目标：实现日志模块，用于记录日志 把日志相关配置信息放到配置文件中 修改日志代码，使用配置文件中的配置信息 Http模块 我在从代理IP网站上抓取代理IP和检验代理IP时候，为了不容易不服务器识别为是一个爬虫，我们最好提供随机的User-Agent请求头. 目标：获取随机User-Agent的请求头 步骤： 1.准备User-Agent的列表 2.实现一个方法，获取随机User-Agent的请求头 代理池的检验模块 目标：检查代理IP速度，匿名程度以及支持的协议类型.\n步骤：\n检查代理IP速度和匿名程度；\n代理IP速度：就是从发送请求到获取响应的时间间隔\n匿名程度检查：\n对http://httpbin.org/get 或https://httpbin.org/get 发送请求\n如果响应的origin中有 ***，***分割的两个IP就是透明代理IP\n如果响应的headers 中包含Proxy-Connection 说明是匿名代理IP\n否则就是高匿代理IP。\n检查代理IP协议类型\n如果http://httpbin.org/get 发送请求可以成功，说明支持http协议 如果https://httpbin.org/get 发送请求可以成功，说明支持https协议\n代理池的数据库模块 作用：用于对proxies集合进行数据库的相关操作 目标：实现对数据库增删改查相关操作、 步骤： 1.在init中，建立数据连接，获取要操作的集合，在del方法中关闭数据库连接 2.提供基础的增删改查功能 实现插入功能 实现修改该功能 实现删除代理：根据代理的IP删除代理 查询所有代理IP的功能 3.提供代理API模块使用的功能 实现查询功能：根据条件进行查询，可以指定查询数量，先分数降序，速度升序排，保证优质的代理IP在上面. 实现根据协议类型和要访问网站的域名，获取代理IP列表 实现根据协议类型和要访问完整的域名，随机获取一个代理IP 实现把指定域名添加到指定IP的disable_domain列表中. 实现代理池的爬虫模块 爬虫模块的需求 需求：抓取各个代理IP网站上的免费代理IP进行检测，如果可用存储到数据库中 需要抓取代理IP的页面如下： 西刺代理：https://www.xicidaili.com/nn/1 ip3366代理：http://www.ip3366.net/free/?stype=1\u0026page=1 快代理：https://www.kuaidaili.com/free/inha/1/ oproxylistplus代理:https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1 66ip代理：http://www.66ip.cn/1.html 爬虫模块的设计 通用爬虫：通过指定URL列表，分组XPATH和组内XPATH，来提取不同网站的代理IP 原因代理IP网站的页面结构几乎都是Table，页面结构类似 具体爬虫：用于抓取具体代理IP网站 通过继承通用爬虫实现具体网站的抓取，一般只需要指定爬取的URL列表，分组的XPATH和组内XPATH就可以了. 如果该网站有特殊反爬手段，可以通过重写某些方法实现反爬 爬虫运行模块：启动爬虫，抓取代理IP进行检测，如果可用，就存储到数据库中； 通过配置文件来控制启动哪些爬虫，增加扩展性；如果将来我们遇到返回json格式的代理网站，单独写一个爬虫配置下就好了. 实现通用爬虫 目标：实现可以指定不同URL列表，分组的XPATH和详情的XPATH，从不同页面上提取代理的IP端口号和区域的通用爬虫；\n步骤： 1.在base_spider.py文件中，定义一个BaseSpider类，继承object 2.提供三个类成员变量：\nurls：代理IP网址的URL的列表\ngroup_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH\ndetail_xpath：组内XPATH，获取代理IP详情的信息XPATH，格式为：{“ip’:‘xx’，‘port’：‘xx’，‘area’：‘xx’}\n3.提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATH 4.对外提供一个获取代理IP的方法\n遍历URL列表，获取URL 根据发送请求，获取页面数据 解析页面，提取数据，封装为Proxy对象 返回Proxy对象列表 实现具体爬虫 目标：通过继承通用爬虫，实现多个具体爬虫，分别从各个免费代理IP网站上抓取代理IP\n1.实现西刺代理爬虫：http://www.xicidaili.com/nn/1\n定义一个类，继承通用爬虫类（BasicSpider） 提供urls，group_xpath 和detail_xpath 2.实现ip3366代理爬虫：http://www.ip3366.net/free/？stype=1\u0026page=1\n定义一个类，继承通用爬虫类（BasicSpider） 提供urls，group_xpath 和detail_xpath 3.实现快代理爬虫：https://www.kuaidaili.com/free/inha/1/\n定义一个类，继承通用爬虫类（BasicSpider） 提供urls，group_xpath和detail_xpath 4.实现 proxylistplus代理爬虫：https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1\n定义一个类，继承通用爬虫类（BasicSpider） 提供urls，group_xpath 和detail_xpath 5.实现66ip爬虫：http://www.66ip.cn/1.html\n定义一个类，继承通用爬虫类（BasicSpider） 提供urls，group_xpath和detail_xpath 由于66ip网页进行js+cookie反爬，需要重写父类的get_page_from_url 方法 PS：实现66ip爬虫：http://www.66ip.cn/1.html核心：\n通过加密的js，生成需要cookie信息 1.从响应页面中，提取：\n​\t1.执行生成真正js语句\n​\t2.生成真正js的函数.\n2.网页中，是通过eval执行真正js，加载页面；而我们要获取真正的js；我们就需要把eval语句，替换为return，把真正js返回.\n3.使用js2py，获取执行js的环境，使用js执行环境加载这个函数\n4.使用这个执行环境，执行调用调用，生成真正js，赋值给一个变量\n5.从真正的js代码中，提取我们需要cookie信息.\n实现爬虫的运行模块 目标：根据配置文件信息，加载爬虫，抓取代理IP，进行校验，如果可用，写入到数据库中 思路： 在run_spider.py中，创建RunSpider类 提供一个运行爬虫的run方法，作为运行爬虫的入口，实现核心的处理逻辑 根据配置文件信息，获取爬虫对象列表. 遍历爬虫对象列表，获取爬虫对象，遍历爬虫对象的get_proxies方法，获取代理IP 检测代理IP（代理IP检测模块） 如果可用，写入数据库（数据库模块） 处理异常，防止一个爬虫内部出错了，影响其他的爬虫. 使用异步来执行每一个爬虫任务，以提高抓取代理IP效率 在init 方法中创建协程池对象 把处理一个代理爬虫的代码抽到一个方法 使用异步执行这个方法 调用协程的join方法，让当前线程等待队列任务的完成. 使用schedule模块，实现每隔一定的时间，执行一次爬取任务 定义一个start的类方法 创建当前类的对象，调用run方法 使用schedule模块，每隔一定的时间，执行当前对象的run方法 实现代理池的检测模块 目的：检查代理IP可用性，保证代理池中代理IP基本可用\n思路\n1.在proxy_test.py中，创建Proxy Tester类\n2.提供一个run 方法，用于处理检测代理命核心逻辑\n从数据库中获取所有代理IP\n遍历代理IP列表\n检查代理可用性\n如果代理不可用，让代理分数-1，如果代理分数等于0就从数据库中删除该代理，否则更新该代理IP\n如果代理可用，就恢复该代理的分数，更新到数据库中\n3.为了提高检查的速度，使用异步来执行检测任务\n在init方法中，创建队列和协程池\n把要检测的代理IP，放到队列中 i.把检查一个代理可用性的代码，抽取到一个方法中；从队列中获取代理IP，进行检查；检查完毕，调度队列的task_done方法 ii.通过异步回调，使用死循环不断执行这个方法， iv.开启多个一个异步任务，来处理代理IP的检测；可以通过配置文件指定异步数量 调用队列的join方法，让当前线程等待队列任务完成 4.使用schedule模块，每隔一定的时间，执行一次检测任务\n定义类方法start，用于启动检测模块 在start方法中 i.创建本类对象 i.调用run方法 i.每间隔一定时间，执行一下，run方法 实现代理池的API模块 目标：\n为爬虫提供高可用代理IP的服务接口 步骤：\n实现根据协议类型和域名，提供随机的获取高可用代理IP的服务\n实现根据协议类型和域名，提供获取多个高可用代理IP的服务\n实现给指定的IP上追加不可用域名的服务\n实现\n在proxy_api.py中，创建ProxyApi类 实现初始方法s\n初始一个Flask的Web服务\n实现根据协议类型和域名，提供随机的获取高可用代理IP的服务\n可用通过protocol和domain参数对IP进行过滤\nprotocol：当前请求的协议类型\ndomain：当前请求域名\n实现根据协议类型和域名，提供获取多个高可用代理IP的服务·\n可用通过protocol和domain参数对IP进行过滤 实现给指定的IP上追加不可用域名的服务\n如果在获取IP的时候，有指定域名参数，将不在获取该IP从而进一步提高代理IP的可用性. 实现run方法，用于启动Flask的WEB服务\n实现start的类方法，用于通过类名，启动服务\n实现代理池的程序入口 目标：把启动爬虫，启动检测代理IP，启动WEB服务统一到一起 思路： 开启三个进程，分别用于启动爬虫，检测代理IP，WEB服务 步骤： 定义一个run方法用于启动动代理池 定义一个列表，用于存储要启动的进程 创建启动爬虫的进程，添加到列表中 创建启动检测的进程，添加到列表中 创建启动提供API服务的进程，添加到列表中 遍历进程列表，启动所有进程 遍历进程列表，让主进程等待子进程的完成 在if__name__=='__main__'：中调用run方法 ",
+  "wordCount" : "6061",
+  "inLanguage": "en",
+  "datePublished": "0001-01-01T00:00:00Z",
+  "dateModified": "0001-01-01T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "Luenci"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://Lucareful.github.io/en/posts/ip%E4%BB%A3%E7%90%86%E6%B1%A0/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Luenci",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://Lucareful.github.io/images/L.png"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://Lucareful.github.io/en/" accesskey="h" title="Luenci (Alt + H)">
+                <img src="https://Lucareful.github.io/images/avatar.jpg" alt="" aria-label="logo"
+                    height="35">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://Lucareful.github.io/en/" title="🏠主页">
+                    <span>🏠主页</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://Lucareful.github.io/en/posts" title="📚文章">
+                    <span>📚文章</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://Lucareful.github.io/en/search" title="🔍搜索 (Alt &#43; /)" accesskey=/>
+                    <span>🔍搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://Lucareful.github.io/en/archives" title="⏱时间轴">
+                    <span>⏱时间轴</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://Lucareful.github.io/en/tags" title="🔖标签">
+                    <span>🔖标签</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://Lucareful.github.io/en/about" title="🙋🏻‍♂️关于">
+                    <span>🙋🏻‍♂️关于</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://Lucareful.github.io/en/links" title="🤝友链">
+                    <span>🤝友链</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="https://Lucareful.github.io/en/">Home</a>&nbsp;»&nbsp;<a href="https://Lucareful.github.io/en/posts/">Posts</a></div>
+    <h1 class="post-title entry-hint-parent">
+      基于Python语言的IP代理池
+    </h1>
+    <div class="post-meta">13 min&nbsp;·&nbsp;6061 words&nbsp;·&nbsp;Luenci
+
+</div>
+  </header> <aside id="toc-container" class="toc-container wide">
+    <div class="toc">
+        <details  open>
+            <summary accesskey="c" title="(Alt + C)">
+                <span class="details">目录</span>
+            </summary>
+
+        <div class="inner"><ul>
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e6%a6%82%e8%bf%b0" aria-label="代理池概述">代理池概述</a><ul>
+                            
+                    <li>
+                        <a href="#%e4%bb%80%e4%b9%88%e6%98%af%e4%bb%a3%e7%90%86%e6%b1%a0" aria-label="什么是代理池">什么是代理池</a></li>
+                    <li>
+                        <a href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e5%ae%9e%e7%8e%b0%e4%bb%a3%e7%90%86%e6%b1%a0" aria-label="为什么要实现代理池">为什么要实现代理池</a></li></ul>
+                    </li>
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e5%bc%80%e5%8f%91%e7%8e%af%e5%a2%83" aria-label="代理池开发环境">代理池开发环境</a></li>
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b" aria-label="代理池工作流程">代理池工作流程</a><ul>
+                            
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e6%a8%a1%e5%9d%97%e5%8f%8a%e5%85%b6%e4%bd%9c%e7%94%a8" aria-label="代理池的模块及其作用">代理池的模块及其作用</a></li></ul>
+                    </li>
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e9%a1%b9%e7%9b%ae%e7%bb%93%e6%9e%84" aria-label="代理池的项目结构">代理池的项目结构</a></li>
+                    <li>
+                        <a href="#%e5%ae%9a%e4%b9%89%e4%bb%a3%e7%90%86ip%e7%9a%84%e6%95%b0%e6%8d%ae%e6%a8%a1%e5%9e%8b%e7%b1%bb" aria-label="定义代理IP的数据模型类">定义代理IP的数据模型类</a></li>
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e5%b7%a5%e5%85%b7%e6%a8%a1%e5%9d%97" aria-label="代理池的工具模块">代理池的工具模块</a><ul>
+                            
+                    <li>
+                        <a href="#%e6%97%a5%e5%bf%97%e6%a8%a1%e5%9d%97" aria-label="日志模块">日志模块</a></li>
+                    <li>
+                        <a href="#http%e6%a8%a1%e5%9d%97" aria-label="Http模块">Http模块</a></li></ul>
+                    </li>
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e6%a3%80%e9%aa%8c%e6%a8%a1%e5%9d%97" aria-label="代理池的检验模块">代理池的检验模块</a></li>
+                    <li>
+                        <a href="#%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e6%95%b0%e6%8d%ae%e5%ba%93%e6%a8%a1%e5%9d%97" aria-label="代理池的数据库模块">代理池的数据库模块</a></li>
+                    <li>
+                        <a href="#%e5%ae%9e%e7%8e%b0%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e7%88%ac%e8%99%ab%e6%a8%a1%e5%9d%97" aria-label="实现代理池的爬虫模块">实现代理池的爬虫模块</a><ul>
+                            
+                    <li>
+                        <a href="#%e7%88%ac%e8%99%ab%e6%a8%a1%e5%9d%97%e7%9a%84%e9%9c%80%e6%b1%82" aria-label="爬虫模块的需求">爬虫模块的需求</a></li>
+                    <li>
+                        <a href="#%e7%88%ac%e8%99%ab%e6%a8%a1%e5%9d%97%e7%9a%84%e8%ae%be%e8%ae%a1" aria-label="爬虫模块的设计">爬虫模块的设计</a></li>
+                    <li>
+                        <a href="#%e5%ae%9e%e7%8e%b0%e9%80%9a%e7%94%a8%e7%88%ac%e8%99%ab" aria-label="实现通用爬虫">实现通用爬虫</a></li>
+                    <li>
+                        <a href="#%e5%ae%9e%e7%8e%b0%e5%85%b7%e4%bd%93%e7%88%ac%e8%99%ab" aria-label="实现具体爬虫">实现具体爬虫</a></li></ul>
+                    </li>
+                    <li>
+                        <a href="#%e5%ae%9e%e7%8e%b0%e7%88%ac%e8%99%ab%e7%9a%84%e8%bf%90%e8%a1%8c%e6%a8%a1%e5%9d%97" aria-label="实现爬虫的运行模块">实现爬虫的运行模块</a></li>
+                    <li>
+                        <a href="#%e5%ae%9e%e7%8e%b0%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e6%a3%80%e6%b5%8b%e6%a8%a1%e5%9d%97" aria-label="实现代理池的检测模块">实现代理池的检测模块</a></li>
+                    <li>
+                        <a href="#%e5%ae%9e%e7%8e%b0%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84api%e6%a8%a1%e5%9d%97" aria-label="实现代理池的API模块">实现代理池的API模块</a></li>
+                    <li>
+                        <a href="#%e5%ae%9e%e7%8e%b0%e4%bb%a3%e7%90%86%e6%b1%a0%e7%9a%84%e7%a8%8b%e5%ba%8f%e5%85%a5%e5%8f%a3" aria-label="实现代理池的程序入口">实现代理池的程序入口</a>
+                    </li>
+                </ul>
+            </div>
+        </details>
+    </div>
+</aside>
+<script>
+    let activeElement;
+    let elements;
+    window.addEventListener('DOMContentLoaded', function (event) {
+        checkTocPosition();
+
+        elements = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+        
+        activeElement = elements[0];
+        const id = encodeURI(activeElement.getAttribute('id')).toLowerCase();
+        document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+    }, false);
+
+    window.addEventListener('resize', function(event) {
+        checkTocPosition();
+    }, false);
+
+    window.addEventListener('scroll', () => {
+        
+        activeElement = Array.from(elements).find((element) => {
+            if ((getOffsetTop(element) - window.pageYOffset) > 0 && 
+                (getOffsetTop(element) - window.pageYOffset) < window.innerHeight/2) {
+                return element;
+            }
+        }) || activeElement
+
+        elements.forEach(element => {
+            const id = encodeURI(element.getAttribute('id')).toLowerCase();
+            if (element === activeElement){
+                document.querySelector(`.inner ul li a[href="#${id}"]`).classList.add('active');
+            } else {
+                document.querySelector(`.inner ul li a[href="#${id}"]`).classList.remove('active');
+            }
+        })
+    }, false);
+
+    const main = parseInt(getComputedStyle(document.body).getPropertyValue('--article-width'), 10);
+    const toc = parseInt(getComputedStyle(document.body).getPropertyValue('--toc-width'), 10);
+    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--gap'), 10);
+
+    function checkTocPosition() {
+        const width = document.body.scrollWidth;
+
+        if (width - main - (toc * 2) - (gap * 4) > 0) {
+            document.getElementById("toc-container").classList.add("wide");
+        } else {
+            document.getElementById("toc-container").classList.remove("wide");
+        }
+    }
+
+    function getOffsetTop(element) {
+        if (!element.getClientRects().length) {
+            return 0;
+        }
+        let rect = element.getBoundingClientRect();
+        let win = element.ownerDocument.defaultView;
+        return rect.top + win.pageYOffset;   
+    }
+</script>
+  <div class="post-content"><p>环境：python3.6</p>
+<p>MongoDB</p>
+<p>flask</p>
+<p>requests等第三方库</p>
+<p>完整代码见： <a href="https://github.com/Lucareful/IPProxyPool">https://github.com/Lucareful/IPProxyPool</a></p>
+<h1 id="代理池概述">代理池概述<a hidden class="anchor" aria-hidden="true" href="#代理池概述">#</a></h1>
+<h2 id="什么是代理池">什么是代理池<a hidden class="anchor" aria-hidden="true" href="#什么是代理池">#</a></h2>
+<ul>
+<li>代理池就是有代理IP组成的池子，它可以提供多个稳定可用的代理IP</li>
+</ul>
+<h2 id="为什么要实现代理池">为什么要实现代理池<a hidden class="anchor" aria-hidden="true" href="#为什么要实现代理池">#</a></h2>
+<p>我们在做爬虫的时候，最常见的一种反爬虫手段就是：IP反爬；也就是当同一个IP访问这个网站的次数过多，频率过高，就会限制这个IP的访问。就是需要经常换IP；</p>
+<ul>
+<li>使用IP代理池是其中一个比较常用的方案</li>
+<li>免费代理都是非常不稳定的，有10%是可用就很不错了</li>
+<li>一些收费代理稳定性也不好</li>
+</ul>
+<p>目的：从一堆不稳定的代理IP中，抽取高可用代理IP，给爬虫使用</p>
+<h1 id="代理池开发环境">代理池开发环境<a hidden class="anchor" aria-hidden="true" href="#代理池开发环境">#</a></h1>
+<ul>
+<li>
+<p>python3开发语言</p>
+</li>
+<li>
+<p>requests：发送请求，获取页面数据</p>
+</li>
+<li>
+<p>lxml：使用XPATH从页面提取我们想要的书籍</p>
+</li>
+<li>
+<p>pymonge：把提取到代理IP存储到MongoDB数据库中和MongoDB数据库中读取代理IP，给爬虫使用</p>
+</li>
+<li>
+<p>Flask：用于提供WEB服务</p>
+</li>
+</ul>
+<h1 id="代理池工作流程">代理池工作流程<a hidden class="anchor" aria-hidden="true" href="#代理池工作流程">#</a></h1>
+<p><img loading="lazy" src="https://i.ibb.co/b7YyrM5/image-20191024195902163.png" alt="image-20191024195902163"  />
+</p>
+<p>1.代理池工作渡程描述：</p>
+<ul>
+<li>代理IP采集模块-&gt;采集代理IP-&gt;检测代理IP-&gt;如果不可用用，直接过滤掉，如果可用，指定默认分数-&gt;存入数据库中</li>
+<li>代理IP检测模块-&gt;从数据库中获取所有代理IP-&gt;检测代理IP-&gt;如果代理IP不可用用，就把分数-1，如果分数为0从数据库中删除，否则更新数据库，如果代理IP可用，恢复为默认分值，更新数据库</li>
+<li>代理API模块-&gt;从数据库中高可用的代理IP给爬虫使用；</li>
+</ul>
+<h2 id="代理池的模块及其作用">代理池的模块及其作用<a hidden class="anchor" aria-hidden="true" href="#代理池的模块及其作用">#</a></h2>
+<p>五大核心模块</p>
+<ul>
+<li>爬虫模块
+<ul>
+<li>从代理IP网站上采集代理IP</li>
+<li>进行校验（获取代理响应速度，协议类型，匿名类型）</li>
+<li>把可用代理IP存储到数据库中</li>
+<li></li>
+</ul>
+</li>
+<li>代理IP的校验模块：获取指定代理的响应速度，支持的协议以及匿名程度
+<ul>
+<li>原因：网站上所标注的响应速度，协议类型和匿名类型是不准确的</li>
+<li>这里使用<strong>httpbin.org</strong>进行检测</li>
+</ul>
+</li>
+<li>数据库模块：实现对代理IP的增删改查操作
+<ul>
+<li>这里使用MongoDB来存储代理IP</li>
+</ul>
+</li>
+<li>检测模块：定时的对代理池中代理进行检测，保证代理池中代理的可用性.
+<ul>
+<li>从数据库读取所有的代理IP</li>
+<li>对代理IP进行逐一检测，可用开启多个协程，以提高检测速度</li>
+<li>如果该代理不可用，就让这个代理分数-1，当代理的分数到0了，就删除该代理；如果检测到代理可用就恢复为满分.</li>
+</ul>
+</li>
+<li>代理IP服务接口：提供高可用的代理IP给爬虫使用
+<ul>
+<li>根据协议类型和域名获取随机一个高质量代理IP</li>
+<li>根据协议类型和域名获取多个高质量代理IP</li>
+<li>根据代理IP不可用域名，告诉代理池这个代理IP在该域名下不可用，下次获取这个域名的代理IP时候，就不会再获取这个代理IP了，从而保证代理IP高可用性.</li>
+</ul>
+</li>
+</ul>
+<p>代理池的其它模块</p>
+<ul>
+<li>数据模型：domain.py
+<ul>
+<li>代理IP的数据模型，用于封装代理IP相关信息，比如ip，端口号，响应速度，协议类型，匿名类型，分数等</li>
+</ul>
+</li>
+<li>程序启动入口：main.py·代理池提供一个统一的启动入口</li>
+<li>工具模块：、</li>
+<li>日志模块：用于记录日志信息</li>
+<li>http模块：用于获取随机User-Agent的请求头</li>
+<li>配置文件：settings.py
+<ul>
+<li>用于默认代理的分数，配置日志格式，文件，启动的爬虫，检验的间隔时间等.</li>
+</ul>
+</li>
+</ul>
+<h1 id="代理池的项目结构">代理池的项目结构<a hidden class="anchor" aria-hidden="true" href="#代理池的项目结构">#</a></h1>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">--</span>IPProxyPoo1
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">--</span>core
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72;font-weight:bold">--</span>db
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>__init__<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>mongo_pool<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72;font-weight:bold">--</span>proxy_validate
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>__init__<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>httpbin_validator<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72;font-weight:bold">--</span>proxy_spider
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>__init__<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>base_spider<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>proxy_kpiders<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72;font-weight:bold">--</span>run_spiders<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72;font-weight:bold">--</span>proxy_test<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72;font-weight:bold">--</span>proxy_api<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">--</span>domain<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">--</span>utils
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72;font-weight:bold">--</span>__init__<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72;font-weight:bold">--</span>http<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72;font-weight:bold">--</span>log<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">--</span>main<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">--</span>settings<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="定义代理ip的数据模型类">定义代理IP的数据模型类<a hidden class="anchor" aria-hidden="true" href="#定义代理ip的数据模型类">#</a></h1>
+<ul>
+<li>定义Proxy类，继承object</li>
+<li>实现_init_方法，负责初始化，包含如下字段：
+<ul>
+<li>ip：代理的IP地址</li>
+<li>port：代理IP的端口号</li>
+<li>protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2</li>
+<li>nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2</li>
+<li>speed：代理IP的响应速度，单位s</li>
+<li>area：代理IP所在地区</li>
+<li>score：代理IP的评分，用于衡量代理的可用性；默认分值可以通过配置文件进行配置.在进行代理可用性检查的时候，每遇到一次请求失败就减1份，减到0的时候从池中删除.如果检查代理可用，就恢复默认分值</li>
+<li>disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下可用</li>
+<li>在配置文件：settings.py中定义MAX_SCORE=50，表示代理IP的默认最高分数</li>
+</ul>
+</li>
+<li>提供_str方法，返回数据字符串</li>
+</ul>
+<h1 id="代理池的工具模块">代理池的工具模块<a hidden class="anchor" aria-hidden="true" href="#代理池的工具模块">#</a></h1>
+<p>日志模块</p>
+<p>http模块</p>
+<h2 id="日志模块">日志模块<a hidden class="anchor" aria-hidden="true" href="#日志模块">#</a></h2>
+<ul>
+<li>
+<p>能够方便的对程序进行调试</p>
+</li>
+<li>
+<p>能够方便记录程序的运行状态</p>
+</li>
+<li>
+<p>能够方便记录错误信息</p>
+</li>
+<li>
+<p>日志的实现</p>
+<ul>
+<li>目标：实现日志模块，用于记录日志</li>
+<li>把日志相关配置信息放到配置文件中</li>
+<li>修改日志代码，使用配置文件中的配置信息</li>
+</ul>
+</li>
+</ul>
+<h2 id="http模块">Http模块<a hidden class="anchor" aria-hidden="true" href="#http模块">#</a></h2>
+<ul>
+<li>我在从代理IP网站上抓取代理IP和检验代理IP时候，为了不容易不服务器识别为是一个爬虫，我们最好提供随机的User-Agent请求头.</li>
+<li>目标：获取随机User-Agent的请求头
+步骤：
+1.准备User-Agent的列表
+2.实现一个方法，获取随机User-Agent的请求头</li>
+</ul>
+<h1 id="代理池的检验模块">代理池的检验模块<a hidden class="anchor" aria-hidden="true" href="#代理池的检验模块">#</a></h1>
+<ul>
+<li>
+<p>目标：检查代理IP速度，匿名程度以及支持的协议类型.</p>
+</li>
+<li>
+<p>步骤：</p>
+</li>
+<li>
+<p>检查代理IP速度和匿名程度；</p>
+<ul>
+<li>
+<p>代理IP速度：就是从发送请求到获取响应的时间间隔</p>
+</li>
+<li>
+<p>匿名程度检查：</p>
+<ul>
+<li>
+<p>对http://httpbin.org/get 或https://httpbin.org/get 发送请求</p>
+</li>
+<li>
+<p>如果响应的origin中有 ***，***分割的两个IP就是透明代理IP</p>
+</li>
+<li>
+<p>如果响应的headers 中包含Proxy-Connection 说明是匿名代理IP</p>
+</li>
+<li>
+<p>否则就是高匿代理IP。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>检查代理IP协议类型</p>
+<ul>
+<li>如果http://httpbin.org/get 发送请求可以成功，说明支持http协议</li>
+</ul>
+</li>
+<li>
+<p>如果https://httpbin.org/get 发送请求可以成功，说明支持https协议</p>
+</li>
+</ul>
+<h1 id="代理池的数据库模块">代理池的数据库模块<a hidden class="anchor" aria-hidden="true" href="#代理池的数据库模块">#</a></h1>
+<ul>
+<li>作用：用于对proxies集合进行数据库的相关操作</li>
+<li>目标：实现对数据库增删改查相关操作、</li>
+<li>步骤：
+1.在<code>init</code>中，建立数据连接，获取要操作的集合，在<code>del</code>方法中关闭数据库连接
+2.提供基础的增删改查功能
+<ul>
+<li>实现插入功能</li>
+<li>实现修改该功能</li>
+<li>实现删除代理：根据代理的IP删除代理</li>
+<li>查询所有代理IP的功能</li>
+</ul>
+</li>
+<li>3.提供代理API模块使用的功能
+<ul>
+<li>实现查询功能：根据条件进行查询，可以指定查询数量，先分数降序，速度升序排，保证优质的代理IP在上面.</li>
+<li>实现根据协议类型和要访问网站的域名，获取代理IP列表</li>
+<li>实现根据协议类型和要访问完整的域名，随机获取一个代理IP</li>
+<li>实现把指定域名添加到指定IP的disable_domain列表中.</li>
+</ul>
+</li>
+</ul>
+<h1 id="实现代理池的爬虫模块">实现代理池的爬虫模块<a hidden class="anchor" aria-hidden="true" href="#实现代理池的爬虫模块">#</a></h1>
+<h2 id="爬虫模块的需求">爬虫模块的需求<a hidden class="anchor" aria-hidden="true" href="#爬虫模块的需求">#</a></h2>
+<ul>
+<li>需求：抓取各个代理IP网站上的免费代理IP进行检测，如果可用存储到数据库中</li>
+<li>需要抓取代理IP的页面如下：
+<ul>
+<li>西刺代理：https://www.xicidaili.com/nn/1</li>
+<li>ip3366代理：http://www.ip3366.net/free/?stype=1&amp;page=1</li>
+<li>快代理：https://www.kuaidaili.com/free/inha/1/</li>
+<li>oproxylistplus代理:https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1</li>
+<li>66ip代理：http://www.66ip.cn/1.html</li>
+</ul>
+</li>
+</ul>
+<h2 id="爬虫模块的设计">爬虫模块的设计<a hidden class="anchor" aria-hidden="true" href="#爬虫模块的设计">#</a></h2>
+<ul>
+<li>通用爬虫：通过指定URL列表，分组XPATH和组内XPATH，来提取不同网站的代理IP
+<ul>
+<li>原因代理IP网站的页面结构几乎都是Table，页面结构类似</li>
+</ul>
+</li>
+<li>具体爬虫：用于抓取具体代理IP网站
+<ul>
+<li>通过继承通用爬虫实现具体网站的抓取，一般只需要指定爬取的URL列表，分组的XPATH和组内XPATH就可以了.</li>
+<li>如果该网站有特殊反爬手段，可以通过重写某些方法实现反爬</li>
+</ul>
+</li>
+<li>爬虫运行模块：启动爬虫，抓取代理IP进行检测，如果可用，就存储到数据库中；
+<ul>
+<li>通过配置文件来控制启动哪些爬虫，增加扩展性；如果将来我们遇到返回<code>json</code>格式的代理网站，单独写一个爬虫配置下就好了.</li>
+</ul>
+</li>
+</ul>
+<h2 id="实现通用爬虫">实现通用爬虫<a hidden class="anchor" aria-hidden="true" href="#实现通用爬虫">#</a></h2>
+<ul>
+<li>
+<p>目标：实现可以指定不同URL列表，分组的XPATH和详情的XPATH，从不同页面上提取代理的IP端口号和区域的通用爬虫；</p>
+</li>
+<li>
+<p>步骤：
+1.在<code>base_spider.py</code>文件中，定义一个<code>BaseSpider</code>类，继承object
+2.提供三个类成员变量：</p>
+<ul>
+<li>
+<p>urls：代理IP网址的URL的列表</p>
+</li>
+<li>
+<p>group_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH</p>
+</li>
+<li>
+<p>detail_xpath：组内XPATH，获取代理IP详情的信息XPATH，格式为：{&ldquo;ip&rsquo;:&lsquo;xx&rsquo;，&lsquo;port&rsquo;：&lsquo;xx&rsquo;，‘area&rsquo;：&lsquo;xx&rsquo;}</p>
+</li>
+</ul>
+<p>3.提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATH
+4.对外提供一个获取代理IP的方法</p>
+<ul>
+<li>遍历URL列表，获取URL</li>
+<li>根据发送请求，获取页面数据</li>
+<li>解析页面，提取数据，封装为Proxy对象</li>
+<li>返回Proxy对象列表</li>
+</ul>
+</li>
+</ul>
+<h2 id="实现具体爬虫">实现具体爬虫<a hidden class="anchor" aria-hidden="true" href="#实现具体爬虫">#</a></h2>
+<ul>
+<li>
+<p>目标：通过继承通用爬虫，实现多个具体爬虫，分别从各个免费代理IP网站上抓取代理IP</p>
+</li>
+<li>
+<p>1.实现西刺代理爬虫：http://www.xicidaili.com/nn/1</p>
+<ul>
+<li>定义一个类，继承通用爬虫类（<code>BasicSpider</code>）</li>
+<li>提供urls，group_xpath 和detail_xpath</li>
+</ul>
+</li>
+<li>
+<p>2.实现ip3366代理爬虫：http://www.ip3366.net/free/？stype=1&amp;page=1</p>
+<ul>
+<li>定义一个类，继承通用爬虫类（BasicSpider）</li>
+<li>提供urls，group_xpath 和detail_xpath</li>
+</ul>
+</li>
+<li>
+<p>3.实现快代理爬虫：https://www.kuaidaili.com/free/inha/1/</p>
+<ul>
+<li>定义一个类，继承通用爬虫类（BasicSpider）</li>
+<li>提供urls，group_xpath和detail_xpath</li>
+</ul>
+</li>
+<li>
+<p>4.实现 proxylistplus代理爬虫：https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1</p>
+<ul>
+<li>定义一个类，继承通用爬虫类（BasicSpider）</li>
+<li>提供urls，group_xpath 和detail_xpath</li>
+</ul>
+</li>
+<li>
+<p>5.实现66ip爬虫：http://www.66ip.cn/1.html</p>
+<ul>
+<li>定义一个类，继承通用爬虫类（BasicSpider）</li>
+<li>提供urls，group_xpath和detail_xpath</li>
+<li>由于66ip网页进行js+cookie反爬，需要重写父类的get_page_from_url 方法</li>
+</ul>
+<p>PS：实现66ip爬虫：http://www.66ip.cn/1.html核心：</p>
+<p>通过加密的js，生成需要cookie信息
+1.从响应页面中，提取：</p>
+<p>​			1.执行生成真正js语句</p>
+<p>​			2.生成真正js的函数.</p>
+<p>2.网页中，是通过<code>eval</code>执行真正js，加载页面；而我们要获取真正的js；我们就需要把<code>eval</code>语句，替换为return，把真正js返回.</p>
+<p>3.使用<code>js2py</code>，获取执行js的环境，使用js执行环境加载这个函数</p>
+<p>4.使用这个执行环境，执行调用调用，生成真正js，赋值给一个变量</p>
+<p>5.从真正的js代码中，提取我们需要cookie信息.</p>
+</li>
+</ul>
+<h1 id="实现爬虫的运行模块">实现爬虫的运行模块<a hidden class="anchor" aria-hidden="true" href="#实现爬虫的运行模块">#</a></h1>
+<ul>
+<li>目标：根据配置文件信息，加载爬虫，抓取代理IP，进行校验，如果可用，写入到数据库中</li>
+<li>思路：
+<ul>
+<li>在<code>run_spider.py</code>中，创建<code>RunSpider</code>类</li>
+</ul>
+</li>
+<li>提供一个运行爬虫的run方法，作为运行爬虫的入口，实现核心的处理逻辑
+<ul>
+<li>根据配置文件信息，获取爬虫对象列表.</li>
+<li>遍历爬虫对象列表，获取爬虫对象，遍历爬虫对象的get_proxies方法，获取代理IP</li>
+<li>检测代理IP（代理IP检测模块）</li>
+<li>如果可用，写入数据库（数据库模块）</li>
+<li>处理异常，防止一个爬虫内部出错了，影响其他的爬虫.</li>
+</ul>
+</li>
+<li>使用异步来执行每一个爬虫任务，以提高抓取代理IP效率
+<ul>
+<li>在init 方法中创建协程池对象</li>
+<li>把处理一个代理爬虫的代码抽到一个方法</li>
+<li>使用异步执行这个方法</li>
+<li>调用协程的join方法，让当前线程等待队列任务的完成.</li>
+</ul>
+</li>
+<li>使用<code>schedule</code>模块，实现每隔一定的时间，执行一次爬取任务
+<ul>
+<li>定义一个start的类方法</li>
+<li>创建当前类的对象，调用run方法</li>
+<li>使用schedule模块，每隔一定的时间，执行当前对象的run方法</li>
+</ul>
+</li>
+</ul>
+<h1 id="实现代理池的检测模块">实现代理池的检测模块<a hidden class="anchor" aria-hidden="true" href="#实现代理池的检测模块">#</a></h1>
+<ul>
+<li>
+<p>目的：检查代理IP可用性，保证代理池中代理IP基本可用</p>
+</li>
+<li>
+<p>思路</p>
+<ul>
+<li>
+<p>1.在<code>proxy_test.py</code>中，创建<code>Proxy Tester</code>类</p>
+</li>
+<li>
+<p>2.提供一个run 方法，用于处理检测代理命核心逻辑</p>
+<ul>
+<li>
+<p>从数据库中获取所有代理IP</p>
+</li>
+<li>
+<p>遍历代理IP列表</p>
+</li>
+<li>
+<p>检查代理可用性</p>
+<ul>
+<li>
+<p>如果代理不可用，让代理分数-1，如果代理分数等于0就从数据库中删除该代理，否则更新该代理IP</p>
+</li>
+<li>
+<p>如果代理可用，就恢复该代理的分数，更新到数据库中</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>3.为了提高检查的速度，使用异步来执行检测任务</p>
+<ul>
+<li>
+<p>在<code>init</code>方法中，创建队列和协程池</p>
+<ul>
+<li>把要检测的代理IP，放到队列中</li>
+<li>i.把检查一个代理可用性的代码，抽取到一个方法中；从队列中获取代理IP，进行检查；检查完毕，调度队列的task_done方法</li>
+<li>ii.通过异步回调，使用死循环不断执行这个方法，</li>
+<li>iv.开启多个一个异步任务，来处理代理IP的检测；可以通过配置文件指定异步数量</li>
+<li>调用队列的join方法，让当前线程等待队列任务完成</li>
+</ul>
+</li>
+</ul>
+<p>4.使用schedule模块，每隔一定的时间，执行一次检测任务</p>
+<ul>
+<li>定义类方法start，用于启动检测模块</li>
+<li>在start方法中
+<ul>
+<li>i.创建本类对象</li>
+<li>i.调用run方法</li>
+<li>i.每间隔一定时间，执行一下，run方法</li>
+</ul>
+</li>
+</ul>
+<h1 id="实现代理池的api模块">实现代理池的API模块<a hidden class="anchor" aria-hidden="true" href="#实现代理池的api模块">#</a></h1>
+<ul>
+<li>
+<p>目标：</p>
+<ul>
+<li>为爬虫提供高可用代理IP的服务接口</li>
+</ul>
+</li>
+<li>
+<p>步骤：</p>
+<ul>
+<li>
+<p>实现根据协议类型和域名，提供随机的获取高可用代理IP的服务</p>
+</li>
+<li>
+<p>实现根据协议类型和域名，提供获取多个高可用代理IP的服务</p>
+</li>
+<li>
+<p>实现给指定的IP上追加不可用域名的服务</p>
+</li>
+</ul>
+</li>
+<li>
+<p>实现</p>
+<ul>
+<li>在<code>proxy_api.py</code>中，创建<code>ProxyApi</code>类</li>
+</ul>
+</li>
+<li>
+<p>实现初始方法s</p>
+<ul>
+<li>
+<p>初始一个Flask的Web服务</p>
+</li>
+<li>
+<p>实现根据协议类型和域名，提供随机的获取高可用代理IP的服务</p>
+<ul>
+<li>
+<p>可用通过protocol和domain参数对IP进行过滤</p>
+</li>
+<li>
+<p>protocol：当前请求的协议类型</p>
+</li>
+<li>
+<p>domain：当前请求域名</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>实现根据协议类型和域名，提供获取多个高可用代理IP的服务·</p>
+<ul>
+<li>可用通过protocol和domain参数对IP进行过滤</li>
+</ul>
+</li>
+<li>
+<p>实现给指定的IP上追加不可用域名的服务</p>
+<ul>
+<li>如果在获取IP的时候，有指定域名参数，将不在获取该IP从而进一步提高代理IP的可用性.</li>
+</ul>
+</li>
+<li>
+<p>实现run方法，用于启动Flask的WEB服务</p>
+</li>
+<li>
+<p>实现start的类方法，用于通过类名，启动服务</p>
+</li>
+</ul>
+<h1 id="实现代理池的程序入口">实现代理池的程序入口<a hidden class="anchor" aria-hidden="true" href="#实现代理池的程序入口">#</a></h1>
+<ul>
+<li>目标：把<code>启动爬虫</code>，<code>启动检测代理IP</code>，<code>启动WEB服务</code>统一到一起</li>
+<li>思路：
+<ul>
+<li>开启三个进程，分别用于启动爬虫，检测代理IP，WEB服务</li>
+</ul>
+</li>
+<li>步骤：</li>
+<li>定义一个run方法用于启动动代理池
+<ul>
+<li>定义一个列表，用于存储要启动的进程</li>
+<li>创建<code>启动爬虫</code>的进程，添加到列表中</li>
+<li>创建<code>启动检测</code>的进程，添加到列表中</li>
+<li>创建<code>启动提供API</code>服务的进程，添加到列表中</li>
+<li>遍历进程列表，启动所有进程</li>
+<li>遍历进程列表，让主进程等待子进程的完成</li>
+</ul>
+</li>
+<li>在<code>if__name__=='__main__'：</code>中调用run方法</li>
+</ul>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://Lucareful.github.io/en/tags/%E7%88%AC%E8%99%AB%E5%AE%9E%E8%B7%B5/">爬虫实践</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="https://Lucareful.github.io/en/posts/%E4%BA%AC%E4%B8%9C%E5%85%A8%E7%BD%91%E7%88%AC%E8%99%AB/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>京东全网爬虫</span>
+  </a>
+  <a class="next" href="https://Lucareful.github.io/en/posts/hadoop%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/">
+    <span class="title">Next »</span>
+    <br>
+    <span>大数据之Hadoop</span>
+  </a>
+</nav>
+
+
+<ul class="share-buttons">
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share 基于Python语言的IP代理池 on x"
+            href="https://x.com/intent/tweet/?text=%e5%9f%ba%e4%ba%8ePython%e8%af%ad%e8%a8%80%e7%9a%84IP%e4%bb%a3%e7%90%86%e6%b1%a0&amp;url=https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f&amp;hashtags=%e7%88%ac%e8%99%ab%e5%ae%9e%e8%b7%b5">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M512 62.554 L 512 449.446 C 512 483.97 483.97 512 449.446 512 L 62.554 512 C 28.03 512 0 483.97 0 449.446 L 0 62.554 C 0 28.03 28.029 0 62.554 0 L 449.446 0 C 483.971 0 512 28.03 512 62.554 Z M 269.951 190.75 L 182.567 75.216 L 56 75.216 L 207.216 272.95 L 63.9 436.783 L 125.266 436.783 L 235.9 310.383 L 332.567 436.783 L 456 436.783 L 298.367 228.367 L 432.367 75.216 L 371.033 75.216 Z M 127.633 110 L 164.101 110 L 383.481 400.065 L 349.5 400.065 Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share 基于Python语言的IP代理池 on linkedin"
+            href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f&amp;title=%e5%9f%ba%e4%ba%8ePython%e8%af%ad%e8%a8%80%e7%9a%84IP%e4%bb%a3%e7%90%86%e6%b1%a0&amp;summary=%e5%9f%ba%e4%ba%8ePython%e8%af%ad%e8%a8%80%e7%9a%84IP%e4%bb%a3%e7%90%86%e6%b1%a0&amp;source=https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share 基于Python语言的IP代理池 on reddit"
+            href="https://reddit.com/submit?url=https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f&title=%e5%9f%ba%e4%ba%8ePython%e8%af%ad%e8%a8%80%e7%9a%84IP%e4%bb%a3%e7%90%86%e6%b1%a0">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share 基于Python语言的IP代理池 on facebook"
+            href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share 基于Python语言的IP代理池 on whatsapp"
+            href="https://api.whatsapp.com/send?text=%e5%9f%ba%e4%ba%8ePython%e8%af%ad%e8%a8%80%e7%9a%84IP%e4%bb%a3%e7%90%86%e6%b1%a0%20-%20https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share 基于Python语言的IP代理池 on telegram"
+            href="https://telegram.me/share/url?text=%e5%9f%ba%e4%ba%8ePython%e8%af%ad%e8%a8%80%e7%9a%84IP%e4%bb%a3%e7%90%86%e6%b1%a0&amp;url=https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f">
+            <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share 基于Python语言的IP代理池 on ycombinator"
+            href="https://news.ycombinator.com/submitlink?t=%e5%9f%ba%e4%ba%8ePython%e8%af%ad%e8%a8%80%e7%9a%84IP%e4%bb%a3%e7%90%86%e6%b1%a0&u=https%3a%2f%2fLucareful.github.io%2fen%2fposts%2fip%25E4%25BB%25A3%25E7%2590%2586%25E6%25B1%25A0%2f">
+            <svg version="1.1" xml:space="preserve" width="30px" height="30px" viewBox="0 0 512 512" fill="currentColor"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                <path
+                    d="M449.446 0C483.971 0 512 28.03 512 62.554L512 449.446C512 483.97 483.97 512 449.446 512L62.554 512C28.03 512 0 483.97 0 449.446L0 62.554C0 28.03 28.029 0 62.554 0L449.446 0ZM183.8767 87.9921H121.8427L230.6673 292.4508V424.0079H281.3328V292.4508L390.1575 87.9921H328.1233L256 238.2489z" />
+            </svg>
+        </a>
+    </li>
+</ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>
+            <a id="running-time"></a>
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <span id="busuanzi_container">
+                <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+                👁️‍🗨️访客人数: <span id="busuanzi_value_site_uv"></span>|
+                🌐访问量: <span id="busuanzi_value_site_pv"></span>
+            </span>
+        </span>
+        <br/>
+        <span>&copy; 2024 <a href="https://Lucareful.github.io/en/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+    const RunningTimerInterval = 1000;
+    const StartTime = new Date("10/11/2018 00:00:00");
+
+    function prefixZero(num)
+    {
+        if (num < 10)
+        {
+            num = "0" + num;
+        }
+        return num;
+    }
+
+function updateTime()
+{
+    const currentTime = new Date();
+    let runningTime = currentTime.getTime() - StartTime.getTime();
+
+    const dayMs = 24 * 60 * 60 * 1000;
+    const runningDays = Math.floor(runningTime / dayMs);
+
+    runningTime -= runningDays * dayMs;
+
+    const hourMs = 60 * 60 * 1000;
+    const runningHours = Math.floor(runningTime / hourMs);
+
+    runningTime -= runningHours * hourMs;
+
+    const minuteMs = 60 * 1000;
+    const runningMinutes = Math.floor(runningTime / minuteMs);
+
+    runningTime -= runningMinutes * minuteMs;
+
+    const runningSeconds = Math.floor(runningTime / 1000);
+
+    
+
+    const showTime = document.getElementById("running-time");
+
+    showTime.innerText ="🕚: " +
+        runningDays + "天" + prefixZero(runningHours) + "小时" + prefixZero(runningMinutes) + "分" + prefixZero(runningSeconds) + "秒";
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { let RunningTimer = setInterval(updateTime, RunningTimerInterval); });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script></body>
+
+</html>

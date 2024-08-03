@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>ORM on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/orm/</link>
+    <description>Recent content in ORM on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/orm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Django的ORM多表操作</title>
+      <link>https://Lucareful.github.io/en/posts/django%E7%9A%84orm%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/django%E7%9A%84orm%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/</guid>
+      <description>ORM多表操作 API 函数 说明 all() 查询所有结果 filter(**kwargs) 包含了与所给筛选条件相匹配的对象 get(**kwargs) 返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选</description>
+      <content:encoded><![CDATA[<h1 id="orm多表操作">ORM多表操作</h1>
+<h2 id="api">API</h2>
+<table>
+<thead>
+<tr>
+<th>函数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>all()</td>
+<td>查询所有结果</td>
+</tr>
+<tr>
+<td>filter(**kwargs)</td>
+<td>包含了与所给筛选条件相匹配的对象</td>
+</tr>
+<tr>
+<td>get(**kwargs)</td>
+<td>返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选条件的对象超过一个或者没有都会抛出错误。</td>
+</tr>
+<tr>
+<td>exclude(**kwargs)</td>
+<td>它包含了与所给筛选条件不匹配的对象</td>
+</tr>
+<tr>
+<td>order_by(*field)</td>
+<td>对查询结果排序 用法:order_by (&ldquo;price&rdquo;)  <code>DESC</code> 降序</td>
+</tr>
+<tr>
+<td>reverse():</td>
+<td>对查询结果反向排序</td>
+</tr>
+<tr>
+<td>count()</td>
+<td>返回数据库中匹配查询(<code>QuerySet</code>)的对象数量</td>
+</tr>
+<tr>
+<td>first()</td>
+<td>返回第一条记录</td>
+</tr>
+<tr>
+<td>last()</td>
+<td>返回最后一条记录</td>
+</tr>
+<tr>
+<td>exists()</td>
+<td>如果<code>QuerySet</code>包含数据，就返回<code>True</code>，否则返回<code>False</code> 相当于<code>limit 1</code>(用途查询这个表中是否有值)</td>
+</tr>
+<tr>
+<td>values(*field)</td>
+<td>用法:<code>Book.objects.all.values(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[{‘title’:‘aa’,‘pirce’:12},{}]</code></td>
+</tr>
+<tr>
+<td>values_list(*field):</td>
+<td>用法:<code>Book.objects.all.values_list(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[(‘aa’,12),(‘bb’,33)]</code></td>
+</tr>
+<tr>
+<td>distinct()</td>
+<td>从返回结果中剔除重复纪录 用法:<code>Book.objects.all.values(‘title’,‘price’).distinct()</code> 错误用法 <code>Book.objects.all.distinct()</code> 因为id不相同,其他相同,无法去重</td>
+</tr>
+</tbody>
+</table>
+<h2 id="模糊查询">模糊查询</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span>__exact 	精确等于 like ‘aaa’
+</span></span><span style="display:flex;"><span>__iexact 	精确等于 忽略大小写 ilike ‘aaa’
+</span></span><span style="display:flex;"><span>__contains  是否包含 like ‘<span style="color:#79c0ff">%aaa%</span>’
+</span></span><span style="display:flex;"><span>__icontains 包含 忽略大小写 ilike ‘<span style="color:#79c0ff">%aaa%</span>’，但是对于sqlite来说，contains的作用效果等同于icontains。
+</span></span><span style="display:flex;"><span>__gt 		大于
+</span></span><span style="display:flex;"><span>__gte 		大于等于
+</span></span><span style="display:flex;"><span>__lt 		小于
+</span></span><span style="display:flex;"><span>__lte 		小于等于
+</span></span><span style="display:flex;"><span>__in 		存在于一个list范围内
+</span></span><span style="display:flex;"><span>__startswith 以…开头
+</span></span><span style="display:flex;"><span>__istartswith 以…开头 忽略大小写
+</span></span><span style="display:flex;"><span>__endswith  以…结尾
+</span></span><span style="display:flex;"><span>__iendswith 以…结尾，忽略大小写
+</span></span><span style="display:flex;"><span>__range 	在…范围内
+</span></span><span style="display:flex;"><span>__year 		日期字段的年份
+</span></span><span style="display:flex;"><span>__month 	日期字段的月份
+</span></span><span style="display:flex;"><span>__day 		日期字段的日
+</span></span><span style="display:flex;"><span>__isnull=True/False
+</span></span><span style="display:flex;"><span>__isnull=True 与 __exact=None的区别
+</span></span></code></pre></td></tr></table>
+</div>
+</div><!-- more -->
+<h2 id="外键的定义">外键的定义</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># modeld.py</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">Book</span>(models<span style="color:#ff7b72;font-weight:bold">.</span>Model):
+</span></span><span style="display:flex;"><span>    name <span style="color:#ff7b72;font-weight:bold">=</span> models<span style="color:#ff7b72;font-weight:bold">.</span>CharField(max_length<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">20</span>)
+</span></span><span style="display:flex;"><span>    price <span style="color:#ff7b72;font-weight:bold">=</span> models<span style="color:#ff7b72;font-weight:bold">.</span>FloatField()
+</span></span><span style="display:flex;"><span>    pub_date <span style="color:#ff7b72;font-weight:bold">=</span> models<span style="color:#ff7b72;font-weight:bold">.</span>DateField()
+</span></span><span style="display:flex;"><span>    publish <span style="color:#ff7b72;font-weight:bold">=</span> models<span style="color:#ff7b72;font-weight:bold">.</span>ForeignKey(<span style="color:#a5d6ff">&#34;Publish&#34;</span>,on_delete<span style="color:#ff7b72;font-weight:bold">=</span>models<span style="color:#ff7b72;font-weight:bold">.</span>CASCADE)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">Publish</span>(models<span style="color:#ff7b72;font-weight:bold">.</span>Model):
+</span></span><span style="display:flex;"><span>    name <span style="color:#ff7b72;font-weight:bold">=</span> models<span style="color:#ff7b72;font-weight:bold">.</span>CharField(max_length<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">32</span>)
+</span></span><span style="display:flex;"><span>    city <span style="color:#ff7b72;font-weight:bold">=</span> models<span style="color:#ff7b72;font-weight:bold">.</span>CharField(max_length<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">32</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="on_delete的参数"><code>on_delete</code>的参数</h3>
+<ul>
+<li><code>CASCADE</code>:这就是默认的选项，级联删除，你无需显性指定它。</li>
+<li><code>PROTECT</code>: 保护模式，如果采用该选项，删除的时候，会抛出<code>ProtectedError</code>错误。</li>
+<li><code>SET_NULL</code>: 置空模式，删除的时候，外键字段被设置为空，前提就是<code>blank=True</code>, <code>null=True</code>,定义该字段的时候，允许为空。</li>
+<li><code>SET_DEFAULT</code>: 置默认值，删除的时候，外键字段设置为默认值，所以定义外键的时候注意加上一个默认值。</li>
+<li><code>SET()</code>: 自定义一个值，该值只能是对应的实体了</li>
+<li><code>DO_NOTHING</code>:不采取行动。如果您的数据库后端强制执行参照完整性，会造成<code>IntegrityError</code>，除非您手动将SQL 约束<code>ON DELETE</code>添加到数据库字段。</li>
+</ul>
+<h2 id="一对多之对象查询">一对多之对象查询</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 通过外键实现关联查询</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 一对多： book_obj ————————————》一定是一个对象</span>
+</span></span><span style="display:flex;"><span>book_obj <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;python进阶&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(book_obj<span style="color:#ff7b72;font-weight:bold">.</span>publish)
+</span></span><span style="display:flex;"><span>print(book_obj<span style="color:#ff7b72;font-weight:bold">.</span>publish<span style="color:#ff7b72;font-weight:bold">.</span>name)
+</span></span><span style="display:flex;"><span>print(book_obj<span style="color:#ff7b72;font-weight:bold">.</span>publish<span style="color:#ff7b72;font-weight:bold">.</span>city)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 查询出版社出版的所有书籍和价格</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 方法一</span>
+</span></span><span style="display:flex;"><span>pub_obj <span style="color:#ff7b72;font-weight:bold">=</span> Publish<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;人民出版社&#34;</span>)[<span style="color:#a5d6ff">0</span>]
+</span></span><span style="display:flex;"><span>ret <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(publish<span style="color:#ff7b72;font-weight:bold">=</span>pub_obj)<span style="color:#ff7b72;font-weight:bold">.</span>values(<span style="color:#a5d6ff">&#34;name&#34;</span>,<span style="color:#a5d6ff">&#34;price&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(ret) <span style="color:#8b949e;font-style:italic"># &lt;QuerySet [{&#39;name&#39;: &#39;linux运维&#39;, &#39;price&#39;: 77.0}]&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 方法二</span>
+</span></span><span style="display:flex;"><span>pub_obj <span style="color:#ff7b72;font-weight:bold">=</span> Publish<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;机械出版社&#34;</span>)[<span style="color:#a5d6ff">0</span>]
+</span></span><span style="display:flex;"><span>print(pub_obj<span style="color:#ff7b72;font-weight:bold">.</span>book_set<span style="color:#ff7b72;font-weight:bold">.</span>all())  <span style="color:#8b949e;font-style:italic"># &lt;QuerySet [&lt;Book: python进阶&gt;]&gt;</span>
+</span></span><span style="display:flex;"><span>print(type(pub_obj<span style="color:#ff7b72;font-weight:bold">.</span>book_set<span style="color:#ff7b72;font-weight:bold">.</span>all()))  <span style="color:#8b949e;font-style:italic"># &lt;class &#39;django.db.models.query.QuerySet&#39;&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(pub_obj<span style="color:#ff7b72;font-weight:bold">.</span>book_set<span style="color:#ff7b72;font-weight:bold">.</span>all()<span style="color:#ff7b72;font-weight:bold">.</span>values(<span style="color:#a5d6ff">&#34;name&#34;</span>, <span style="color:#a5d6ff">&#34;price&#34;</span>))
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="多对多对象添加">多对多对象添加</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 多对多添加信息</span>
+</span></span><span style="display:flex;"><span>book_obj <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(id<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">2</span>)
+</span></span><span style="display:flex;"><span>author_obj <span style="color:#ff7b72;font-weight:bold">=</span> Author<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(id<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 添加关系</span>
+</span></span><span style="display:flex;"><span>book_obj<span style="color:#ff7b72;font-weight:bold">.</span>author<span style="color:#ff7b72;font-weight:bold">.</span>add(author_obj)
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 删除关系</span>
+</span></span><span style="display:flex;"><span>book_obj<span style="color:#ff7b72;font-weight:bold">.</span>author<span style="color:#ff7b72;font-weight:bold">.</span>remove(author_obj)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="聚合查询与分组查询">聚合查询与分组查询</h2>
+<h3 id="聚合查询">聚合查询:</h3>
+<h4 id="aggregateargs-kwargs"><code>aggregate</code>(*args, **kwargs)</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#1.聚合  aggregate:返回值是一个字典</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.db.models</span> <span style="color:#ff7b72">import</span> Avg,Max,Min,Count
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#问题:查询所有书籍的平均价格,最高价格,最低价格</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ret <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>all()<span style="color:#ff7b72;font-weight:bold">.</span>aggregate(avg_price<span style="color:#ff7b72;font-weight:bold">=</span>Avg(<span style="color:#a5d6ff">&#39;price&#39;</span>),max_price <span style="color:#ff7b72;font-weight:bold">=</span> Max(<span style="color:#a5d6ff">&#39;price&#39;</span>),min_price<span style="color:#ff7b72;font-weight:bold">=</span>Min(<span style="color:#a5d6ff">&#39;price&#39;</span>))
+</span></span><span style="display:flex;"><span>print(ret)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>aggregate()</code>是<code>QuerySet</code> 的一个终止子句，意思是说，它返回一个包含一些键值对的字典。键的名称是聚合值的标识符，值是计算出来的聚合值。键的名称是按照字段和聚合函数的名称自动生成出来的。如果你想要为聚合值指定一个名称，可以向聚合子句提供它。</li>
+</ul>
+<h2 id="分组查询">分组查询</h2>
+<h3 id="annotateargs-kwargs">annotate(*args, **kwargs)</h3>
+<ul>
+<li>表单模型.objects.values(&ldquo;group by 分组字段&rdquo;).annotate(聚合函数(&lsquo;聚合字段&rsquo;))</li>
+</ul>
+<h2 id="f查询">F查询</h2>
+<ul>
+<li>Django 支持 F() 对象之间以及 F() 对象和常数之间的加减乘除和取模的操作。</li>
+</ul>
+<h2 id="q查询">Q查询</h2>
+<ul>
+<li>filter() 等方法中的关键字参数查询都是一起进行“AND” 的。 如果你需要执行更复杂的查询（例如OR语句），你可以使用Q对象</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Django的ORM字段介绍</title>
+      <link>https://Lucareful.github.io/en/posts/django%E7%9A%84field%E8%AF%A6%E8%A7%A3/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/django%E7%9A%84field%E8%AF%A6%E8%A7%A3/</guid>
+      <description>Django的Field详解（转载） 本文转载于：https://www.cnblogs.com/ellisonzhang/p/1067905</description>
+      <content:encoded><![CDATA[<h1 id="django的field详解转载">Django的Field详解（转载）</h1>
+<blockquote>
+<p>本文转载于：https://www.cnblogs.com/ellisonzhang/p/10679054.html</p>
+</blockquote>
+<h2 id="字段">字段</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#a5d6ff">1</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>AutoField　　自增列 <span style="color:#ff7b72;font-weight:bold">=</span> int(<span style="color:#a5d6ff">11</span>)
+</span></span><span style="display:flex;"><span>　　如果没有的话<span style="color:#f85149">，</span>默认会生成一个名称为 id 的列<span style="color:#f85149">，</span>如果要显示的自定义一个自增列<span style="color:#f85149">，</span>必须将给列设置为主键 primary_key<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span><span style="color:#f85149">。</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">2</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>CharField　　字符串字段
+</span></span><span style="display:flex;"><span>　　必须 max_length 参数
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">3</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>BooleanField　　布尔类型<span style="color:#ff7b72;font-weight:bold">=</span>tinyint(<span style="color:#a5d6ff">1</span>)
+</span></span><span style="display:flex;"><span>　　不能为空<span style="color:#f85149">，</span>Blank<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">4</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>ComaSeparatedIntegerField　　用逗号分割的数字<span style="color:#ff7b72;font-weight:bold">=</span>varchar
+</span></span><span style="display:flex;"><span>　　继承CharField<span style="color:#f85149">，</span>所以必须 max_lenght 参数
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">5</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>DateField　　日期类型 date
+</span></span><span style="display:flex;"><span>　　对于参数<span style="color:#f85149">，</span>auto_now <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">True</span> 则每次更新都会更新这个时间<span style="color:#f85149">；</span>auto_now_add 则只是第一次创建添加<span style="color:#f85149">，</span>之后的更新不再改变<span style="color:#f85149">。</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">6</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>DateTimeField　　日期类型 datetime
+</span></span><span style="display:flex;"><span>　　同DateField的参数
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">7</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>Decimal　　十进制小数类型 <span style="color:#ff7b72;font-weight:bold">=</span> decimal
+</span></span><span style="display:flex;"><span>　　必须指定整数位max_digits和小数位decimal_places
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">8</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>EmailField　　字符串类型<span style="color:#f85149">（</span>正则表达式邮箱<span style="color:#f85149">）</span> <span style="color:#ff7b72;font-weight:bold">=</span>varchar
+</span></span><span style="display:flex;"><span>　　对字符串进行正则表达式
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">9</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>FloatField　　浮点类型 <span style="color:#ff7b72;font-weight:bold">=</span> double
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">10</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>IntegerField　　整形
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">11</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>BigIntegerField　　长整形
+</span></span><span style="display:flex;"><span>　　integer_field_ranges <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span>　　　　<span style="color:#a5d6ff">&#39;SmallIntegerField&#39;</span>: (<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">32768</span>, <span style="color:#a5d6ff">32767</span>),
+</span></span><span style="display:flex;"><span>　　　　<span style="color:#a5d6ff">&#39;IntegerField&#39;</span>: (<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">2147483648</span>, <span style="color:#a5d6ff">2147483647</span>),
+</span></span><span style="display:flex;"><span>　　　　<span style="color:#a5d6ff">&#39;BigIntegerField&#39;</span>: (<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">9223372036854775808</span>, <span style="color:#a5d6ff">9223372036854775807</span>),
+</span></span><span style="display:flex;"><span>　　　　<span style="color:#a5d6ff">&#39;PositiveSmallIntegerField&#39;</span>: (<span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">32767</span>),
+</span></span><span style="display:flex;"><span>　　　　<span style="color:#a5d6ff">&#39;PositiveIntegerField&#39;</span>: (<span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">2147483647</span>),
+</span></span><span style="display:flex;"><span>　　}
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">12</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>IPAddressField　　字符串类型<span style="color:#f85149">（</span>ip4正则表达式<span style="color:#f85149">）</span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">13</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>GenericIPAddressField　　字符串类型<span style="color:#f85149">（</span>ip4和ip6是可选的<span style="color:#f85149">）</span>
+</span></span><span style="display:flex;"><span>　　参数protocol可以是<span style="color:#f85149">：</span>both<span style="color:#f85149">、</span>ipv4<span style="color:#f85149">、</span>ipv6
+</span></span><span style="display:flex;"><span>　　验证时<span style="color:#f85149">，</span>会根据设置报错
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">14</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>NullBooleanField　　允许为空的布尔类型
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">15</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>PositiveIntegerFiel　　正Integer
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">16</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>PositiveSmallIntegerField　　正smallInteger
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">17</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>SlugField　　减号<span style="color:#f85149">、</span>下划线<span style="color:#f85149">、</span>字母<span style="color:#f85149">、</span>数字
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">18</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>SmallIntegerField　　数字
+</span></span><span style="display:flex;"><span>　　数据库中的字段有<span style="color:#f85149">：</span>tinyint<span style="color:#f85149">、</span>smallint<span style="color:#f85149">、</span>int<span style="color:#f85149">、</span>bigint
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">19</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>TextField　　字符串<span style="color:#ff7b72;font-weight:bold">=</span>longtext
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">20</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>TimeField　　时间 HH:MM[:ss[<span style="color:#ff7b72;font-weight:bold">.</span>uuuuuu]]
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">21</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>URLField　　字符串<span style="color:#f85149">，</span>地址正则表达式
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">22</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>BinaryField　　二进制
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">23</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>ImageField   图片
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">24</span><span style="color:#f85149">、</span>models<span style="color:#ff7b72;font-weight:bold">.</span>FilePathField 文件
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="参数">参数</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span>1、null=True
+</span></span><span style="display:flex;"><span>　　数据库中字段是否可以为空
+</span></span><span style="display:flex;"><span>2、blank=True
+</span></span><span style="display:flex;"><span>　　django的 Admin 中添加数据时是否可允许空值
+</span></span><span style="display:flex;"><span>3、primary_key = False
+</span></span><span style="display:flex;"><span>　　主键，对AutoField设置主键后，就会代替原来的自增 id 列
+</span></span><span style="display:flex;"><span>4、auto_now 和 auto_now_add
+</span></span><span style="display:flex;"><span>　　auto_now   自动创建---无论添加或修改，都是当前操作的时间
+</span></span><span style="display:flex;"><span>　　auto_now_add  自动创建---永远是创建时的时间
+</span></span><span style="display:flex;"><span>5、choices
+</span></span><span style="display:flex;"><span>    sex_choice=((“F”,“FEMAL”),(“M”,’Male’),)　　　　#admin专用下拉选项    
+</span></span><span style="display:flex;"><span>    gender=models.CharFiled(max_length=2,choice=sex_choice)
+</span></span><span style="display:flex;"><span>6、max_length
+</span></span><span style="display:flex;"><span>7、default　　默认值
+</span></span><span style="display:flex;"><span>8、verbose_name　　Admin中字段的显示名称
+</span></span><span style="display:flex;"><span>9、name|db_column　　数据库中的字段名称
+</span></span><span style="display:flex;"><span>10、unique=True　　不允许重复
+</span></span><span style="display:flex;"><span>11、db_index = True　　数据库索引
+</span></span><span style="display:flex;"><span>12、editable=True　　在Admin里是否可编辑
+</span></span><span style="display:flex;"><span>13、error_messages=None　　错误提示
+</span></span><span style="display:flex;"><span>14、auto_created=False　　自动创建
+</span></span><span style="display:flex;"><span>15、help_text　　在Admin中提示帮助信息
+</span></span><span style="display:flex;"><span>16、validators=[]
+</span></span><span style="display:flex;"><span>17、upload-to
+</span></span></code></pre></td></tr></table>
+</div>
+</div>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

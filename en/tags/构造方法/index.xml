@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>构造方法 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95/</link>
+    <description>Recent content in 构造方法 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>golang 构造方法入参出参最佳实践</title>
+      <link>https://Lucareful.github.io/en/posts/golang-%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/golang-%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E5%85%A5%E5%8F%82%E5%87%BA%E5%8F%82%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</guid>
+      <description>对上层保持简洁，对下层保持抽象 概念 接口 ​ 在 Golang 中，接口是一组方法签名。 当类型为接口中的所有方法提供定义时，它被称为实现接口。 它与 OOP(面向对</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>对上层保持简洁，对下层保持抽象</p>
+</blockquote>
+<h2 id="概念">概念</h2>
+<h3 id="接口">接口</h3>
+<p>​	在 Golang 中，接口是<strong>一组方法签名</strong>。 当类型为接口中的所有方法提供定义时，它被称为实现接口。 它与 OOP(面向对象编程) 非常相似。 接口指定了类型应该具有的方法，类型决定了如何实现这些方法。</p>
+<p>结构体</p>
+<h2 id="结构体">结构体</h2>
+<p>​	Golang 提供了<strong>一种自定义数据类型，可以封装多个基本数据类型，这种数据类型叫结构体，英文名称 struct</strong></p>
+<h2 id="传入接口">传入接口</h2>
+<p>​	传入接口意味着，可以使调用方更加具有灵活性、可扩展、且更易于编写单元测试.</p>
+<h3 id="可扩展性">可扩展性</h3>
+<p>​	如下面这个例子,<code>UserService</code>需要一个存储对象完成一些操作，如果传入<code>db struct</code> 实例的话，意味着如果下次新增了<code>redis store</code> 那么<code>UserService</code>的逻辑需要进行修改，如果传入接口，只要相关的store实现了接口中定义的方法即可为<code>UserService</code>使用，不需要额外修改代码</p>
+<h3 id="推荐">（推荐）</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// db.go mysql 
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">package</span> db
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Store <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>   db <span style="color:#ff7b72;font-weight:bold">*</span>sql.DB
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewDB</span>() <span style="color:#ff7b72;font-weight:bold">*</span>Store { <span style="color:#ff7b72;font-weight:bold">...</span> } 							<span style="color:#8b949e;font-style:italic">// func to initialise DB
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (s <span style="color:#ff7b72;font-weight:bold">*</span>Store) <span style="color:#d2a8ff;font-weight:bold">Insert</span>(item <span style="color:#ff7b72">interface</span>{}) <span style="color:#ff7b72">error</span> { <span style="color:#ff7b72;font-weight:bold">...</span> } 	<span style="color:#8b949e;font-style:italic">// insert item
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> (s <span style="color:#ff7b72;font-weight:bold">*</span>Store) <span style="color:#d2a8ff;font-weight:bold">Get</span>(id <span style="color:#ff7b72">int</span>) <span style="color:#ff7b72">error</span> { <span style="color:#ff7b72;font-weight:bold">...</span> }			    <span style="color:#8b949e;font-style:italic">// get item by id
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">------------------------------------------------------------------------------</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// user.go
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">package</span> user
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> UserStore <span style="color:#ff7b72">interface</span> {
+</span></span><span style="display:flex;"><span>   <span style="color:#d2a8ff;font-weight:bold">Insert</span>(item <span style="color:#ff7b72">interface</span>{}) <span style="color:#ff7b72">error</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#d2a8ff;font-weight:bold">Get</span>(id <span style="color:#ff7b72">int</span>) <span style="color:#ff7b72">error</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> UserService <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>   store UserStore
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 接受接口
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewUserService</span>(s UserStore) <span style="color:#ff7b72;font-weight:bold">*</span>UserService {
+</span></span><span style="display:flex;"><span>   <span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>UserService{
+</span></span><span style="display:flex;"><span>      store: s,
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (u <span style="color:#ff7b72;font-weight:bold">*</span>UserService) <span style="color:#d2a8ff;font-weight:bold">CreateUser</span>() { <span style="color:#ff7b72;font-weight:bold">...</span> }
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (u <span style="color:#ff7b72;font-weight:bold">*</span>UserService) <span style="color:#d2a8ff;font-weight:bold">RetrieveUser</span>(id <span style="color:#ff7b72">int</span>) User { <span style="color:#ff7b72;font-weight:bold">...</span> }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><!-- more -->
+<h4 id="不推荐扩展性差">（不推荐，扩展性差）</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//postgres.go
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">package</span> db
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Store <span style="color:#ff7b72">interface</span> {
+</span></span><span style="display:flex;"><span>   <span style="color:#d2a8ff;font-weight:bold">Insert</span>(item <span style="color:#ff7b72">interface</span>{}) <span style="color:#ff7b72">error</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#d2a8ff;font-weight:bold">Get</span>(id <span style="color:#ff7b72">int</span>) <span style="color:#ff7b72">error</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> MyStore <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>   db <span style="color:#ff7b72;font-weight:bold">*</span>sql.DB
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">InitDB</span>() Store { <span style="color:#ff7b72;font-weight:bold">...</span> } <span style="color:#8b949e;font-style:italic">//func to initialise DB
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> (s <span style="color:#ff7b72;font-weight:bold">*</span>Store) <span style="color:#d2a8ff;font-weight:bold">Insert</span>(item <span style="color:#ff7b72">interface</span>{}) <span style="color:#ff7b72">error</span> { <span style="color:#ff7b72;font-weight:bold">...</span> } <span style="color:#8b949e;font-style:italic">//insert item
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> (s <span style="color:#ff7b72;font-weight:bold">*</span>Store) <span style="color:#d2a8ff;font-weight:bold">Get</span>(id <span style="color:#ff7b72">int</span>) <span style="color:#ff7b72">error</span> { <span style="color:#ff7b72;font-weight:bold">...</span> } <span style="color:#8b949e;font-style:italic">//get item by id
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">----------------------------------------------------------------</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//user.go
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">package</span> user
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> UserService <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>   store db.Store
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewUserService</span>(s db.Store) <span style="color:#ff7b72;font-weight:bold">*</span>UserService {
+</span></span><span style="display:flex;"><span>   <span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>UserService{
+</span></span><span style="display:flex;"><span>      store: s,
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (u <span style="color:#ff7b72;font-weight:bold">*</span>UserService) <span style="color:#d2a8ff;font-weight:bold">CreateUser</span>() { <span style="color:#ff7b72;font-weight:bold">...</span> }
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (u <span style="color:#ff7b72;font-weight:bold">*</span>UserService) <span style="color:#d2a8ff;font-weight:bold">RetrieveUser</span>(id <span style="color:#ff7b72">int</span>) User { <span style="color:#ff7b72;font-weight:bold">...</span> }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="可测试">可测试</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//user_test.go
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">TestCreateUser</span>(t <span style="color:#ff7b72;font-weight:bold">*</span>testing.T) {
+</span></span><span style="display:flex;"><span>   s <span style="color:#ff7b72;font-weight:bold">:=</span> new(inMemStore) 			<span style="color:#8b949e;font-style:italic">//	实现了接口方法的mock实例
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>   service <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">NewUserService</span>(s)
+</span></span><span style="display:flex;"><span>   
+</span></span><span style="display:flex;"><span>   <span style="color:#8b949e;font-style:italic">//... test the CreateUser() function
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="返回结构体">返回结构体</h2>
+<p>​	该 <code>NewPerson</code> 函数返回一个 <code>Person</code> 表示个人信息的结构。通过直接返回结构，我们可以在调用代码中显式访问其字段 （ ， <code>Name</code> ， <code>Age</code> <code>Email</code> ）。这种<strong>明确性</strong>使我们能够轻松<strong>检索</strong>和利用所需的<strong>特定数据</strong>。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Person <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span> Name  <span style="color:#ff7b72">string</span>
+</span></span><span style="display:flex;"><span> Age   <span style="color:#ff7b72">int</span>
+</span></span><span style="display:flex;"><span> Email <span style="color:#ff7b72">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewPerson</span>(name <span style="color:#ff7b72">string</span>, age <span style="color:#ff7b72">int</span>, email <span style="color:#ff7b72">string</span>) Person {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> Person{
+</span></span><span style="display:flex;"><span>  Name:  name,
+</span></span><span style="display:flex;"><span>  Age:   age,
+</span></span><span style="display:flex;"><span>  Email: email,
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span> person <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">NewPerson</span>(<span style="color:#a5d6ff">&#34;John Doe&#34;</span>, <span style="color:#a5d6ff">30</span>, <span style="color:#a5d6ff">&#34;john.doe@example.com&#34;</span>)
+</span></span><span style="display:flex;"><span> fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;Name:&#34;</span>, person.Name)
+</span></span><span style="display:flex;"><span> fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;Age:&#34;</span>, person.Age)
+</span></span><span style="display:flex;"><span> fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;Email:&#34;</span>, person.Email)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="简洁性"><strong>简洁性</strong></h3>
+<p>​	在定义特定行为和方法时，结构返回提供了无与伦比的控制和灵活性。您可以自由地设计具有所需确切功能的结构。这种根据您的特定要求定制结构的能力可以产生更简洁、更集中的代码，从而精确地满足您的应用程序需求</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Person <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span> Name  <span style="color:#ff7b72">string</span>
+</span></span><span style="display:flex;"><span> Age   <span style="color:#ff7b72">int</span>
+</span></span><span style="display:flex;"><span> Email <span style="color:#ff7b72">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p Person) <span style="color:#d2a8ff;font-weight:bold">Greet</span>() {
+</span></span><span style="display:flex;"><span> fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;Hello, my name is&#34;</span>, p.Name)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span> person <span style="color:#ff7b72;font-weight:bold">:=</span> Person{
+</span></span><span style="display:flex;"><span>  Name:  <span style="color:#a5d6ff">&#34;John Doe&#34;</span>,
+</span></span><span style="display:flex;"><span>  Age:   <span style="color:#a5d6ff">30</span>,
+</span></span><span style="display:flex;"><span>  Email: <span style="color:#a5d6ff">&#34;john.doe@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> person.<span style="color:#d2a8ff;font-weight:bold">Greet</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	在此更新的示例中，我们向结构中 <code>Person</code> 添加了一个 <code>Greet</code> 方法。通过返回结构，我们能够直接在结构类型上定义特定行为。该 <code>Greet</code> 方法利用 <code>Person</code> 结构的 <code>Name</code> 字段来个性化问候语。这种灵活性使我们能够将相关行为封装在结构本身中，从而促进更简洁、更易于维护的代码。</p>
+<h3 id="耦合性高注意"><strong>耦合性高</strong>(注意)</h3>
+<p>​	虽然从函数返回结构类型提供了显式、灵活性和控制性，但重要的是要意识到调用代码和特定结构实现之间紧密耦合的潜在挑战。当对结构的实现细节进行修改或引入新功能时，也可能需要更新调用代码。这种紧密耦合增加了代码维护，并给应用程序随时间推移的发展带来了挑战。</p>
+<p>​	为了减轻紧密耦合的影响，在结构设计中采用良好的实践是必不可少的。仔细考虑并记录结构的预期行为和契约，以管理期望并降低中断性变更的风险。通过提前规划未来的更改，您可以在返回结构的优点和最小化紧密耦合的潜在缺点之间取得平衡。</p>
+<h2 id="返回接口">返回接口</h2>
+<h3 id="抽象化">抽象化</h3>
+<p>​	<strong>返回接口通过隐藏底层结构的实现细节来实现更高级别的抽象</strong>。返回接口时，会显示对象所遵循的明确协定或行为集，而不会暴露内部工作原理。这种抽象有助于分离关注点并促进更简洁的代码结构。通过针对接口进行编程，您可以专注于对象可以做什么，而不是它如何做。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Shape <span style="color:#ff7b72">interface</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">Area</span>() <span style="color:#ff7b72">float64</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Circle <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Radius <span style="color:#ff7b72">float64</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (c Circle) <span style="color:#d2a8ff;font-weight:bold">Area</span>() <span style="color:#ff7b72">float64</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> math.Pi <span style="color:#ff7b72;font-weight:bold">*</span> c.Radius <span style="color:#ff7b72;font-weight:bold">*</span> c.Radius
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Rectangle <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Width  <span style="color:#ff7b72">float64</span>
+</span></span><span style="display:flex;"><span>    Height <span style="color:#ff7b72">float64</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (r Rectangle) <span style="color:#d2a8ff;font-weight:bold">Area</span>() <span style="color:#ff7b72">float64</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> r.Width <span style="color:#ff7b72;font-weight:bold">*</span> r.Height
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">GetShape</span>() Shape {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> someCondition {
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> Circle{Radius: <span style="color:#a5d6ff">5</span>}
+</span></span><span style="display:flex;"><span>    } <span style="color:#ff7b72">else</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> Rectangle{Width: <span style="color:#a5d6ff">10</span>, Height: <span style="color:#a5d6ff">5</span>}
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	在此示例中 <code>Shape</code> ，我们使用 <code>Area</code> 方法定义接口。我们有两个结构类型，和 <code>Rectangle</code> ， <code>Circle</code> 用于实现此接口。该 <code>GetShape</code> 函数返回一个 <code>Shape</code> ，根据某些条件，它可以是 a 或 a <code>Circle</code> <code>Rectangle</code> 。通过返回接口，调用代码可以将返回的对象视为 <code>Shape</code> ，专注于它所保证的行为（ <code>Area</code> 方法），而不关心每个形状的具体实现细节。</p>
+<h3 id="多态性"><strong>多态性</strong></h3>
+<p>​	接口的强大功能之一是它们能够实现多态性。接口允许多个结构类型根据它们对接口协定的遵守来互换使用。这意味着可以通过接口统一处理不同的结构实现，从而提供灵活性和代码可重用性。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 接受 Shape 接口
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">PrintArea</span>(s Shape) {
+</span></span><span style="display:flex;"><span>    fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;Area:&#34;</span>, s.<span style="color:#d2a8ff;font-weight:bold">Area</span>())
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>    circle <span style="color:#ff7b72;font-weight:bold">:=</span> Circle{Radius: <span style="color:#a5d6ff">5</span>}
+</span></span><span style="display:flex;"><span>    rectangle <span style="color:#ff7b72;font-weight:bold">:=</span> Rectangle{Width: <span style="color:#a5d6ff">10</span>, Height: <span style="color:#a5d6ff">5</span>}
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">PrintArea</span>(circle)    <span style="color:#8b949e;font-style:italic">// Polymorphically treat Circle as Shape
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">PrintArea</span>(rectangle) <span style="color:#8b949e;font-style:italic">// Polymorphically treat Rectangle as Shape
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	在这个扩展的示例中，我们有一个 <code>PrintArea</code> 接受 <code>Shape</code> 接口作为参数的函数。我们可以将 <code>Circle</code> 和 <code>Rectangle</code> 结构体传递给这个函数，将它们多态地视为 <code>Shape</code> 。这允许我们编写可重用的代码，这些代码对接口定义的常见行为进行操作，而不是为每个特定的结构类型复制逻辑。</p>
+<h3 id="松耦合"><strong>松耦合</strong></h3>
+<p>​	返回接口会促进代码库不同部分之间的松散耦合。调用代码只需要知道接口中定义的方法，而不需要知道实现它的特定结构。这种松散耦合允许在不影响调用代码的情况下更轻松地交换不同的实现。它实现了模块化、可测试性和更好的关注点分离。</p>
+<p>​	相反，返回结构会在调用代码和特定结构实现之间创建更紧密的耦合。如果对结构的实现细节进行了更改或引入了新功能，则可能还需要修改调用代码。这种紧密耦合会使代码更加僵化，对更改的适应性降低。</p>
+<p>​	总而言之，返回接口提供了更高级别的抽象，允许分离关注点和更简洁的代码结构。它支持多态性，促进代码的可重用性和灵活性。此外，返回接口会促进松耦合，从而可以更轻松地交换不同的实现，而不会影响调用代码。这使您能够构建模块化且可维护的代码，这些代码可以轻松适应不断变化的需求。</p>
+<h2 id="总结">总结</h2>
+<p>​	构造函数传入接口能让你的代码具有灵活性和可测试性，但是返回接口还是结构体完全取决你自己对项目的把控。一般对于底层的 <code>store</code> 层和 <code>usecase</code> 层我偏向传入接口返回接口，因为这样可以是扩展性更好，并且不需要做大改动，至于偏上的启动层和controller层可以返回结构体，因为更加清晰明了的。总结起来就是一句话：<strong>对上层保持简洁，对下层保持抽象。</strong></p>
+<h1 id="参考文章">参考文章</h1>
+<ul>
+<li><a href="https://medium.com/@leodahal4/between-returning-structs-and-interfaces-in-go-ddcae77c129f">Between Returning Structs and Interfaces in Go | by Mou Sam Dahal | Medium</a></li>
+<li><a href="https://bryanftan.medium.com/accept-interfaces-return-structs-in-go-d4cab29a301b">“Accept interfaces, return structs” in Go | by Bryan F Tan | Medium</a></li>
+<li><a href="https://dev.to/lcaparelli/should-my-methods-return-structs-or-interfaces-in-go-3b7">Should my methods return structs or interfaces in Go? - DEV Community</a></li>
+</ul>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

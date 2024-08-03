@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>语音识别 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB/</link>
+    <description>Recent content in 语音识别 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>python之百度接口语音识别</title>
+      <link>https://Lucareful.github.io/en/posts/%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB/</guid>
+      <description>&lt;h1 id=&#34;python编程之百度接口语音识别&#34;&gt;python编程之百度接口语音识别&lt;/h1&gt;
+&lt;ul&gt;
+&lt;li&gt;首先在百度AI开放平台上创建&lt;a href=&#34;https://ai.baidu.com/tech/speech/asr&#34;&gt;语音识别&lt;/a&gt;应用，创建完毕应用后，得到系统分配给用户的&lt;code&gt;AppID&lt;/code&gt;， &lt;code&gt;API Key&lt;/code&gt;，  &lt;code&gt;secret Key&lt;/code&gt;，均为字符串，用于标识用户，为访问做签名验证。&lt;/li&gt;
+&lt;li&gt;得到验证后，开始编程
+&lt;ul&gt;
+&lt;li&gt;1.记录自己声音&lt;/li&gt;
+&lt;li&gt;2.将记录下来的音频文件上传至云端&lt;/li&gt;
+&lt;li&gt;3.解析返回后的结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <content:encoded><![CDATA[<h1 id="python编程之百度接口语音识别">python编程之百度接口语音识别</h1>
+<ul>
+<li>首先在百度AI开放平台上创建<a href="https://ai.baidu.com/tech/speech/asr">语音识别</a>应用，创建完毕应用后，得到系统分配给用户的<code>AppID</code>， <code>API Key</code>，  <code>secret Key</code>，均为字符串，用于标识用户，为访问做签名验证。</li>
+<li>得到验证后，开始编程
+<ul>
+<li>1.记录自己声音</li>
+<li>2.将记录下来的音频文件上传至云端</li>
+<li>3.解析返回后的结果</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>python实现</li>
+<li>相关包 pyaudio，baidu-aip</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">aip</span> <span style="color:#ff7b72">import</span> AipSpeech
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">wave</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">pyaudio</span> <span style="color:#ff7b72">import</span> PyAudio, paInt16
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">save_wave_file</span>(filename, data):
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;&#39;&#39;save the date to the wavfile&#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>    wf <span style="color:#ff7b72;font-weight:bold">=</span> wave<span style="color:#ff7b72;font-weight:bold">.</span>open(filename, <span style="color:#a5d6ff">&#39;wb&#39;</span>)
+</span></span><span style="display:flex;"><span>    wf<span style="color:#ff7b72;font-weight:bold">.</span>setnchannels(channels)
+</span></span><span style="display:flex;"><span>    wf<span style="color:#ff7b72;font-weight:bold">.</span>setsampwidth(sampwidth)
+</span></span><span style="display:flex;"><span>    wf<span style="color:#ff7b72;font-weight:bold">.</span>setframerate(framerate)
+</span></span><span style="display:flex;"><span>    wf<span style="color:#ff7b72;font-weight:bold">.</span>writeframes(<span style="color:#79c0ff">b</span><span style="color:#a5d6ff">&#34;&#34;</span><span style="color:#ff7b72;font-weight:bold">.</span>join(data))
+</span></span><span style="display:flex;"><span>    wf<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">my_record</span>():
+</span></span><span style="display:flex;"><span>    pa <span style="color:#ff7b72;font-weight:bold">=</span> PyAudio()
+</span></span><span style="display:flex;"><span>    stream <span style="color:#ff7b72;font-weight:bold">=</span> pa<span style="color:#ff7b72;font-weight:bold">.</span>open(format<span style="color:#ff7b72;font-weight:bold">=</span>paInt16, channels<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">1</span>,
+</span></span><span style="display:flex;"><span>                     rate<span style="color:#ff7b72;font-weight:bold">=</span>framerate, input<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>,
+</span></span><span style="display:flex;"><span>                     frames_per_buffer<span style="color:#ff7b72;font-weight:bold">=</span>NUM_SAMPLES)
+</span></span><span style="display:flex;"><span>    my_buf <span style="color:#ff7b72;font-weight:bold">=</span> []
+</span></span><span style="display:flex;"><span>    count <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#39;录音开始&#39;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">while</span> count <span style="color:#ff7b72;font-weight:bold">&lt;</span> TIME<span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#a5d6ff">10</span>:  <span style="color:#8b949e;font-style:italic"># 控制录音时间</span>
+</span></span><span style="display:flex;"><span>        string_audio_data <span style="color:#ff7b72;font-weight:bold">=</span> stream<span style="color:#ff7b72;font-weight:bold">.</span>read(NUM_SAMPLES)
+</span></span><span style="display:flex;"><span>        my_buf<span style="color:#ff7b72;font-weight:bold">.</span>append(string_audio_data)
+</span></span><span style="display:flex;"><span>        count <span style="color:#ff7b72;font-weight:bold">+=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#39;录音结束&#39;</span>)
+</span></span><span style="display:flex;"><span>    save_wave_file(<span style="color:#a5d6ff">&#39;01.pcm&#39;</span>, my_buf)
+</span></span><span style="display:flex;"><span>    stream<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> __name__ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span>    framerate <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">16000</span>
+</span></span><span style="display:flex;"><span>    NUM_SAMPLES <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">2000</span>
+</span></span><span style="display:flex;"><span>    channels <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>    sampwidth <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">2</span>
+</span></span><span style="display:flex;"><span>    TIME <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">2</span>
+</span></span><span style="display:flex;"><span>    my_record()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#34;&#34;&#34; 我的 APPID AK SK &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    APP_ID <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;16795182  &#39;</span>
+</span></span><span style="display:flex;"><span>    API_KEY <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;8io5s7uv8pjYPUrQp1i8PcIg&#39;</span>
+</span></span><span style="display:flex;"><span>    SECRET_KEY <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;gK2MljvbcF3SKS4p0C2ieq1SCBNY48BD&#39;</span>
+</span></span><span style="display:flex;"><span>    client <span style="color:#ff7b72;font-weight:bold">=</span> AipSpeech(APP_ID, API_KEY, SECRET_KEY)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># 读取文件</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">get_file_content</span>(filePath):
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">with</span> open(filePath, <span style="color:#a5d6ff">&#39;rb&#39;</span>) <span style="color:#ff7b72">as</span> fp:
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">return</span> fp<span style="color:#ff7b72;font-weight:bold">.</span>read()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># 识别本地文件</span>
+</span></span><span style="display:flex;"><span>    result <span style="color:#ff7b72;font-weight:bold">=</span> client<span style="color:#ff7b72;font-weight:bold">.</span>asr(get_file_content(<span style="color:#a5d6ff">&#39;01.pcm&#39;</span>), <span style="color:#a5d6ff">&#39;pcm&#39;</span>, <span style="color:#a5d6ff">16000</span>, {
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;dev_pid&#39;</span>: <span style="color:#a5d6ff">1536</span>,
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># print(type(result))</span>
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34;语音识别结果：&#34;</span>, result[<span style="color:#a5d6ff">&#39;result&#39;</span>])
+</span></span></code></pre></td></tr></table>
+</div>
+</div>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

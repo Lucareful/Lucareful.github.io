@@ -1,0 +1,1307 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Django on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/django/</link>
+    <description>Recent content in Django on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/django/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Django之编写URL</title>
+      <link>https://Lucareful.github.io/en/posts/django%E4%B9%8Burl%E8%A7%84%E5%88%99/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/django%E4%B9%8Burl%E8%A7%84%E5%88%99/</guid>
+      <description>&lt;h1 id=&#34;编写url&#34;&gt;编写URL&lt;/h1&gt;
+&lt;h2 id=&#34;编写规则&#34;&gt;编写规则&lt;/h2&gt;
+&lt;p&gt;​	为了使其规范性，在每个新创建的App中设置独立的静态资源和模板文件夹并添加一个空白的&lt;code&gt;.py&lt;/code&gt;文件，命为&lt;code&gt;urls.py&lt;/code&gt;。如下是创建app中的文件结构：&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="编写url">编写URL</h1>
+<h2 id="编写规则">编写规则</h2>
+<p>​	为了使其规范性，在每个新创建的App中设置独立的静态资源和模板文件夹并添加一个空白的<code>.py</code>文件，命为<code>urls.py</code>。如下是创建app中的文件结构：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>frist<span style="color:#ff7b72;font-weight:bold">/</span>
+</span></span><span style="display:flex;"><span>	migrations<span style="color:#ff7b72;font-weight:bold">/</span>		<span style="color:#8b949e;font-style:italic"># 数据库前后是否有变化，生成出迁移文件</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>	static<span style="color:#ff7b72;font-weight:bold">/</span>			<span style="color:#8b949e;font-style:italic"># 创建App后存放App中的静态资源文件，自己手动添加</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>	templates<span style="color:#ff7b72;font-weight:bold">/</span>		<span style="color:#8b949e;font-style:italic"># 创建App后存放App中的模板文件，自己手动添加</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>	__init__<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	admin<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	apps<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	models<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	tests<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	urls<span style="color:#ff7b72;font-weight:bold">.</span>py			<span style="color:#8b949e;font-style:italic"># 创建App后由系统总路由映射到App的路由文件，自己手动添加</span>
+</span></span><span style="display:flex;"><span>	view<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="系统总路由和app的路由分发配置">系统总路由和app的路由分发配置</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 根目录的urls.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.contrib</span> <span style="color:#ff7b72">import</span> admin
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.urls</span> <span style="color:#ff7b72">import</span> path,admin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>urlpatterns <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    path(<span style="color:#a5d6ff">&#39;admin/&#39;</span>, admin<span style="color:#ff7b72;font-weight:bold">.</span>site<span style="color:#ff7b72;font-weight:bold">.</span>urls),
+</span></span><span style="display:flex;"><span>    path(<span style="color:#a5d6ff">&#39;&#39;</span>,include(<span style="color:#a5d6ff">&#39;frist.urls&#39;</span>))			<span style="color:#8b949e;font-style:italic"># 引入app中的urls.py</span>
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>代码详解:</p>
+<ul>
+<li><code>from django.contrib import admin</code>:导入Admin功能模块.</li>
+<li><code>from django.urls import path,admin</code>:导入URL编写模块.</li>
+<li><code>urlpatterns</code>:整个项目的URL集合,每个元素代表一条URL信息.</li>
+<li><code>path('admin/', admin.site.urls)</code>:设定Admin的URL.<code>'admin/'</code>代表<code>127.0.0.1/admin</code>地址信息,<code>admin</code>后面的斜杠是路径分隔符;admin.site.urls是URL的处理函数,也称为视图函数.</li>
+<li><code> path('',include('frist.urls'))	</code>:URL为空,代表网站的域名,即127.0.0.1,通常是网站的首页;include将该URL分发给app的urls.py处理.</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># app下的urls.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.urls</span> <span style="color:#ff7b72">import</span> path
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">.</span> <span style="color:#ff7b72">import</span> views
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>urlpatterns <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    path(<span style="color:#a5d6ff">&#39;&#39;</span>,views<span style="color:#ff7b72;font-weight:bold">.</span>index)	<span style="color:#8b949e;font-style:italic"># 调用和url匹配的视图函数</span>
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>当根目录的URL分发给app中的URL处理后,下一步就是根据所匹配的URL进行视图的调用.</p>
+<p>在Views中编写相应的视图函数。如下：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># index的views.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.http</span> <span style="color:#ff7b72">import</span> HttpResponse
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># creat you views here.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">index</span>(request):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> HttpResponse(<span style="color:#a5d6ff">&#34;hello world&#34;</span>)   
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>视图函数的参数必须设置为<code>request</code>，该参数代表当前用户的请求对象，该对象包含用户名，请求内容和请求方式等信息，执行完成后必须使用<code>return</code>将处理结果返回。</p>
+<h2 id="带变量的url">带变量的URL</h2>
+<p>​	在日常开发中，有时候一个URL可以代表多个不同的页面，如编写带有日期的URL，若根据前面的编写方式，按一年计算，则需要开发者编写365个不同的URL才能实现。这种做法是不可取的，因此，Django在编写URL时，可以对URL设置变量值，使URL具有多样性。</p>
+<p>​	URL的变量类型有字符类型，整型，<code>slug</code>和<code>uuid</code>，常用的是字符类型和整型。说明如下：</p>
+<ul>
+<li>字符类型：匹配任何非空字符串，但不含斜杠。如果没有指定类型，默认使用该类型。</li>
+<li>整形：匹配0和正整数</li>
+<li>slug：可理解为注释，后缀或附属等概念，常作为URL的解释性字符。可匹配任何ASCII字符以及连接符和下画线，能使URL更加清晰易懂。比如网页的标题是“13岁的孩子”，其URL地址可以设置为“13-sui-de-hai-zi“。</li>
+<li>uuid：匹配一个uuid格式的对象。为了防止冲突，规定必须使用破折号并且所有字母必须小写，例如0201203-3213-31e-321c34d435</li>
+</ul>
+<p>（未待完续）</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Django参数和模板</title>
+      <link>https://Lucareful.github.io/en/posts/django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/</guid>
+      <description>render方法参数 request: 是一个固定参数。 template_name: templates 中定义的文件, 要注意路径名. 比如’templates\polls\index.html’, 参数就要</description>
+      <content:encoded><![CDATA[<h2 id="render方法参数"><code>render</code>方法参数</h2>
+<ul>
+<li><code>request</code>: 是一个固定参数。</li>
+<li><code>template_name</code>: <code>templates</code> 中定义的文件, 要注意路径名. 比如<code>’templates\polls\index.html’</code>, 参数就要写<code>‘polls\index.html’</code></li>
+<li><code>context</code>: 要传入文件中用于渲染呈现的数据, 默认是字典格式</li>
+<li><code>content_type</code>: 生成的文档要使用的MIME 类型。默认为DEFAULT_CONTENT_TYPE 设置的值。</li>
+<li><code>status</code>: http的响应代码,默认是200.</li>
+<li><code>using</code>: 用于加载模板使用的模板引擎的名称。</li>
+</ul>
+<h2 id="request对象方法和属性"><code>request</code>对象方法和属性</h2>
+<ul>
+<li><code>request.scheme</code>   # 代表请求的方案,http或者https</li>
+<li><code>request.body</code># 原始HTTP请求主体为字节串。这对于以不同于常规HTML格式的方式处理数据很有用：二进制图像，XML有效负载等。对于处理常规格式的数据，请使用 <code>HttpRequest.POST</code>。</li>
+<li><code>request.path</code>   # 请求的路径,比如请求<code>127.0.0.1/org/list</code>,那这个值就是<code>/org/list</code></li>
+<li><code>request.get_full_path()</code> # 获取完整的请求路径</li>
+<li><code>request.method</code>  # 表示请求使用的http方法,GET或者POST请求</li>
+<li><code>request.encoding</code> # 表示提交数据的编码方式</li>
+<li><code>request.GET</code>     # 获取GET请求</li>
+<li><code>request.POST</code>    # 获取post的请求,比如前端提交的用户密码,可以通过<code>request.POST.get()</code>来获取</li>
+</ul>
+<blockquote>
+<p><strong>NOTICED：如果使用 POST 上传文件的话，文件信息将包含在 FILES 属性中</strong></p>
+</blockquote>
+<p><code>request.COOKIES</code> #包含所有的cookie</p>
+<p><code>request.META</code>   #一个标准的Python 字典，包含所有的HTTP 首部。具体的头部信息取决于客户端和服务器，下面是一些示例：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span>CONTENT_LENGTH 	—— 请求的正文的长度（是一个字符串）。
+</span></span><span style="display:flex;"><span>CONTENT_TYPE 	—— 请求的正文的MIME 类型。
+</span></span><span style="display:flex;"><span>HTTP_ACCEPT 	—— 响应可接收的Content-Type。
+</span></span><span style="display:flex;"><span>HTTP_ACCEPT_ENCODING —— 响应可接收的编码。
+</span></span><span style="display:flex;"><span>HTTP_ACCEPT_LANGUAGE —— 响应可接收的语言。
+</span></span><span style="display:flex;"><span>HTTP_HOST 		—— 客服端发送的HTTP Host 头部。
+</span></span><span style="display:flex;"><span>HTTP_REFERER 	—— Referring 页面。
+</span></span><span style="display:flex;"><span>HTTP_USER_AGENT —— 客户端的user-agent 字符串。
+</span></span><span style="display:flex;"><span>QUERY_STRING 	—— 单个字符串形式的查询字符串（未解析过的形式）。
+</span></span><span style="display:flex;"><span>REMOTE_ADDR 	—— 客户端的IP 地址。
+</span></span><span style="display:flex;"><span>REMOTE_HOST 	—— 客户端的主机名。
+</span></span><span style="display:flex;"><span>REMOTE_USER 	—— 服务器认证后的用户。
+</span></span><span style="display:flex;"><span>REQUEST_METHOD  —— 一个字符串，例如<span style="color:#a5d6ff">&#34;GET&#34;</span> 或<span style="color:#a5d6ff">&#34;POST&#34;</span>。
+</span></span><span style="display:flex;"><span>SERVER_NAME 	—— 服务器的主机名。
+</span></span><span style="display:flex;"><span>SERVER_PORT 	—— 服务器的端口（是一个字符串）
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>request.user</code>   #一个 <code>AUTH_USER_MODEL</code> 类型的对象，表示当前登录的用户。
+<ul>
+<li>如果用户当前没有登录，user 将设置为 <code>django.contrib.auth.models.AnonymousUser</code> 的一个实例。你可以通过 <code>s_authenticated() </code>区分它们</li>
+<li>把<code>request</code>传给前端的时候,前端可以通过 <code> if request.user.is_authenticated</code>判断用户时候登录</li>
+</ul>
+</li>
+<li><code>request.session</code> #一个既可读又可写的类似于字典的对象，表示当前的会话</li>
+</ul>
+<!-- more -->
+<h2 id="response对象"><code>response</code>对象</h2>
+<ul>
+<li><code>Httpresponse</code>对象对于 <code>Httpreques</code>对象来说，是由<code> django</code>自动创建的，但是， <code>Httpresponse</code>对象就必须我们自己创建。每个<code>view</code>请求处理方法必须返回一个 <code>Httpresponse</code>对象。</li>
+</ul>
+<blockquote>
+<p><code>Httpresponse</code>类在<code>djangohttpHttprespons</code></p>
+</blockquote>
+<blockquote>
+<p>在 <code>Httpresponse</code>对象上扩展的常用方法：</p>
+</blockquote>
+<ul>
+<li>
+<p>页面渲染</p>
+<ul>
+<li><code>render() </code></li>
+<li><code>render to response()</code></li>
+</ul>
+</li>
+<li>
+<p>页面跳转：</p>
+<ul>
+<li><code>redirect(&quot;路径&quot;)</code></li>
+</ul>
+</li>
+<li>
+<p><code>locals()</code>：可以直接将函数中所有的变里传给模板</p>
+</li>
+</ul>
+<h2 id="内置变量过滤器filter">内置变量过滤器<code>filter</code></h2>
+<p>​    可以理解为python中的内置函数，过滤器是模板的特有语法，通过前端来过滤部分数据。注意filter只能传递一个参数(也可以说是两个参数，因为第一个个参数已经固定，就是被处理的那个)。
+格式：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-jinja" data-lang="jinja"><span style="display:flex;"><span>`<span style="color:#8b949e;font-weight:bold;font-style:italic">{{</span><span style="color:#f85149">`</span> <span style="color:#79c0ff">var</span><span style="color:#ff7b72;font-weight:bold">|</span><span style="color:#d2a8ff;font-weight:bold">method</span><span style="color:#ff7b72;font-weight:bold">:</span><span style="color:#79c0ff">parameter</span><span style="color:#f85149">`</span><span style="color:#8b949e;font-weight:bold;font-style:italic">}}</span>`
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>method表示过滤器部分过滤器如下</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>过滤器</th>
+<th>说明</th>
+<th>举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>first</td>
+<td>取列表第一个元素</td>
+<td></td>
+</tr>
+<tr>
+<td>last</td>
+<td>取列表最后元素</td>
+<td></td>
+</tr>
+<tr>
+<td>capfirst</td>
+<td>首字母大写</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200614210257960.png" alt="filter"  />
+</p>
+<h2 id="logging配置"><code>logging</code>配置</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#下面就是logging的配置</span>
+</span></span><span style="display:flex;"><span>LOGGING <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;version&#39;</span>: <span style="color:#a5d6ff">1</span>,  <span style="color:#8b949e;font-style:italic"># 指明dictConnfig的版本，目前就只有一个版本</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;disable_existing_loggers&#39;</span>: <span style="color:#79c0ff">False</span>,  <span style="color:#8b949e;font-style:italic"># 表示是否禁用所有的已经存在的日志配置</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;formatters&#39;</span>: {  <span style="color:#8b949e;font-style:italic"># 格式器</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;verbose&#39;</span>: {  <span style="color:#8b949e;font-style:italic"># 详细</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;format&#39;</span>: <span style="color:#a5d6ff">&#39;</span><span style="color:#a5d6ff">%(levelname)s</span><span style="color:#a5d6ff"> </span><span style="color:#a5d6ff">%(asctime)s</span><span style="color:#a5d6ff"> </span><span style="color:#a5d6ff">%(module)s</span><span style="color:#a5d6ff"> </span><span style="color:#a5d6ff">%(process)d</span><span style="color:#a5d6ff"> </span><span style="color:#a5d6ff">%(thread)d</span><span style="color:#a5d6ff"> </span><span style="color:#a5d6ff">%(message)s</span><span style="color:#a5d6ff">&#39;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;standard&#39;</span>: {  <span style="color:#8b949e;font-style:italic"># 标准</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;format&#39;</span>: <span style="color:#a5d6ff">&#39;[</span><span style="color:#a5d6ff">%(asctime)s</span><span style="color:#a5d6ff">] [</span><span style="color:#a5d6ff">%(levelname)s</span><span style="color:#a5d6ff">] </span><span style="color:#a5d6ff">%(message)s</span><span style="color:#a5d6ff">&#39;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># handlers：用来定义具体处理日志的方式，可以定义多种，&#34;default&#34;就是默认方式，&#34;console&#34;就是打印到控制台方式。file是写入到文件的方式，注意使用的class不同</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;handlers&#39;</span>: { <span style="color:#8b949e;font-style:italic"># 处理器，在这里定义了两个个处理器</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;console&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;level&#39;</span>: <span style="color:#a5d6ff">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;class&#39;</span>: <span style="color:#a5d6ff">&#39;logging.StreamHandler&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;stream&#39;</span>: <span style="color:#a5d6ff">&#39;ext://sys.stdout&#39;</span>,   <span style="color:#8b949e;font-style:italic"># 文件重定向的配置，将打印到控制台的信息都重定向出去 python manage.py runserver &gt;&gt; /home/aea/log/test.log</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># &#39;stream&#39;: open(&#39;/home/aea/log/test.log&#39;,&#39;a&#39;),  #虽然成功了，但是并没有将所有内容全部写入文件，目前还不清楚为什么</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;formatter&#39;</span>: <span style="color:#a5d6ff">&#39;standard&#39;</span>   <span style="color:#8b949e;font-style:italic"># 制定输出的格式，注意 在上面的formatters配置里面选择一个，否则会报错</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;file&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;level&#39;</span>: <span style="color:#a5d6ff">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;class&#39;</span>: <span style="color:#a5d6ff">&#39;logging.FileHandler&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;filename&#39;</span>: os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR,<span style="color:#a5d6ff">&#39;debug.log&#39;</span>),  <span style="color:#8b949e;font-style:italic">#这是将普通日志写入到日志文件中的方法，</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;formatter&#39;</span>: <span style="color:#a5d6ff">&#39;standard&#39;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;default&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;level&#39;</span>:<span style="color:#a5d6ff">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;class&#39;</span>:<span style="color:#a5d6ff">&#39;logging.handlers.RotatingFileHandler&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;filename&#39;</span>: os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR,<span style="color:#a5d6ff">&#39;All.log&#39;</span>),     <span style="color:#8b949e;font-style:italic">#日志输出文件</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;maxBytes&#39;</span>: <span style="color:#a5d6ff">1024</span><span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#a5d6ff">1024</span><span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#a5d6ff">5</span>,                  <span style="color:#8b949e;font-style:italic">#文件大小</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;backupCount&#39;</span>: <span style="color:#a5d6ff">5</span>,                         <span style="color:#8b949e;font-style:italic">#备份份数</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;formatter&#39;</span>:<span style="color:#a5d6ff">&#39;standard&#39;</span>,                   <span style="color:#8b949e;font-style:italic">#使用哪种formatters日志格式</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 上面两种写入日志的方法是有区别的，前者是将控制台下输出的内容全部写入到文件中，这样做的好处就是我们在views代码中的所有print也会写在对应的位置</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 第二种方法就是将系统内定的内容写入到文件，具体就是请求的地址、错误信息等，小伙伴也可以都使用一下然后查看两个文件的异同。</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;loggers&#39;</span>: {  <span style="color:#8b949e;font-style:italic"># log记录器，配置之后就会对应的输出日志</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># django 表示就是django本身默认的控制台输出，就是原本在控制台里面输出的内容，在这里的handlers里的file表示写入到上面配置的file-/home/aea/log/jwt_test.log文件里面</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 在这里的handlers里的console表示写入到上面配置的console-/home/aea/log/test.log文件里面</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;django&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;handlers&#39;</span>: [<span style="color:#a5d6ff">&#39;console&#39;</span>,<span style="color:#a5d6ff">&#39;file&#39;</span>],
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;level&#39;</span>: <span style="color:#a5d6ff">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;propagate&#39;</span>: <span style="color:#79c0ff">True</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;django.request &#39;</span>:{
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;handlers&#39;</span>: [<span style="color:#a5d6ff">&#39;console&#39;</span>,<span style="color:#a5d6ff">&#39;file&#39;</span>],
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;level&#39;</span>: <span style="color:#a5d6ff">&#39;WARNING&#39;</span>,  <span style="color:#8b949e;font-style:italic"># 配合上面的将警告log写入到另外一个文件</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;propagate&#39;</span>: <span style="color:#79c0ff">True</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;django.db.backends&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;handlers&#39;</span>: [<span style="color:#a5d6ff">&#39;file&#39;</span>], <span style="color:#8b949e;font-style:italic"># 指定file handler处理器，表示只写入到文件</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;level&#39;</span>:<span style="color:#a5d6ff">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;propagate&#39;</span>: <span style="color:#79c0ff">True</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="orm的增删改查"><code>ORM</code>的增删改查</h2>
+<ul>
+<li>增加数据</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#方式一创建记录</span>
+</span></span><span style="display:flex;"><span>b <span style="color:#ff7b72;font-weight:bold">=</span> Book(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;python基础&#34;</span>, price<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">99</span>, author<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;luenci&#34;</span>, pub_date<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;2020-06-14&#34;</span>)
+</span></span><span style="display:flex;"><span>b<span style="color:#ff7b72;font-weight:bold">.</span>save()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#方法二创建数据</span>
+</span></span><span style="display:flex;"><span>Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>create(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;python基础&#34;</span>, price<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">99</span>, author<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;luenci&#34;</span>, pub_date<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;2020-06-14&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 便捷方法</span>
+</span></span><span style="display:flex;"><span>dic <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">&#39;name&#39;</span>: <span style="color:#a5d6ff">&#39;go基础&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">&#39;price&#39;</span>: <span style="color:#a5d6ff">99</span>,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">&#39;author&#39;</span>: <span style="color:#a5d6ff">&#39;luenci&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">&#39;pub_date&#39;</span>: <span style="color:#a5d6ff">&#39;2020-06-13&#39;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>create(<span style="color:#ff7b72;font-weight:bold">**</span>dic)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>更新数据</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 方法一：(推荐用)</span>
+</span></span><span style="display:flex;"><span>Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(author<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;luenci&#39;</span>)<span style="color:#ff7b72;font-weight:bold">.</span>update(price<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">100</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 方法二</span>
+</span></span><span style="display:flex;"><span>b <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;go基础&#39;</span>)
+</span></span><span style="display:flex;"><span>print(b) <span style="color:#8b949e;font-style:italic"># &lt;QuerySet [&lt;Book: Book object (3)&gt;]</span>
+</span></span><span style="display:flex;"><span>b<span style="color:#ff7b72;font-weight:bold">.</span>price <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">8.9</span>
+</span></span><span style="display:flex;"><span>b<span style="color:#ff7b72;font-weight:bold">.</span>save()
+</span></span><span style="display:flex;"><span>print(type(b)) <span style="color:#8b949e;font-style:italic"># &lt;class &#39;app01.models.Book&#39;&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">return</span> HttpResponse(<span style="color:#a5d6ff">&#34;修改成功&#34;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>删除数据</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;go基础&#34;</span>)<span style="color:#ff7b72;font-weight:bold">.</span>delete()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>查找数据</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 获取所有对象</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>all()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 对name去重</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>all()<span style="color:#ff7b72;font-weight:bold">.</span>values(<span style="color:#a5d6ff">&#34;name&#34;</span>)<span style="color:#ff7b72;font-weight:bold">.</span>distinct()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 统计</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>all()<span style="color:#ff7b72;font-weight:bold">.</span>values(<span style="color:#a5d6ff">&#34;name&#34;</span>)<span style="color:#ff7b72;font-weight:bold">.</span>distinct()<span style="color:#ff7b72;font-weight:bold">.</span>count()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 查询的是对象的集合，即使只有一个对象也是集合的形式</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(author<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;luenci&#39;</span>) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>first()
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>last()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 指定查询到一个对象</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(id<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">7</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 查询作者为luenci出版的书名.（字典的集合）</span>
+</span></span><span style="display:flex;"><span>book_list1 <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(author<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;luenci&#39;</span>)<span style="color:#ff7b72;font-weight:bold">.</span>values(<span style="color:#a5d6ff">&#39;name&#39;</span>, <span style="color:#a5d6ff">&#39;price&#39;</span>) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 查询作者为luenci出版的书名.（列表的集合）</span>
+</span></span><span style="display:flex;"><span>book_list2 <span style="color:#ff7b72;font-weight:bold">=</span> Book<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(author<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;luenci&#39;</span>)<span style="color:#ff7b72;font-weight:bold">.</span>values_list(<span style="color:#a5d6ff">&#39;name&#39;</span>, <span style="color:#a5d6ff">&#39;price&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># &lt;QuerySet [{&#39;name&#39;: &#39;go基础&#39;, &#39;price&#39;: 99.0}, {&#39;name&#39;: &#39;python基础&#39;, &#39;price&#39;: 99.0}, {&#39;name&#39;: &#39;python基础&#39;, &#39;price&#39;: 66.0}&gt;</span>
+</span></span><span style="display:flex;"><span>print(book_list1) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#&lt;QuerySet [(&#39;go基础&#39;, 99.0), (&#39;python基础&#39;, 99.0), (&#39;python基础&#39;, 66.0), (&#39;docker基础&#39;, 8.9)]&gt;</span>
+</span></span><span style="display:flex;"><span>print(book_list2)
+</span></span></code></pre></td></tr></table>
+</div>
+</div>]]></content:encoded>
+    </item>
+    <item>
+      <title>Django简介</title>
+      <link>https://Lucareful.github.io/en/posts/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/django%E9%85%8D%E7%BD%AE%E5%88%9D%E5%90%AF/</guid>
+      <description>&lt;h1 id=&#34;django简介&#34;&gt;Django简介&lt;/h1&gt;
+&lt;h2 id=&#34;背景&#34;&gt;背景&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;2003诞生 它最初是被开发来用于管理劳伦斯出版集团旗下的一些以新闻内容为主的网站的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;mvt框架&#34;&gt;MVT（框架）&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Models 模型 数据库&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Views 视图 放和拿&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Template 模板 前端&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;From 表单 &lt;code&gt;django&lt;/code&gt; 会根据你后台数据库字段及表单层的设计对应的给你创建HTML关于表单的代码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;django优点&#34;&gt;Django优点&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;对象关系映射（Object Relational Mapping ORM）：通过定义映射类来构建数据模型，将模型与关系型数据库连接起来，使用ORM框架内置的数据库接口可实现复杂的数据操作。（简单来说就是把数据库的语句换成了python可识别的语言）&lt;/li&gt;
+&lt;li&gt;URL设计：开发者可以设计任意的URL（网站地址）， 而且支持使用正则表达式设计。&lt;/li&gt;
+&lt;li&gt;模板系统：提供可扩展的模板语言，模板之间具有可继承性。&lt;/li&gt;
+&lt;li&gt;表单处理：可以生成各种表单模型，而且表单具有有效性检验功能。&lt;/li&gt;
+&lt;li&gt;Cache系统：完善的缓存系统，可支持多种缓存方式&lt;/li&gt;
+&lt;li&gt;用户管理系统：提供用户认证，权限设置和用户组功能，功能扩展性强。&lt;/li&gt;
+&lt;li&gt;国际化：内置国际化系统，方便开发出多语言的网站。&lt;/li&gt;
+&lt;li&gt;admin管理系统：内置admin管理系统，系统的扩展性强。&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <content:encoded><![CDATA[<h1 id="django简介">Django简介</h1>
+<h2 id="背景">背景</h2>
+<ul>
+<li>2003诞生 它最初是被开发来用于管理劳伦斯出版集团旗下的一些以新闻内容为主的网站的</li>
+</ul>
+<h2 id="mvt框架">MVT（框架）</h2>
+<ul>
+<li>
+<p>Models 模型 数据库</p>
+</li>
+<li>
+<p>Views 视图 放和拿</p>
+</li>
+<li>
+<p>Template 模板 前端</p>
+<ul>
+<li>From 表单 <code>django</code> 会根据你后台数据库字段及表单层的设计对应的给你创建HTML关于表单的代码</li>
+</ul>
+</li>
+</ul>
+<h2 id="django优点">Django优点</h2>
+<ul>
+<li>对象关系映射（Object Relational Mapping ORM）：通过定义映射类来构建数据模型，将模型与关系型数据库连接起来，使用ORM框架内置的数据库接口可实现复杂的数据操作。（简单来说就是把数据库的语句换成了python可识别的语言）</li>
+<li>URL设计：开发者可以设计任意的URL（网站地址）， 而且支持使用正则表达式设计。</li>
+<li>模板系统：提供可扩展的模板语言，模板之间具有可继承性。</li>
+<li>表单处理：可以生成各种表单模型，而且表单具有有效性检验功能。</li>
+<li>Cache系统：完善的缓存系统，可支持多种缓存方式</li>
+<li>用户管理系统：提供用户认证，权限设置和用户组功能，功能扩展性强。</li>
+<li>国际化：内置国际化系统，方便开发出多语言的网站。</li>
+<li>admin管理系统：内置admin管理系统，系统的扩展性强。</li>
+</ul>
+<h2 id="django项目目录">Django项目目录</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>用django<span style="color:#ff7b72;font-weight:bold">-</span>admin startproject demo 创建一个demo项目
+</span></span><span style="display:flex;"><span>文件结构如下<span style="color:#f85149">：</span>
+</span></span><span style="display:flex;"><span>demo<span style="color:#ff7b72;font-weight:bold">/</span>				<span style="color:#8b949e;font-style:italic"># 最外层 这个是整个项目的容器文件夹，可以随意改名字</span>
+</span></span><span style="display:flex;"><span>	
+</span></span><span style="display:flex;"><span>    demo<span style="color:#ff7b72;font-weight:bold">/</span>			<span style="color:#8b949e;font-style:italic"># 内层的demo 是这个项目中关于配置文件的一个管理文件夹，这个不允许改名字</span>
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>        __init__<span style="color:#ff7b72;font-weight:bold">.</span>py	<span style="color:#8b949e;font-style:italic">#初始化文件，代表这个文件夹是一个包，一个模块，demo文件夹就是一个模块了</span>
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>        settings<span style="color:#ff7b72;font-weight:bold">.</span>py <span style="color:#8b949e;font-style:italic"># 这个是整个项目的配置文件，配置中间，配置邮件等</span>
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>        urls<span style="color:#ff7b72;font-weight:bold">.</span>py		<span style="color:#8b949e;font-style:italic"># django项目的总路由配置文件。网站的地址信息</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>		wsgi<span style="color:#ff7b72;font-weight:bold">.</span>py		<span style="color:#8b949e;font-style:italic"># 全称为Python Web Server Gateway Interface，即为python服务器网关接口，					   是python应用与Web服务器之间的接口，用于Django项目在服务器上的部署和上线，一 					   般不需要修改</span>
+</span></span><span style="display:flex;"><span>	manage<span style="color:#ff7b72;font-weight:bold">.</span>py		<span style="color:#8b949e;font-style:italic"># 命令行工具，允许以多种方式与项目交互。 可输入 python manage.py help 查看					    该工具的具体用法 </span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="django的创建的app目录">Django的创建的App目录</h2>
+<ul>
+<li>
+<p>使用命令创建app： python manage.py startapp frist</p>
+<ul>
+<li>
+<p><strong>创建了App必须把App名称添加到<kbd>INSTALL_APPS</kbd>里面。</strong></p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>frist<span style="color:#ff7b72;font-weight:bold">/</span>
+</span></span><span style="display:flex;"><span>	migrations<span style="color:#ff7b72;font-weight:bold">/</span>		<span style="color:#8b949e;font-style:italic"># 数据库前后是否有变化，生成出迁移文件</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	static<span style="color:#ff7b72;font-weight:bold">/</span>			<span style="color:#8b949e;font-style:italic"># 创建App后存放App中的静态资源文件，自己手动添加</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	templates<span style="color:#ff7b72;font-weight:bold">/</span>		<span style="color:#8b949e;font-style:italic"># 创建App后存放App中的模板文件，自己手动添加</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	__init__<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	admin<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	apps<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	models<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	tests<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span><span style="display:flex;"><span>	urls<span style="color:#ff7b72;font-weight:bold">.</span>py			<span style="color:#8b949e;font-style:italic"># 创建App后由系统总路由映射到App的路由文件，自己手动添加</span>
+</span></span><span style="display:flex;"><span>	view<span style="color:#ff7b72;font-weight:bold">.</span>py
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+</li>
+</ul>
+<h2 id="djangosettings配置全览">Django（settings）配置全览</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">  9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 67
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 68
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 69
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 70
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 71
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 72
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 73
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 74
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 75
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 76
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 77
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 78
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 79
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 80
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 81
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 82
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 83
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 84
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 85
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 86
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 87
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 88
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 89
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 90
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 91
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 92
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 93
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 94
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 95
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 96
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 97
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 98
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 99
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">100
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">101
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">102
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">103
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">104
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">105
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">106
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">107
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">108
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">109
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">110
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">111
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">112
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">113
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">114
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">115
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">116
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">117
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">118
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">119
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">120
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">121
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">122
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#a5d6ff">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">Django settings for mysite project.
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">Generated by &#39;django-admin startproject&#39; using Django 2.1.2.
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">For more information on this file, see
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">https://docs.djangoproject.com/en/2.1/weightics/settings/
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">For the full list of settings and their values, see
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">https://docs.djangoproject.com/en/2.1/ref/settings/
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">os</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 项目路径</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Build paths inside the project like this: os.path.join(BASE_DIR, ...)</span>
+</span></span><span style="display:flex;"><span>BASE_DIR <span style="color:#ff7b72;font-weight:bold">=</span> os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>dirname(os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>dirname(os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>abspath(__file__)))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Quick-start development settings - unsuitable for production</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 密匙配置</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># SECURITY WARNING: keep the secret key used in production secret!</span>
+</span></span><span style="display:flex;"><span>SECRET_KEY <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;#g$qgqkee8csvp67l$(8ugkx</span><span style="color:#a5d6ff">%+i</span><span style="color:#a5d6ff">_9k%mbykw-%9zpbnyn!bb!=&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 调试模式</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># SECURITY WARNING: don&#39;t run with debug turned on in production!</span>
+</span></span><span style="display:flex;"><span>DEBUG <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">True</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 域名访问权限</span>
+</span></span><span style="display:flex;"><span>ALLOWED_HOSTS <span style="color:#ff7b72;font-weight:bold">=</span> [<span style="color:#a5d6ff">&#39;*&#39;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># App列表</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Application definition</span>
+</span></span><span style="display:flex;"><span>INSTALLED_APPS <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.admin&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.auth&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.contenttypes&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.sessions&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.messages&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.staticfiles&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;myblog&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;article&#39;</span>,
+</span></span><span style="display:flex;"><span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>MIDDLEWARE <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.security.SecurityMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.sessions.middleware.SessionMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.common.CommonMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.csrf.CsrfViewMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.auth.middleware.AuthenticationMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.messages.middleware.MessageMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.clickjacking.XFrameOptionsMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ROOT_URLCONF <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;mysite.urls&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>TEMPLATES <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;BACKEND&#39;</span>: <span style="color:#a5d6ff">&#39;django.template.backends.django.DjangoTemplates&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;DIRS&#39;</span>: [BASE_DIR, <span style="color:#a5d6ff">&#39;templates&#39;</span>],
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;APP_DIRS&#39;</span>: <span style="color:#79c0ff">True</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;OPTIONS&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;context_processors&#39;</span>: [
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.template.context_processors.debug&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.template.context_processors.request&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.contrib.auth.context_processors.auth&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.contrib.messages.context_processors.messages&#39;</span>,
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#8b949e;font-style:italic"># 自定义模版全局变量(默认变量)</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;article.views.global_settings&#39;</span>,
+</span></span><span style="display:flex;"><span>            ],
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>WSGI_APPLICATION <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;mysite.wsgi.application&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Database</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># https://docs.djangoproject.com/en/2.1/ref/settings/#databases</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>DATABASES <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;default&#39;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;ENGINE&#39;</span>: <span style="color:#a5d6ff">&#39;django.db.backends.sqlite3&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;NAME&#39;</span>: os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR, <span style="color:#a5d6ff">&#39;db.sqlite3&#39;</span>),
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Password validation</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>AUTH_PASSWORD_VALIDATORS <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>     <span style="color:#a5d6ff">&#39;NAME&#39;</span>:<span style="color:#a5d6ff">&#39;django.contrib.auth.password_validation.UserAttributeSimilarityValidator&#39;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;NAME&#39;</span>: <span style="color:#a5d6ff">&#39;django.contrib.auth.password_validation.MinimumLengthValidator&#39;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;NAME&#39;</span>: <span style="color:#a5d6ff">&#39;django.contrib.auth.password_validation.CommonPasswordValidator&#39;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;NAME&#39;</span>: <span style="color:#a5d6ff">&#39;django.contrib.auth.password_validation.NumericPasswordValidator&#39;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Internationalization</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># https://docs.djangoproject.com/en/2.1/weightics/i18n/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>LANGUAGE_CODE <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;zh-Hans&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>TIME_ZONE <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;Asia/Shanghai&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>USE_I18N <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">True</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>USE_L10N <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">True</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>USE_TZ <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">True</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Static files (CSS, JavaScript, Images)</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># https://docs.djangoproject.com/en/2.1/howto/static-files/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>STATIC_URL <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;/static/&#39;</span>
+</span></span><span style="display:flex;"><span>STATIC_ROOT <span style="color:#ff7b72;font-weight:bold">=</span> os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR, <span style="color:#a5d6ff">&#34;static/&#34;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>项目路径 BASE_DIR：主要通过<code>os</code>模块读取当前项目在系统的具体路径，该代码在创建项目时自动生成，一般情况无需修改</p>
+<p>密匙配置SECRET_KEY：是一个随机值，在项目创建的时候自动生成，一般情况下无需修改。主要用于重要的数据		 加密处理，提高系统的安全性，避免遭到攻击者的恶意破坏。密匙主要用于用户密码，<code>CSRF</code>机制和会话<code>Session</code>等数据加密。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> 用户密码<span style="color:#f85149">：</span>Django内置一套用户管理系统<span style="color:#f85149">，</span>该系统具有用户认证和存储用户信息等功能<span style="color:#f85149">，</span>在创建用户的时候<span style="color:#f85149">，</span>将用户的密码通过密匙进行加密处理<span style="color:#f85149">，</span>保证用户的安全性<span style="color:#f85149">。</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> CSRF机制<span style="color:#f85149">：</span>该机制主要用于表单提交<span style="color:#f85149">，</span>防止窃取网站的用户信息来制造恶意请求
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> 会话Session<span style="color:#f85149">：</span>Session的信息存放在Cookies<span style="color:#f85149">，</span>以一串随机的字符串表示<span style="color:#f85149">，</span>用于标识当前访问网站的用户身份<span style="color:#f85149">，</span>记录相关用户信息<span style="color:#f85149">。</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>调试模式DEBUG：该值为布尔类型。如果在开发调试阶段应设置为True，在开发调试过程中会自动检测代码是否 发生更改，根据检测结果执行是否刷新重启系统。如果项目部署上线，将其改为False，否则会泄露系统的相关信息。</p>
+<p>域名访问权限ALLOWED_HOSTS:设置可访问的域名，默认值为空。当DEBUG为True并且ALLOWED_HOSTS为空时，项目只允许以<code>localhost</code>或<kbd>127.0.0.1</kbd>在浏览器上访问启动。当DEBUG为False时，ALLOWED_HOSTS为必填项，否则程序无法启动，如果想允许所有域名访问，可设置ALLOW_HOSTS=[&rsquo;*&rsquo;]。</p>
+<p>App列表INSTALLED_APPS：告诉Django有哪些App。在创建项目时已有admin，auth，和session等配置等信息，这些都是Django内置的应用功能，各个功能说明如下。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> admin:内置的后台管理系统<span style="color:#f85149">。</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> auth<span style="color:#f85149">：</span>内置的用户认证系统<span style="color:#f85149">。</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> contenttypes<span style="color:#f85149">：</span>记录项目中所有的model元数据<span style="color:#f85149">（</span>Django的ORM框架<span style="color:#f85149">）。</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> session<span style="color:#f85149">：</span>Session会话功能<span style="color:#f85149">，</span>用于标识当前访问网站的 用户身份<span style="color:#f85149">，</span>记录相关用户信息<span style="color:#f85149">。</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> message<span style="color:#f85149">：</span>消息提示功能<span style="color:#f85149">。</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span> staticfiles<span style="color:#f85149">：</span>查找静态资源路径<span style="color:#f85149">。</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="静态资源static">静态资源（static）</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Static files (CSS, JavaScript, Images)</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># https://docs.djangoproject.com/en/2.1/howto/static-files/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>STATIC_URL <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;/static/&#39;</span>	
+</span></span><span style="display:flex;"><span>STATIC_ROOT <span style="color:#ff7b72;font-weight:bold">=</span> os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR, <span style="color:#a5d6ff">&#34;static/&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 设置根目录的静态资源文件夹static</span>
+</span></span><span style="display:flex;"><span>STATICFILES_DIRS <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    				os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR, <span style="color:#a5d6ff">&#39;static&#39;</span>),
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 设置App的静态资源文件夹</span>
+</span></span><span style="display:flex;"><span>    				os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR, <span style="color:#a5d6ff">&#39;/static&#39;</span>)<span style="color:#f85149">，</span>
+</span></span><span style="display:flex;"><span>                   ]
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​</p>
+<p>​	CSS也称层叠样式表（Cascading Style Sheets），是一种用来表现HTML（标准通用标记语言的一个应用）或XML（标准通用标记语言的一个子集）等文件样式的计算机语言。CSS不仅可以静态地修饰网页，还可以配合各种脚本语言动态地对网页各元素进行格式化。</p>
+<p>​	JavaScript是一种直译式脚本语言，也是一种动态类型，弱类型，基于原型的语言，内置支持类型。它的解释器被称为JavaScript引擎，为浏览器的一部分，广泛用于客户端的脚本语言，最早是在HTML（标准通用标记语言下的一个应用）网页上使用，用来给HTML网页增加动态功能。</p>
+<ul>
+<li>
+<p><kbd>STATIC_URL</kbd>是必须配置的属性而且属性值不能为空。如果没有配置<kbd>STATICFILES_DIRS</kbd>，则<kbd>STATIC_URL</kbd>只能识别App里的static静态资源文件夹。</p>
+</li>
+<li>
+<p><kbd>STATICFILES_DIRS</kbd>是可选配置属性，属性值为列表或元组格式，每个列表（元组）元素代表一个静态资源文件夹，这些文件夹可行命名。</p>
+</li>
+<li>
+<p>在浏览器上访问项目的静态资源时，无论项目的静态资源文件夹是如何命名的，在浏览器上，静态资源的上级目录必须为static，而static而<kbd>STATIC_URL</kbd>的属性值,因为<kbd>STATIC_URL</kbd>也是静态资源的起始URL。</p>
+</li>
+</ul>
+<p>​    除此之外，静态资源配置还有<kbd>STATIC_ROOT</kbd>，其作用是方便在服务器上部署项目，实现服务器和项目之间的映射。</p>
+<p><strong>STATIC_URL和STATICFILES_DIRS区别</strong></p>
+<ul>
+<li>STATIC_URL是必须配置的属性而且属性的值不能为空。如果没有配置STATICFILES_DIRS,则STATIC_URL只能识别App里面的static静态资源文件夹。</li>
+<li>STATICFILES_DIRS是可选配置属性，属性值为列表或元组格式，每个列表（元组）元素代表一个静态资源文件夹，这些文件夹可自行命名。</li>
+<li>在浏览器上访问项目的静态资源时，无论项目的静态资源文件夹是如何命名的，在浏览器上，静态资源的上级目录必须为static，而static是STATIC_URL的属性值，因为STATIC_URL也是静态资源的起始URL。</li>
+</ul>
+<h3 id="模板路径template">模板路径（template）</h3>
+<ul>
+<li>在web开发中，模板是一种较为特殊的HTML文档。这个HTML文档嵌入了一些能够让Python识别的变量和指令，然后程序解析这些变量和指令，生成完整的HTML网页并返回给用户浏览。模板是Django里面的MTV框架模式的<code>T</code>部分，配置模板路径是Django在解析模板时，如何找到模板所在的位置。创建项目时，Django以有初始的模板配置信息。如下：</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>TEMPLATES <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;BACKEND&#39;</span>: <span style="color:#a5d6ff">&#39;django.template.backends.django.DjangoTemplates&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;DIRS&#39;</span>: [BASE_DIR, <span style="color:#a5d6ff">&#39;templates&#39;</span>],
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;APP_DIRS&#39;</span>: <span style="color:#79c0ff">True</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;OPTIONS&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#39;context_processors&#39;</span>: [
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.template.context_processors.debug&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.template.context_processors.request&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.contrib.auth.context_processors.auth&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;django.contrib.messages.context_processors.messages&#39;</span>,
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#8b949e;font-style:italic"># 自定义模版全局变量(默认变量)</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#a5d6ff">&#39;article.views.global_settings&#39;</span>,
+</span></span><span style="display:flex;"><span>            ],
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>
+<p>模板信息是以列表格式呈现的，每个元素具有不同的含义，说明如下：</p>
+<ul>
+<li>
+<p>BACKEND：定义模板引擎，用于识别模板里面的变量和指令。内置的模板引擎有<code>DjangoTemplate</code>和<code>jinjia2.Jinjia2</code>，每个模板引擎都有自己的变量和指令语法。</p>
+</li>
+<li>
+<p>DIRS：设置模板所在的路径，告诉Django在那个地方查找模板的位置，默认为空列表</p>
+</li>
+<li>
+<p>APP_DIRS:是否在App里面查找模板文件</p>
+</li>
+<li>
+<p>OPTIONS：用于填充在RequestContext中上下文调用函数，一般情况下不做任何修改。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="数据库设置databases">数据库设置（Databases）</h3>
+<ul>
+<li>
+<p>在settings文件下 有一个DATABASES属性</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>DATABASES <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;default&#39;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;ENGINE&#39;</span>: <span style="color:#a5d6ff">&#39;django.db.backends.sqlite3&#39;</span>, 	  <span style="color:#8b949e;font-style:italic"># 数据库引擎</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;NAME&#39;</span>: os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>join(BASE_DIR, <span style="color:#a5d6ff">&#39;db.sqlite3&#39;</span>), <span style="color:#8b949e;font-style:italic"># 本地sqllite3数据库位置</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;USER&#39;</span>: 									  <span style="color:#8b949e;font-style:italic"># 用户名</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;PASSWORD&#39;</span>: 								  <span style="color:#8b949e;font-style:italic"># 数据库密码</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#39;HOST&#39;</span>:										  <span style="color:#8b949e;font-style:italic"># 数据库主机地址</span>
+</span></span><span style="display:flex;"><span>    			}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#	默认的django使用sqllite3作为数据库</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic"># django提供四种 ENGINE 数据库引擎</span>
+</span></span><span style="display:flex;"><span>    	<span style="color:#8b949e;font-style:italic">#	django.db.backends.mysql</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">#	django.db.backends.oracle</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">#	django.db.backends.splite3</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#	如果你使用的是 PostgreSQL 或者Mysql的话，已经是先创建了数据库，但是默认的SQLlite不需要</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p><code>sqlite3</code> 轻量级数据库（数据存放在文件里面）</p>
+</li>
+<li>
+<p>在Django连接MYSQL数据库时候如果提示django.db.utils.OperationalError的错误信息，这是因为MYSQL8.0版本的密码加密方式发生了变化，8.0版本的用户密码采用的是cha2加密方法。</p>
+<ul>
+<li>
+<p>解决方法，把SQL语句将8.0版本加密方法改回原来的加密方式。</p>
+</li>
+<li>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">#</span><span style="color:#6e7681"> </span>newpassword<span style="color:#6e7681"> </span><span style="color:#f85149">是我们设置的用户密码</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#ff7b72">ALTER</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">USER</span><span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#39;root&#39;</span><span style="color:#ff7b72;font-weight:bold">@</span><span style="color:#a5d6ff">&#39;localhost&#39;</span><span style="color:#6e7681"> </span>IDENTIFIED<span style="color:#6e7681"> </span><span style="color:#ff7b72">WITH</span><span style="color:#6e7681"> </span>mysql_native_password<span style="color:#6e7681"> </span><span style="color:#ff7b72">BY</span><span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#39;newpassword&#39;</span>;<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>FLUSH<span style="color:#6e7681"> </span><span style="color:#ff7b72">PRIVILEGES</span>;<span style="color:#6e7681">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+</li>
+</ul>
+<h3 id="中间件middlewere">中间件（Middlewere）</h3>
+<p>中间件（Middleware）是处理Django的request和response对象的钩子。当用户在网站中进行单击某个按钮等操作时，这个动作是用户向网站发送请求（request）；而网页会根据用户的操作返回相关的网页内容，这个过程称为响应处理（response）。从请求到响应的过程中，当Django接收到用户的请求时，Django首先经过中间件处理请求消息，执行相关的处理，然后将处理结果返回给用户，中间件的执行流程如图：</p>
+<p><img loading="lazy" src="C:%5cUsers%5cLuenci%5cDeskweight%5cWeb%e7%ac%94%e8%ae%b0%5cDjango%5ctimg.jpg" alt="Alt"  />
+</p>
+<p>如上图，中间件的作用主要是处理用户的请求信息。开发者也可以根据自己的开发需求自定义中间件，只要将自定义的中间件添加到配置属性MIDDLEWARE中即可激活。一般情况下，Django默认的中间件配置均可满足大部分的开发需求。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.security.SecurityMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.sessions.middleware.SessionMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.common.CommonMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.csrf.CsrfViewMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.auth.middleware.AuthenticationMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.contrib.messages.middleware.MessageMiddleware&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;django.middleware.clickjacking.XFrameOptionsMiddleware&#39;</span>,
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>配置属性MIDDLEWARE的数据格式为列表类型，每个中间件的设置顺序是固定的，如果随意变更中间件很容易导致程序异常，每个中间件的说明如下：</p>
+<ul>
+<li>SecurityMiddleware：内置的安全机制，保护用户与网站的通信安全。</li>
+<li>SessionMiddleware：会话Session。</li>
+<li>LocaleModdleware：支持中文语言。</li>
+<li>CommonMiddleware：处理请求信息，规范化请求内容。</li>
+<li>CsrViewMiddleware：开启CSRF防护功能。</li>
+<li>AuthenticationMiddleware：开启内置的用户认证系统。</li>
+<li>MessageMiddleware：开启内置的信息提示功能。</li>
+<li>XFrameOptionsMiddleware：防止恶意程序点击劫持。</li>
+</ul>
+<h2 id="修改时区及语言">修改时区及语言</h2>
+<ul>
+<li>
+<p>LANGUAGE_CODE = &rsquo;en-us&rsquo;  #语言</p>
+</li>
+<li>
+<p>TIME_ZONE = &lsquo;UTC&rsquo; #时区</p>
+</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>LANGUAGE_CODE <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;zh-Hans&#39;</span>
+</span></span><span style="display:flex;"><span>TIME_ZONE <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;Asia/Shanghai&#39;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="开启测试服务器">开启测试服务器</h2>
+<ul>
+<li>用来展示你创建出来的空项目</li>
+<li>/home/Publc_Class/5-17-django框架/</li>
+<li>python3 manage.py runserver 0.0.0.0:9090
+<ul>
+<li>开启了一个测试服务器</li>
+<li>runserver 可以让你在浏览器看到效果，但是这个是测试服务器，压力不过百</li>
+</ul>
+</li>
+</ul>
+<h2 id="创建默认数据库">创建默认数据库</h2>
+<ul>
+<li>
+<p>因为django自带的admin界面，首先需要数据库来支持</p>
+<ul>
+<li>我们来先创建出一个数据库</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>makemigrations 数据库前后是否有变化，生成出迁移文件
+</span></span><span style="display:flex;"><span>migrate 根据迁移文件 来对应的执行SQL语句 
+</span></span><span style="display:flex;"><span>python3 manage.py makemigrations
+</span></span><span style="display:flex;"><span>python3 manage.py migrate 
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>
+<p>如果数据库创建完成，那么目录结构下和<code>manage.py</code>同级的就会有一个<code>db.splite3</code>文件</p>
+</li>
+<li>
+<p>有了这个数据库，就可以创建超级用户来管理<code>admin</code>界面啦！</p>
+</li>
+</ul>
+<p><strong>为<code>admin</code>界面创建超级用户</strong></p>
+<ul>
+<li>
+<p>数据库有了，要创建超级用户</p>
+<ul>
+<li>python3 manage.py createsuperuser</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>Username (leave blank to use <span style="color:#a5d6ff">&#39;root&#39;</span>): root
+</span></span><span style="display:flex;"><span>Email address: <span style="color:#a5d6ff">2573799357</span><span style="color:#d2a8ff;font-weight:bold">@qq.com</span>   
+</span></span><span style="display:flex;"><span>Password: 
+</span></span><span style="display:flex;"><span>Password (again): 
+</span></span><span style="display:flex;"><span>Superuser created successfully<span style="color:#ff7b72;font-weight:bold">.</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

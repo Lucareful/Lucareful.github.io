@@ -1,0 +1,664 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>RabbitMQ on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/rabbitmq/</link>
+    <description>Recent content in RabbitMQ on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/rabbitmq/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>消息队列笔记</title>
+      <link>https://Lucareful.github.io/en/posts/mq%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/mq%E7%AC%94%E8%AE%B0/</guid>
+      <description>消息队列介绍 概念 MQ（Message Queue，消息队列），是基础数据结构中“先进先出”的一种数据结构，是在消息的传输工程中保存消息的容器。</description>
+      <content:encoded><![CDATA[<h1 id="消息队列介绍">消息队列介绍</h1>
+<h2 id="概念">概念</h2>
+<ul>
+<li>MQ（Message Queue，消息队列），是基础数据结构中“先进先出”的一种数据结构，是在消息的传输工程中保存消息的容器。多用于分布式系统之间进行通信等。</li>
+</ul>
+<h2 id="mq优势">MQ优势</h2>
+<h3 id="应用解耦">应用解耦</h3>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225748.png" alt="image-20201129132737572"  />
+</p>
+<h3 id="异步提速">异步提速</h3>
+<p><img loading="lazy" src="https://b3logfile.com/file/2020/12/image-9d8dcb68.png?imageView2/2/interlace/1/format/webp" alt="image.png"  />
+</p>
+<h3 id="削峰填谷">削峰填谷</h3>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225756.png" alt="image-20201129132952802"  />
+</p>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225806.png" alt="image-20201129133010842"  />
+</p>
+<h2 id="mq的带来的问题">MQ的带来的问题</h2>
+<h4 id="系统的可用性降低">系统的可用性降低</h4>
+<ul>
+<li>系统引入的外部依赖越多，系统的稳定性就越差。如果MQ宕机，整个业务就会受到影响。如何保证MQ的高可用？</li>
+</ul>
+<h4 id="系统的复杂度提高">系统的复杂度提高</h4>
+<ul>
+<li>MQ的加入大大增加了系统的复杂度，以前系统间是同步调用的，现在通过MQ进行一步调用。如何保证消息没有被重复消费？怎么处理消息地丢失情况？怎么保证消息传递的顺序性</li>
+</ul>
+<h4 id="一致性问题">一致性问题</h4>
+<ul>
+<li>A系统处理完业务，通过MQ给B、C、D三个系统发消息，如果B、C系统成功，D系统处理失败。如何保证消息数据的一致性？</li>
+</ul>
+<h2 id="使用mq的场景">使用MQ的场景</h2>
+<ul>
+<li>生产者不需要从消费者处获得反馈。
+<ul>
+<li>引入消息队列之前的直接调用，其接口的返回值应该为空，即上层的请求不依赖下层返回的结果，这样也才能使异步成为可能</li>
+</ul>
+</li>
+<li>容许短暂的不一致性</li>
+<li>收益性高
+<ul>
+<li>引入MQ后系统解耦、提速、削峰等方面的收益大于管理使用MQ的成本</li>
+</ul>
+</li>
+</ul>
+<h1 id="rabbitmq介绍">RabbitMQ介绍</h1>
+<p><code>AMQP</code>，即（Advanced Message Queuing Protocal）（高级消息队列），是一个<code>网络协议</code>，是应用层协议的一个开放标准，为面向消息的中间件设计。基于此协议的客户端和消息中间件可传递消息，并不受客户端/中间件不同产品，不同的开发语言等条件的限制。</p>
+<p><img loading="lazy" src="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png" alt="Publish path from publisher to consumer via exchange and queue"  />
+</p>
+<h2 id="rabbitmq基础架构和组件信息">RabbitMQ基础架构和组件信息</h2>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/20201201225820.png" alt="image-20201129161016285"  />
+</p>
+<ul>
+<li>
+<p>Broker：标识消息队列服务器实体.</p>
+</li>
+<li>
+<p>Virtual Host：虚拟主机。标识一批交换机、消息队列和相关对象。虚拟主机是共享相同的身份认证和加密环境的独立服务器域。每个vhost本质上就是一个mini版的RabbitMQ服务器，拥有自己的队列、交换器、绑定和权限机制。vhost是AMQP概念的基础，必须在链接时指定，RabbitMQ默认的vhost是 /。</p>
+</li>
+<li>
+<p>Exchange：交换器，用来接收生产者发送的消息并将这些消息路由给服务器中的队列。</p>
+</li>
+<li>
+<p>Queue：消息队列，用来保存消息直到发送给消费者。它是消息的容器，也是消息的终点。一个消息可投入一个或多个队列。消息一直在队列里面，等待消费者连接到这个队列将其取走。</p>
+</li>
+<li>
+<p>Banding：绑定，用于消息队列和交换机之间的关联。一个绑定就是基于路由键将交换机和消息队列连接起来的路由规则，所以可以将交换器理解成一个由绑定构成的路由表。</p>
+</li>
+<li>
+<p>Channel：信道，多路复用连接中的一条独立的双向数据流通道。信道是建立在真实的TCP连接内地虚拟链接，AMQP命令都是通过信道发出去的，不管是发布消息、订阅队列还是接收消息，这些动作都是通过信道完成。因为对于操作系统来说，建立和销毁TCP都是非常昂贵的开销，所以引入了信道的概念，以复用一条TCP连接。</p>
+</li>
+<li>
+<p>Connection：网络连接，比如一个TCP连接。</p>
+</li>
+<li>
+<p>Publisher：消息的生产者，也是一个向交换器发布消息的客户端应用程序。</p>
+</li>
+<li>
+<p>Consumer：消息的消费者，表示一个从一个消息队列中取得消息的客户端应用程序。</p>
+</li>
+<li>
+<p>Message：消息，消息是不具名的，它是由消息头和消息体组成。消息体是不透明的，而消息头则是由一系列的可选属性组成，这些属性包括routing-key(路由键)、priority(优先级)、delivery-mode(消息可能需要持久性存储[消息的路由模式])等。</p>
+</li>
+</ul>
+<h2 id="rabbitmq的工作模式">RabbitMQ的工作模式</h2>
+<blockquote>
+<p>原文链接：https://www.cnblogs.com/Jeely/p/10784013.html</p>
+</blockquote>
+<h3 id="11simple简单模式">1.1simple简单模式</h3>
+<p><img loading="lazy" src="https://img-blog.csdnimg.cn/20181221114009759.png" alt="在这里插入图片描述"  />
+</p>
+<ol>
+<li>消息产生着and将消息放入队列</li>
+<li>消息的消费者(consumer) 监听(while) 消息队列,如果队列中有消息,就消费掉,消息被拿走后,自动从队列中删除(隐患 消息可能没有被消费者正确处理,已经从队列中消失了,造成消息的丢失)应用场景:聊天(中间有一个过度的服务器;p端,c端)</li>
+</ol>
+<h4 id="生产者代码样例">生产者代码样例</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 设置消息队列</span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_declare(queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;TEST01&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 向消息队列中发消息</span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_publish(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>                      routing_key<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;TEST01&#39;</span>,
+</span></span><span style="display:flex;"><span>                      body<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;Hello World I am Luenci&#39;</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#34; [x] Sent &#39;Hello World!&#39;&#34;</span>)
+</span></span><span style="display:flex;"><span>connection<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="消费者代码样例">消费者代码样例</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_declare(queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;TEST01&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">callback</span>(ch, method, properties, body):
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34; [x] Received </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> body)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_consume(on_message_callback<span style="color:#ff7b72;font-weight:bold">=</span>callback,
+</span></span><span style="display:flex;"><span>                      queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;TEST01&#39;</span>,
+</span></span><span style="display:flex;"><span>                      auto_ack<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#39; [*] Waiting for messages. To exit press CTRL+C&#39;</span>)
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>start_consuming()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="12-work工作模式资源的竞争">1.2 work工作模式(资源的竞争)</h3>
+<p><img loading="lazy" src="https://img-blog.csdnimg.cn/20181221114036231.png" alt="在这里插入图片描述"  />
+</p>
+<ol>
+<li>
+<p>**说明：**一对多模式，一个生产者，多个消费者，一个队列，每个消费者从队列中获取唯一的消息。</p>
+<p>有两种消息分发机制，轮询分发和公平分发：</p>
+<p>轮询分发的特点是将消息轮流发送给每个消费者，在实际情况中，多个消费者，难免有的处理得快，有的处理得慢，如果都要等到一个消费者处理完，才把消息发送给下一个消费者，效率就大大降低了。</p>
+<p>而公平分发的特点是，只要有消费者处理完，就会把消息发送给目前空闲的消费者，这样就提高消费效率了。</p>
+</li>
+<li>
+<p>消息产生者将消息放入队列消费者可以有多个,消费者1,消费者2,同时监听同一个队列,消息被消费? C1 C2共同争抢当前的消息队列内容,谁先拿到谁负责消费消息(隐患,高并发情况下,默认会产生某一个消息被多个消费者共同使用,可以设置一个开关(syncronize,与同步锁的性能不一样) 保证一条消息只能被一个消费者使用)</p>
+</li>
+<li>
+<p>应用场景:红包;大项目中的资源调度(任务分配系统不需知道哪一个任务执行系统在空闲,直接将任务扔到消息队列中,空闲的系统自动争抢)</p>
+</li>
+</ol>
+<h4 id="生产者">生产者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">sys</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_declare(queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;task_queue&#39;</span>, durable<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>message <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39; &#39;</span><span style="color:#ff7b72;font-weight:bold">.</span>join(sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">1</span>:]) <span style="color:#ff7b72;font-weight:bold">or</span> <span style="color:#a5d6ff">&#34;Hello World!&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">in</span> range(<span style="color:#a5d6ff">1</span>,<span style="color:#a5d6ff">10</span>):
+</span></span><span style="display:flex;"><span>    channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_publish(
+</span></span><span style="display:flex;"><span>        exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;&#39;</span>,
+</span></span><span style="display:flex;"><span>        routing_key<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;task_queue&#39;</span>,
+</span></span><span style="display:flex;"><span>        body<span style="color:#ff7b72;font-weight:bold">=</span>message,
+</span></span><span style="display:flex;"><span>        properties<span style="color:#ff7b72;font-weight:bold">=</span>pika<span style="color:#ff7b72;font-weight:bold">.</span>BasicProperties(
+</span></span><span style="display:flex;"><span>            delivery_mode<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">2</span>,  <span style="color:#8b949e;font-style:italic"># make message persistent</span>
+</span></span><span style="display:flex;"><span>        ))
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34; [x] Sent </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> message)
+</span></span><span style="display:flex;"><span>connection<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="消费者">消费者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">time</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_declare(queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;task_queue&#39;</span>, durable<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#39; [*] Waiting for messages. To exit press CTRL+C&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">callback</span>(ch, method, properties, body):
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34; [x] Received </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> body)
+</span></span><span style="display:flex;"><span>    time<span style="color:#ff7b72;font-weight:bold">.</span>sleep(body<span style="color:#ff7b72;font-weight:bold">.</span>count(<span style="color:#79c0ff">b</span><span style="color:#a5d6ff">&#39;.&#39;</span>))
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34; [x] Done&#34;</span>)
+</span></span><span style="display:flex;"><span>    ch<span style="color:#ff7b72;font-weight:bold">.</span>basic_ack(delivery_tag<span style="color:#ff7b72;font-weight:bold">=</span>method<span style="color:#ff7b72;font-weight:bold">.</span>delivery_tag)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 公平分发</span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_qos(prefetch_count<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">1</span>)
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_consume(queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;task_queue&#39;</span>, on_message_callback<span style="color:#ff7b72;font-weight:bold">=</span>callback)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>start_consuming()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="13-publishsubscribe发布订阅共享资源">1.3 publish/subscribe发布订阅(共享资源)</h3>
+<p><img loading="lazy" src="https://img-blog.csdnimg.cn/20181221114050657.png" alt="在这里插入图片描述"  />
+</p>
+<ol>
+<li>X代表交换机rabbitMQ内部组件,erlang 消息产生者是代码完成,代码的执行效率不高,消息产生者将消息放入交换机,交换机发布订阅把消息发送到所有消息队列中,对应消息队列的消费者拿到消息进行消费</li>
+<li>相关场景:邮件群发,群聊天,广播(广告)</li>
+</ol>
+<h4 id="生产者-1">生产者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">sys</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>exchange_declare(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;logs&#39;</span>, exchange_type<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;fanout&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>message <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39; &#39;</span><span style="color:#ff7b72;font-weight:bold">.</span>join(sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">1</span>:]) <span style="color:#ff7b72;font-weight:bold">or</span> <span style="color:#a5d6ff">&#34;info: Hello World!&#34;</span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_publish(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;logs&#39;</span>, routing_key<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;&#39;</span>, body<span style="color:#ff7b72;font-weight:bold">=</span>message)
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#34; [x] Sent </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> message)
+</span></span><span style="display:flex;"><span>connection<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="消费者-1">消费者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>exchange_declare(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;logs&#39;</span>, exchange_type<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;fanout&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#ff7b72;font-weight:bold">=</span> channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_declare(queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;&#39;</span>, exclusive<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>queue_name <span style="color:#ff7b72;font-weight:bold">=</span> result<span style="color:#ff7b72;font-weight:bold">.</span>method<span style="color:#ff7b72;font-weight:bold">.</span>queue
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_bind(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;logs&#39;</span>, queue<span style="color:#ff7b72;font-weight:bold">=</span>queue_name)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#39; [*] Waiting for logs. To exit press CTRL+C&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">callback</span>(ch, method, properties, body):
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34; [x] </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> body)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_consume(
+</span></span><span style="display:flex;"><span>    queue<span style="color:#ff7b72;font-weight:bold">=</span>queue_name, on_message_callback<span style="color:#ff7b72;font-weight:bold">=</span>callback, auto_ack<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>start_consuming()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="14-routing路由模式">1.4 routing路由模式</h3>
+<p><img loading="lazy" src="https://img-blog.csdnimg.cn/20181221114420299.png" alt="在这里插入图片描述"  />
+</p>
+<ol>
+<li>消息生产者将消息发送给交换机按照路由判断,路由是字符串(info) 当前产生的消息携带路由字符(对象的方法),交换机根据路由的key,只能匹配上路由key对应的消息队列,对应的消费者才能消费消息;</li>
+<li>根据业务功能定义路由字符串</li>
+<li>从系统的代码逻辑中获取对应的功能字符串,将消息任务扔到对应的队列中业务场景:error 通知;EXCEPTION;错误通知的功能;传统意义的错误通知;客户通知;利用key路由,可以将程序中的错误封装成消息传入到消息队列中,开发者可以自定义消费者,实时接收错误;</li>
+</ol>
+<h4 id="生产者-2">生产者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">sys</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>exchange_declare(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;direct_logs&#39;</span>, exchange_type<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;direct&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>severity <span style="color:#ff7b72;font-weight:bold">=</span> sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">1</span>] <span style="color:#ff7b72">if</span> len(sys<span style="color:#ff7b72;font-weight:bold">.</span>argv) <span style="color:#ff7b72;font-weight:bold">&gt;</span> <span style="color:#a5d6ff">1</span> <span style="color:#ff7b72">else</span> <span style="color:#a5d6ff">&#39;info&#39;</span>
+</span></span><span style="display:flex;"><span>message <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39; &#39;</span><span style="color:#ff7b72;font-weight:bold">.</span>join(sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">2</span>:]) <span style="color:#ff7b72;font-weight:bold">or</span> <span style="color:#a5d6ff">&#39;Hello World!&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_publish(
+</span></span><span style="display:flex;"><span>    exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;direct_logs&#39;</span>, routing_key<span style="color:#ff7b72;font-weight:bold">=</span>severity, body<span style="color:#ff7b72;font-weight:bold">=</span>message)
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#34; [x] Sent </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">:</span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> (severity, message))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>connection<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="消费者-2">消费者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>exchange_declare(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;logs&#39;</span>, exchange_type<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;fanout&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#ff7b72;font-weight:bold">=</span> channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_declare(queue<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;&#39;</span>, exclusive<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>queue_name <span style="color:#ff7b72;font-weight:bold">=</span> result<span style="color:#ff7b72;font-weight:bold">.</span>method<span style="color:#ff7b72;font-weight:bold">.</span>queue
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_bind(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;logs&#39;</span>, queue<span style="color:#ff7b72;font-weight:bold">=</span>queue_name)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#39; [*] Waiting for logs. To exit press CTRL+C&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">callback</span>(ch, method, properties, body):
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34; [x] </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> body)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_consume(
+</span></span><span style="display:flex;"><span>    queue<span style="color:#ff7b72;font-weight:bold">=</span>queue_name, on_message_callback<span style="color:#ff7b72;font-weight:bold">=</span>callback, auto_ack<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>start_consuming()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="15-weightic-主题模式路由模式的一种">1.5 weightic 主题模式(路由模式的一种)</h3>
+<p><img loading="lazy" src="https://img-blog.csdnimg.cn/20181221114208408.png" alt="在这里插入图片描述"  />
+</p>
+<ol>
+<li>星号井号代表通配符</li>
+<li>星号代表多个单词,井号代表一个单词</li>
+<li>路由功能添加模糊匹配</li>
+<li>消息产生者产生消息,把消息交给交换机</li>
+<li>交换机根据key的规则模糊匹配到对应的队列,由队列的监听消费者接收消息消费</li>
+</ol>
+<h4 id="生产者-3">生产者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">sys</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>exchange_declare(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;weightic_logs&#39;</span>, exchange_type<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;weightic&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>routing_key <span style="color:#ff7b72;font-weight:bold">=</span> sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">1</span>] <span style="color:#ff7b72">if</span> len(sys<span style="color:#ff7b72;font-weight:bold">.</span>argv) <span style="color:#ff7b72;font-weight:bold">&gt;</span> <span style="color:#a5d6ff">2</span> <span style="color:#ff7b72">else</span> <span style="color:#a5d6ff">&#39;anonymous.info&#39;</span>
+</span></span><span style="display:flex;"><span>message <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39; &#39;</span><span style="color:#ff7b72;font-weight:bold">.</span>join(sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">2</span>:]) <span style="color:#ff7b72;font-weight:bold">or</span> <span style="color:#a5d6ff">&#39;Hello World!&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_publish(
+</span></span><span style="display:flex;"><span>    exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;weightic_logs&#39;</span>, routing_key<span style="color:#ff7b72;font-weight:bold">=</span>routing_key, body<span style="color:#ff7b72;font-weight:bold">=</span>message)
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#34; [x] Sent </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">:</span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> (routing_key, message))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>connection<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="消费者-3">消费者</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">pika</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">sys</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>auth <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>PlainCredentials(<span style="color:#a5d6ff">&#39;username&#39;</span>, <span style="color:#a5d6ff">&#39;password&#39;</span>)
+</span></span><span style="display:flex;"><span>connection <span style="color:#ff7b72;font-weight:bold">=</span> pika<span style="color:#ff7b72;font-weight:bold">.</span>BlockingConnection(pika<span style="color:#ff7b72;font-weight:bold">.</span>ConnectionParameters(<span style="color:#a5d6ff">&#39;主机名&#39;</span>, <span style="color:#a5d6ff">&#39;5672&#39;</span>, <span style="color:#a5d6ff">&#39;/&#39;</span>, auth))
+</span></span><span style="display:flex;"><span>channel <span style="color:#ff7b72;font-weight:bold">=</span> connection<span style="color:#ff7b72;font-weight:bold">.</span>channel()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>exchange_declare(exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;weightic_logs&#39;</span>, exchange_type<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;weightic&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#ff7b72;font-weight:bold">=</span> channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_declare(<span style="color:#a5d6ff">&#39;&#39;</span>, exclusive<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>queue_name <span style="color:#ff7b72;font-weight:bold">=</span> result<span style="color:#ff7b72;font-weight:bold">.</span>method<span style="color:#ff7b72;font-weight:bold">.</span>queue
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>binding_keys <span style="color:#ff7b72;font-weight:bold">=</span> sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">1</span>:]
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> <span style="color:#ff7b72;font-weight:bold">not</span> binding_keys:
+</span></span><span style="display:flex;"><span>    sys<span style="color:#ff7b72;font-weight:bold">.</span>stderr<span style="color:#ff7b72;font-weight:bold">.</span>write(<span style="color:#a5d6ff">&#34;Usage: </span><span style="color:#a5d6ff">%s</span><span style="color:#a5d6ff"> [binding_key]...</span><span style="color:#79c0ff">\n</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> sys<span style="color:#ff7b72;font-weight:bold">.</span>argv[<span style="color:#a5d6ff">0</span>])
+</span></span><span style="display:flex;"><span>    sys<span style="color:#ff7b72;font-weight:bold">.</span>exit(<span style="color:#a5d6ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">for</span> binding_key <span style="color:#ff7b72;font-weight:bold">in</span> binding_keys:
+</span></span><span style="display:flex;"><span>    channel<span style="color:#ff7b72;font-weight:bold">.</span>queue_bind(
+</span></span><span style="display:flex;"><span>        exchange<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;weightic_logs&#39;</span>, queue<span style="color:#ff7b72;font-weight:bold">=</span>queue_name, routing_key<span style="color:#ff7b72;font-weight:bold">=</span>binding_key)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#39; [*] Waiting for logs. To exit press CTRL+C&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">callback</span>(ch, method, properties, body):
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34; [x] </span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">:</span><span style="color:#a5d6ff">%r</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72;font-weight:bold">%</span> (method<span style="color:#ff7b72;font-weight:bold">.</span>routing_key, body))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>basic_consume(
+</span></span><span style="display:flex;"><span>    queue<span style="color:#ff7b72;font-weight:bold">=</span>queue_name, on_message_callback<span style="color:#ff7b72;font-weight:bold">=</span>callback, auto_ack<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>channel<span style="color:#ff7b72;font-weight:bold">.</span>start_consuming()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="rabbitmq速度提升">RabbitMQ速度提升</h1>
+<ul>
+<li>消息消费速度主要受到发送消息时间、消费者处理时间、消息Ack时间这几个时间的影响</li>
+</ul>
+<blockquote>
+<p><a href="https://www.cnblogs.com/bossma/p/practices-on-improving-the-speed-of-rabbitmq-consumption.html">https://www.cnblogs.com/bossma/p/practices-on-improving-the-speed-of-rabbitmq-consumption.html</a></p>
+</blockquote>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

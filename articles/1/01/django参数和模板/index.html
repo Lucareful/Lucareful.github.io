@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Django参数和模板 | Luenci</title>
+<meta name="keywords" content="Django">
+<meta name="description" content="render方法参数 request: 是一个固定参数。 template_name: templates 中定义的文件, 要注意路径名. 比如’templates\polls\index.html’, 参数就要写‘polls\index.html’ context: 要传入文件中用于渲染呈现的数据, 默认是字典格式 content_type: 生成的文档要使用的MIME 类型。默认为DEFAULT_CONTENT_TYPE 设置的值。 status: http的响应代码,默认是200. using: 用于加载模板使用的模板引擎的名称。 reques">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="http://localhost:1313/articles/1/01/django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.54405a410796490bc874ab6181fac9b675753cc2b91375d8f882566459eca428.css" integrity="sha256-VEBaQQeWSQvIdKthgfrJtnV1PMK5E3XY&#43;IJWZFnspCg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/articles/1/01/django%E5%8F%82%E6%95%B0%E5%92%8C%E6%A8%A1%E6%9D%BF/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Luenci (Alt + H)">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/index.xml" title="RSS Feed">
+                    <span>RSS Feed</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Django参数和模板
+    </h1>
+    <div class="post-meta">Luenci
+
+</div>
+  </header> 
+  <div class="post-content"><h2 id="render方法参数"><code>render</code>方法参数<a hidden class="anchor" aria-hidden="true" href="#render方法参数">#</a></h2>
+<ul>
+<li><code>request</code>: 是一个固定参数。</li>
+<li><code>template_name</code>: <code>templates</code> 中定义的文件, 要注意路径名. 比如<code>’templates\polls\index.html’</code>, 参数就要写<code>‘polls\index.html’</code></li>
+<li><code>context</code>: 要传入文件中用于渲染呈现的数据, 默认是字典格式</li>
+<li><code>content_type</code>: 生成的文档要使用的MIME 类型。默认为DEFAULT_CONTENT_TYPE 设置的值。</li>
+<li><code>status</code>: http的响应代码,默认是200.</li>
+<li><code>using</code>: 用于加载模板使用的模板引擎的名称。</li>
+</ul>
+<h2 id="request对象方法和属性"><code>request</code>对象方法和属性<a hidden class="anchor" aria-hidden="true" href="#request对象方法和属性">#</a></h2>
+<ul>
+<li><code>request.scheme</code>   # 代表请求的方案,http或者https</li>
+<li><code>request.body</code># 原始HTTP请求主体为字节串。这对于以不同于常规HTML格式的方式处理数据很有用：二进制图像，XML有效负载等。对于处理常规格式的数据，请使用 <code>HttpRequest.POST</code>。</li>
+<li><code>request.path</code>   # 请求的路径,比如请求<code>127.0.0.1/org/list</code>,那这个值就是<code>/org/list</code></li>
+<li><code>request.get_full_path()</code> # 获取完整的请求路径</li>
+<li><code>request.method</code>  # 表示请求使用的http方法,GET或者POST请求</li>
+<li><code>request.encoding</code> # 表示提交数据的编码方式</li>
+<li><code>request.GET</code>     # 获取GET请求</li>
+<li><code>request.POST</code>    # 获取post的请求,比如前端提交的用户密码,可以通过<code>request.POST.get()</code>来获取</li>
+</ul>
+<blockquote>
+<p><strong>NOTICED：如果使用 POST 上传文件的话，文件信息将包含在 FILES 属性中</strong></p>
+</blockquote>
+<p><code>request.COOKIES</code> #包含所有的cookie</p>
+<p><code>request.META</code>   #一个标准的Python 字典，包含所有的HTTP 首部。具体的头部信息取决于客户端和服务器，下面是一些示例：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span>CONTENT_LENGTH 	—— 请求的正文的长度（是一个字符串）。
+</span></span><span style="display:flex;"><span>CONTENT_TYPE 	—— 请求的正文的MIME 类型。
+</span></span><span style="display:flex;"><span>HTTP_ACCEPT 	—— 响应可接收的Content-Type。
+</span></span><span style="display:flex;"><span>HTTP_ACCEPT_ENCODING —— 响应可接收的编码。
+</span></span><span style="display:flex;"><span>HTTP_ACCEPT_LANGUAGE —— 响应可接收的语言。
+</span></span><span style="display:flex;"><span>HTTP_HOST 		—— 客服端发送的HTTP Host 头部。
+</span></span><span style="display:flex;"><span>HTTP_REFERER 	—— Referring 页面。
+</span></span><span style="display:flex;"><span>HTTP_USER_AGENT —— 客户端的user-agent 字符串。
+</span></span><span style="display:flex;"><span>QUERY_STRING 	—— 单个字符串形式的查询字符串（未解析过的形式）。
+</span></span><span style="display:flex;"><span>REMOTE_ADDR 	—— 客户端的IP 地址。
+</span></span><span style="display:flex;"><span>REMOTE_HOST 	—— 客户端的主机名。
+</span></span><span style="display:flex;"><span>REMOTE_USER 	—— 服务器认证后的用户。
+</span></span><span style="display:flex;"><span>REQUEST_METHOD  —— 一个字符串，例如<span style="color:#f1fa8c">&#34;GET&#34;</span> 或<span style="color:#f1fa8c">&#34;POST&#34;</span>。
+</span></span><span style="display:flex;"><span>SERVER_NAME 	—— 服务器的主机名。
+</span></span><span style="display:flex;"><span>SERVER_PORT 	—— 服务器的端口（是一个字符串）
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>request.user</code>   #一个 <code>AUTH_USER_MODEL</code> 类型的对象，表示当前登录的用户。
+<ul>
+<li>如果用户当前没有登录，user 将设置为 <code>django.contrib.auth.models.AnonymousUser</code> 的一个实例。你可以通过 <code>s_authenticated() </code>区分它们</li>
+<li>把<code>request</code>传给前端的时候,前端可以通过 <code> if request.user.is_authenticated</code>判断用户时候登录</li>
+</ul>
+</li>
+<li><code>request.session</code> #一个既可读又可写的类似于字典的对象，表示当前的会话</li>
+</ul>
+<!-- raw HTML omitted -->
+<h2 id="response对象"><code>response</code>对象<a hidden class="anchor" aria-hidden="true" href="#response对象">#</a></h2>
+<ul>
+<li><code>Httpresponse</code>对象对于 <code>Httpreques</code>对象来说，是由<code> django</code>自动创建的，但是， <code>Httpresponse</code>对象就必须我们自己创建。每个<code>view</code>请求处理方法必须返回一个 <code>Httpresponse</code>对象。</li>
+</ul>
+<blockquote>
+<p><code>Httpresponse</code>类在<code>djangohttpHttprespons</code></p>
+</blockquote>
+<blockquote>
+<p>在 <code>Httpresponse</code>对象上扩展的常用方法：</p>
+</blockquote>
+<ul>
+<li>
+<p>页面渲染</p>
+<ul>
+<li><code>render() </code></li>
+<li><code>render to response()</code></li>
+</ul>
+</li>
+<li>
+<p>页面跳转：</p>
+<ul>
+<li><code>redirect(&quot;路径&quot;)</code></li>
+</ul>
+</li>
+<li>
+<p><code>locals()</code>：可以直接将函数中所有的变里传给模板</p>
+</li>
+</ul>
+<h2 id="内置变量过滤器filter">内置变量过滤器<code>filter</code><a hidden class="anchor" aria-hidden="true" href="#内置变量过滤器filter">#</a></h2>
+<p>​    可以理解为python中的内置函数，过滤器是模板的特有语法，通过前端来过滤部分数据。注意filter只能传递一个参数(也可以说是两个参数，因为第一个个参数已经固定，就是被处理的那个)。
+格式：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-jinja" data-lang="jinja"><span style="display:flex;"><span>`<span style="color:#ff79c6">{{</span>` <span style="color:#8be9fd;font-style:italic">var</span><span style="color:#ff79c6">|</span><span style="color:#50fa7b">method</span><span style="color:#ff79c6">:</span><span style="color:#8be9fd;font-style:italic">parameter</span>`<span style="color:#ff79c6">}}</span>`
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>method表示过滤器部分过滤器如下</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>过滤器</th>
+<th>说明</th>
+<th>举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>first</td>
+<td>取列表第一个元素</td>
+<td></td>
+</tr>
+<tr>
+<td>last</td>
+<td>取列表最后元素</td>
+<td></td>
+</tr>
+<tr>
+<td>capfirst</td>
+<td>首字母大写</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200614210257960.png" alt="filter"  />
+</p>
+<h2 id="logging配置"><code>logging</code>配置<a hidden class="anchor" aria-hidden="true" href="#logging配置">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4">#下面就是logging的配置</span>
+</span></span><span style="display:flex;"><span>LOGGING <span style="color:#ff79c6">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#f1fa8c">&#39;version&#39;</span>: <span style="color:#bd93f9">1</span>,  <span style="color:#6272a4"># 指明dictConnfig的版本，目前就只有一个版本</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f1fa8c">&#39;disable_existing_loggers&#39;</span>: <span style="color:#ff79c6">False</span>,  <span style="color:#6272a4"># 表示是否禁用所有的已经存在的日志配置</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f1fa8c">&#39;formatters&#39;</span>: {  <span style="color:#6272a4"># 格式器</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;verbose&#39;</span>: {  <span style="color:#6272a4"># 详细</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;format&#39;</span>: <span style="color:#f1fa8c">&#39;</span><span style="color:#f1fa8c">%(levelname)s</span><span style="color:#f1fa8c"> </span><span style="color:#f1fa8c">%(asctime)s</span><span style="color:#f1fa8c"> </span><span style="color:#f1fa8c">%(module)s</span><span style="color:#f1fa8c"> </span><span style="color:#f1fa8c">%(process)d</span><span style="color:#f1fa8c"> </span><span style="color:#f1fa8c">%(thread)d</span><span style="color:#f1fa8c"> </span><span style="color:#f1fa8c">%(message)s</span><span style="color:#f1fa8c">&#39;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;standard&#39;</span>: {  <span style="color:#6272a4"># 标准</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;format&#39;</span>: <span style="color:#f1fa8c">&#39;[</span><span style="color:#f1fa8c">%(asctime)s</span><span style="color:#f1fa8c">] [</span><span style="color:#f1fa8c">%(levelname)s</span><span style="color:#f1fa8c">] </span><span style="color:#f1fa8c">%(message)s</span><span style="color:#f1fa8c">&#39;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#6272a4"># handlers：用来定义具体处理日志的方式，可以定义多种，&#34;default&#34;就是默认方式，&#34;console&#34;就是打印到控制台方式。file是写入到文件的方式，注意使用的class不同</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f1fa8c">&#39;handlers&#39;</span>: { <span style="color:#6272a4"># 处理器，在这里定义了两个个处理器</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;console&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;level&#39;</span>: <span style="color:#f1fa8c">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;class&#39;</span>: <span style="color:#f1fa8c">&#39;logging.StreamHandler&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;stream&#39;</span>: <span style="color:#f1fa8c">&#39;ext://sys.stdout&#39;</span>,   <span style="color:#6272a4"># 文件重定向的配置，将打印到控制台的信息都重定向出去 python manage.py runserver &gt;&gt; /home/aea/log/test.log</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#6272a4"># &#39;stream&#39;: open(&#39;/home/aea/log/test.log&#39;,&#39;a&#39;),  #虽然成功了，但是并没有将所有内容全部写入文件，目前还不清楚为什么</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;formatter&#39;</span>: <span style="color:#f1fa8c">&#39;standard&#39;</span>   <span style="color:#6272a4"># 制定输出的格式，注意 在上面的formatters配置里面选择一个，否则会报错</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;file&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;level&#39;</span>: <span style="color:#f1fa8c">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;class&#39;</span>: <span style="color:#f1fa8c">&#39;logging.FileHandler&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;filename&#39;</span>: os<span style="color:#ff79c6">.</span>path<span style="color:#ff79c6">.</span>join(BASE_DIR,<span style="color:#f1fa8c">&#39;debug.log&#39;</span>),  <span style="color:#6272a4">#这是将普通日志写入到日志文件中的方法，</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;formatter&#39;</span>: <span style="color:#f1fa8c">&#39;standard&#39;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;default&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;level&#39;</span>:<span style="color:#f1fa8c">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;class&#39;</span>:<span style="color:#f1fa8c">&#39;logging.handlers.RotatingFileHandler&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;filename&#39;</span>: os<span style="color:#ff79c6">.</span>path<span style="color:#ff79c6">.</span>join(BASE_DIR,<span style="color:#f1fa8c">&#39;All.log&#39;</span>),     <span style="color:#6272a4">#日志输出文件</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;maxBytes&#39;</span>: <span style="color:#bd93f9">1024</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1024</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">5</span>,                  <span style="color:#6272a4">#文件大小</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;backupCount&#39;</span>: <span style="color:#bd93f9">5</span>,                         <span style="color:#6272a4">#备份份数</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;formatter&#39;</span>:<span style="color:#f1fa8c">&#39;standard&#39;</span>,                   <span style="color:#6272a4">#使用哪种formatters日志格式</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4"># 上面两种写入日志的方法是有区别的，前者是将控制台下输出的内容全部写入到文件中，这样做的好处就是我们在views代码中的所有print也会写在对应的位置</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4"># 第二种方法就是将系统内定的内容写入到文件，具体就是请求的地址、错误信息等，小伙伴也可以都使用一下然后查看两个文件的异同。</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#f1fa8c">&#39;loggers&#39;</span>: {  <span style="color:#6272a4"># log记录器，配置之后就会对应的输出日志</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4"># django 表示就是django本身默认的控制台输出，就是原本在控制台里面输出的内容，在这里的handlers里的file表示写入到上面配置的file-/home/aea/log/jwt_test.log文件里面</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4"># 在这里的handlers里的console表示写入到上面配置的console-/home/aea/log/test.log文件里面</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;django&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;handlers&#39;</span>: [<span style="color:#f1fa8c">&#39;console&#39;</span>,<span style="color:#f1fa8c">&#39;file&#39;</span>],
+</span></span><span style="display:flex;"><span>            <span style="color:#6272a4"># 这里直接输出到控制台只是请求的路由等系统console，当使用重定向之后会把所有内容输出到log日志</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;level&#39;</span>: <span style="color:#f1fa8c">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;propagate&#39;</span>: <span style="color:#ff79c6">True</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;django.request &#39;</span>:{
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;handlers&#39;</span>: [<span style="color:#f1fa8c">&#39;console&#39;</span>,<span style="color:#f1fa8c">&#39;file&#39;</span>],
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;level&#39;</span>: <span style="color:#f1fa8c">&#39;WARNING&#39;</span>,  <span style="color:#6272a4"># 配合上面的将警告log写入到另外一个文件</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;propagate&#39;</span>: <span style="color:#ff79c6">True</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f1fa8c">&#39;django.db.backends&#39;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;handlers&#39;</span>: [<span style="color:#f1fa8c">&#39;file&#39;</span>], <span style="color:#6272a4"># 指定file handler处理器，表示只写入到文件</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;level&#39;</span>:<span style="color:#f1fa8c">&#39;DEBUG&#39;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f1fa8c">&#39;propagate&#39;</span>: <span style="color:#ff79c6">True</span>,
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="orm的增删改查"><code>ORM</code>的增删改查<a hidden class="anchor" aria-hidden="true" href="#orm的增删改查">#</a></h2>
+<ul>
+<li>增加数据</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4">#方式一创建记录</span>
+</span></span><span style="display:flex;"><span>b <span style="color:#ff79c6">=</span> Book(name<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;python基础&#34;</span>, price<span style="color:#ff79c6">=</span><span style="color:#bd93f9">99</span>, author<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;luenci&#34;</span>, pub_date<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;2020-06-14&#34;</span>)
+</span></span><span style="display:flex;"><span>b<span style="color:#ff79c6">.</span>save()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">#方法二创建数据</span>
+</span></span><span style="display:flex;"><span>Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>create(name<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;python基础&#34;</span>, price<span style="color:#ff79c6">=</span><span style="color:#bd93f9">99</span>, author<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;luenci&#34;</span>, pub_date<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;2020-06-14&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 便捷方法</span>
+</span></span><span style="display:flex;"><span>dic <span style="color:#ff79c6">=</span> {
+</span></span><span style="display:flex;"><span><span style="color:#f1fa8c">&#39;name&#39;</span>: <span style="color:#f1fa8c">&#39;go基础&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f1fa8c">&#39;price&#39;</span>: <span style="color:#bd93f9">99</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f1fa8c">&#39;author&#39;</span>: <span style="color:#f1fa8c">&#39;luenci&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#f1fa8c">&#39;pub_date&#39;</span>: <span style="color:#f1fa8c">&#39;2020-06-13&#39;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>create(<span style="color:#ff79c6">**</span>dic)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>更新数据</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4"># 方法一：(推荐用)</span>
+</span></span><span style="display:flex;"><span>Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(author<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#39;luenci&#39;</span>)<span style="color:#ff79c6">.</span>update(price<span style="color:#ff79c6">=</span><span style="color:#bd93f9">100</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 方法二</span>
+</span></span><span style="display:flex;"><span>b <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>get(name<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#39;go基础&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(b) <span style="color:#6272a4"># &lt;QuerySet [&lt;Book: Book object (3)&gt;]</span>
+</span></span><span style="display:flex;"><span>b<span style="color:#ff79c6">.</span>price <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">8.9</span>
+</span></span><span style="display:flex;"><span>b<span style="color:#ff79c6">.</span>save()
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(<span style="color:#8be9fd;font-style:italic">type</span>(b)) <span style="color:#6272a4"># &lt;class &#39;app01.models.Book&#39;&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">return</span> HttpResponse(<span style="color:#f1fa8c">&#34;修改成功&#34;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>删除数据</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(name<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;go基础&#34;</span>)<span style="color:#ff79c6">.</span>delete()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>查找数据</li>
+</ul>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4"># 获取所有对象</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>all()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 对name去重</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>all()<span style="color:#ff79c6">.</span>values(<span style="color:#f1fa8c">&#34;name&#34;</span>)<span style="color:#ff79c6">.</span>distinct()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 统计</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>all()<span style="color:#ff79c6">.</span>values(<span style="color:#f1fa8c">&#34;name&#34;</span>)<span style="color:#ff79c6">.</span>distinct()<span style="color:#ff79c6">.</span>count()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 查询的是对象的集合，即使只有一个对象也是集合的形式</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(author<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#39;luenci&#39;</span>) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>first()
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>last()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 指定查询到一个对象</span>
+</span></span><span style="display:flex;"><span>book_list <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>get(<span style="color:#8be9fd;font-style:italic">id</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">7</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 查询作者为luenci出版的书名.（字典的集合）</span>
+</span></span><span style="display:flex;"><span>book_list1 <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(author<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#39;luenci&#39;</span>)<span style="color:#ff79c6">.</span>values(<span style="color:#f1fa8c">&#39;name&#39;</span>, <span style="color:#f1fa8c">&#39;price&#39;</span>) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 查询作者为luenci出版的书名.（列表的集合）</span>
+</span></span><span style="display:flex;"><span>book_list2 <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(author<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#39;luenci&#39;</span>)<span style="color:#ff79c6">.</span>values_list(<span style="color:#f1fa8c">&#39;name&#39;</span>, <span style="color:#f1fa8c">&#39;price&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># &lt;QuerySet [{&#39;name&#39;: &#39;go基础&#39;, &#39;price&#39;: 99.0}, {&#39;name&#39;: &#39;python基础&#39;, &#39;price&#39;: 99.0}, {&#39;name&#39;: &#39;python基础&#39;, &#39;price&#39;: 66.0}&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(book_list1) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">#&lt;QuerySet [(&#39;go基础&#39;, 99.0), (&#39;python基础&#39;, 99.0), (&#39;python基础&#39;, 66.0), (&#39;docker基础&#39;, 8.9)]&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(book_list2)
+</span></span></code></pre></td></tr></table>
+</div>
+</div>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/django/">Django</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Syntax on Luenci</title>
+    <link>http://localhost:1313/tags/syntax/</link>
+    <description>Recent content in Syntax on Luenci</description>
+    <generator>Hugo -- 0.129.0</generator>
+    <language>en-us</language>
+    <atom:link href="http://localhost:1313/tags/syntax/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Go 变量声明指南</title>
+      <link>http://localhost:1313/articles/1/01/go-%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E%E6%8C%87%E5%8D%97/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/articles/1/01/go-%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E%E6%8C%87%E5%8D%97/</guid>
+      <description>&lt;h1 id=&#34;golang-varnewmake区别及使用&#34;&gt;golang var、:=、new、make区别及使用&lt;/h1&gt;
+&lt;p&gt;​    go里面的几大变量“类型”(不严谨，只是个人在使用的时候常用到的结构的一个划分)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;（1） 值类型：&lt;code&gt; int&lt;/code&gt;， &lt;code&gt;string&lt;/code&gt;， &lt;code&gt;struct&lt;/code&gt; 等&lt;/li&gt;
+&lt;li&gt;（2） 引用类型：主要是 &lt;code&gt;map&lt;/code&gt;, &lt;code&gt;slice&lt;/code&gt;,&lt;code&gt;chan&lt;/code&gt; 这三个引用（&lt;code&gt;make&lt;/code&gt;创建内存的）&lt;/li&gt;
+&lt;li&gt;（3）指针类型：&lt;code&gt;*int64&lt;/code&gt;， &lt;code&gt;*struct&lt;/code&gt;等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;var-vs-&#34;&gt;&lt;code&gt;var&lt;/code&gt; vs &lt;code&gt;:=&lt;/code&gt;&lt;/h2&gt;
+&lt;p&gt;​	对于值类型的变量，我们通过var 声明(包括结构体)，系统会默认为他分配内存空间，并赋该类型的零值。&lt;/p&gt;
+&lt;p&gt;如下，我们声明一个int类型变量i，输出为0。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;var&lt;/span&gt; i &lt;span style=&#34;color:#8be9fd&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;fmt.&lt;span style=&#34;color:#50fa7b&#34;&gt;Println&lt;/span&gt;(i) &lt;span style=&#34;color:#6272a4&#34;&gt;// i = 0 (类型零值)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;&lt;code&gt;var&lt;/code&gt;和&lt;code&gt;:=&lt;/code&gt;之间实际上存在差异，&lt;strong&gt;采用&lt;code&gt;:=&lt;/code&gt;允许重新声明变量&lt;/strong&gt;。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;与常规变量声明不同，&lt;code&gt;:=&lt;/code&gt;声明可以重新声明变量，前提是它们最初在同一块中以相同类型声明，并且至少有一个非空白变量是新的。因此，重新声明只能出现在多变量短声明中。&lt;/p&gt;
+&lt;p&gt;重新声明不引入新变量；它只是为原始值分配一个新值。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;2
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;3
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;4
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;field1, offset &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;nextField&lt;/span&gt;(str, &lt;span style=&#34;color:#bd93f9&#34;&gt;0&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;field2, offset &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;nextField&lt;/span&gt;(str, offset)  &lt;span style=&#34;color:#6272a4&#34;&gt;// 重新声明偏移量(可重入)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;a, a &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#bd93f9&#34;&gt;1&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;2&lt;/span&gt;                              &lt;span style=&#34;color:#6272a4&#34;&gt;// 非法：如果在别处声明了 a，则双重声明 a 或没有新变量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;所以我会说&lt;code&gt;:=&lt;/code&gt;运算符不是纯粹的声明，而是更像声明和分配。不允许在顶层重新声明，因此也不允许短声明。另一个原因可能是语法简单。&lt;code&gt;type&lt;/code&gt;在 Go 中，所有顶级表单都以&lt;code&gt;var&lt;/code&gt; 或 &lt;code&gt;func&lt;/code&gt; 开头。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;建议：重复声明的变量用 &lt;code&gt;:=&lt;/code&gt;，比如 err 的声明，使用的值或全局变量（不推荐大量使用）用 var， 如 var fields []string&lt;/p&gt;
+&lt;/blockquote&gt;</description>
+    </item>
+  </channel>
+</rss>

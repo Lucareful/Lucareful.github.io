@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Syntax on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/syntax/</link>
+    <description>Recent content in Syntax on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/syntax/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Go 变量声明指南</title>
+      <link>https://Lucareful.github.io/en/posts/%E6%B5%85%E6%9E%90-golangmakenewvar%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/%E6%B5%85%E6%9E%90-golangmakenewvar%E5%A3%B0%E6%98%8E%E5%8F%98%E9%87%8F/</guid>
+      <description>&lt;h1 id=&#34;golang-varnewmake区别及使用&#34;&gt;golang var、:=、new、make区别及使用&lt;/h1&gt;
+&lt;p&gt;​    go里面的几大变量“类型”(不严谨，只是个人在使用的时候常用到的结构的一个划分)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;（1） 值类型：&lt;code&gt; int&lt;/code&gt;， &lt;code&gt;string&lt;/code&gt;， &lt;code&gt;struct&lt;/code&gt; 等&lt;/li&gt;
+&lt;li&gt;（2） 引用类型：主要是 &lt;code&gt;map&lt;/code&gt;, &lt;code&gt;slice&lt;/code&gt;,&lt;code&gt;chan&lt;/code&gt; 这三个引用（&lt;code&gt;make&lt;/code&gt;创建内存的）&lt;/li&gt;
+&lt;li&gt;（3）指针类型：&lt;code&gt;*int64&lt;/code&gt;， &lt;code&gt;*struct&lt;/code&gt;等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;var-vs-&#34;&gt;&lt;code&gt;var&lt;/code&gt; vs &lt;code&gt;:=&lt;/code&gt;&lt;/h2&gt;
+&lt;p&gt;​	对于值类型的变量，我们通过var 声明(包括结构体)，系统会默认为他分配内存空间，并赋该类型的零值。&lt;/p&gt;
+&lt;p&gt;如下，我们声明一个int类型变量i，输出为0。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff7b72&#34;&gt;var&lt;/span&gt; i &lt;span style=&#34;color:#ff7b72&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;fmt.&lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;Println&lt;/span&gt;(i) &lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;// i = 0 (类型零值)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;&lt;code&gt;var&lt;/code&gt;和&lt;code&gt;:=&lt;/code&gt;之间实际上存在差异，&lt;strong&gt;采用&lt;code&gt;:=&lt;/code&gt;允许重新声明变量&lt;/strong&gt;。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;与常规变量声明不同，&lt;code&gt;:=&lt;/code&gt;声明可以重新声明变量，前提是它们最初在同一块中以相同类型声明，并且至少有一个非空白变量是新的。因此，重新声明只能出现在多变量短声明中。&lt;/p&gt;
+&lt;p&gt;重新声明不引入新变量；它只是为原始值分配一个新值。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;3
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;4
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;field1, offset &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;nextField&lt;/span&gt;(str, &lt;span style=&#34;color:#a5d6ff&#34;&gt;0&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;field2, offset &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;nextField&lt;/span&gt;(str, offset)  &lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;// 重新声明偏移量(可重入)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;a, a &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a5d6ff&#34;&gt;1&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;2&lt;/span&gt;                              &lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;// 非法：如果在别处声明了 a，则双重声明 a 或没有新变量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;所以我会说&lt;code&gt;:=&lt;/code&gt;运算符不是纯粹的声明，而是更像声明和分配。不允许在顶层重新声明，因此也不允许短声明。另一个原因可能是语法简单。&lt;code&gt;type&lt;/code&gt;在 Go 中，所有顶级表单都以&lt;code&gt;var&lt;/code&gt; 或 &lt;code&gt;func&lt;/code&gt; 开头。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;建议：重复声明的变量用 &lt;code&gt;:=&lt;/code&gt;，比如 err 的声明，使用的值或全局变量（不推荐大量使用）用 var， 如 var fields []string&lt;/p&gt;
+&lt;/blockquote&gt;</description>
+      <content:encoded><![CDATA[<h1 id="golang-varnewmake区别及使用">golang var、:=、new、make区别及使用</h1>
+<p>​    go里面的几大变量“类型”(不严谨，只是个人在使用的时候常用到的结构的一个划分)</p>
+<ul>
+<li>（1） 值类型：<code> int</code>， <code>string</code>， <code>struct</code> 等</li>
+<li>（2） 引用类型：主要是 <code>map</code>, <code>slice</code>,<code>chan</code> 这三个引用（<code>make</code>创建内存的）</li>
+<li>（3）指针类型：<code>*int64</code>， <code>*struct</code>等</li>
+</ul>
+<h2 id="var-vs-"><code>var</code> vs <code>:=</code></h2>
+<p>​	对于值类型的变量，我们通过var 声明(包括结构体)，系统会默认为他分配内存空间，并赋该类型的零值。</p>
+<p>如下，我们声明一个int类型变量i，输出为0。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">var</span> i <span style="color:#ff7b72">int</span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(i) <span style="color:#8b949e;font-style:italic">// i = 0 (类型零值)
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>var</code>和<code>:=</code>之间实际上存在差异，<strong>采用<code>:=</code>允许重新声明变量</strong>。</p>
+<blockquote>
+<p>与常规变量声明不同，<code>:=</code>声明可以重新声明变量，前提是它们最初在同一块中以相同类型声明，并且至少有一个非空白变量是新的。因此，重新声明只能出现在多变量短声明中。</p>
+<p>重新声明不引入新变量；它只是为原始值分配一个新值。</p>
+</blockquote>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>field1, offset <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">nextField</span>(str, <span style="color:#a5d6ff">0</span>)
+</span></span><span style="display:flex;"><span>field2, offset <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">nextField</span>(str, offset)  <span style="color:#8b949e;font-style:italic">// 重新声明偏移量(可重入)
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span>a, a <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">2</span>                              <span style="color:#8b949e;font-style:italic">// 非法：如果在别处声明了 a，则双重声明 a 或没有新变量
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>所以我会说<code>:=</code>运算符不是纯粹的声明，而是更像声明和分配。不允许在顶层重新声明，因此也不允许短声明。另一个原因可能是语法简单。<code>type</code>在 Go 中，所有顶级表单都以<code>var</code> 或 <code>func</code> 开头。</p>
+<blockquote>
+<p>建议：重复声明的变量用 <code>:=</code>，比如 err 的声明，使用的值或全局变量（不推荐大量使用）用 var， 如 var fields []string</p>
+</blockquote>
+<h2 id="new函数"><strong>new函数</strong></h2>
+<p>来看一下new函数的签名：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> new(Type)<span style="color:#ff7b72;font-weight:bold">*</span>Type
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	它只接受一个参数，这个参数是一个类型，分配好内存后，返回一个指向该类型内存地址的指针。同时把分配的内存置为零，也就是类型的零值。但是实际在工程使用中，通常是直接声明指针使用，不需要 new 操作。</p>
+<p>如果我们声明一个指针类型的变量，系统不会为他分配内存，默认就是<code>nil</code>。此时如果你想直接使用，那么系统会抛异常。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">var</span> j <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">int</span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(j)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span>j = <span style="color:#a5d6ff">10</span>  <span style="color:#8b949e;font-style:italic">//invalid memory address or nil pointer dereference
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 也就是说，空指针还没有内存分配，是不能使用的。那么要想使用，此时就需要new出场啦。
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">var</span> j <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">int</span>
+</span></span><span style="display:flex;"><span>j = new(<span style="color:#ff7b72">int</span>)  <span style="color:#8b949e;font-style:italic">// 让j里面的内容指向一块分配好的内存地址，地址里面设置int的零值：0
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(j)
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#ff7b72;font-weight:bold">*</span>j)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">*</span>j = <span style="color:#a5d6ff">10</span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#ff7b72;font-weight:bold">*</span>j)
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 声明指针类型变量后，通过new为他分配内存，有了内存空间，这个变量就可以自由的使用了。
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="make函数"><strong>Make函数</strong></h2>
+<blockquote>
+<p><code>make</code>和<code>new</code>不同，<code>make</code> 用于 <code>map</code>, <code>slice</code>,<code>chan</code> 的内存创建，因为他们三个是引用类型，直接返回这三个类型本身。</p>
+</blockquote>
+<p>make签名是：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> make(t Type, size <span style="color:#ff7b72;font-weight:bold">...</span>IntegerType) Type
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>make 是<strong>分配内存并初始化，初始化并不是置为零值(而是将地址空间的值二进制为都设置为0)</strong>。</p>
+<p>与new一样，它的第一个参数也是一个类型，但是不一样的是，make返回的是传入的类型，而不是指针！</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">var</span> c <span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span> <span style="color:#8b949e;font-style:italic">//声明管道类型变量c，此时c还是nil，不可用
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;%#v \\n&#34;</span>,c) <span style="color:#8b949e;font-style:italic">//(chan int)(nil)
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span>c = make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;%#v&#34;</span>, c) <span style="color:#8b949e;font-style:italic">//(chan int)(0xc000062060)
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>声明管道类型变量c，此时c还是nil，不可用；通过make来分配内存并初始化，c就获得了内存可以使用了。所以，我们在使用map, slice,chan 的时候，需要先对他们用make初始化，然后在进行操作。</p>
+<h1 id="总结"><strong>总结</strong></h1>
+<ul>
+<li><code>new </code>和<code>make</code>都是Go语言的两个内建函数，用于分配内存</li>
+<li><code>new</code> 一般用来返回指针类型（一般不用），make返回引用类型（<code>map</code>,<code> slice</code>,<code>chan </code>这三个引用)</li>
+<li><code>var</code>声明的 基本类型和<code>struct</code>这种已经分配了内存，并且赋零值了。</li>
+</ul>
+<h1 id="参考链接">参考链接</h1>
+<ul>
+<li><a href="https://stackoverflow.com/questions/21657446/var-vs-in-go">https://stackoverflow.com/questions/21657446/var-vs-in-go</a></li>
+<li><a href="https://stackoverflow.com/questions/25358130/what-is-the-difference-between-new-and-make">https://stackoverflow.com/questions/25358130/what-is-the-difference-between-new-and-make</a></li>
+<li><a href="https://stackoverflow.com/questions/9320862/why-would-i-make-or-new?noredirect=1&lq=1">https://stackoverflow.com/questions/9320862/why-would-i-make-or-new?noredirect=1&lq=1</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

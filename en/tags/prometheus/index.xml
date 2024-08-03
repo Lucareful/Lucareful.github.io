@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Prometheus on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/prometheus/</link>
+    <description>Recent content in Prometheus on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/prometheus/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Prometheus 概念入门</title>
+      <link>https://Lucareful.github.io/en/posts/prometheus-%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/prometheus-%E6%A6%82%E5%BF%B5%E5%85%A5%E9%97%A8/</guid>
+      <description>&lt;h1 id=&#34;prometheus-概念入门&#34;&gt;Prometheus 概念入门&lt;/h1&gt;
+&lt;h1 id=&#34;数据模型&#34;&gt;数据模型&lt;/h1&gt;
+&lt;p&gt;​	Prometheus 所有采集的监控数据均以指标（metric）的形式保存在内置的&lt;a href=&#34;https://www.wikiwand.com/zh/%E6%99%82%E9%96%93%E5%BA%8F%E5%88%97&#34;&gt;时间序列&lt;/a&gt;数据库当中（TSDB）：属于同一指标名称，同一标签集合的、有时间戳标记的数据流。除了存储的时间序列，Prometheus 还可以根据查询请求产生临时的、衍生的时间序列作为返回结果。&lt;/p&gt;
+&lt;h2 id=&#34;指标名称和标签&#34;&gt;指标名称和标签&lt;/h2&gt;
+&lt;p&gt;每一条时间序列由指标名称（Metrics Name）以及一组标签（键值对）唯一标识。其中指标的名称（metric name）可以反映被监控样本的含义（例如，&lt;code&gt;http_requests_total&lt;/code&gt; — 表示当前系统接收到的 HTTP 请求总量），指标名称只能由 ASCII 字符、数字、下划线以及冒号组成，同时必须匹配正则表达式 &lt;code&gt;[a-zA-Z_:][a-zA-Z0-9_:]*&lt;/code&gt;。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;[info] 注意&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;冒号用来表示用户自定义的记录规则，不能在 exporter 中或监控对象直接暴露的指标中使用冒号来定义指标名称。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;通过使用标签，Prometheus 开启了强大的多维数据模型：对于相同的指标名称，通过不同标签列表的集合，会形成特定的度量维度实例（例如：所有包含度量名称为 &lt;code&gt;/api/tracks&lt;/code&gt; 的 http 请求，打上 &lt;code&gt;method=POST&lt;/code&gt; 的标签，就会形成具体的 http 请求）。该查询语言在这些指标和标签列表的基础上进行过滤和聚合。改变任何度量指标上的任何标签值（包括添加或删除指标），都会创建新的时间序列。&lt;/p&gt;
+&lt;p&gt;标签的名称只能由 ASCII 字符、数字以及下划线组成并满足正则表达式 &lt;code&gt;[a-zA-Z_][a-zA-Z0-9_]*&lt;/code&gt;。其中以 &lt;code&gt;__&lt;/code&gt; 作为前缀的标签，是系统保留的关键字，只能在系统内部使用。标签的值则可以包含任何 &lt;code&gt;Unicode&lt;/code&gt; 编码的字符。&lt;/p&gt;
+&lt;h2 id=&#34;样本&#34;&gt;样本&lt;/h2&gt;
+&lt;p&gt;在时间序列中的每一个点称为一个样本（sample），样本由以下三部分组成：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;指标（metric）：指标名称和描述当前样本特征的 labelsets；&lt;/li&gt;
+&lt;li&gt;时间戳（timestamp）：一个精确到毫秒的时间戳；&lt;/li&gt;
+&lt;li&gt;样本值（value）： 一个 folat64 的浮点型数据表示当前样本的值。&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <content:encoded><![CDATA[<h1 id="prometheus-概念入门">Prometheus 概念入门</h1>
+<h1 id="数据模型">数据模型</h1>
+<p>​	Prometheus 所有采集的监控数据均以指标（metric）的形式保存在内置的<a href="https://www.wikiwand.com/zh/%E6%99%82%E9%96%93%E5%BA%8F%E5%88%97">时间序列</a>数据库当中（TSDB）：属于同一指标名称，同一标签集合的、有时间戳标记的数据流。除了存储的时间序列，Prometheus 还可以根据查询请求产生临时的、衍生的时间序列作为返回结果。</p>
+<h2 id="指标名称和标签">指标名称和标签</h2>
+<p>每一条时间序列由指标名称（Metrics Name）以及一组标签（键值对）唯一标识。其中指标的名称（metric name）可以反映被监控样本的含义（例如，<code>http_requests_total</code> — 表示当前系统接收到的 HTTP 请求总量），指标名称只能由 ASCII 字符、数字、下划线以及冒号组成，同时必须匹配正则表达式 <code>[a-zA-Z_:][a-zA-Z0-9_:]*</code>。</p>
+<blockquote>
+<p><strong>[info] 注意</strong></p>
+<p>冒号用来表示用户自定义的记录规则，不能在 exporter 中或监控对象直接暴露的指标中使用冒号来定义指标名称。</p>
+</blockquote>
+<p>通过使用标签，Prometheus 开启了强大的多维数据模型：对于相同的指标名称，通过不同标签列表的集合，会形成特定的度量维度实例（例如：所有包含度量名称为 <code>/api/tracks</code> 的 http 请求，打上 <code>method=POST</code> 的标签，就会形成具体的 http 请求）。该查询语言在这些指标和标签列表的基础上进行过滤和聚合。改变任何度量指标上的任何标签值（包括添加或删除指标），都会创建新的时间序列。</p>
+<p>标签的名称只能由 ASCII 字符、数字以及下划线组成并满足正则表达式 <code>[a-zA-Z_][a-zA-Z0-9_]*</code>。其中以 <code>__</code> 作为前缀的标签，是系统保留的关键字，只能在系统内部使用。标签的值则可以包含任何 <code>Unicode</code> 编码的字符。</p>
+<h2 id="样本">样本</h2>
+<p>在时间序列中的每一个点称为一个样本（sample），样本由以下三部分组成：</p>
+<ul>
+<li>指标（metric）：指标名称和描述当前样本特征的 labelsets；</li>
+<li>时间戳（timestamp）：一个精确到毫秒的时间戳；</li>
+<li>样本值（value）： 一个 folat64 的浮点型数据表示当前样本的值。</li>
+</ul>
+<h2 id="表示方式">表示方式</h2>
+<p>通过如下表达方式表示指定指标名称和指定标签集合的时间序列：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>&lt;metric name&gt;<span style="color:#ff7b72;font-weight:bold">{</span>&lt;label name&gt;<span style="color:#ff7b72;font-weight:bold">=</span>&lt;label value&gt;, ...<span style="color:#ff7b72;font-weight:bold">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>例如，指标名称为 <code>api_http_requests_total</code>，标签为 <code>method=&quot;POST&quot;</code> 和 <code>handler=&quot;/messages&quot;</code> 的时间序列可以表示为：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-http" data-lang="http"><span style="display:flex;"><span><span style="color:#f85149">api_http_requests_total{method=&#34;POST&#34;, handler=&#34;/messages&#34;}
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>这与 <a href="http://opentsdb.net/">OpenTSDB</a> 中使用的标记法相同。</p>
+<h1 id="指标类型">指标类型</h1>
+<p>​	Prometheus 的客户端库中提供了四种核心的指标类型。但这些类型只是在客户端库（客户端可以根据不同的数据类型调用不同的 API 接口）和在线协议中，实际在 Prometheus server 中并不对指标类型进行区分，而是简单地把这些指标统一视为无类型的时间序列。不过，将来我们会努力改变这一现状的</p>
+<h2 id="counter计数器">Counter（计数器）</h2>
+<p>​	Counter 类型代表一种样本数据单调递增的指标，即只增不减，除非监控系统发生了重置。例如，你可以使用 counter 类型的指标来表示服务的请求数、已完成的任务数、错误发生的次数等。counter 主要有两个方法：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//将counter值加1.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#d2a8ff;font-weight:bold">Inc</span>()
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 将指定值加到counter值上，如果指定值是0会 panic.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#d2a8ff;font-weight:bold">Add</span>(<span style="color:#ff7b72">float64</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	Counter 类型数据可以让用户方便的了解事件产生的速率的变化，在 PromQL 内置的相关操作函数可以提供相应的分析，比如以 HTTP 应用请求量来进行说明：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-promQL" data-lang="promQL"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">//</span><span style="color:#f85149">通过</span><span style="color:#ff7b72">rate</span><span style="color:#ff7b72;font-weight:bold">()</span><span style="color:#f85149">函数获取</span><span style="color:#79c0ff">HTTP</span><span style="color:#f85149">请求量的增长率</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#ff7b72">rate</span><span style="color:#ff7b72;font-weight:bold">(</span><span style="color:#79c0ff">http_requests_total</span>[<span style="color:#a5d6ff">5m</span>]<span style="color:#ff7b72;font-weight:bold">)</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#ff7b72;font-weight:bold">//</span><span style="color:#f85149">查询当前系统中，访问量前</span><span style="color:#a5d6ff">10</span><span style="color:#f85149">的</span><span style="color:#79c0ff">HTTP</span><span style="color:#f85149">地址</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#79c0ff">weightk</span><span style="color:#ff7b72;font-weight:bold">(</span><span style="color:#a5d6ff">10</span>,<span style="color:#6e7681"> </span><span style="color:#79c0ff">http_requests_total</span><span style="color:#ff7b72;font-weight:bold">)</span><span style="color:#6e7681">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	不要将 counter 类型应用于样本数据非单调递增的指标，例如：当前运行的进程数量（应该用 Gauge 类型）。</p>
+<h2 id="gauge仪表盘">Gauge（仪表盘）</h2>
+<p>​	Gauge 类型代表一种样本数据可以任意变化的指标，即可增可减。Gauge 通常用于像温度或者内存使用率这种指标数据，也可以表示能随时增加或减少的“总数”，例如：当前并发请求的数量。</p>
+<p>​	对于 Gauge 类型的监控指标，通过 PromQL 内置函数 <a href="https://www.yangcs.net/prometheus/3-prometheus/functions.html#delta">delta()</a> 可以获取样本在一段时间内的变化情况，例如，计算 CPU 温度在两小时内的差异：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>dalta<span style="color:#ff7b72;font-weight:bold">(</span>cpu_temp_celsius<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">host</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;zeus&#34;</span><span style="color:#ff7b72;font-weight:bold">}[</span>2h<span style="color:#ff7b72;font-weight:bold">])</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	你还可以通过PromQL 内置函数 <a href="https://www.yangcs.net/prometheus/3-prometheus/functions.html#predictlinear">predict_linear()</a> 基于简单线性回归的方式，对样本数据的变化趋势做出预测。例如，基于 2 小时的样本数据，来预测主机可用磁盘空间在 4 个小时之后的剩余情况：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>predict_linear<span style="color:#ff7b72;font-weight:bold">(</span>node_filesystem_free<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">job</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;node&#34;</span><span style="color:#ff7b72;font-weight:bold">}[</span>2h<span style="color:#ff7b72;font-weight:bold">]</span>, <span style="color:#a5d6ff">4</span> * 3600<span style="color:#ff7b72;font-weight:bold">)</span> &lt; <span style="color:#a5d6ff">0</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="histogram直方图">Histogram（直方图）</h2>
+<p>​	在大多数情况下人们都倾向于使用某些量化指标的平均值，例如 CPU 的平均使用率、页面的平均响应时间。这种方式的问题很明显，以系统 API 调用的平均响应时间为例：如果大多数 API 请求都维持在 100ms 的响应时间范围内，而个别请求的响应时间需要 5s，那么就会导致某些 WEB 页面的响应时间落到中位数的情况，而这种现象被称为<strong>长尾问题</strong>。</p>
+<p>​	为了区分是平均的慢还是长尾的慢，最简单的方式就是按照请求延迟的范围进行分组。例如，统计延迟在 0<del>10ms 之间的请求数有多少而 10</del>20ms 之间的请求数又有多少。通过这种方式可以快速分析系统慢的原因。Histogram 和 Summary 都是为了能够解决这样问题的存在，通过 Histogram 和 Summary 类型的监控指标，我们可以快速了解监控样本的分布情况。</p>
+<p>​	Histogram 在一段时间范围内对数据进行采样（通常是请求持续时间或响应大小等），并将其计入可配置的存储桶（bucket）中，后续可通过指定区间筛选样本，也可以统计样本总数，最后一般将数据展示为直方图。</p>
+<p>Histogram 类型的样本会提供三种指标（假设指标名称为 <code>&lt;basename&gt;</code>）：</p>
+<ul>
+<li>
+<p>样本的值分布在 bucket 中的数量，命名为 <code>&lt;basename&gt;_bucket{le=&quot;&lt;上边界&gt;&quot;}</code>。解释的更通俗易懂一点，这个值表示指标值小于等于上边界的所有样本数量。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>  // 在总共2次请求当中。http 请求响应时间 &lt;<span style="color:#ff7b72;font-weight:bold">=</span>0.005 秒 的请求次数为0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.005&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  // 在总共2次请求当中。http 请求响应时间 &lt;<span style="color:#ff7b72;font-weight:bold">=</span>0.01 秒 的请求次数为0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.01&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  // 在总共2次请求当中。http 请求响应时间 &lt;<span style="color:#ff7b72;font-weight:bold">=</span>0.025 秒 的请求次数为0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.025&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.05&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.075&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.1&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.25&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.5&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.75&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;1.0&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;2.5&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;5.0&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 0.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;7.5&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 2.0
+</span></span><span style="display:flex;"><span>  // 在总共2次请求当中。http 请求响应时间 &lt;<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">10</span> 秒 的请求次数为 <span style="color:#a5d6ff">2</span>
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;10.0&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 2.0
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_bucket<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,le<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;+Inf&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 2.0
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>所有样本值的大小总和，命名为 <code>&lt;basename&gt;_sum</code>。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>// 实际含义： 发生的2次 http 请求总的响应时间为 13.107670803000001 秒
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_sum<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 13.107670803000001
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>样本总数，命名为 <code>&lt;basename&gt;_count</code>。值和 <code>&lt;basename&gt;_bucket{le=&quot;+Inf&quot;}</code> 相同。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span> // 实际含义： 当前一共发生了 <span style="color:#a5d6ff">2</span> 次 http 请求
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_histogram_count<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 2.0
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+<blockquote>
+<p><strong>[info] 注意</strong></p>
+<p>bucket 可以理解为是对数据指标值域的一个划分，划分的依据应该基于数据值的分布。注意后面的采样点是包含前面的采样点的，假设 <code>xxx_bucket{...,le=&quot;0.01&quot;}</code> 的值为 10，而 <code>xxx_bucket{...,le=&quot;0.05&quot;}</code> 的值为 30，那么意味着这 30 个采样点中，有 10 个是小于 10 ms 的，其余 20 个采样点的响应时间是介于 10 ms 和 50 ms 之间的。</p>
+</blockquote>
+<p>​	可以通过 <a href="https://www.yangcs.net/prometheus/3-prometheus/functions.html#histogramquantile">histogram_quantile() 函数</a>来计算 Histogram 类型样本的<a href="https://www.wikiwand.com/zh-hans/%E5%88%86%E4%BD%8D%E6%95%B0">分位数</a>。分位数可能不太好理解，你可以理解为分割数据的点。我举个例子，假设样本的 9 分位数（quantile=0.9）的值为 x，即表示小于 x 的采样值的数量占总体采样值的 90%。Histogram 还可以用来计算应用性能指标值（<a href="https://www.wikiwand.com/en/Apdex">Apdex score</a>）。</p>
+<h2 id="summary摘要">Summary（摘要）</h2>
+<p>​	与 Histogram 类型类似，用于表示一段时间内的数据采样结果（通常是请求持续时间或响应大小等），但它直接存储了分位数（通过客户端计算，然后展示出来），而不是通过区间来计算。</p>
+<p>​	Summary 类型的样本也会提供三种指标（假设指标名称为 ）：</p>
+<ul>
+<li>
+<p>样本值的分位数分布情况，命名为 <code>&lt;basename&gt;{quantile=&quot;&lt;φ&gt;&quot;}</code>。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>// 含义：这 <span style="color:#a5d6ff">12</span> 次 http 请求中有 50% 的请求响应时间是 3.052404983s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>io_namespace_http_requests_latency_seconds_summary<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,quantile<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.5&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 3.052404983
+</span></span><span style="display:flex;"><span>  // 含义：这 <span style="color:#a5d6ff">12</span> 次 http 请求中有 90% 的请求响应时间是 8.003261666s
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_summary<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,quantile<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;0.9&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 8.003261666
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>所有样本值的大小总和，命名为 <code>&lt;basename&gt;_sum</code>。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>// 含义：这12次 http 请求的总响应时间为 51.029495508s
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_summary_sum<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 51.029495508
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>样本总数，命名为 <code>&lt;basename&gt;_count</code>。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>// 含义：当前一共发生了 <span style="color:#a5d6ff">12</span> 次 http 请求
+</span></span><span style="display:flex;"><span>  io_namespace_http_requests_latency_seconds_summary_count<span style="color:#ff7b72;font-weight:bold">{</span><span style="color:#79c0ff">path</span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;/&#34;</span>,method<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;GET&#34;</span>,code<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;200&#34;</span>,<span style="color:#ff7b72;font-weight:bold">}</span> 12.0
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>现在可以总结一下 Histogram 与 Summary 的异同：</p>
+<ul>
+<li>
+<p>它们都包含了 <code>&lt;basename&gt;_sum</code> 和 <code>&lt;basename&gt;_count</code> 指标</p>
+</li>
+<li>
+<p>Histogram 需要通过 <code>&lt;basename&gt;_bucket</code> 来计算分位数，而 Summary 则直接存储了分位数的值。</p>
+</li>
+</ul>
+<p>关于 Summary 与 Histogram 的详细用法，请参考 <a href="https://prometheus.io/docs/practices/histograms">histograms and summaries</a>。</p>
+</li>
+</ul>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="https://prometheus.fuckcloudnative.io/di-er-zhang-gai-nian/data_model">第1节：数据模型 - Prometheus 中文文档 (fuckcloudnative.io)</a></p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Prometheus 入门实操</title>
+      <link>https://Lucareful.github.io/en/posts/prometheus-%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/prometheus-%E5%85%A5%E9%97%A8%E5%AE%9E%E6%93%8D/</guid>
+      <description>Prometheus 入门实操 参考文章：Prometheus监控Linux主机 - 吕振江 - 博客园 (cnblogs.com) 安装 1 2 3 4 5 6 7 8 9 # 下载 wget https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz # 解压 tar zxf prometheus-2.44.0.linux-amd64.tar.gz # 移动 mv prometheus-2.24.1.linux-amd64/* /usr/local/prometheus # 将本机</description>
+      <content:encoded><![CDATA[<h1 id="prometheus-入门实操">Prometheus 入门实操</h1>
+<blockquote>
+<p>参考文章：<a href="https://www.cnblogs.com/lvzhenjiang/p/14377577.html">Prometheus监控Linux主机 - 吕振江 - 博客园 (cnblogs.com)</a></p>
+</blockquote>
+<h2 id="安装">安装</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 下载</span>
+</span></span><span style="display:flex;"><span>wget https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 解压</span>
+</span></span><span style="display:flex;"><span>tar zxf prometheus-2.44.0.linux-amd64.tar.gz
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 移动</span>
+</span></span><span style="display:flex;"><span>mv prometheus-2.24.1.linux-amd64/* /usr/local/prometheus
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 将本机上报</span>
+</span></span><span style="display:flex;"><span>sed -i <span style="color:#a5d6ff">&#39;s/localhost/你的主机ip/g&#39;</span> /usr/local/prometheus/prometheus.yml
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="启动systemed守护进程">启动(systemed，守护进程)</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>cat <span style="color:#a5d6ff">&lt;&lt;EOF &gt; /usr/lib/systemd/system/prometheus.service
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">[Unit]
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">Description=prometheus
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">After=network.target
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">[Service]
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">Type=simple
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">ExecStart=/usr/local/prometheus/prometheus --config.file=/usr/local/prometheus/prometheus.yml 
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">	--storage.tsdb.path=/usr/local/prometheus/data/ --web.enable-lifecycle 
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">	--storage.tsdb.retention.time=30d	
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">Restart=on-failure
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">[Install]
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">WantedBy=multi-user.target
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">EOF</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>systemctl daemon-reload
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>systemctl start prometheus
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>systemctl status prometheus <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> systemctl enable prometheus
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="访问">访问</h3>
+<blockquote>
+<p>Ip:9090</p>
+</blockquote>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601135045946.png" alt="image-20230601135045946"  />
+</p>
+<!-- more -->
+<h3 id="管理接口">管理接口</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ curl  http://ip:9090/-/healthy
+</span></span><span style="display:flex;"><span>Prometheus is Healthy.
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 健康检查</span>
+</span></span><span style="display:flex;"><span>$ curl  http://ip:9090/-/ready
+</span></span><span style="display:flex;"><span>Prometheus is Ready.
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 检查Prometheus是否启动</span>
+</span></span><span style="display:flex;"><span>$ curl -XPOST http://ip:9090/-/reload
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 通过web接口重载，启动时需增加选项  --web.enable-lifecycle</span>
+</span></span><span style="display:flex;"><span>$ curl -XPUT http://ip:9090/-/quit
+</span></span><span style="display:flex;"><span>$ curl -XPOST http://ip:9090/-/quit
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 停止Prometheus</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 同样需启动时增加--web.enable-lifecycle选项</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="grafana安装centos">grafana安装（centos）</h1>
+<blockquote>
+<p>安装连接参考：<a href="https://grafana.com/docs/grafana/latest/setup-grafana/installation/redhat-rhel-fedora/">Install Grafana on Red Hat, RHEL, or Fedora | Grafana documentation</a></p>
+</blockquote>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>sudo yum install -y https://dl.grafana.com/oss/release/grafana-9.5.2-1.x86_64.rpm
+</span></span><span style="display:flex;"><span>systemctl daemon-reload
+</span></span><span style="display:flex;"><span>systemctl enable grafana-server <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> systemctl start grafana-server
+</span></span><span style="display:flex;"><span>ss -lnput | grep <span style="color:#a5d6ff">3000</span>
+</span></span><span style="display:flex;"><span>tcp    LISTEN     <span style="color:#a5d6ff">0</span>      <span style="color:#a5d6ff">128</span>    <span style="color:#ff7b72;font-weight:bold">[</span>::<span style="color:#ff7b72;font-weight:bold">]</span>:3000               <span style="color:#ff7b72;font-weight:bold">[</span>::<span style="color:#ff7b72;font-weight:bold">]</span>:*                   users:<span style="color:#ff7b72;font-weight:bold">((</span><span style="color:#a5d6ff">&#34;grafana&#34;</span>,pid<span style="color:#ff7b72;font-weight:bold">=</span>1194,fd<span style="color:#ff7b72;font-weight:bold">=</span>10<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="访问-1">访问</h2>
+<blockquote>
+<p>http://ip:3000/</p>
+</blockquote>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601141940655.png" alt="image-20230601141940655"  />
+</p>
+<h2 id="导入-prometheus-数据">导入 Prometheus 数据</h2>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601141923345.png" alt="image-20230601141923345"  />
+</p>
+<h1 id="实战---监控主机节点信息">实战 - 监控主机节点信息</h1>
+<h2 id="node_exporter-配置">node_exporter 配置</h2>
+<blockquote>
+<p>node_exporter用于收集主机运行信息，比如CPU、内存、磁盘等资源使用情况。</p>
+</blockquote>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 下载</span>
+</span></span><span style="display:flex;"><span>wget https://github.com/prometheus/node_exporter/releases/download/v1.6.0/node_exporter-1.6.0.linux-amd64.tar.gz
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 解压</span>
+</span></span><span style="display:flex;"><span>tar zxf node_exporter-1.0.1.linux-amd64.tar.gz
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 移动</span>
+</span></span><span style="display:flex;"><span>mv node_exporter-1.0.1.linux-amd64/* /usr/local/node_exporter/
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="设置-systemd-启动">设置 systemd 启动</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>cat &gt; /usr/lib/systemd/system/node_exporter.service <span style="color:#a5d6ff">&lt;&lt;EOF
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">[Unit]
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">Description=node_exporter
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">After=network.target
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">[Service]\nType=simple
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">User=node_exporter
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">ExecStart=/usr/local/node_exporter/node_exporter
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">Restart=on-failure
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">[Install]
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">WantedBy=multi-user.target
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">EOF</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="启动服务">启动服务</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>systemctl daemon-reload
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>systemctl enable node_exporter <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> systemctl start node_exporter
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ss -lnput | grep <span style="color:#a5d6ff">9100</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tcp    LISTEN     <span style="color:#a5d6ff">0</span>      <span style="color:#a5d6ff">128</span>    <span style="color:#ff7b72;font-weight:bold">[</span>::<span style="color:#ff7b72;font-weight:bold">]</span>:9100               <span style="color:#ff7b72;font-weight:bold">[</span>::<span style="color:#ff7b72;font-weight:bold">]</span>:*                   users:<span style="color:#ff7b72;font-weight:bold">((</span><span style="color:#a5d6ff">&#34;node_exporter&#34;</span>,pid<span style="color:#ff7b72;font-weight:bold">=</span>1155,fd<span style="color:#ff7b72;font-weight:bold">=</span>3<span style="color:#ff7b72;font-weight:bold">))</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="配置-prometheus-监控">配置 prometheus 监控</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ $ vim /usr/local/prometheus/prometheus.yml
+</span></span><span style="display:flex;"><span>  - job_name: <span style="color:#a5d6ff">&#39;prometheus&#39;</span>
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># metrics_path defaults to &#39;/metrics&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># scheme defaults to &#39;http&#39;.</span>
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>    static_configs:
+</span></span><span style="display:flex;"><span>    - targets: <span style="color:#ff7b72;font-weight:bold">[</span><span style="color:#a5d6ff">&#39;ip:9090&#39;</span><span style="color:#ff7b72;font-weight:bold">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 增加以下配置，其中job_name为自定义</span>
+</span></span><span style="display:flex;"><span>  - job_name: <span style="color:#a5d6ff">&#39;agent1&#39;</span>
+</span></span><span style="display:flex;"><span>    static_configs:
+</span></span><span style="display:flex;"><span>    - targets: <span style="color:#ff7b72;font-weight:bold">[</span><span style="color:#a5d6ff">&#39;ip:9100&#39;</span><span style="color:#ff7b72;font-weight:bold">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 重载Prometheus配置文件</span>
+</span></span><span style="display:flex;"><span>$ curl -XPOST http://ip:9090/-/reload
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="查看node上报状态">查看node上报状态</h3>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601142949919.png" alt="image-20230601142949919"  />
+</p>
+<h3 id="配置-grafana-展示">配置 grafana 展示</h3>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601143216266.png" alt="image-20230601143216266"  />
+</p>
+<p>选择 9276 模版号</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601143259198.png" alt="image-20230601143259198"  />
+</p>
+<p>load 之后选择数据源 prometheus</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601143407125.png" alt="image-20230601143407125"  />
+</p>
+<p>查看效果</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/image-20230601143519243.png" alt="image-20230601143519243"  />
+</p>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>计算机网络 on Luenci</title>
+    <link>https://Lucareful.github.io/en/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/</link>
+    <description>Recent content in 计算机网络 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>同源和跨域</title>
+      <link>https://Lucareful.github.io/en/posts/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/%E5%85%B3%E4%BA%8E%E8%B7%A8%E5%9F%9F%E5%92%8C%E5%90%8C%E6%BA%90/</guid>
+      <description>原文:同源策略、跨域解决方案 一、同源策略 1、先来说说什么是源 • 源（origin）就是协议、域名和端口号。 以上url中的源就是：http://</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>原文:<a href="https://www.cnblogs.com/rockmadman/p/6836834.html">同源策略、跨域解决方案</a></p>
+</blockquote>
+<h2 id="一同源策略">一、同源策略</h2>
+<h3 id="1先来说说什么是源">1、先来说说什么是源</h3>
+<p>• 源（origin）就是协议、域名和端口号。
+以上url中的源就是：http://www.company.com:80
+若地址里面的协议、域名和端口号均相同则属于同源。
+以下是相对于 <a href="http://www.a.com/test/index.html">http://www.a.com/test/index.html</a> 的同源检测</p>
+<p>• <a href="http://www.a.com/dir/page.html">http://www.a.com/dir/page.html</a> &mdash;-成功
+• <a href="http://www.child.a.com/test/index.html">http://www.child.a.com/test/index.html</a> &mdash;-失败，域名不同
+• <a href="https://www.a.com/test/index.html">https://www.a.com/test/index.html</a> &mdash;-失败，协议不同
+• <a href="http://www.a.com:8080/test/index.html">http://www.a.com:8080/test/index.html</a> &mdash;-失败，端口号不同</p>
+<h3 id="2什么是同源策略">2.什么是同源策略？</h3>
+<p>同源策略是浏览器的一个安全功能，不同源的客户端脚本在没有明确授权的情况下，不能读写对方资源。所以a.com下的js脚本采用ajax读取b.com里面的文件数据是会报错的。</p>
+<p>• 不受同源策略限制的：
+1、页面中的链接，重定向以及表单提交是不会受到同源策略限制的。
+2、跨域资源的引入是可以的。但是js不能读写加载的内容。如嵌入到页面中的<code>&lt;script src=&quot;...&quot;&gt;``&lt;/script&gt;，&lt;img&gt;</code>，<code>&lt;link&gt;</code>，<code>&lt;iframe&gt;</code>等。</p>
+<!-- more -->
+<h2 id="二跨域">二、跨域</h2>
+<h3 id="1什么是跨域">1、什么是跨域</h3>
+<p>根据前面所讲的浏览器同源策略的影响，不是同源的脚本不能操作其他源下面的对象。想要操作另一个源下的对象是就需要跨域。</p>
+<h3 id="2跨域的实现形式">2、跨域的实现形式</h3>
+<h4 id="1设置documentdomain">（1）设置document.domain</h4>
+<ul>
+<li>比如<code>home.example.com</code>要读取<code>developer.example.com</code>里面的文档，由于同源策略的限制，就无法读取，我们通过设置<code>document.domain=&quot;example.com&quot;;</code>这时就不再受同源策略的限制了。</li>
+</ul>
+<h4 id="2跨资源共享corscross-origin-resource-sharing">（2）跨资源共享CORS（Cross-origin resource sharing）</h4>
+<ul>
+<li>
+<p>CORS采用新的<code>“origin:”</code>请求头和新的<code>Access-Control-Allow-Origin</code>响应头来扩展HTTP。它允许服务器用头信息显示地列出源，或使用通配符来匹配所有的源并允许任何地址请求文件。</p>
+</li>
+<li>
+<p>因此，实现CORS通信的关键是服务器。只要服务器实现了CORS接口，就可以跨源通信。</p>
+</li>
+</ul>
+<p>从而它允许浏览器向跨源服务器，发出XMLHttpRequest请求，克服了AJAX只能同源使用的限制。</p>
+<h4 id="3跨文档消息cross-document-messaging">（3）跨文档消息（cross-document messaging）</h4>
+<ul>
+<li>允许来自一个文档的脚本可以传递消息到另一个文档里的脚本，而不管脚本的来源是否不同，通过调用<code>window.postMessage()</code>方法，可以异步传递消息事件(可以使用<code>onmessage</code>事件处理程序函数来处理它)到窗口的文档里。</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>计算机网络学习</title>
+      <link>https://Lucareful.github.io/en/posts/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/</guid>
+      <description>计算机网络概述 OSI七层协议 物理层 传输的数据类型：比特流 主要定义物理设备标准，如网线的接口类型、光纤的接口类型、各种传输介质的传输速率等。它</description>
+      <content:encoded><![CDATA[<h1 id="计算机网络概述">计算机网络概述</h1>
+<h2 id="osi七层协议">OSI七层协议</h2>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/ImgRepo/master/img/hexo_img/image-20200501130320493.png" alt=""  />
+</p>
+<h3 id="物理层">物理层</h3>
+<ul>
+<li>传输的数据类型：比特流</li>
+<li>主要定义物理设备标准，如网线的接口类型、光纤的接口类型、各种传输介质的传输速率等。它的主要作用是传输比特流（就是由1、0转化为电流强弱来进行传输,到达目的地后在转化为1、0，也就是我们常说的数模转换与模数转换）。这一层的数据叫做比特</li>
+</ul>
+<h3 id="数据链路层">数据链路层</h3>
+<ul>
+<li>
+<p>传输的数据类型：帧</p>
+</li>
+<li>
+<p>定义了如何让格式化数据以进行传输，以及如何让控制对物理介质的访问。这一层通常还提供错误检测和纠正，以确保数据的可靠传输。</p>
+</li>
+</ul>
+<h3 id="网络层">网络层</h3>
+<ul>
+<li>
+<p>传输的数据类型：数据报</p>
+</li>
+<li>
+<p>在位于不同地理位置的网络中的两个主机系统之间提供连接和路径选择。Internet的发展使得从世界各站点访问信息的用户数大大增加，而网络层正是管理这种连接的层。 　</p>
+</li>
+</ul>
+<h3 id="运输层">运输层</h3>
+<ul>
+<li>
+<p>报文段/用户数据报</p>
+</li>
+<li>
+<p>定义了一些传输数据的协议和端口号（WWW端口80等），如：</p>
+<ul>
+<li>TCP（transmission control protocol –传输控制协议，传输效率低，可靠性强，用于传输可靠性要求高，数据量大的数据）</li>
+<li>UDP（user datagram protocol–用户数据报协议，与TCP特性恰恰相反，用于传输可靠性要求不高，数据量小的数据，如QQ聊天数据就是通过这种方式传输的）。 主要是将从下层接收的数据进行分段和传输，到达目的地址后再进行重组。常常把这一层数据叫做段。</li>
+</ul>
+</li>
+</ul>
+<h3 id="会话层">会话层</h3>
+<ul>
+<li>通过运输层（端口号：传输端口与接收端口）建立数据传输的通路。主要在你的系统之间发起会话或者接受会话请求（设备之间需要互相认识可以是IP也可以是MAC或者是主机名）</li>
+</ul>
+<h3 id="表示层">表示层</h3>
+<ul>
+<li>可确保一个系统的应用层所发送的信息可以被另一个系统的应用层读取。例如，PC程序与另一台计算机进行通信，其中一台计算机使用扩展二一十进制交换码（EBCDIC），而另一台则使用美国信息交换标准码（ASCII）来表示相同的字符。如有必要，表示层会通过使用一种通格式来实现多种数据格式之间的转换。</li>
+</ul>
+<h3 id="应用层">应用层</h3>
+<ul>
+<li>传输的数据类型：报文</li>
+</ul>
+<!-- more -->
+<h2 id="五层协议">五层协议</h2>
+<h3 id="1-第五层应用层application-layer">1 第五层——应用层(application layer)</h3>
+<ul>
+<li>**应用层(application layer)：**是体系结构中的最高。直接为用户的应用进程（例如电子邮件、文件传输和终端仿真）提供服务。</li>
+<li>在因特网中的应用层协议很多，如支持万维网应用的HTTP协议，支持电子邮件的SMTP协议，支持文件传送的FTP协议，DNS，POP3，SNMP，Telnet等等。</li>
+</ul>
+<h3 id="2-第四层运输层transport-layer">2. 第四层——运输层(transport layer)</h3>
+<ul>
+<li>**运输层(transport layer)：**负责向两个主机中进程之间的通信提供服务。由于一个主机可同时运行多个进程，因此运输层有复用和分用的功能</li>
+<li>复用，就是多个应用层进程可同时使用下面运输层的服务。</li>
+<li>分用，就是把收到的信息分别交付给上面应用层中相应的进程。</li>
+<li><strong>运输层主要使用以下两种协议：</strong>
+**(1) 传输控制协议TCP(Transmission Control Protocol)：**面向连接的，数据传输的单位是报文段，能够提供可靠的交付。
+**(2) 用户数据包协议UDP(User Datagram Protocol)：**无连接的，数据传输的单位是用户数据报，不保证提供可靠的交付，只能提供“尽最大努力交付”。</li>
+</ul>
+<h3 id="3-第三层网络层network-layer">3. 第三层——网络层(network layer)</h3>
+<ul>
+<li><strong>网络层(network layer)主要包括以下两个任务：</strong></li>
+<li><strong>(1) 负责为分组交换网上的不同主机提供通信服务。在发送数据时，网络层把运输层产生的报文段或用户数据报封装成分组或包进行传送。在TCP/IP体系中，由于网络层使用IP协议，因此分组也叫做IP数据报，或简称为数据报。</strong></li>
+<li><strong>(2) 选中合适的路由，使源主机运输层所传下来的分组，能够通过网络中的路由器找到目的主机。</strong></li>
+<li><strong>协议：IP,ICMP,IGMP,ARP,RARP</strong></li>
+</ul>
+<h3 id="4-第二层数据链路层data-link-layer">4. 第二层——数据链路层(data link layer)</h3>
+<ul>
+<li>**数据链路层(data link layer)：**常简称为链路层，我们知道，两个主机之间的数据传输，总是在一段一段的链路上传送的，也就是说，在两个相邻结点之间传送数据是直接传送的(点对点)，这时就需要使用专门的链路层的协议。</li>
+<li>在两个相邻结点之间传送数据时，数据链路层将网络层交下来的IP数据报组装成帧(framing)，在两个相邻结点之间的链路上“透明”地传送帧中的数据。</li>
+<li>每一帧包括数据和必要的控制信息(如同步信息、地址信息、差错控制等)。典型的帧长是几百字节到一千多字节。</li>
+<li>注：”透明”是一个很重要的术语。它表示，某一个实际存在的事物看起来却好像不存在一样。”在数据链路层透明传送数据”表示无力什么样的比特组合的数据都能够通过这个数据链路层。因此，对所传送的数据来说，这些数据就“看不见”数据链路层。或者说，数据链路层对这些数据来说是透明的。
+(1)在接收数据时，控制信息使接收端能知道一个帧从哪个比特开始和到哪个比特结束。这样，数据链路层在收到一个帧后，就可从中提取出数据部分，上交给网络层。
+(2)控制信息还使接收端能检测到所收到的帧中有无差错。如发现有差错，数据链路层就简单地丢弃这个出了差错的帧，以免继续传送下去白白浪费网络资源。如需改正错误，就由运输层的TCP协议来完成。</li>
+</ul>
+<h3 id="5-第一层物理层physical-layer">5. 第一层——物理层(physical layer)</h3>
+<ul>
+<li>**物理层(physical layer)：**在物理层上所传数据的单位是比特。物理层的任务就是透明地传送比特流。</li>
+</ul>
+<p><img loading="lazy" src="https://img-blog.csdn.net/20160126223713317" alt="osi"  />
+</p>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

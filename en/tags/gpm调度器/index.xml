@@ -1,0 +1,904 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>GPM调度器 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/gpm%E8%B0%83%E5%BA%A6%E5%99%A8/</link>
+    <description>Recent content in GPM调度器 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/gpm%E8%B0%83%E5%BA%A6%E5%99%A8/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang的goroutine模型概述和调度</title>
+      <link>https://Lucareful.github.io/en/posts/golang%E7%9A%84gpm%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%BF%B0%E5%92%8C%E8%B0%83%E5%BA%A6/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/golang%E7%9A%84gpm%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%BF%B0%E5%92%8C%E8%B0%83%E5%BA%A6/</guid>
+      <description>&lt;h1 id=&#34;g-p-m-模型概述&#34;&gt;G-P-M 模型概述&lt;/h1&gt;
+&lt;ul&gt;
+&lt;li&gt;每一个OS线程都有一个固定大小的内存块(一般会是&lt;code&gt;2MB&lt;/code&gt;)来做栈，这个栈会用来存储当前正在被调用或挂起(指在调用其它函数时)的函数的内部变量。&lt;/li&gt;
+&lt;li&gt;这个固定大小的栈同时很大又很小。因为&lt;code&gt;2MB&lt;/code&gt;的栈对于一个小小的&lt;code&gt;Goroutine&lt;/code&gt;来说是很大的内存浪费，而对于一些复杂的任务（如深度嵌套的递归）来说又显得太小。因此，Go语言做了它自己的『线程』。&lt;/li&gt;
+&lt;li&gt;在Go语言中，每一个Goroutine是一个独立的执行单元，相较于每个OS线程固定分配&lt;code&gt;2M&lt;/code&gt;内存的模式，Goroutine的栈采取了动态扩容方式， &lt;strong&gt;初始时仅为&lt;code&gt;2KB&lt;/code&gt;&lt;/strong&gt;，随着任务执行按需增长，最大可达&lt;code&gt;1GB&lt;/code&gt;（64位机器最大是&lt;code&gt;1G&lt;/code&gt;，32位机器最大是&lt;code&gt;256M&lt;/code&gt;），且完全由Golang自己的调度器 Go Scheduler 来调度。&lt;/li&gt;
+&lt;li&gt;此外，&lt;code&gt;GC&lt;/code&gt;还会周期性地将不再使用的内存回收，收缩栈空间。 因此，Go程序可以同时并发成千上万个Goroutine是得益于它&lt;strong&gt;强劲的调度器和高效的内存模型&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;任何用户线程最终肯定都是要交由OS线程来执行&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;​    Goroutine（称为G）也不例外，但是G并不直接绑定OS线程运行，而是由Goroutine Scheduler中的 &lt;code&gt;P - Logical Processor &lt;/code&gt;（逻辑处理器）来作为两者的&lt;code&gt;『中介』&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;P 可以看作是一个抽象的资源或者一个上下文，一个P绑定一个OS线程，在Golang的实现里把OS线程抽象成一个数据结构。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;M，G实际上是由M通过P来进行调度运行的&lt;/strong&gt;，但是在G的层面来看，&lt;strong&gt;P提供了G运行所需的一切资源和环境&lt;/strong&gt;，因此在G看来P就是运行它的 “CPU”，由 G、P、M 这三种由Go抽象出来的实现，最终形成了Go调度器的基本结构：&lt;/p&gt;
+&lt;h2 id=&#34;g-goroutine&#34;&gt;G: Goroutine&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;G有以下状态&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;非&lt;code&gt;GC&lt;/code&gt;状态&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;idle&lt;/code&gt;:&lt;code&gt;_Gidle for idle&lt;/code&gt;，意思是这个goroutine刚被创建出来，还未被进行初始化。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;runnable&lt;/code&gt;: &lt;code&gt;_Grunnable for runnable&lt;/code&gt;意思是这个goroutine已经在运行队列，在这种情况下，goroutine还未执行用户代码，M的执行栈还不是goroutine自己的&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;running&lt;/code&gt;: &lt;code&gt;_Grunning for running&lt;/code&gt;，意思是goroutine可能正在执行用户代码，M的执行栈已经由该goroutine所拥有，此时对象g不在运行队列中。这个状态值要待分配给M和P之后，交由M和P来设定&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;syscall&lt;/code&gt;, &lt;code&gt;waiting&lt;/code&gt;, &lt;code&gt;dead&lt;/code&gt;, &lt;code&gt;copystack&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;对应的&lt;code&gt;GC&lt;/code&gt;状态&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;scan&lt;/code&gt;, &lt;code&gt;scanrunnable&lt;/code&gt;, &lt;code&gt;scan running&lt;/code&gt;, &lt;code&gt;scansyscall&lt;/code&gt;, &lt;code&gt;scanwaiting&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_Gscan&lt;/code&gt;系列，用于标记正在被&lt;code&gt;GC&lt;/code&gt;扫描的状态，这些状态是由&lt;code&gt;_Gscan=0x1000&lt;/code&gt;再加上&lt;code&gt;_GRunnable&lt;/code&gt;, &lt;code&gt;_Grunning&lt;/code&gt;, &lt;code&gt;_Gsyscall&lt;/code&gt;和&lt;code&gt;_Gwaiting&lt;/code&gt;的枚举值所产生的，这么做的好处是直接通过简单的运算即可知道被Scan之前的状态。当被标记为这系列的状态时，这些&lt;code&gt;goroutine&lt;/code&gt;都不会执行用户代码，并且它们的执行栈都是被做该&lt;code&gt;GC&lt;/code&gt;的&lt;code&gt;goroutine&lt;/code&gt;所拥有。不过&lt;code&gt;_Gscanrunning&lt;/code&gt;状态有点特别，这个标记是为了阻止正在运行的&lt;code&gt;goroutine&lt;/code&gt;切换成其它状态，并告诉这个G自己扫描自己的堆栈。正是这种巧妙的方式，使得&lt;code&gt;Go&lt;/code&gt;语言的&lt;code&gt;GC&lt;/code&gt;十分高效。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;每个Goroutine对应一个G结构体，G 存储 Goroutine的运行堆栈、状态以及任务函数，可重用。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;G并非执行体，每个G需要绑定到P才能被调度执行。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;p-processor&#34;&gt;P: Processor&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;表示逻辑处理器， 对G来说，P相当于CPU核，G只有绑定到P(&lt;code&gt;在P的local run中&lt;/code&gt;)才能被调度。对M来说，&lt;code&gt;P&lt;/code&gt;提供了相关的执行环境(&lt;code&gt;Context&lt;/code&gt;)，如内存分配状态(&lt;code&gt;mcache&lt;/code&gt;)，任务队列(&lt;code&gt;G&lt;/code&gt;)等，&lt;strong&gt;P的数量决定了系统内最大可并行的G的数量（前提：物理CPU核数 &amp;gt;= P的数量），P的数量由用户设置的&lt;code&gt;GoMAXPROCS&lt;/code&gt;决定，但是不论&lt;code&gt;GoMAXPROCS&lt;/code&gt;设置为多大，P的数量最大为256&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;golang runtime&lt;/code&gt;是有个&lt;code&gt;sysmon&lt;/code&gt;的协程，他会轮询的检测所有的&lt;code&gt;P上下文队列&lt;/code&gt;，**只要 G-M 的线程长时间在阻塞状态，那么就重新创建一个线程去从runtime P队列里获取任务。先前的阻塞的线程会被游离出去了，当他完成阻塞操作后会触发相关的callback回调，并加入回线程组里。**简单说，如果你没有特意配置&lt;code&gt;runtime.SetMaxThreads&lt;/code&gt;，那么在没有可复用的线程的情况下，会一直创建新线程。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;m-machine&#34;&gt;M: Machine&lt;/h2&gt;
+&lt;p&gt;​    OS线程抽象，&lt;strong&gt;代表着真正执行计算的资源&lt;/strong&gt;。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;在绑定有效的P后，进入schedule循环；而schedule循环的机制大致是从Global队列、P的Local队列以及wait队列中获取G，切换到G的执行栈上并执行G的函数，调用&lt;code&gt;Goexit&lt;/code&gt;做清理工作并回到M，如此反复。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;M并不保留G状态，这是G可以跨M调度的基础，M的数量是不定的，由Go Runtime调整，为了防止创建过多OS线程导致系统调度不过来，目前默认最大限制为10000个。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在绝大多数时候，其实&lt;code&gt;P&lt;/code&gt;的数量和&lt;code&gt;M&lt;/code&gt;的数量是相等。 每创建一个&lt;code&gt;p&lt;/code&gt;, 就会创建一个对应的&lt;code&gt;M&lt;/code&gt;只有少数情况下，&lt;code&gt;M&lt;/code&gt;的数量会大于&lt;code&gt;P&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h1 id=&#34;work-stealinghttpssupertechcsailmitedupapersstealpdf-的调度算法&#34;&gt;&lt;em&gt;&lt;a href=&#34;https://supertech.csail.mit.edu/papers/steal.pdf&#34;&gt;work-stealing&lt;/a&gt;&lt;/em&gt; 的调度算法&lt;/h1&gt;
+&lt;ul&gt;
+&lt;li&gt;每个P维护一个G的本地队列；&lt;/li&gt;
+&lt;li&gt;当一个G被创建出来，或者变为可执行状态时，就把他放到P的可执行队列中；&lt;/li&gt;
+&lt;li&gt;当一个G在M里执行结束后，P会从队列中把该G取出；如果此时P的队列为空，即没有其他G可以执行， M就随机选择另外一个P，从其可执行的G队列中取走一半。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://gitee.com/luenci/RepoImg/raw/master/img/202108091238404.png&#34; alt=&#34;image-20210809113044316&#34;  /&gt;
+&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="g-p-m-模型概述">G-P-M 模型概述</h1>
+<ul>
+<li>每一个OS线程都有一个固定大小的内存块(一般会是<code>2MB</code>)来做栈，这个栈会用来存储当前正在被调用或挂起(指在调用其它函数时)的函数的内部变量。</li>
+<li>这个固定大小的栈同时很大又很小。因为<code>2MB</code>的栈对于一个小小的<code>Goroutine</code>来说是很大的内存浪费，而对于一些复杂的任务（如深度嵌套的递归）来说又显得太小。因此，Go语言做了它自己的『线程』。</li>
+<li>在Go语言中，每一个Goroutine是一个独立的执行单元，相较于每个OS线程固定分配<code>2M</code>内存的模式，Goroutine的栈采取了动态扩容方式， <strong>初始时仅为<code>2KB</code></strong>，随着任务执行按需增长，最大可达<code>1GB</code>（64位机器最大是<code>1G</code>，32位机器最大是<code>256M</code>），且完全由Golang自己的调度器 Go Scheduler 来调度。</li>
+<li>此外，<code>GC</code>还会周期性地将不再使用的内存回收，收缩栈空间。 因此，Go程序可以同时并发成千上万个Goroutine是得益于它<strong>强劲的调度器和高效的内存模型</strong>。</li>
+</ul>
+<blockquote>
+<p><strong>任何用户线程最终肯定都是要交由OS线程来执行</strong></p>
+</blockquote>
+<p>​    Goroutine（称为G）也不例外，但是G并不直接绑定OS线程运行，而是由Goroutine Scheduler中的 <code>P - Logical Processor </code>（逻辑处理器）来作为两者的<code>『中介』</code>。</p>
+<p>P 可以看作是一个抽象的资源或者一个上下文，一个P绑定一个OS线程，在Golang的实现里把OS线程抽象成一个数据结构。</p>
+<p><strong>M，G实际上是由M通过P来进行调度运行的</strong>，但是在G的层面来看，<strong>P提供了G运行所需的一切资源和环境</strong>，因此在G看来P就是运行它的 “CPU”，由 G、P、M 这三种由Go抽象出来的实现，最终形成了Go调度器的基本结构：</p>
+<h2 id="g-goroutine">G: Goroutine</h2>
+<ul>
+<li>
+<p>G有以下状态</p>
+<ul>
+<li>
+<p>非<code>GC</code>状态</p>
+<ul>
+<li><code>idle</code>:<code>_Gidle for idle</code>，意思是这个goroutine刚被创建出来，还未被进行初始化。</li>
+<li><code>runnable</code>: <code>_Grunnable for runnable</code>意思是这个goroutine已经在运行队列，在这种情况下，goroutine还未执行用户代码，M的执行栈还不是goroutine自己的</li>
+<li><code>running</code>: <code>_Grunning for running</code>，意思是goroutine可能正在执行用户代码，M的执行栈已经由该goroutine所拥有，此时对象g不在运行队列中。这个状态值要待分配给M和P之后，交由M和P来设定</li>
+<li><code>syscall</code>, <code>waiting</code>, <code>dead</code>, <code>copystack</code></li>
+</ul>
+</li>
+<li>
+<p>对应的<code>GC</code>状态</p>
+<ul>
+<li><code>scan</code>, <code>scanrunnable</code>, <code>scan running</code>, <code>scansyscall</code>, <code>scanwaiting</code></li>
+<li><code>_Gscan</code>系列，用于标记正在被<code>GC</code>扫描的状态，这些状态是由<code>_Gscan=0x1000</code>再加上<code>_GRunnable</code>, <code>_Grunning</code>, <code>_Gsyscall</code>和<code>_Gwaiting</code>的枚举值所产生的，这么做的好处是直接通过简单的运算即可知道被Scan之前的状态。当被标记为这系列的状态时，这些<code>goroutine</code>都不会执行用户代码，并且它们的执行栈都是被做该<code>GC</code>的<code>goroutine</code>所拥有。不过<code>_Gscanrunning</code>状态有点特别，这个标记是为了阻止正在运行的<code>goroutine</code>切换成其它状态，并告诉这个G自己扫描自己的堆栈。正是这种巧妙的方式，使得<code>Go</code>语言的<code>GC</code>十分高效。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>每个Goroutine对应一个G结构体，G 存储 Goroutine的运行堆栈、状态以及任务函数，可重用。</p>
+</li>
+<li>
+<p>G并非执行体，每个G需要绑定到P才能被调度执行。</p>
+</li>
+</ul>
+<h2 id="p-processor">P: Processor</h2>
+<ul>
+<li>表示逻辑处理器， 对G来说，P相当于CPU核，G只有绑定到P(<code>在P的local run中</code>)才能被调度。对M来说，<code>P</code>提供了相关的执行环境(<code>Context</code>)，如内存分配状态(<code>mcache</code>)，任务队列(<code>G</code>)等，<strong>P的数量决定了系统内最大可并行的G的数量（前提：物理CPU核数 &gt;= P的数量），P的数量由用户设置的<code>GoMAXPROCS</code>决定，但是不论<code>GoMAXPROCS</code>设置为多大，P的数量最大为256</strong>。</li>
+<li><code>golang runtime</code>是有个<code>sysmon</code>的协程，他会轮询的检测所有的<code>P上下文队列</code>，**只要 G-M 的线程长时间在阻塞状态，那么就重新创建一个线程去从runtime P队列里获取任务。先前的阻塞的线程会被游离出去了，当他完成阻塞操作后会触发相关的callback回调，并加入回线程组里。**简单说，如果你没有特意配置<code>runtime.SetMaxThreads</code>，那么在没有可复用的线程的情况下，会一直创建新线程。</li>
+</ul>
+<h2 id="m-machine">M: Machine</h2>
+<p>​    OS线程抽象，<strong>代表着真正执行计算的资源</strong>。</p>
+<ul>
+<li>
+<p>在绑定有效的P后，进入schedule循环；而schedule循环的机制大致是从Global队列、P的Local队列以及wait队列中获取G，切换到G的执行栈上并执行G的函数，调用<code>Goexit</code>做清理工作并回到M，如此反复。</p>
+</li>
+<li>
+<p>M并不保留G状态，这是G可以跨M调度的基础，M的数量是不定的，由Go Runtime调整，为了防止创建过多OS线程导致系统调度不过来，目前默认最大限制为10000个。</p>
+</li>
+<li>
+<p>在绝大多数时候，其实<code>P</code>的数量和<code>M</code>的数量是相等。 每创建一个<code>p</code>, 就会创建一个对应的<code>M</code>只有少数情况下，<code>M</code>的数量会大于<code>P</code></p>
+</li>
+</ul>
+<h1 id="work-stealinghttpssupertechcsailmitedupapersstealpdf-的调度算法"><em><a href="https://supertech.csail.mit.edu/papers/steal.pdf">work-stealing</a></em> 的调度算法</h1>
+<ul>
+<li>每个P维护一个G的本地队列；</li>
+<li>当一个G被创建出来，或者变为可执行状态时，就把他放到P的可执行队列中；</li>
+<li>当一个G在M里执行结束后，P会从队列中把该G取出；如果此时P的队列为空，即没有其他G可以执行， M就随机选择另外一个P，从其可执行的G队列中取走一半。</li>
+</ul>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202108091238404.png" alt="image-20210809113044316"  />
+</p>
+<h1 id="g-p-m-模型调度">G-P-M 模型调度</h1>
+<p>​    Go调度器工作时会维护两种用来保存G的任务队列：</p>
+<ul>
+<li>一种是一个Global任务队列</li>
+<li>一种是每个P维护的Local任务队列</li>
+</ul>
+<p>当通过Go关键字创建一个新的Goroutine的时候，它会优先被放入P的本地队列。</p>
+<p>​    为了运Goroutine，M需要持有（绑定）一个P，接着M会启动一个OS线程，循环从P的本地队列里取出一个Goroutine并执行。</p>
+<p>当然还有上文提及的 work-stealing调度算法:</p>
+<p>​    当M执行完了当前P的Local队列里的所有G后，P也不会就这么在那躺尸啥都不干，它会<strong>先尝试从Global队列寻找G</strong>来执行，如果Global队列为空，它会随机挑选另外一个P，从它的队列里中拿走一半的G到自己的队列中执行。</p>
+<h2 id="用户态阻塞唤醒"><strong>用户态阻塞/唤醒</strong></h2>
+<p>​    当<code>Goroutine</code>因为<code>channel</code>操作或者<code>network I/O</code>而阻塞时（实际上<code>Golang</code>已经用<code>netpoller</code>实现了<code>Goroutine</code>网络<code>I/O</code>阻塞不会导致<code>M</code>被阻塞，仅阻塞<code>G</code>，这里仅仅是举个栗子），对应的<code>G</code>会被放置到某个<code>wait</code>队列(如<code>channel</code>的<code>waitq</code>)，该G的状态由<code>_Gruning</code>变为<code>_Gwaitting</code>，而M会跳过该G尝试获取并执行下一个G，如果此时没有<code>runnable</code>的<code>G</code>供<code>M</code>运行，那么M将解绑P，并进入<code>sleep</code>状态；</p>
+<p>当阻塞的<code>G</code>被另一端的<code>G2</code>唤醒时（比如<code>channel</code>的可读/写通知），G被标记为<code>runnable</code>，尝试加入<code>G2</code>所在P的<code>runnext</code>，然后再是P的<code>Local</code>队列和<code>Global</code>队列。</p>
+<h2 id="系统调用阻塞">系统调用阻塞</h2>
+<p>​    当G被阻塞在某个系统调用上时，此时G会阻塞在<code>_Gsyscall</code>状态，M也处于 <code>block on syscall</code> 状态，此时的M可被抢占调度：执行该G的M会与P解绑，而<code>P</code>则尝试与其它<code>idle</code>的M绑定，继续执行其它<code>G</code>。</p>
+<p>​    如果没有其它<code>idle</code>的M，但<code>P</code>的<code>Local</code>队列中仍然有<code>G</code>需要执行，则创建一个新的M；当系统调用完成后，<code>G</code>会重新尝试获取一个<code>idle</code>的<code>P</code>进入它的<code>Local</code>队列恢复执行，如果没有<code>idle</code>的<code>P</code>，<code>G</code>会被标记为<code>runnable</code>加入到<code>Global</code>队列。</p>
+<h2 id="管理协程">管理协程</h2>
+<p>​    上面说到go语言自己定义一个结构体，叫协程。自己在用户态控制多个协程（结构体）的调度和执行，那它是怎么实现的呢？</p>
+<ul>
+<li>
+<p>go引入了P(Processor)的概念。一个P表示一个逻辑处理器，用于调度G。称之为逻辑处理器，一般与物理处理器对应</p>
+</li>
+<li>
+<p>M(Machine)，可以理解成一个线程，真正执行P的线程。</p>
+</li>
+</ul>
+<p>G、P、M之间的关系如下图：</p>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202108091238161.png" alt="image-20210809113107322"  />
+</p>
+<p>每一个P都有一个对应的G队列，P绑定了线程<code>M0</code>正在执行协程<code>G0</code>，当遇到阻塞事件的时候，runtime会为P绑定一个新的线程<code>M1</code>，执行新的新的线程</p>
+<h1 id="参考链接">参考链接</h1>
+<blockquote>
+<p><a href="https://juejin.cn/post/6927264515193045000#heading-10">Go协程管理</a></p>
+<p><a href="https://segmentfault.com/a/1190000022871460">Go 调度模型 GPM</a></p>
+</blockquote>]]></content:encoded>
+    </item>
+    <item>
+      <title>Runtime:Golang 处理系统调用阻塞方式</title>
+      <link>https://Lucareful.github.io/en/posts/runtimegolang-%E5%A4%84%E7%90%86%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E9%98%BB%E5%A1%9E%E6%96%B9%E5%BC%8F/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/runtimegolang-%E5%A4%84%E7%90%86%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E9%98%BB%E5%A1%9E%E6%96%B9%E5%BC%8F/</guid>
+      <description>&lt;h1 id=&#34;runtimegolang-处理系统调用阻塞方式&#34;&gt;Runtime：Golang 处理系统调用阻塞方式&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;当一个Goroutine由于执行 &lt;code&gt;系统调用&lt;/code&gt; 而阻塞时，会将M从GPM中分离出去，然后P再找一个G和M重新执行，避免浪费CPU资源。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;h2 id=&#34;什么是-runtime&#34;&gt;什么是 runtime&lt;/h2&gt;
+&lt;p&gt;​    runtime 描述了&lt;strong&gt;程序运行时候&lt;/strong&gt;执行的软件/指令， 在每种语言有着不同的实现。可大可小，在 C 中，runtime 是库代码， 等同于&lt;code&gt; C runtime library&lt;/code&gt;，一系列 &lt;code&gt;C &lt;/code&gt;程序运行所需的函数，在&lt;code&gt;Java&lt;/code&gt;中，&lt;code&gt;runtime&lt;/code&gt; 还提供了 &lt;code&gt;Java&lt;/code&gt; 程序运行所需的虚拟机等。&lt;/p&gt;
+&lt;p&gt;​    总而言之，&lt;strong&gt;runtime 是一个通用抽象的术语，指的是计算机程序运行的时候所需要的一切代码库，框架，平台等&lt;/strong&gt;。&lt;/p&gt;
+&lt;h2 id=&#34;go中的-runtime&#34;&gt;Go中的 runtime&lt;/h2&gt;
+&lt;p&gt;在 Go 中， 有一个 runtime 库，其实现了垃圾回收，并发控制， 栈管理以及其他一些 Go 语言的关键特性。 runtime 库是每个 Go 程序的一部分，也就是说编译 Go 代码为机器代码时也会将其也编译进来。所以 Go 官方将其定位偏向类似于 C 语言中的库。Go 中的 runtime 不像 Java runtime （JRE， java runtime envirement ) 一样，jre 还会提供虚拟机， Java 程序要在 JRE 下 才能运行。&lt;/p&gt;
+&lt;p&gt;所以在 Go 语言中， runtime 只是提供支持语言特性的库的名称，也就是 Go 程序执行时候使用的库。&lt;/p&gt;
+&lt;h2 id=&#34;p的状态切换&#34;&gt;P的状态切换&lt;/h2&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/202205201526793.png&#34; alt=&#34;P的状态切换&#34;  /&gt;
+&lt;/p&gt;
+&lt;p&gt;​    从上图我们可以看出 &lt;code&gt;P&lt;/code&gt; 执行系统调用时会执行 &lt;code&gt;entersyscall()&lt;/code&gt; 函数（另还有一个类似的阻塞函数 &lt;a href=&#34;https://github.com/golang/go/blob/go1.15.6/src/runtime/proc.go#L3171-L3212&#34;&gt;&lt;code&gt;entersyscallblock()&lt;/code&gt;&lt;/a&gt; ，注意两者的区别）。当系统调用执行完毕切换回去会执行 &lt;a href=&#34;https://github.com/golang/go/blob/go1.15.6/src/runtime/proc.go#L3222-L3305&#34;&gt;&lt;code&gt;exitsyscall()&lt;/code&gt;&lt;/a&gt; 函数，下面我们看一下这两个函数的实现。&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="runtimegolang-处理系统调用阻塞方式">Runtime：Golang 处理系统调用阻塞方式</h1>
+<blockquote>
+<p>当一个Goroutine由于执行 <code>系统调用</code> 而阻塞时，会将M从GPM中分离出去，然后P再找一个G和M重新执行，避免浪费CPU资源。</p>
+</blockquote>
+<h2 id="前言">前言</h2>
+<h2 id="什么是-runtime">什么是 runtime</h2>
+<p>​    runtime 描述了<strong>程序运行时候</strong>执行的软件/指令， 在每种语言有着不同的实现。可大可小，在 C 中，runtime 是库代码， 等同于<code> C runtime library</code>，一系列 <code>C </code>程序运行所需的函数，在<code>Java</code>中，<code>runtime</code> 还提供了 <code>Java</code> 程序运行所需的虚拟机等。</p>
+<p>​    总而言之，<strong>runtime 是一个通用抽象的术语，指的是计算机程序运行的时候所需要的一切代码库，框架，平台等</strong>。</p>
+<h2 id="go中的-runtime">Go中的 runtime</h2>
+<p>在 Go 中， 有一个 runtime 库，其实现了垃圾回收，并发控制， 栈管理以及其他一些 Go 语言的关键特性。 runtime 库是每个 Go 程序的一部分，也就是说编译 Go 代码为机器代码时也会将其也编译进来。所以 Go 官方将其定位偏向类似于 C 语言中的库。Go 中的 runtime 不像 Java runtime （JRE， java runtime envirement ) 一样，jre 还会提供虚拟机， Java 程序要在 JRE 下 才能运行。</p>
+<p>所以在 Go 语言中， runtime 只是提供支持语言特性的库的名称，也就是 Go 程序执行时候使用的库。</p>
+<h2 id="p的状态切换">P的状态切换</h2>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/202205201526793.png" alt="P的状态切换"  />
+</p>
+<p>​    从上图我们可以看出 <code>P</code> 执行系统调用时会执行 <code>entersyscall()</code> 函数（另还有一个类似的阻塞函数 <a href="https://github.com/golang/go/blob/go1.15.6/src/runtime/proc.go#L3171-L3212"><code>entersyscallblock()</code></a> ，注意两者的区别）。当系统调用执行完毕切换回去会执行 <a href="https://github.com/golang/go/blob/go1.15.6/src/runtime/proc.go#L3222-L3305"><code>exitsyscall()</code></a> 函数，下面我们看一下这两个函数的实现。</p>
+<h1 id="进入系统调用">进入系统调用</h1>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Standard syscall entry used by the go syscall library and normal cgo calls.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is exported via linkname to assembly in the syscall package.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:linkname entersyscall
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">entersyscall</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#d2a8ff;font-weight:bold">reentersyscall</span>(<span style="color:#d2a8ff;font-weight:bold">getcallerpc</span>(), <span style="color:#d2a8ff;font-weight:bold">getcallersp</span>())
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>当通过Golang标准库 <code>syscall</code> 或者 <code>cgo</code> 调用时会执行 <code>entersyscall() </code>函数，并通过 <code>go:linkname</code> 方式导出为标准包。此函数只是对 <code>reentersyscall()</code> 函数的封装，我们看下这个函数实现了什么。</p>
+<p>函数注释比较多，这里只帖子重点的一部分</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>// The goroutine g is about to enter a system call.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// Record that it&#39;s not using the cpu anymore.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// This is called only from the go syscall library and cgocall,
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// not from the low-level system calls used by the runtime.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>//
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// Entersyscall cannot split the stack: the gosave must
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// make g-&gt;sched refer to the caller&#39;s stack segment, because
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// entersyscall is going to return immediately after.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>//
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// Nothing entersyscall calls can split the stack either.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// We cannot safely move the stack during an active call to syscall,
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// because we do not know which of the uintptr arguments are
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// really pointers (back into the stack).
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// In practice, this means that we make the fast path run through
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// entersyscall doing no-split things, and the slow path has to use systemstack
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// to run bigger things on the system stack.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>//
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// reentersyscall is the entry point used by cgo callbacks, where explicitly
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// saved SP and PC are restored. This is needed when exitsyscall will be called
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// from a function further up in the call stack than the parent, as g-&gt;syscallsp
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// must always point to a valid stack frame. entersyscall below is the normal
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>// entry point for syscalls, which obtains the SP and PC from the caller.
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>从注释我们得知以下信息：</p>
+<ul>
+<li>调用此函数，<code>goroutine</code> 即将进入系统调用，将不会使用P。此函数只能通过标准的 <code>syscall</code> 库和 <code>cgocall</code> 调用</li>
+<li><code>entersyscall()</code> 函数是<code>禁止栈分裂</code>的， <code>gosave()</code> 函数必须将 <code>g-&gt;sched</code> 指向它的调用者的栈段，这是因为 <code>entersyscall()</code> 函数返回时要使用（不清楚的话，可以点击<a href="https://studygolang.com/articles/12443">这里</a>）</li>
+<li><code>reentersyscall()</code> 函数是cgo的回调执行函数，它保存了已经恢复的 <code>SP/PC</code> 。</li>
+<li><code>reentersyscall()</code> 是不允许分裂的 <code>go:nosplit</code></li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">reentersyscall</span>(pc, sp <span style="color:#ff7b72">uintptr</span>) {
+</span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Disable preemption because during this function g is in Gsyscall status,
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// but can have inconsistent g-&gt;sched, do not let GC observe it.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">++</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Entersyscall must not call any function that might split/grow the stack.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// (See details in comment above.)
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// Catch calls that might, by replacing the stack guard with something that
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// will trip any stack check and leaving a flag to tell newstack to die.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.stackguard0 = stackPreempt
+</span></span><span style="display:flex;"><span>    _g_.throwsplit = <span style="color:#79c0ff">true</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Leave SP around for GC and traceback.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 更新 g.sched 相关信息，后期需要读取这些信息
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 记录g的系统调用SP/PC
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.syscallsp = sp
+</span></span><span style="display:flex;"><span>    _g_.syscallpc = pc
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 设置g的状态为 _Gsyscall
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(_g_, _Grunning, _Gsyscall)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _g_.syscallsp &lt; _g_.stack.lo <span style="color:#ff7b72;font-weight:bold">||</span> _g_.stack.hi &lt; _g_.syscallsp {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(<span style="color:#ff7b72">func</span>() {
+</span></span><span style="display:flex;"><span>            print(<span style="color:#a5d6ff">&#34;entersyscall inconsistent &#34;</span>, <span style="color:#d2a8ff;font-weight:bold">hex</span>(_g_.syscallsp), <span style="color:#a5d6ff">&#34; [&#34;</span>, <span style="color:#d2a8ff;font-weight:bold">hex</span>(_g_.stack.lo), <span style="color:#a5d6ff">&#34;,&#34;</span>, <span style="color:#d2a8ff;font-weight:bold">hex</span>(_g_.stack.hi), <span style="color:#a5d6ff">&#34;]n&#34;</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#d2a8ff;font-weight:bold">throw</span>(<span style="color:#a5d6ff">&#34;entersyscall&#34;</span>)
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> trace.enabled {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(traceGoSysCall)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// systemstack itself clobbers g.sched.{pc,sp} and we might
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// need them later when the G is genuinely blocked in a
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// syscall
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> atomic.<span style="color:#d2a8ff;font-weight:bold">Load</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonwait) <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(entersyscall_sysmon)
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().runSafePointFn <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// runSafePointFn may stack split if run on this stack
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(runSafePointFn)
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 更新与当前g关联P的执行调用系统调用次数
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.m.syscalltick = _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick
+</span></span><span style="display:flex;"><span>    _g_.sysblocktraced = <span style="color:#79c0ff">true</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 设置当前 m 所关联的 P 为下次优先使用的P（m.oldp = p), 实现亲和性
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    pp <span style="color:#ff7b72;font-weight:bold">:=</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
+</span></span><span style="display:flex;"><span>    pp.m = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    _g_.m.oldp.<span style="color:#d2a8ff;font-weight:bold">set</span>(pp)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">//  解除 m 与 p 的关联
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.m.p = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 修改P的状态为 _Psyscall
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    atomic.<span style="color:#d2a8ff;font-weight:bold">Store</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>pp.status, _Psyscall)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> sched.gcwaiting <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(entersyscall_gcwait)
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">--</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>主要有以下工作：</p>
+<ul>
+<li>在开始前需要进行 <code>_g_.m.locks++</code>, 以防止GC，函数执行结束时再减少一个锁</li>
+<li>要进行禁止栈分裂</li>
+<li>通过 <code>save()</code> 函数将当前调度需要的信息暂存到 <code>_g_.sched</code></li>
+<li>修改 <code>G</code> 和 <code>P</code> 的状态为系统调用状态</li>
+<li>将本次 <code>m</code> 绑定的 P 保存到 <code>_g_.oldp</code> 字段中，以备系统调用完毕后可以优先使用当前P继续执行</li>
+</ul>
+<h1 id="退出系统调用">退出系统调用</h1>
+<p>​    当一个<code>goroutine</code>系统调用结束后，需要再次将<code>GM</code>重新与<code>P</code>关联继续执行，<code>Golang</code> 为了亲和性，会优先与上次执行的P绑定，如果上次关联的 <code>P</code> 正在被使用，这时再考虑重新找一个新的<code>P </code>关联。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// The goroutine g exited its system call.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Arrange for it to run on a cpu again.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is called only from the go syscall library, not
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// from the low-level system calls used by the runtime.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Write barriers are not allowed because our P may have been stolen.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is exported via linkname to assembly in the syscall package.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:linkname exitsyscall
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall</span>() {}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>同 <code>reentersyscall()</code> 函数一样，<code>exitsyscall() </code>函数也是通过调用go的标准系统调用库实现的，而不是使用底层的<code>runtime</code>调用方法。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">68
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">69
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall</span>() {
+</span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
+</span></span><span style="display:flex;"><span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">++</span> <span style="color:#8b949e;font-style:italic">// see comment in entersyscall
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">getcallersp</span>() &gt; _g_.syscallsp {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">throw</span>(<span style="color:#a5d6ff">&#34;exitsyscall: syscall frame is no longer valid&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 重置g阻塞时间为0
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.waitsince = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 取出上次关联的P，优先使用
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    oldp <span style="color:#ff7b72;font-weight:bold">:=</span> _g_.m.oldp.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
+</span></span><span style="display:flex;"><span>    _g_.m.oldp = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 与原来的P进行关联
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast</span>(oldp) {
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> trace.enabled {
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">if</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>() <span style="color:#ff7b72;font-weight:bold">||</span> _g_.m.syscalltick <span style="color:#ff7b72;font-weight:bold">!=</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick {
+</span></span><span style="display:flex;"><span>                <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(traceGoStart)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// There&#39;s a cpu for us, so we can run.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick<span style="color:#ff7b72;font-weight:bold">++</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// We need to cas the status and scan before resuming...
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// G 的状态恢复为 _Grunning
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(_g_, _Gsyscall, _Grunning)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Garbage collector isn&#39;t running (since we are),
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// so okay to clear syscallsp.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        _g_.syscallsp = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>        _g_.m.locks<span style="color:#ff7b72;font-weight:bold">--</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> _g_.preempt {
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// restore the preemption request in case we&#39;ve cleared it in newstack
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            _g_.stackguard0 = stackPreempt
+</span></span><span style="display:flex;"><span>        } <span style="color:#ff7b72">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// otherwise restore the real _StackGuard, we&#39;ve spoiled it in entersyscall/entersyscallblock
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            _g_.stackguard0 = _g_.stack.lo <span style="color:#ff7b72;font-weight:bold">+</span> _StackGuard
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        _g_.throwsplit = <span style="color:#79c0ff">false</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> sched.disable.user <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> !<span style="color:#d2a8ff;font-weight:bold">schedEnabled</span>(_g_) {
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// Scheduling of this goroutine is disabled.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            <span style="color:#d2a8ff;font-weight:bold">Gosched</span>()
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    _g_.sysexitticks = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> trace.enabled {
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Wait till traceGoSysBlock event is emitted.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// This ensures consistency of the trace (the goroutine is started after it is blocked).
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#ff7b72">for</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> oldp.syscalltick <span style="color:#ff7b72;font-weight:bold">==</span> _g_.m.syscalltick {
+</span></span><span style="display:flex;"><span>            <span style="color:#d2a8ff;font-weight:bold">osyield</span>()
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// We can&#39;t trace syscall exit right now because we don&#39;t have a P.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// Tracing code can invoke write barriers that cannot run without a P.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// So instead we remember the syscall exit time and emit the event
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// in execute when we have a P.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        _g_.sysexitticks = <span style="color:#d2a8ff;font-weight:bold">cputicks</span>()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">--</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Call the scheduler.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 在g0上调用 exitsyscall0() 函数, 执行流程到这里的话，说明并没有找到空闲的P，此时需要将G和M进行解绑，分别入相应的队列等待下次执行
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">mcall</span>(exitsyscall0)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Scheduler returned, so we&#39;re allowed to run now.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// Delete the syscallsp information that we left for
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// the garbage collector during the system call.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// Must wait until now because until gosched returns
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// we don&#39;t know for sure that the garbage collector
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// is not running.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 以下信息必须等待调度器返回才可以重置，gc考虑
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.syscallsp = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick<span style="color:#ff7b72;font-weight:bold">++</span>
+</span></span><span style="display:flex;"><span>    _g_.throwsplit = <span style="color:#79c0ff">false</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>当系统调用返回时，通过函数 <code>exitsyscallfast()</code> 优先与上次关联的 <code>oldp</code> 进行关联，否则重新获取一个新的<code>P</code>。如果重新获取新<code>P</code>也失败的话，这时候就需要将<code>GM</code>进行解绑，分别入等待执行队列等待下次的调度执行。</p>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202205111736507.png" alt="img"  />
+</p>
+<h2 id="有p关联">有P关联</h2>
+<p>上面我们说过与P关联时会优先使用上次使用的P，这里我们先看下与<code>oldp</code> 绑定的逻辑：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast</span>(oldp <span style="color:#ff7b72;font-weight:bold">*</span>p) <span style="color:#ff7b72">bool</span> {
+</span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Freezetheworld sets sweightwait but does not retake P&#39;s.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> sched.sweightwait <span style="color:#ff7b72;font-weight:bold">==</span> freezeSweightWait {
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">false</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Try to re-acquire the last P.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 尝试与上次的P关联
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> oldp.status <span style="color:#ff7b72;font-weight:bold">==</span> _Psyscall <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> atomic.<span style="color:#d2a8ff;font-weight:bold">Cas</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>oldp.status, _Psyscall, _Pidle) {
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// There&#39;s a cpu for us, so we can run.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">wirep</span>(oldp)
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast_reacquired</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">true</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Try to get any other idle P.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> sched.pidle <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">var</span> ok <span style="color:#ff7b72">bool</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(<span style="color:#ff7b72">func</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// 获取另一个P
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            ok = <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast_pidle</span>()
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">if</span> ok <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> trace.enabled {
+</span></span><span style="display:flex;"><span>                <span style="color:#ff7b72">if</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#8b949e;font-style:italic">// Wait till traceGoSysBlock event is emitted.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>                    <span style="color:#8b949e;font-style:italic">// This ensures consistency of the trace (the goroutine is started after it is blocked).
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>                    <span style="color:#ff7b72">for</span> oldp.syscalltick <span style="color:#ff7b72;font-weight:bold">==</span> _g_.m.syscalltick {
+</span></span><span style="display:flex;"><span>                        <span style="color:#d2a8ff;font-weight:bold">osyield</span>()
+</span></span><span style="display:flex;"><span>                    }
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>                <span style="color:#d2a8ff;font-weight:bold">traceGoSysExit</span>(<span style="color:#a5d6ff">0</span>)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> ok {
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">true</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">false</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>可以看到这里优先通过调用 <code>wirep()</code> 函数实现与上次使用的P关联。如果关联失败，再去看调度器里是否有空闲的P可以用（<code>sched.pidle != 0</code>）。如果有的话，则通过 <code>exitsyscallfast_pidle()</code> 函数里的 <code>pidleget()</code> 重新获取一个新的P进行关联。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Try get a p from _Pidle list.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Sched must be locked.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// May run during STW, so write barriers are not allowed.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">pidleget</span>() <span style="color:#ff7b72;font-weight:bold">*</span>p {
+</span></span><span style="display:flex;"><span>    _p_ <span style="color:#ff7b72;font-weight:bold">:=</span> sched.pidle.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _p_ <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>        sched.pidle = _p_.link
+</span></span><span style="display:flex;"><span>        atomic.<span style="color:#d2a8ff;font-weight:bold">Xadd</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.npidle, <span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">1</span>) <span style="color:#8b949e;font-style:italic">// TODO: fast atomic
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> _p_
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="无p关联">无P关联</h2>
+<p>如果所有的 <code>P</code> 都处于繁忙状态，可能无法获取空闲的P，这时就不得不先将GM解除关联，然后放入各自的等待队列里，等待下次的调度。实现函数为 <code>exitsyscall0()</code>, 此函数需要在系统栈上执行。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// exitsyscall slow path on g0.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Failed to acquire P, enqueue gp as runnable.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall0</span>(gp <span style="color:#ff7b72;font-weight:bold">*</span>g) {
+</span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// G 状态为等待执行状态
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(gp, _Gsyscall, _Grunnable)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 解除m与G的关联
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">dropg</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">lock</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.lock)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">var</span> _p_ <span style="color:#ff7b72;font-weight:bold">*</span>p
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">schedEnabled</span>(_g_) {
+</span></span><span style="display:flex;"><span>        _p_ = <span style="color:#d2a8ff;font-weight:bold">pidleget</span>()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _p_ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// 将g 放放全局运行队列
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">globrunqput</span>(gp)
+</span></span><span style="display:flex;"><span>    } <span style="color:#ff7b72">else</span> <span style="color:#ff7b72">if</span> atomic.<span style="color:#d2a8ff;font-weight:bold">Load</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonwait) <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>        atomic.<span style="color:#d2a8ff;font-weight:bold">Store</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonwait, <span style="color:#a5d6ff">0</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">notewakeup</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonnote)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">unlock</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.lock)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 这里再检查一次是否有p可用，有的话，正好重新再获取一个G立即执行
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> _p_ <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">acquirep</span>(_p_)
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">execute</span>(gp, <span style="color:#79c0ff">false</span>) <span style="color:#8b949e;font-style:italic">// Never returns.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _g_.m.lockedg <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Wait until another thread schedules gp and so m again.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">sweightlockedm</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">execute</span>(gp, <span style="color:#79c0ff">false</span>) <span style="color:#8b949e;font-style:italic">// Never returns.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 停止M
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">sweightm</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 重新调度
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">schedule</span>() <span style="color:#8b949e;font-style:italic">// Never returns.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>sweightm() </code>函数会停止当前<code>m</code>执行，直到有新的G需要执行。m停止后被调用 <code>mput()</code> 函数将当前<code>m</code>放在一下 <code>sched.midle</code> 空闲列表里。</p>
+<h1 id="总结">总结</h1>
+<ul>
+<li>当进入系统调用时，先记录下当前 G 的调度信息，包括当前使用的 P</li>
+<li>退出系统调用时，优先使用上次使用的P；如果原来的P已被使用，则重新找一个新的P；如果无P可用，则先当前的GM关系先解除，放入各自的待执行队列，等待下次调度再执行。这里的执行队列为全局 <code>sched</code> 。</li>
+</ul>
+<h1 id="参考链接">参考链接</h1>
+<ul>
+<li><a href="https://blog.haohtml.com/archives/23551">https://blog.haohtml.com/archives/23551</a></li>
+<li><a href="https://studygolang.com/articles/28812#:~:text=Go%E4%B8%AD%E7%9A%84runtime,C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84%E5%BA%93%E3%80%82">https://studygolang.com/articles/28812#:~:text=Go%E4%B8%AD%E7%9A%84runtime,C%20%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84%E5%BA%93%E3%80%82</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

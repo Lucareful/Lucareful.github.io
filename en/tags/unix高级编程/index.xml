@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Unix高级编程 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/unix%E9%AB%98%E7%BA%A7%E7%BC%96%E7%A8%8B/</link>
+    <description>Recent content in Unix高级编程 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/unix%E9%AB%98%E7%BA%A7%E7%BC%96%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>UNIX 系统体系结构</title>
+      <link>https://Lucareful.github.io/en/posts/unix%E9%AB%98%E7%BA%A7%E7%BC%96%E7%A8%8B/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/unix%E9%AB%98%E7%BA%A7%E7%BC%96%E7%A8%8B/</guid>
+      <description>&lt;h1 id=&#34;unix-体系结构&#34;&gt;Unix 体系结构&lt;/h1&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://gitee.com/luenci/RepoImg/raw/master/img/202203291146103.webp&#34; alt=&#34;img&#34;  /&gt;
+&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内核：从严格意义来说，可将操作系统（内核）定义为一种软件，它控制计算机硬件资源，提供程序运行环境。&lt;/li&gt;
+&lt;li&gt;shell: 是一个命令行解释器，它读取用户输入，然后执行命令。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;函数&#34;&gt;函数&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;系统调用通常提供一种最小的接口，而库函数通常提供比较复杂的功能。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;系统调用：内核的接口。各种版本的Unix实现都提供良好定义、数量有限、直接进入内核的入口点，这些入口点称为&lt;code&gt;系统调用&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;公用库函数：封装一些功能，库函数可能会包含很多的系统调用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;登录&#34;&gt;登录&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;/etc/passwd&lt;/code&gt;口令文件中保存这用户的登录相关信息。&lt;/li&gt;
+&lt;li&gt;由七个以冒号分隔的字段组成：登录名、加密口令、数字用户ID、数字组ID、注释字段、起始目录（&lt;code&gt;/home/sar&lt;/code&gt;）、shell程序（&lt;code&gt;/bin/ksh&lt;/code&gt;）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;登录名 加密口令  数字用户ID  数字组ID   注释字段   起始目录    shell程序
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root    x        &lt;span style=&#34;color:#a5d6ff&#34;&gt;0&lt;/span&gt;         &lt;span style=&#34;color:#a5d6ff&#34;&gt;0&lt;/span&gt;        root     /root      /bin/bash
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;</description>
+      <content:encoded><![CDATA[<h1 id="unix-体系结构">Unix 体系结构</h1>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202203291146103.webp" alt="img"  />
+</p>
+<ul>
+<li>内核：从严格意义来说，可将操作系统（内核）定义为一种软件，它控制计算机硬件资源，提供程序运行环境。</li>
+<li>shell: 是一个命令行解释器，它读取用户输入，然后执行命令。</li>
+</ul>
+<h3 id="函数">函数</h3>
+<blockquote>
+<p>系统调用通常提供一种最小的接口，而库函数通常提供比较复杂的功能。</p>
+</blockquote>
+<ul>
+<li>系统调用：内核的接口。各种版本的Unix实现都提供良好定义、数量有限、直接进入内核的入口点，这些入口点称为<code>系统调用</code></li>
+<li>公用库函数：封装一些功能，库函数可能会包含很多的系统调用</li>
+</ul>
+<h2 id="登录">登录</h2>
+<ul>
+<li><code>/etc/passwd</code>口令文件中保存这用户的登录相关信息。</li>
+<li>由七个以冒号分隔的字段组成：登录名、加密口令、数字用户ID、数字组ID、注释字段、起始目录（<code>/home/sar</code>）、shell程序（<code>/bin/ksh</code>）。</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>登录名 加密口令  数字用户ID  数字组ID   注释字段   起始目录    shell程序
+</span></span><span style="display:flex;"><span>root    x        <span style="color:#a5d6ff">0</span>         <span style="color:#a5d6ff">0</span>        root     /root      /bin/bash
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="文件和目录">文件和目录</h2>
+<h3 id="文件系统">文件系统</h3>
+<ul>
+<li>UNIX 文件系统是目录和文件的一种层次结构，所有东西的起点是称为根（root）的目录，这个目录名称是一个字符 <code>&quot;/&quot;</code>。</li>
+<li>目录（directory）是一个包含目录项的文件。</li>
+</ul>
+<h3 id="文件名">文件名</h3>
+<ul>
+<li>目录中的各个名字称为文件名（filename）。只有斜线（<code>/</code>）和空字符不能出现在文件名中。
+<ul>
+<li><code>/</code>：用来分隔构成路径名的各文件名。</li>
+<li>空字符：用来终止一个路径名。</li>
+</ul>
+</li>
+<li>创建新目录的时候会自动创建两个文件名：<code>.</code>(点)和<code>..</code>（点点）。在最高层次的根目录中，点点和点相同
+<ul>
+<li><code>.</code>(点)：指向当前目录</li>
+<li><code>..</code>（点点）：指向父目录</li>
+</ul>
+</li>
+</ul>
+<h3 id="路径名">路径名</h3>
+<p>由斜线分隔的一个或多个文件名组成的序列（也可以斜线开头）构成路径名（pathname），以斜线开头的路径名称称为绝对路径名（absolute pathname），否则称为相对路径名（relative pathname）。</p>
+<ul>
+<li>文件系统根的名字（<code>/</code>）是一个特殊的绝对路径名，它不含文件名。</li>
+</ul>
+<h3 id="工作目录">工作目录</h3>
+<p>每个进程都有一个工作目录（working directory），有时称其为当前工作目录（current working directory）。<strong>所有的相对路径都从工作目录开始解释</strong></p>
+<h3 id="起始目录">起始目录</h3>
+<p>登录时，工作目录设置为起始目录（home directory），该其实目录从口令文件中相应的用户的登录项中取得。</p>
+<h2 id="输入和输出">输入和输出</h2>
+<h3 id="文件描述符">文件描述符</h3>
+<p>文件描述符（file descriptor）通常是一个<strong>小的非负整数</strong>，内核用以标识一个特定进程正在访问的文件。当内核打开一个现有文件或创建一个新文件时，它都返回一个文件描述符。在读、写文件时，可以使用这个文件描述符。</p>
+<h3 id="标准输入标准输出和标准错误">标准输入、标准输出和标准错误</h3>
+<p>按照惯例，每当运行一个新程序时，所有的shell都为其打开3个文件描述符，即标准输入（standard input）、标准输出（standard output）、以及标准错误（standard error）。</p>
+<h3 id="不带缓冲的io">不带缓冲的I/O</h3>
+<p>函数 open、read、write、lseek以及close提供了不带缓冲的I/O。</p>
+<h3 id="标准io">标准I/O</h3>
+<p>标准I/O函数为那些不带缓冲的I/O函数提供了一个带缓冲的接口。使用标准I/O函数无须担心选取最佳的缓冲区大小。</p>
+<h2 id="程序和进程">程序和进程</h2>
+<h3 id="程序">程序</h3>
+<p>程序（program）是一个存储在磁盘上某个目录中的可执行文件。内核使用<code>exec</code>函数（7个<code>exec</code>函数之一），将程序读入内存，并执行程序。</p>
+<h3 id="进程和进程id">进程和进程ID</h3>
+<p>程序被执行的实例被称为进程（process）。Unix系统确保每个进程都有一个唯一的数字标识符，称为进程ID（process ID）。进程ID总是一个非负整数</p>
+<h3 id="进程控制">进程控制</h3>
+<p>有3个用于进程控制的主要函数：<code>fork</code>、<code>exec</code>、<code>waitpid</code>。(<code>exec</code>函数有七种变体，但经常把它们统称为<code>exec</code>函数。)</p>
+<ul>
+<li><code>fork</code>：调用fork用于创建一个新进程。</li>
+<li><code>waitpid</code>: 函数返回子进程的终止状态（status变量）。</li>
+</ul>
+<h3 id="线程和线程id">线程和线程ID</h3>
+<p>通常，一个进程只有一个控制线程（thread）——某一时刻执行的一组机器指令。</p>
+<ul>
+<li>一个线程内的所有线程共享同一地址空间、文件描述符、栈以及与进程相关的属性。因为它们能访问同一存储区，所有各线程在访问共享数据时需要采用同步措施避免不一致性。</li>
+<li>与进程相同，线程也用ID标识。但是，<strong>线程ID只在它所属的进程内起作用</strong>。一个进程中的线程ID在另一个进程中没有意义。当在一进程中对某个特定线程进行处理时，我们可以使用该线程的ID引用它。</li>
+</ul>
+<h3 id="出错处理">出错处理</h3>
+<p>​    当Unix系统函数出错时候，通常会返回一个负值，而且整形变量<code>errno</code>通常被设置为具有特定信息的值。</p>
+<h2 id="用户标识">用户标识</h2>
+<h3 id="用户id">用户ID</h3>
+<p>​    口令文件登录项中的用户ID（user ID）是一个数值，它向系统标识各个不用的用户</p>
+<ul>
+<li>用户ID为0的用户为根用户（root）或者超级用户（superuser）。
+<ul>
+<li>如果一个进程具有超级用户特权，则大多数文件名权限的检查都不再进行。</li>
+</ul>
+</li>
+</ul>
+<h3 id="组id">组ID</h3>
+<blockquote>
+<p>组被用于将若干用户集合到项目或部门中去。这种机制允许同组的各个成员之间共享资源（如文件）</p>
+<p>这个组管理可以按照（rbac）角色资源管理去理解</p>
+</blockquote>
+<p>口令文件登录项也包含用户的组ID（group ID），它是一个数值。</p>
+<ul>
+<li>组ID是由系统管理员在指定用户登录名时分配的。</li>
+<li>在口令文件中有多个登录项具有相同的组ID。</li>
+</ul>
+<h3 id="附属组id">附属组ID</h3>
+<p>​    除了在口令文件中对一个登录名指定一个组ID外，大多数UNIX系统版本还允许一个用户属于另外一些组。</p>
+<h2 id="信号">信号</h2>
+<p>​    信号用于通知进程发生了某种情况。进程有以下三种信号处理方式。</p>
+<ul>
+<li>忽略信号</li>
+<li>按系统默认的方式处理。一般是终止该进程</li>
+<li>提供一个函数，信号发生时调用该函数，这种称为捕捉信号。</li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>UNIX 环境高级编程 - 文件和目录</title>
+      <link>https://Lucareful.github.io/en/posts/unix%E9%AB%98%E7%BA%A7%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%96%87%E4%BB%B6%E5%92%8C%E7%9B%AE%E5%BD%95/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/unix%E9%AB%98%E7%BA%A7%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%96%87%E4%BB%B6%E5%92%8C%E7%9B%AE%E5%BD%95/</guid>
+      <description>Unix高级编程之文件和目录 文件类型 普通文件（regular file） 这是最常用的文件类型，这种文件包含了某种形式的数据。例如文本文件、二进</description>
+      <content:encoded><![CDATA[<h1 id="unix高级编程之文件和目录">Unix高级编程之文件和目录</h1>
+<h2 id="文件类型">文件类型</h2>
+<h3 id="普通文件regular-file">普通文件（regular file）</h3>
+<ul>
+<li>这是最常用的文件类型，这种文件包含了某种形式的数据。例如文本文件、二进制可执行文件等等。</li>
+<li>不管文件是何种格式，其用途如何，对于 Unix 文件系统对此类文件的管理是完全一致的。</li>
+<li>对普通文件内容的解释由处理该文件的应用程序进行。</li>
+</ul>
+<h3 id="目录文件directory-file">目录文件（directory file）</h3>
+<ul>
+<li>这种文件包含了其他文件的名字以及指向与这些文件有关信息的指针。</li>
+<li>对于一个目录文件具有读权限的任一进程都可以读取该目录的内容，但只有内核可以直接写目录文件。</li>
+</ul>
+<h3 id="块特殊文件block-special-file">块特殊文件（block special file）</h3>
+<ul>
+<li>这种类型的文件提供对设备（如磁盘）带缓冲的访问，每次访问以固定长度为单位进行。</li>
+</ul>
+<h3 id="字符特殊文件-character-special-file">字符特殊文件 （character special file）</h3>
+<ul>
+<li>这种类型的文件提供对设备不带缓冲的访问，每次访问的长度可变。系统中的所有设备要么是字符特殊文件，要么是块特殊文件。</li>
+</ul>
+<h3 id="fifo">FIFO</h3>
+<ul>
+<li>这种类型的文件用于进程间的通信，有时也称为命名管道（named pipe）</li>
+</ul>
+<h3 id="套接字socket">套接字（socket）</h3>
+<ul>
+<li>这种类型的文件用于进程间的网络通信。</li>
+<li>也可用于在一台宿主机上进程之间的非网络通信。</li>
+</ul>
+<h3 id="符号链接symbolic-link">符号链接（symbolic link）</h3>
+<ul>
+<li>这种类型的文件指向另一个文件。</li>
+</ul>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

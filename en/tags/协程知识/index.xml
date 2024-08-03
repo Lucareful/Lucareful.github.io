@@ -1,0 +1,837 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>协程知识 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</link>
+    <description>Recent content in 协程知识 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>python的协程</title>
+      <link>https://Lucareful.github.io/en/posts/%E5%8D%8F%E7%A8%8B/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/%E5%8D%8F%E7%A8%8B/</guid>
+      <description>可迭代对象 可遍历对象就是可迭代对象 列表、元组、字典、字符串都是可迭代对象 100和自定义myclass 默认都是不可以迷代的 myclass 对象所属的类MyC</description>
+      <content:encoded><![CDATA[<h1 id="可迭代对象">可迭代对象</h1>
+<ul>
+<li>可遍历对象就是可迭代对象</li>
+<li>列表、元组、字典、字符串都是可迭代对象</li>
+<li>100和自定义<code>myclass</code> 默认都是不可以迷代的</li>
+<li><code>myclass </code>对象所属的类<code>MyClass</code>如果包含了<code>__iter__（）</code>方法，此时
+<ul>
+<li><code>myclass</code>就是一个可送代对象</li>
+</ul>
+</li>
+<li>可送代对象的本质：对象所属的类中包含了<code>__iter__（）</code>方法</li>
+<li>检测一个对象是否可以送代，用<code>isinstance（）</code>函数检测。</li>
+</ul>
+<h1 id="迭代器">迭代器</h1>
+<ul>
+<li>我们发现选代器最核心的功能就是可以通过next0函数的调用来返回下一个数据值。如果每次返回的数据值不是在一个已有的数据集合中读取的，而是通过程序按照一定的规律计算生成的，那么也就意味着可以不用再依赖一个已有的数据集合，也就是说不用再将所有要迭代的数据都一次性缓存下来供后续依次读取，这样可以节省大量的存储（内存）空间。</li>
+<li>举个例子，比如，数学中有个著名的斐波拉契数列（Fibonacci），数列中第一个数为0，第二个数为1，其后的每一个数都可由前两个数相加得到：</li>
+</ul>
+<h2 id="特点">特点</h2>
+<ul>
+<li>
+<p>记录遍历的位置</p>
+</li>
+<li>
+<p>提供下一个元素的值（配合next（）函数）</p>
+</li>
+<li>
+<p>迭代器生成斐波那契数列</p>
+</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">Fibanacci</span>(object):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">def</span> __init__(self, num):
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 实例化生成列属性</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#ff7b72;font-weight:bold">.</span>num <span style="color:#ff7b72;font-weight:bold">=</span> num
+</span></span><span style="display:flex;"><span>        self<span style="color:#ff7b72;font-weight:bold">.</span>a <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#ff7b72;font-weight:bold">.</span>b <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#ff7b72;font-weight:bold">.</span>current_index <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">def</span> __iter__(self):
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 返回自己</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> self
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">def</span> __next__(self):
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> self<span style="color:#ff7b72;font-weight:bold">.</span>current_index <span style="color:#ff7b72;font-weight:bold">&lt;</span> self<span style="color:#ff7b72;font-weight:bold">.</span>num:
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># 生成斐波那契数列</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># 定义变量保存a的值</span>
+</span></span><span style="display:flex;"><span>            data <span style="color:#ff7b72;font-weight:bold">=</span> self<span style="color:#ff7b72;font-weight:bold">.</span>a
+</span></span><span style="display:flex;"><span>            self<span style="color:#ff7b72;font-weight:bold">.</span>a, self<span style="color:#ff7b72;font-weight:bold">.</span>b <span style="color:#ff7b72;font-weight:bold">=</span> self<span style="color:#ff7b72;font-weight:bold">.</span>b, self<span style="color:#ff7b72;font-weight:bold">.</span>a <span style="color:#ff7b72;font-weight:bold">+</span> self<span style="color:#ff7b72;font-weight:bold">.</span>b
+</span></span><span style="display:flex;"><span>            self<span style="color:#ff7b72;font-weight:bold">.</span>current_index <span style="color:#ff7b72;font-weight:bold">+=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">return</span> data
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">else</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">raise</span> SweightIteration
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> __name__ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    fib <span style="color:#ff7b72;font-weight:bold">=</span> Fibanacci(<span style="color:#a5d6ff">8</span>)
+</span></span><span style="display:flex;"><span>    value <span style="color:#ff7b72;font-weight:bold">=</span> next(fib)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">in</span> fib:
+</span></span><span style="display:flex;"><span>        print(i)
+</span></span><span style="display:flex;"><span>out:
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">2</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">3</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">5</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">8</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">13</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">21</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><!-- more -->
+<h1 id="生成器">生成器</h1>
+<ul>
+<li><strong>生成器是一类特殊的迭代器。</strong></li>
+<li>利用选代器，我们可以在每次迭代获取数据（通过<code>next()</code>方法）时按照特定的规律进行生成。但是我们在实现一个迭代器时，关于当前迭代到的状态需要我们自己记录，进而才能根据当前状态生成下一个数据。为了达到记录当前状态，并配合<code>next()</code>函数进行迭代使用，我们可以采用更简便的语法，即<code>生成器（generator)</code>。
+<ul>
+<li>创建生成器方法1要创建一个生成器，有很多种方法。第一种方法很简单，只要把一个列表生成式的[]改成（）</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 列表推导式</span>
+</span></span><span style="display:flex;"><span>data_list <span style="color:#ff7b72;font-weight:bold">=</span> [x<span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#a5d6ff">2</span> <span style="color:#ff7b72">for</span> x <span style="color:#ff7b72;font-weight:bold">in</span> range(<span style="color:#a5d6ff">5</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">in</span> data_list:
+</span></span><span style="display:flex;"><span>    print(i)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 生成器的创建</span>
+</span></span><span style="display:flex;"><span>data_list1 <span style="color:#ff7b72;font-weight:bold">=</span> (x<span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#a5d6ff">2</span> <span style="color:#ff7b72">for</span> x <span style="color:#ff7b72;font-weight:bold">in</span> range(<span style="color:#a5d6ff">5</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 通过next()获取下一个值</span>
+</span></span><span style="display:flex;"><span>value <span style="color:#ff7b72;font-weight:bold">=</span> next(data_list1)
+</span></span><span style="display:flex;"><span>print(<span style="color:#a5d6ff">&#34;--------&gt;&#34;</span>, value)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">for</span> j <span style="color:#ff7b72;font-weight:bold">in</span> data_list1:
+</span></span><span style="display:flex;"><span>    print(j)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>out:
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">2</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">4</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">6</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">8</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">--------&gt;</span> <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">2</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">4</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">6</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">8</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>函数中使用<code>yield</code>关键字生成生成器</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">test</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> <span style="color:#a5d6ff">10</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">test2</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">yield</span> <span style="color:#a5d6ff">10</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> __name__ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    m <span style="color:#ff7b72;font-weight:bold">=</span> test()
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34;m:&#34;</span>, m)
+</span></span><span style="display:flex;"><span>    n <span style="color:#ff7b72;font-weight:bold">=</span> test2()
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34;n&#34;</span>, n)
+</span></span><span style="display:flex;"><span>    value <span style="color:#ff7b72;font-weight:bold">=</span> next(n)
+</span></span><span style="display:flex;"><span>    print(value)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>out<span style="color:#f85149">：</span>
+</span></span><span style="display:flex;"><span>	m: <span style="color:#a5d6ff">10</span>
+</span></span><span style="display:flex;"><span>    n <span style="color:#ff7b72;font-weight:bold">&lt;</span>generator object test2 at <span style="color:#a5d6ff">0x000002A2C4C6D0F8</span><span style="color:#ff7b72;font-weight:bold">&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">10</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="生成器生成斐波那契数列">生成器生成斐波那契数列</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">fibnacci</span>(n):
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># 初始化a, b的值</span>
+</span></span><span style="display:flex;"><span>    a <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>    b <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># 纪录迭代位置</span>
+</span></span><span style="display:flex;"><span>    current_index <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#34;-----1------&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">while</span> current_index <span style="color:#ff7b72;font-weight:bold">&lt;</span> n:
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 保存a的值</span>
+</span></span><span style="display:flex;"><span>        data <span style="color:#ff7b72;font-weight:bold">=</span> a
+</span></span><span style="display:flex;"><span>        a, b <span style="color:#ff7b72;font-weight:bold">=</span> b, a<span style="color:#ff7b72;font-weight:bold">+</span>b
+</span></span><span style="display:flex;"><span>        current_index <span style="color:#ff7b72;font-weight:bold">+=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>        print(<span style="color:#a5d6ff">&#34;-----2------&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">yield</span> data
+</span></span><span style="display:flex;"><span>        print(<span style="color:#a5d6ff">&#34;-----3------&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> __name__ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    fib <span style="color:#ff7b72;font-weight:bold">=</span> fibnacci(<span style="color:#a5d6ff">6</span>)
+</span></span><span style="display:flex;"><span>    print(next(fib))
+</span></span><span style="display:flex;"><span>    print(next(fib))
+</span></span><span style="display:flex;"><span>    print(next(fib))
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>out:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">-----</span><span style="color:#a5d6ff">1</span><span style="color:#ff7b72;font-weight:bold">------</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">-----</span><span style="color:#a5d6ff">2</span><span style="color:#ff7b72;font-weight:bold">------</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">-----</span><span style="color:#a5d6ff">3</span><span style="color:#ff7b72;font-weight:bold">------</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">-----</span><span style="color:#a5d6ff">2</span><span style="color:#ff7b72;font-weight:bold">------</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">-----</span><span style="color:#a5d6ff">3</span><span style="color:#ff7b72;font-weight:bold">------</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">-----</span><span style="color:#a5d6ff">2</span><span style="color:#ff7b72;font-weight:bold">------</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">2</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="yield作用">yield作用</h2>
+<ul>
+<li>充当<code>return</code>作用</li>
+<li>保存程序的运行状态并且暂停程序执行</li>
+<li>当next的时候，可以继续唤醒程序从yield位置继续向下执行</li>
+</ul>
+<h2 id="生成器中使用return问题">生成器中使用return问题</h2>
+<ul>
+<li>生成器客户以使用<code>return</code>关键字，语法上没有问题，但是如果执行到<code>return</code>语句以后，生成器会停止迭代，抛出停止迭代的异常</li>
+</ul>
+<h2 id="send作用">send作用</h2>
+<ul>
+<li>
+<p>生成器.send(传递给生成器的值)</p>
+</li>
+<li>
+<p>传递</p>
+<ul>
+<li>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>a <span style="color:#ff7b72;font-weight:bold">=</span> fib<span style="color:#ff7b72;font-weight:bold">.</span>send(<span style="color:#a5d6ff">1</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+</li>
+<li>
+<p>接收</p>
+<ul>
+<li>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>xxx <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">yield</span> data
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+</li>
+</ul>
+<h1 id="协程">协程</h1>
+<ul>
+<li>协程，又称微线程，纤程。英文名Coroutine。从技术的角度来说，“协程就是你可以暂停执行的函数”。如果你把它理解成“就像生成器一样”，那么你就想对了。</li>
+<li>线程和进程的操作是由程序触发系统接口，最后的执行者是系统；协程的操作则是程序员。</li>
+<li>协程存在的意义：对于多线程应用，CPU通过切片的方式来切换线程间的执行，线程切换时需要耗时（保存状态，下次继续）。协程，则只使用一个线程（单线程），在一个线程中规定某个代码块执行顺序。</li>
+</ul>
+<p><img loading="lazy" src="https://i.postimg.cc/vBkZ8L6h/image-20191116100828999.png" alt="image-20191116100828999"  />
+</p>
+<h2 id="协程应用场景">协程应用场景</h2>
+<ul>
+<li>协程的适用场景：当程序中存在大量不需要CPU的操作时（IO），适用于协程；通俗的理解：在一个线程中的某个函数，可以在任何地方保存当前函数的一些临时变量等信息，然后切换到另外一个函数中执行，注意不是通过调用函数的方式做到的，并且切换的次数以及什么时候再切换到原来的函数都由开发者自己确定</li>
+</ul>
+<h2 id="协程和线程差异">协程和线程差异</h2>
+<ul>
+<li>
+<p>不开辟新的线程的基础上，实现多个任务</p>
+</li>
+<li>
+<p>在实现多任务时，线程切换从系统层面远不止保存和恢复CPU上下文这么简单。操作系统为了程序运行的高效性每个线程都有自己缓存Cache等等数据，操作系统还会帮你做这些数据的恢复操作。所以线程的切换非常耗性能。但是协程的切换只是单纯的操作CPU的上下文，所以一秒钟切换个上百万次系统都抗的住。</p>
+</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># ------------------ 携程的原始实现 --------------------</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">time</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">work1</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">while</span> <span style="color:#79c0ff">True</span>:
+</span></span><span style="display:flex;"><span>        print(<span style="color:#a5d6ff">&#34;work1正在工作....&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">yield</span>
+</span></span><span style="display:flex;"><span>        time<span style="color:#ff7b72;font-weight:bold">.</span>sleep(<span style="color:#a5d6ff">0.5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">work2</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">while</span> <span style="color:#79c0ff">True</span>:
+</span></span><span style="display:flex;"><span>        print(<span style="color:#a5d6ff">&#34;work2正在工作.............&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">yield</span>
+</span></span><span style="display:flex;"><span>        time<span style="color:#ff7b72;font-weight:bold">.</span>sleep(<span style="color:#a5d6ff">0.5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> __name__ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    t1 <span style="color:#ff7b72;font-weight:bold">=</span>work1()
+</span></span><span style="display:flex;"><span>    t2 <span style="color:#ff7b72;font-weight:bold">=</span> work2()
+</span></span><span style="display:flex;"><span>    print(t1)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">while</span> <span style="color:#79c0ff">True</span>:
+</span></span><span style="display:flex;"><span>        next(t1)
+</span></span><span style="display:flex;"><span>        next(t2)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="greenlet库">greenlet库</h1>
+<ul>
+<li>greenlet 可以实现协程</li>
+<li>Greenlet是python的一个C扩展，来源于Stackless python，旨在提供可<strong>自行调度的“微线程’，即协程</strong>。</li>
+<li>generator实现的协程在yield value时只能将value返回给调用者（caller）。而在greenlet中，<code>target.switch（value）</code>可以切换到指定的协程（target），然后<code>yield value。greenlet</code>用<code>switch</code>来表示协程的切换，从一个协程切换到另一个协程需要显式指定。
+<code>GNI GREENLE</code> T为了更好使用协程来完成多任务，python中的greenlet模块对其封装，从而使得切换任务变的更加简单</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">time</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">greenlet</span> <span style="color:#ff7b72">import</span> greenlet
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># work1生成器</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">work1</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">while</span> <span style="color:#79c0ff">True</span>:
+</span></span><span style="display:flex;"><span>        print(<span style="color:#a5d6ff">&#34;work1正在工作....&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        time<span style="color:#ff7b72;font-weight:bold">.</span>sleep(<span style="color:#a5d6ff">2</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 切换到第二个任务</span>
+</span></span><span style="display:flex;"><span>        g2<span style="color:#ff7b72;font-weight:bold">.</span>switch()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># work1生成器</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">work2</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">while</span> <span style="color:#79c0ff">True</span>:
+</span></span><span style="display:flex;"><span>        print(<span style="color:#a5d6ff">&#34;work2正在工作.............&#34;</span>)
+</span></span><span style="display:flex;"><span>        time<span style="color:#ff7b72;font-weight:bold">.</span>sleep(<span style="color:#a5d6ff">2</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 切换到第一个任务</span>
+</span></span><span style="display:flex;"><span>        g1<span style="color:#ff7b72;font-weight:bold">.</span>switch()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> __name__ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    g1 <span style="color:#ff7b72;font-weight:bold">=</span> greenlet(work1)
+</span></span><span style="display:flex;"><span>    g2 <span style="color:#ff7b72;font-weight:bold">=</span> greenlet(work2)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">#执行work1</span>
+</span></span><span style="display:flex;"><span>    g1<span style="color:#ff7b72;font-weight:bold">.</span>switch()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="gevent-库">gevent 库</h1>
+<ul>
+<li>
+<p>自动调度协程，自动识别程序中的耗时操作</p>
+</li>
+<li>
+<p><code>greenlet</code>已经实现了协程，但是这个还的人工切换</p>
+</li>
+<li>
+<p>python还有一个比<code>greenlet</code>更强大的并且能够自动切换任务的第三方库 <code>gevent</code>其原理是当一个<code>greenlet</code>遇到IO（指的是input/ output 输入输出，比如网络、文件操作等）操作时，比如访问网络，就自动切换到其他的<code>greenlet</code>，等到<code>IO</code>操作完成，再在适当的时候切换回来继续执行。</p>
+</li>
+<li>
+<p>由于IO操作非常耗时，经常使程序处于等待状态，有了<code>gevent</code>为我们自动切换协程，就保证总有greenlet在运行，而不是等待</p>
+</li>
+<li>
+<p>使用步骤</p>
+</li>
+<li>
+<p>导入模块</p>
+</li>
+<li>
+<p><code>Iimport gevent</code></p>
+</li>
+<li>
+<p>指派任务</p>
+<ul>
+<li><code>g1= gevent.spawn（函数名，参数1，参数2，…）</code></li>
+</ul>
+</li>
+<li>
+<p>join（）让主线程等待协程执行完毕后再退出</p>
+<ul>
+<li><code>g1.join()</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="打猴子补丁补丁">打猴子补丁补丁</h2>
+<ul>
+<li>
+<p>给程序打补丁（猴子补丁）关于猴子补丁为啥叫猴子补丁，据说是这样子的：</p>
+<blockquote>
+<p>这个叫法起源于Zope框架，大家在修正Zope的Bug的时候经常在程序后面追加更新部分，这些被称作是“杂牌军补丁<code>（guerilla patch）</code>”，后来<code>guerilla</code>就渐渐的写成了<code>gorlia（塑猩）</code>，再后来就写了monkey（猴子）：所以猴子补丁的叫法是这么莫名其妙的得来的。</p>
+</blockquote>
+</li>
+<li>
+<p>猴子补丁主要有以下几个用处：</p>
+<ul>
+<li>1.在运行时替换方法、属性等</li>
+<li>2.在不修改第三方代码的情况下增加原来不支持的功能</li>
+<li>3.在运行时为内存中的对象增加patch而不是在盏盘的源代码中增加</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span># 打补丁
+</span></span><span style="display:flex;"><span>from gevent import monkey
+</span></span><span style="display:flex;"><span># 破解所有
+</span></span><span style="display:flex;"><span>monkey.patch_all()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>import time
+</span></span><span style="display:flex;"><span>import gevent
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>def work1():
+</span></span><span style="display:flex;"><span>    while True:
+</span></span><span style="display:flex;"><span>        print(&#34;work1正在工作....&#34;)
+</span></span><span style="display:flex;"><span>        time.sleep(0.5)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>def work2():
+</span></span><span style="display:flex;"><span>    while True:
+</span></span><span style="display:flex;"><span>        print(&#34;work2正在工作.............&#34;)
+</span></span><span style="display:flex;"><span>        # gevent.sleep(0.5)
+</span></span><span style="display:flex;"><span>        time.sleep(0.5)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>if __name__ == &#39;__main__&#39;:
+</span></span><span style="display:flex;"><span>    # 指派任务
+</span></span><span style="display:flex;"><span>    g1 = gevent.spawn(work1)
+</span></span><span style="display:flex;"><span>    g2 = gevent.spawn(work2)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    # 让主线程等待协程执行完毕再运行
+</span></span><span style="display:flex;"><span>    g1.join()
+</span></span><span style="display:flex;"><span>    g2.join()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="小福利">小福利</h1>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">68
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">69
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">70
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">71
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">72
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">73
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">74
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">75
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">76
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">77
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">78
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">79
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">80
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">81
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">82
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">83
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">84
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">85
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">86
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">87
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">88
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">89
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">90
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">91
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">92
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">93
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">94
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">95
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 妹子图爬虫多协程版</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># coding=utf-8</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">gevent</span> <span style="color:#ff7b72">import</span> monkey
+</span></span><span style="display:flex;"><span>monkey<span style="color:#ff7b72;font-weight:bold">.</span>patch_all()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">gevent</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">requests</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">bs4</span> <span style="color:#ff7b72">import</span> BeautifulSoup
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">os</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">re</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>all_url <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;http://www.mzitu.com&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># http请求头</span>
+</span></span><span style="display:flex;"><span>Hostreferer <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;User-Agent&#39;</span>: <span style="color:#a5d6ff">&#39;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;Referer&#39;</span>: <span style="color:#a5d6ff">&#39;http://www.mzitu.com&#39;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>Picreferer <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;User-Agent&#39;</span>: <span style="color:#a5d6ff">&#39;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#39;Referer&#39;</span>: <span style="color:#a5d6ff">&#39;http://i.meizitu.net&#39;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 此请求头破解盗链</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>start_html <span style="color:#ff7b72;font-weight:bold">=</span> requests<span style="color:#ff7b72;font-weight:bold">.</span>get(all_url, headers<span style="color:#ff7b72;font-weight:bold">=</span>Hostreferer)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 保存地址</span>
+</span></span><span style="display:flex;"><span>path <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#34;E:</span><span style="color:#79c0ff">\\</span><span style="color:#a5d6ff">mzitu</span><span style="color:#79c0ff">\\</span><span style="color:#a5d6ff">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 找寻最大页数</span>
+</span></span><span style="display:flex;"><span>soup <span style="color:#ff7b72;font-weight:bold">=</span> BeautifulSoup(start_html<span style="color:#ff7b72;font-weight:bold">.</span>text, <span style="color:#a5d6ff">&#34;html.parser&#34;</span>)
+</span></span><span style="display:flex;"><span>page <span style="color:#ff7b72;font-weight:bold">=</span> soup<span style="color:#ff7b72;font-weight:bold">.</span>find_all(<span style="color:#a5d6ff">&#39;a&#39;</span>, class_<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;page-numbers&#39;</span>)
+</span></span><span style="display:flex;"><span>max_page <span style="color:#ff7b72;font-weight:bold">=</span> page[<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">2</span>]<span style="color:#ff7b72;font-weight:bold">.</span>text
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>same_url <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;http://www.mzitu.com/all/&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">download_img</span>(pic_url):
+</span></span><span style="display:flex;"><span>    html <span style="color:#ff7b72;font-weight:bold">=</span> requests<span style="color:#ff7b72;font-weight:bold">.</span>get(pic_url, headers<span style="color:#ff7b72;font-weight:bold">=</span>Picreferer)
+</span></span><span style="display:flex;"><span>    file_name <span style="color:#ff7b72;font-weight:bold">=</span> pic_url<span style="color:#ff7b72;font-weight:bold">.</span>split(<span style="color:#79c0ff">r</span><span style="color:#a5d6ff">&#39;/&#39;</span>)[<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">1</span>]<span style="color:#ff7b72;font-weight:bold">.</span>replace(<span style="color:#a5d6ff">&#39;&#34;&#39;</span>, <span style="color:#a5d6ff">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>    print(file_name)
+</span></span><span style="display:flex;"><span>    f <span style="color:#ff7b72;font-weight:bold">=</span> open(file_name, <span style="color:#a5d6ff">&#39;wb&#39;</span>)
+</span></span><span style="display:flex;"><span>    f<span style="color:#ff7b72;font-weight:bold">.</span>write(html<span style="color:#ff7b72;font-weight:bold">.</span>content)
+</span></span><span style="display:flex;"><span>    f<span style="color:#ff7b72;font-weight:bold">.</span>close()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">for</span> n <span style="color:#ff7b72;font-weight:bold">in</span> range(<span style="color:#a5d6ff">1</span>, int(max_page) <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">1</span>):
+</span></span><span style="display:flex;"><span>    ul <span style="color:#ff7b72;font-weight:bold">=</span> same_url <span style="color:#ff7b72;font-weight:bold">+</span> str(n)
+</span></span><span style="display:flex;"><span>    start_html <span style="color:#ff7b72;font-weight:bold">=</span> requests<span style="color:#ff7b72;font-weight:bold">.</span>get(ul, headers<span style="color:#ff7b72;font-weight:bold">=</span>Hostreferer)
+</span></span><span style="display:flex;"><span>    soup <span style="color:#ff7b72;font-weight:bold">=</span> BeautifulSoup(start_html<span style="color:#ff7b72;font-weight:bold">.</span>text, <span style="color:#a5d6ff">&#34;html.parser&#34;</span>)
+</span></span><span style="display:flex;"><span>    all_a <span style="color:#ff7b72;font-weight:bold">=</span> soup<span style="color:#ff7b72;font-weight:bold">.</span>find(<span style="color:#a5d6ff">&#39;div&#39;</span>, class_<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;all&#39;</span>)<span style="color:#ff7b72;font-weight:bold">.</span>find_all(<span style="color:#a5d6ff">&#39;a&#39;</span>, target<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;_blank&#39;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">for</span> a <span style="color:#ff7b72;font-weight:bold">in</span> all_a:
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># 提取文本</span>
+</span></span><span style="display:flex;"><span>        title <span style="color:#ff7b72;font-weight:bold">=</span> a<span style="color:#ff7b72;font-weight:bold">.</span>get_text()
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> title <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">&#39;&#39;</span>:
+</span></span><span style="display:flex;"><span>            print(<span style="color:#a5d6ff">&#34;准备扒取：&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> title)
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># win不能创建带？的目录</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">if</span> os<span style="color:#ff7b72;font-weight:bold">.</span>path<span style="color:#ff7b72;font-weight:bold">.</span>exists(path <span style="color:#ff7b72;font-weight:bold">+</span> title<span style="color:#ff7b72;font-weight:bold">.</span>strip()<span style="color:#ff7b72;font-weight:bold">.</span>replace(<span style="color:#a5d6ff">&#39;?&#39;</span>, <span style="color:#a5d6ff">&#39;&#39;</span>)):
+</span></span><span style="display:flex;"><span>                <span style="color:#8b949e;font-style:italic"># print(&#39;目录已存在&#39;)</span>
+</span></span><span style="display:flex;"><span>                flag <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">else</span>:
+</span></span><span style="display:flex;"><span>                os<span style="color:#ff7b72;font-weight:bold">.</span>makedirs(path <span style="color:#ff7b72;font-weight:bold">+</span> title<span style="color:#ff7b72;font-weight:bold">.</span>strip()<span style="color:#ff7b72;font-weight:bold">.</span>replace(<span style="color:#a5d6ff">&#39;?&#39;</span>, <span style="color:#a5d6ff">&#39;&#39;</span>))
+</span></span><span style="display:flex;"><span>                flag <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>            os<span style="color:#ff7b72;font-weight:bold">.</span>chdir(path <span style="color:#ff7b72;font-weight:bold">+</span> title<span style="color:#ff7b72;font-weight:bold">.</span>strip()<span style="color:#ff7b72;font-weight:bold">.</span>replace(<span style="color:#a5d6ff">&#39;?&#39;</span>, <span style="color:#a5d6ff">&#39;&#39;</span>))
+</span></span><span style="display:flex;"><span>            href <span style="color:#ff7b72;font-weight:bold">=</span> a[<span style="color:#a5d6ff">&#39;href&#39;</span>]
+</span></span><span style="display:flex;"><span>            html <span style="color:#ff7b72;font-weight:bold">=</span> requests<span style="color:#ff7b72;font-weight:bold">.</span>get(href, headers<span style="color:#ff7b72;font-weight:bold">=</span>Hostreferer)
+</span></span><span style="display:flex;"><span>            mess <span style="color:#ff7b72;font-weight:bold">=</span> BeautifulSoup(html<span style="color:#ff7b72;font-weight:bold">.</span>text, <span style="color:#a5d6ff">&#34;html.parser&#34;</span>)
+</span></span><span style="display:flex;"><span>            pic_max <span style="color:#ff7b72;font-weight:bold">=</span> mess<span style="color:#ff7b72;font-weight:bold">.</span>find_all(<span style="color:#a5d6ff">&#39;span&#39;</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">try</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#8b949e;font-style:italic"># 最大页数</span>
+</span></span><span style="display:flex;"><span>                pic_max <span style="color:#ff7b72;font-weight:bold">=</span> pic_max[<span style="color:#a5d6ff">9</span>]<span style="color:#ff7b72;font-weight:bold">.</span>text
+</span></span><span style="display:flex;"><span>                <span style="color:#ff7b72">if</span> flag <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">1</span> <span style="color:#ff7b72;font-weight:bold">and</span> len(os<span style="color:#ff7b72;font-weight:bold">.</span>listdir(path <span style="color:#ff7b72;font-weight:bold">+</span> title<span style="color:#ff7b72;font-weight:bold">.</span>strip()<span style="color:#ff7b72;font-weight:bold">.</span>replace(<span style="color:#a5d6ff">&#39;?&#39;</span>, <span style="color:#a5d6ff">&#39;&#39;</span>))) <span style="color:#ff7b72;font-weight:bold">&gt;=</span> int(pic_max):
+</span></span><span style="display:flex;"><span>                    print(<span style="color:#a5d6ff">&#39;已经保存完毕，跳过&#39;</span>)
+</span></span><span style="display:flex;"><span>                    <span style="color:#ff7b72">continue</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">except</span> <span style="color:#f0883e;font-weight:bold">Exception</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#ff7b72">pass</span>
+</span></span><span style="display:flex;"><span>            pic_url <span style="color:#ff7b72;font-weight:bold">=</span> []
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">for</span> num <span style="color:#ff7b72;font-weight:bold">in</span> range(<span style="color:#a5d6ff">1</span>, int(pic_max) <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">1</span>):
+</span></span><span style="display:flex;"><span>                pic <span style="color:#ff7b72;font-weight:bold">=</span> href <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#39;/&#39;</span> <span style="color:#ff7b72;font-weight:bold">+</span> str(num)
+</span></span><span style="display:flex;"><span>                html <span style="color:#ff7b72;font-weight:bold">=</span> requests<span style="color:#ff7b72;font-weight:bold">.</span>get(pic, headers<span style="color:#ff7b72;font-weight:bold">=</span>Hostreferer)
+</span></span><span style="display:flex;"><span>                mess <span style="color:#ff7b72;font-weight:bold">=</span> BeautifulSoup(html<span style="color:#ff7b72;font-weight:bold">.</span>text, <span style="color:#a5d6ff">&#34;html.parser&#34;</span>)
+</span></span><span style="display:flex;"><span>                pic_url<span style="color:#ff7b72;font-weight:bold">.</span>append(mess<span style="color:#ff7b72;font-weight:bold">.</span>find(<span style="color:#a5d6ff">&#39;img&#39;</span>, alt<span style="color:#ff7b72;font-weight:bold">=</span>title))
+</span></span><span style="display:flex;"><span>                <span style="color:#8b949e;font-style:italic"># print(&#34;图片路径：&#34;, pic_url[&#39;src&#39;])</span>
+</span></span><span style="display:flex;"><span>            pic_url <span style="color:#ff7b72;font-weight:bold">=</span> re<span style="color:#ff7b72;font-weight:bold">.</span>findall(<span style="color:#79c0ff">r</span><span style="color:#a5d6ff">&#34;[a-zA-z]+://[^\s]*&#34;</span>, str(pic_url))
+</span></span><span style="display:flex;"><span>            print(pic_url)
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># 将列表编程迭代器</span>
+</span></span><span style="display:flex;"><span>            a <span style="color:#ff7b72;font-weight:bold">=</span> pic_url<span style="color:#ff7b72;font-weight:bold">.</span>__iter__()
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># 开启多个协程</span>
+</span></span><span style="display:flex;"><span>            Coroutine <span style="color:#ff7b72;font-weight:bold">=</span> []
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">in</span> range(len(pic_url)):
+</span></span><span style="display:flex;"><span>                Coroutine<span style="color:#ff7b72;font-weight:bold">.</span>append(gevent<span style="color:#ff7b72;font-weight:bold">.</span>spawn(download_img(next(a))))
+</span></span><span style="display:flex;"><span>            gevent<span style="color:#ff7b72;font-weight:bold">.</span>joinall(Coroutine)
+</span></span><span style="display:flex;"><span>            print(<span style="color:#a5d6ff">&#39;完成&#39;</span>)
+</span></span><span style="display:flex;"><span>    print(<span style="color:#a5d6ff">&#39;第&#39;</span>, n, <span style="color:#a5d6ff">&#39;页完成&#39;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

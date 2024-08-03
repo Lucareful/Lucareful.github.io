@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Go Module on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/go-module/</link>
+    <description>Recent content in Go Module on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/go-module/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>go get 私有库解决方案</title>
+      <link>https://Lucareful.github.io/en/posts/golang-go-get-%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/golang-go-get-%E7%A7%81%E6%9C%89%E5%BA%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</guid>
+      <description>&lt;h1 id=&#34;golang-go-get-私有库解决方案&#34;&gt;golang go get 私有库解决方案&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;注意：go get 只支持 https协议的库路径 &amp;#x203c;&amp;#xfe0f;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;​		在我们开发过程中会自己封装一些工具库，在某个项目中使用。但是如果有别的项目想使用你封装的库，那么此时你就需要将工具库封装为一个&lt;code&gt;go module&lt;/code&gt;，给其它项目导入。一般公司内部的库是不对外开放的，这时候就需要搭建代理去拉取私有仓库&lt;/p&gt;
+&lt;h2 id=&#34;原理架构图&#34;&gt;原理架构图&lt;/h2&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://tonybai.com/wp-content/uploads/the-approach-to-go-get-private-go-module-in-house-9.png&#34; alt=&#34;img&#34;  /&gt;
+&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="golang-go-get-私有库解决方案">golang go get 私有库解决方案</h1>
+<blockquote>
+<p>注意：go get 只支持 https协议的库路径 &#x203c;&#xfe0f;</p>
+</blockquote>
+<h2 id="前言">前言</h2>
+<p>​		在我们开发过程中会自己封装一些工具库，在某个项目中使用。但是如果有别的项目想使用你封装的库，那么此时你就需要将工具库封装为一个<code>go module</code>，给其它项目导入。一般公司内部的库是不对外开放的，这时候就需要搭建代理去拉取私有仓库</p>
+<h2 id="原理架构图">原理架构图</h2>
+<p><img loading="lazy" src="https://tonybai.com/wp-content/uploads/the-approach-to-go-get-private-go-module-in-house-9.png" alt="img"  />
+</p>
+<h2 id="准备工作">准备工作</h2>
+<h3 id="nginx-搭建">nginx 搭建</h3>
+<p>​		详细安装教程可以参考这篇：https://blog.csdn.net/t8116189520/article/details/81909574</p>
+<p><code>nginx</code> 配置文件</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-nginx" data-lang="nginx"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#user  nobody;
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">worker_processes</span>  <span style="color:#a5d6ff">1</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#error_log  logs/error.log;
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#error_log  logs/error.log  notice;
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#error_log  logs/error.log  info;
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#pid        logs/nginx.pid;
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">events</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">worker_connections</span>  <span style="color:#a5d6ff">1024</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">http</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">server</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">listen</span> <span style="color:#a5d6ff">443</span> <span style="color:#a5d6ff">ssl</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">server_name</span> <span style="color:#a5d6ff">xxx.xxx.com</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">ssl_certificate</span>           <span style="color:#a5d6ff">/etc/nginx/ssl/xxx.pem</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">ssl_certificate_key</span>       <span style="color:#a5d6ff">/etc/nginx/ssl/xxx.key</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic"># ssl验证相关配置
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">ssl_session_timeout</span>  <span style="color:#a5d6ff">5m</span>;    <span style="color:#8b949e;font-style:italic"># 缓存有效期
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">ssl_ciphers</span> <span style="color:#a5d6ff">ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4</span>;    <span style="color:#8b949e;font-style:italic">#加密算法
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">ssl_protocols</span> <span style="color:#a5d6ff">TLSv1</span> <span style="color:#a5d6ff">TLSv1.1</span> <span style="color:#a5d6ff">TLSv1.2</span>;    <span style="color:#8b949e;font-style:italic"># 安全链接可选的加密协议
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">ssl_prefer_server_ciphers</span> <span style="color:#79c0ff;font-weight:bold">on</span>;   <span style="color:#8b949e;font-style:italic"># 使用服务器端的首选算法
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">location</span> <span style="color:#a5d6ff">/</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">proxy_pass</span> <span style="color:#a5d6ff">http://127.0.0.1:8080</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">proxy_redirect</span> <span style="color:#79c0ff;font-weight:bold">off</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">proxy_set_header</span> <span style="color:#a5d6ff">Host</span> <span style="color:#79c0ff">$host</span>;
+</span></span><span style="display:flex;"><span>		        <span style="color:#ff7b72">proxy_set_header</span> <span style="color:#a5d6ff">X-Real-IP</span> <span style="color:#79c0ff">$remote_addr</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">proxy_set_header</span> <span style="color:#a5d6ff">X-Forwarded-For</span> <span style="color:#79c0ff">$proxy_add_x_forwarded_for</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">proxy_http_version</span> <span style="color:#a5d6ff">1</span><span style="color:#a5d6ff">.1</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">proxy_set_header</span> <span style="color:#a5d6ff">Upgrade</span> <span style="color:#79c0ff">$http_upgrade</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">proxy_set_header</span> <span style="color:#a5d6ff">Connection</span> <span style="color:#a5d6ff">&#34;upgrade&#34;</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>     }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="govanityurlshttpsgithubcombigwhitegovanityurls-配置"><a href="https://github.com/bigwhite/govanityurls">govanityurls</a> 配置</h3>
+<blockquote>
+<p>Use a custom domain in your Go import path</p>
+</blockquote>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>go install github.com/Lucareful/govanityurls@v1.0.3   <span style="color:#8b949e;font-style:italic"># 我封装了一些，匹配全路由</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="编辑-vanityyaml文件">编辑 <code>vanity.yaml</code>文件</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 代理路由匹配的前缀</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#7ee787">/xxx/xxx</span>:<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">      </span><span style="color:#7ee787">repo</span>:<span style="color:#6e7681"> </span><span style="color:#a5d6ff">https://真实的私有仓库地址</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">      </span><span style="color:#7ee787">vsc</span>:<span style="color:#6e7681"> </span><span style="color:#a5d6ff">git</span><span style="color:#6e7681">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="设置-govanityurls-为守护进程启动">设置 govanityurls 为守护进程启动</h4>
+<h5 id="systemd">systemd</h5>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 新建服务文件 /etc/systemd/system/vanity.service</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#8b949e;font-style:italic"># 文件内容</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>[<span style="color:#a5d6ff">Unit]</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#a5d6ff">Description= Custom domain in your Go import path</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#a5d6ff">After=network.target</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>[<span style="color:#a5d6ff">Service]</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#a5d6ff">Type=simple</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#a5d6ff">WorkingDirectory=/root/govanityurls/ 						# vanity.yaml 文件存放的路径</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#a5d6ff">ExecStart=/home/gopath/bin/govanityurls -host xxxx.xxx.com(nginx代理的域名)</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#a5d6ff">Restart=always</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>[<span style="color:#a5d6ff">Install]</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#a5d6ff">WantedBy=multi-user.target</span><span style="color:#6e7681">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h5 id="supervisord">supervisord</h5>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-ini" data-lang="ini"><span style="display:flex;"><span><span style="color:#ff7b72">[program:govanityurls]</span>
+</span></span><span style="display:flex;"><span>directory <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">/root/govanityurls							# vanity.yaml 文件存放的路径</span>
+</span></span><span style="display:flex;"><span>command <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">/home/gopath/bin/govanityurls -host xxxx.xxx.com(nginx代理的域名)</span>
+</span></span><span style="display:flex;"><span>autostart <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">true</span>
+</span></span><span style="display:flex;"><span>startsecs <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">5</span>
+</span></span><span style="display:flex;"><span>autorestart <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">true</span>
+</span></span><span style="display:flex;"><span>startretries <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">3</span>
+</span></span><span style="display:flex;"><span>user <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">root</span>
+</span></span><span style="display:flex;"><span>redirect_stderr <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">true</span>
+</span></span><span style="display:flex;"><span>stdout_logfile_maxbytes <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">20MB</span>
+</span></span><span style="display:flex;"><span>stdout_logfile_backups <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">20</span>
+</span></span><span style="display:flex;"><span>sweightasgroup<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">false</span>
+</span></span><span style="display:flex;"><span>killasgroup<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">false</span>
+</span></span><span style="display:flex;"><span>stdout_logfile <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">/root/log/go.log</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<p>​	上面的架构设计中参照了tonybai<a href="https://tonybai.com/2021/09/03/the-approach-to-go-get-private-go-module-in-house/">小厂内部私有go模块拉取方案</a>，我在此省略了了goproxy的搭建，只为私有库搭建了一个代理，公有库从公共module获取即可。</p>
+<p><img loading="lazy" src="https://tonybai.com/wp-content/uploads/the-approach-to-go-get-private-go-module-in-house-7.png" alt="img"  />
+</p>
+<h1 id="参考资料">参考资料</h1>
+<ul>
+<li><a href="https://tonybai.com/2021/09/03/the-approach-to-go-get-private-go-module-in-house/">小厂内部私有Go module拉取方案</a></li>
+<li><a href="https://www.ruanyifeng.com/blog/2016/03/systemd-tutorial-part-two.html">systemd 实战教程</a></li>
+<li><a href="https://denyu95.github.io/2019/04/29/%E5%AE%9A%E5%88%B6go-get%E7%9A%84%E5%8C%85%E8%B7%AF%E5%BE%84/">定制go get的包路径</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

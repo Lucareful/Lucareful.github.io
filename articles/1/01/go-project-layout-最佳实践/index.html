@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Go Project Layout 最佳实践 | Luenci</title>
+<meta name="keywords" content="Project Layout">
+<meta name="description" content="Golang Project Layout 最佳实践 鲍勃叔叔干净的架构（Uncle Bob） 依赖规则 同心圆代表软件的不同领域。 一般来说，你走得越远，软件的层次就越高。外圈是机制。内圈是政策。 ​ 使这个架构工作的最重要的规则是依赖规则。这条规则说源代码依赖只能指向内部。内圈中的任何人都无法对外圈中的事物一无所知。特别是，在外圈中声明的事物的名称不能被内圈中的代码提及。这包括函数、类。变量或任何其他命名的软件实体。 ​ 同样，在外圈中使用的数据格">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="http://localhost:1313/articles/1/01/go-project-layout-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.54405a410796490bc874ab6181fac9b675753cc2b91375d8f882566459eca428.css" integrity="sha256-VEBaQQeWSQvIdKthgfrJtnV1PMK5E3XY&#43;IJWZFnspCg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/articles/1/01/go-project-layout-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Luenci (Alt + H)">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/index.xml" title="RSS Feed">
+                    <span>RSS Feed</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Go Project Layout 最佳实践
+    </h1>
+    <div class="post-meta">Luenci
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="golang-project-layout-最佳实践">Golang Project Layout 最佳实践<a hidden class="anchor" aria-hidden="true" href="#golang-project-layout-最佳实践">#</a></h1>
+<h2 id="鲍勃叔叔干净的架构uncle-bob">鲍勃叔叔干净的架构（Uncle Bob）<a hidden class="anchor" aria-hidden="true" href="#鲍勃叔叔干净的架构uncle-bob">#</a></h2>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/image-20220609141505914.png" alt="clean arch"  />
+</p>
+<h3 id="依赖规则">依赖规则<a hidden class="anchor" aria-hidden="true" href="#依赖规则">#</a></h3>
+<ul>
+<li>同心圆代表软件的不同领域。</li>
+<li>一般来说，你走得越远，软件的层次就越高。外圈是机制。内圈是政策。</li>
+</ul>
+<p>​     使这个架构工作的最重要的规则是<code>依赖规则</code>。这条规则说<code>源代码依赖只能指向内部</code>。内圈中的任何人都无法对外圈中的事物一无所知。特别是，在外圈中声明的事物的名称不能被内圈中的代码提及。这包括函数、类。变量或任何其他命名的软件实体。</p>
+<p>​     同样，在外圈中使用的数据格式不应该被内圈使用，特别是如果这些格式是由外圈中的框架生成的。我们不希望外圈的任何东西影响内圈。</p>
+<!-- raw HTML omitted -->
+<h3 id="实体entity">实体(<code>entity</code>)<a hidden class="anchor" aria-hidden="true" href="#实体entity">#</a></h3>
+<p>​    实体封装了企业范围的业务规则。实体可以是具有方法的对象，也可以是一组数据结构和函数。只要实体可以被企业中的许多不同应用程序使用，这并不重要。</p>
+<p>​    如果您没有企业，而只是编写单个应用程序，则这些实体是应用程序的业务对象。它们封装了最一般和高级的规则。当外部变化时，它们最不可能改变。例如，您不会期望这些对象受到页面导航或安全性更改的影响。对任何特定应用程序的操作更改都不应影响实体层。</p>
+<h3 id="使用案例usecase">使用案例(<code>usecase</code>)<a hidden class="anchor" aria-hidden="true" href="#使用案例usecase">#</a></h3>
+<p>​    此层中的软件包含<code>特定于应用程序的业务规则</code>。它封装并实现了系统的所有用例。这些用例协调进出实体的数据流，并指示这些实体使用其<code>企业范围</code>的业务规则来实现用例的目标。</p>
+<p>​    我们预计此层中的更改不会影响实体。我们也不希望此层受到外部性更改（如数据库、UI 或任何通用框架）的影响。这一层与此类问题隔离开来。</p>
+<p>​    但是，我们确实预计对应用程序操作的更改将影响用例，从而影响该层中的软件。如果用例的细节发生变化，那么这一层中的一些代码肯定会受到影响。</p>
+<h3 id="接口适配器interface-adapter">接口适配器(<code>interface adapter</code>)<a hidden class="anchor" aria-hidden="true" href="#接口适配器interface-adapter">#</a></h3>
+<p>​    该层中的软件是一组适配器，可将数据从最适合用例和实体的格式转换为最适合某些外部机构（如数据库或 Web）的格式。例如，正是这一层将完全包含 <code>GUI</code> 的 <code>MVC</code> 架构。<code>Presenters</code>、<code>Views</code> 和 <code>Controllers</code> 都属于这里。模型可能只是从控制器传递到用例，然后从用例返回到演示者和视图的数据结构。</p>
+<p>​    类似地，在这一层中，数据从对实体和用例最方便的形式转换为对正在使用的任何持久性框架最方便的形式。即数据库。这个圈子内的任何代码都不应该对数据库有任何了解。如果数据库是 SQL 数据库，那么所有的 SQL 都应该限制在这一层，特别是限制在这一层与数据库有关的部分。</p>
+<p>在这一层中还有任何其他适配器，用于将数据从某种外部形式（例如外部服务）转换为用例和实体使用的内部形式</p>
+<h3 id="框架和驱动器frameworks-and-drivers">框架和驱动器（Frameworks and Drivers）<a hidden class="anchor" aria-hidden="true" href="#框架和驱动器frameworks-and-drivers">#</a></h3>
+<p>​    最外层一般由框架和工具组成，如数据库、Web 框架等。一般在这一层你不会写太多代码，除了向内与下一个循环通信的胶水代码。</p>
+<p>​    这一层是所有细节的所在。网络是一个细节。数据库是一个细节。我们把这些东西放在外面，它们不会造成什么伤害。</p>
+<h3 id="圈和边界">圈和边界<a hidden class="anchor" aria-hidden="true" href="#圈和边界">#</a></h3>
+<p>​    源代码依赖项总是指向内部。随着向内移动，抽象级别会增加。最外圈是低层次的具体细节。随着您向内移动，软件变得更加抽象，并封装了更高级别的策略。最内圈是最普通的。</p>
+<p>​    通常，<strong>跨越边界的数据是简单的数据结构</strong>。如果您愿意，可以使用基本结构或简单的数据传输对象。或者数据可以只是函数调用中的参数。或者你可以将它打包成一个 hashmap，或者将它构造成一个对象。重要的是，<strong>隔离的、简单的数据结构可以跨越边界传递</strong>。我们不想欺骗和传递实体或数据库行。我们不希望数据结构有任何违反<em>依赖规则的依赖</em>。</p>
+<p>​    例如，许多数据库框架返回方便的数据格式以响应查询。我们可以称其为 Row Structure。我们不想跨边界向内传递该行结构。这将违反依赖规则，因为它会迫使内圈了解外圈。</p>
+<p>所以当我们越界传递数据时，总是采用最方便内圈的形式。</p>
+<h3 id="结论">结论<a hidden class="anchor" aria-hidden="true" href="#结论">#</a></h3>
+<p>​    遵守这些简单的规则并不难，并且会为您省去很多麻烦。通过将软件分层并遵守依赖规则，您将创建一个本质上可测试的系统，并具有所有暗示的好处。当系统的任何外部部件（如数据库或 Web 框架）过时时，您可以轻松替换那些过时的元素。</p>
+<h2 id="从-kratos-框架入手">从 kratos 框架入手<a hidden class="anchor" aria-hidden="true" href="#从-kratos-框架入手">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>application
+</span></span><span style="display:flex;"><span>|____api
+</span></span><span style="display:flex;"><span>| |____helloworld
+</span></span><span style="display:flex;"><span>| | |____v1
+</span></span><span style="display:flex;"><span>| | |____errors
+</span></span><span style="display:flex;"><span>|____cmd
+</span></span><span style="display:flex;"><span>| |____helloworld
+</span></span><span style="display:flex;"><span>|____configs
+</span></span><span style="display:flex;"><span>|____internal
+</span></span><span style="display:flex;"><span>| |____conf
+</span></span><span style="display:flex;"><span>| |____data
+</span></span><span style="display:flex;"><span>| |____biz
+</span></span><span style="display:flex;"><span>| |____service
+</span></span><span style="display:flex;"><span>| |____server
+</span></span><span style="display:flex;"><span>|____test
+</span></span><span style="display:flex;"><span>|____pkg
+</span></span><span style="display:flex;"><span>|____go.mod
+</span></span><span style="display:flex;"><span>|____go.sum
+</span></span><span style="display:flex;"><span>|____LICENSE
+</span></span><span style="display:flex;"><span>|____README.md
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="应用目录">应用目录<a hidden class="anchor" aria-hidden="true" href="#应用目录">#</a></h3>
+<h4 id="cmd">/cmd<a hidden class="anchor" aria-hidden="true" href="#cmd">#</a></h4>
+<p>​     本项目的主干。</p>
+<p>​	每个应用程序的目录名应该与你想要的可执行文件的名称相匹配（例如，<code>/cmd/myapp</code>）。 不要在这个目录中放置太多代码。如果你认为代码可以导入并在其他项目中使用，那么它应该位于 <code>/pkg</code> 目录中。如果代码不是可重用的，或者你不希望其他人重用它，请将该代码放到 <code>/internal</code> 目录中。</p>
+<h4 id="internal">/internal<a hidden class="anchor" aria-hidden="true" href="#internal">#</a></h4>
+<p>​      私有应用程序和库代码。</p>
+<p>​      这是你不希望其他人在其应用程序或库中导入代码。请注意，这个布局模式是由 Go 编译器本身执行的。有关更多细节，请参阅 Go 1.4 release notes。注意，你并不局限于顶级 <code>internal</code> 目录。在项目树的任何级别上都可以有多个内部目录。 你可以选择向 <code>internal</code> 包中添加一些额外的结构，以分隔共享和非共享的内部代码。这不是必需的(特别是对于较小的项目)，但是最好有有可视化的线索来显示预期的包的用途。你的实际应用程序代码可以放在 <code>/internal/app</code> 目录下（例如 <code>/internal/app/myapp</code>），这些应用程序共享的代码可以放在 <code>/internal/pkg</code> 目录下（例如 /internal/pkg/myprivlib）。 因为我们习惯把相关的服务，比如账号服务，内部有 rpc、job、admin 等，相关的服务整合一起后，需要区分 app。单一的服务，可以去掉 <code>/internal/myapp</code>。</p>
+<h4 id="pkg">/pkg<a hidden class="anchor" aria-hidden="true" href="#pkg">#</a></h4>
+<p>​     外部应用程序可以使用的库代码（例如 <code>/pkg/mypubliclib</code>）。</p>
+<p>​	其他项目会导入这些库，所以在这里放东西之前要三思:-)注意，<code>internal</code> 目录是确保私有包不可导入的更好方法，因为它是由 Go 强制执行的。<code>/pkg</code> 目录仍然是一种很好的方式，可以显式地表示该目录中的代码对于其他人来说是安全使用的好方法。</p>
+<blockquote>
+<p>/pkg 目录内，可以参考 go 标准库的组织方式，按照功能分类。/internla/pkg 一般用于项目内的 跨多个应用的公共共享代码，但其作用域仅在单个项目工程内。</p>
+</blockquote>
+<h3 id="服务应用目录">服务应用目录<a hidden class="anchor" aria-hidden="true" href="#服务应用目录">#</a></h3>
+<h4 id="api">/api<a hidden class="anchor" aria-hidden="true" href="#api">#</a></h4>
+<pre><code>API 协议定义目录，services.proto protobuf 文件，以及生成的 go 文件。我们通常把 api 文档直接在 proto 文件中描述。
+</code></pre>
+<h4 id="configs">/configs<a hidden class="anchor" aria-hidden="true" href="#configs">#</a></h4>
+<pre><code>配置文件模板或默认配置。
+</code></pre>
+<h4 id="test">/test<a hidden class="anchor" aria-hidden="true" href="#test">#</a></h4>
+<p>​	 额外的外部测试应用程序和测试数据。你可以随时根据需求构造 /test 目录。对于较大的项目，有一个数据子目录是有意义的。例如，你可以使用 /test/data 或 /test/testdata (如果你需要忽略目录中的内容)。请注意，Go 还会忽略以 “.” 或 “_” 开头的目录或文件，因此在如何命名测试数据目录方面有更大的灵活性。</p>
+<h3 id="服务内部目录">服务内部目录<a hidden class="anchor" aria-hidden="true" href="#服务内部目录">#</a></h3>
+<p>​	Application 目录下有 api、cmd、configs、internal、pkg 目录，目录里一般还会放置 README、CHANGELOG、OWNERS。internal 是为了避免有同业务下有人跨目录引用了内部的 data、biz、service、server 等内部 struct。</p>
+<h4 id="data">data<a hidden class="anchor" aria-hidden="true" href="#data">#</a></h4>
+<p>​	业务数据访问，包含 cache、db 等封装，实现了 biz 的 repo 接口。我们可能会把 data 与 dao 混淆在一起，data 偏重业务的含义，它所要做的是将领域对象重新拿出来，我们去掉了 DDD 的 infra层。</p>
+<h4 id="biz">biz<a hidden class="anchor" aria-hidden="true" href="#biz">#</a></h4>
+<p>​	业务逻辑的组装层，类似 DDD 的 domain 层，data 类似 DDD 的 repo，repo 接口在这里定义，使用依赖倒置的原则。</p>
+<h4 id="service">service<a hidden class="anchor" aria-hidden="true" href="#service">#</a></h4>
+<p>​	实现了 api 定义的服务层，类似 DDD 的 application 层，处理 DTO 到 biz 领域实体的转换（DTO -&gt; DO），同时协同各类 biz 交互，但是不应处理复杂逻辑。</p>
+<h4 id="server">server<a hidden class="anchor" aria-hidden="true" href="#server">#</a></h4>
+<p>​	为http和grpc实例的创建和配置，以及注册对应的 service 。</p>
+<h3 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h3>
+<p>​	在实际 go 项目开发中，一定要灵活运用，当然也可以完全不按照这样架构分层、包设计的规则，一切以项目的大小、业务的复杂度、个人专业技能认知的广度和深度、时间的紧迫度为准。</p>
+<h2 id="github上优秀的项目">github上优秀的项目<a hidden class="anchor" aria-hidden="true" href="#github上优秀的项目">#</a></h2>
+<h3 id="go-clean-arch">go-clean-arch<a hidden class="anchor" aria-hidden="true" href="#go-clean-arch">#</a></h3>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/clean-arch.png" alt="golang clean architecture"  />
+</p>
+<p>​	此项目有 4 个域层</p>
+<ul>
+<li>模型层</li>
+<li>存储库层</li>
+<li>用例层</li>
+<li>交付层</li>
+</ul>
+<h3 id="go-clean-template">go-clean-template<a hidden class="anchor" aria-hidden="true" href="#go-clean-template">#</a></h3>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/layers-2.png" alt="例"  />
+</p>
+<h3 id="服务流向">服务流向<a hidden class="anchor" aria-hidden="true" href="#服务流向">#</a></h3>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>	HTTP &gt; usecase
+</span></span><span style="display:flex;"><span>           usecase &gt; repository
+</span></span><span style="display:flex;"><span>           usecase &lt; repository
+</span></span><span style="display:flex;"><span>           usecase &gt; webapi
+</span></span><span style="display:flex;"><span>           usecase &lt; webapi
+</span></span><span style="display:flex;"><span>           usecase &gt; RPC
+</span></span><span style="display:flex;"><span>           usecase &lt; RPC
+</span></span><span style="display:flex;"><span>           usecase &gt; repository
+</span></span><span style="display:flex;"><span>           usecase &lt; repository
+</span></span><span style="display:flex;"><span>    HTTP &lt; usecase
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="参考文章">参考文章<a hidden class="anchor" aria-hidden="true" href="#参考文章">#</a></h2>
+<ul>
+<li>
+<p><a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">Clean Coder Blog</a></p>
+</li>
+<li>
+<p><a href="https://go-kratos.dev/blog/go-project-layout">Go工程化 - Project Layout 最佳实践 | Kratos (go-kratos.dev)</a></p>
+</li>
+<li>
+<p><a href="https://juejin.cn/post/6904595334693912584">Golang进阶4-Go 工程化实践和配置中心 - 掘金 (juejin.cn)</a></p>
+</li>
+<li>
+<p><a href="https://github.com/bxcodec/go-clean-arch">bxcodec/go-clean-arch: Go (Golang) Clean Architecture based on Reading Uncle Bob&rsquo;s Clean Architecture (github.com)</a></p>
+</li>
+<li>
+<p><a href="https://github.com/evrone/go-clean-template">evrone/go-clean-template: Clean Architecture template for Golang services (github.com)</a></p>
+</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/project-layout/">Project Layout</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Debug on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/debug/</link>
+    <description>Recent content in Debug on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/debug/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>golang的coredump调试入门</title>
+      <link>https://Lucareful.github.io/en/posts/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/golang%E7%9A%84coredump%E8%B0%83%E8%AF%95%E5%85%A5%E9%97%A8/</guid>
+      <description>&lt;h1 id=&#34;core-dump-概念&#34;&gt;core dump 概念&lt;/h1&gt;
+&lt;p&gt;​	&lt;code&gt;core dump&lt;/code&gt;文件实际上是进程在某个时间点时的内存映像，当时进程使用的内存是啥样就会被原样保存下来存在文件系统的某个位置上，这个时间点一般是触发了&lt;code&gt;SIGSEGV&lt;/code&gt;或者&lt;code&gt;SIGABRT&lt;/code&gt;这两个信号的时候，当进程的内存映像保存完毕后进程就会异常终止，也就是大家喜闻乐见的“程序崩了”和“段错误：核心已转储”。&lt;/p&gt;
+&lt;p&gt;​	因此 &lt;code&gt;coredump&lt;/code&gt; 就像是程序出错崩溃后的“第一现场”，是用来排查错误的主要资源。&lt;/p&gt;
+&lt;h1 id=&#34;golang-程序生成-coredump-方法&#34;&gt;golang 程序生成 coredump 方法&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;设置环境变量和在代码里调用相关的标准库接口&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;​    在这之前先用ulimit命令检测下系统当前能不能生成coredump：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ ulimit -c
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;unlimited
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;​	如果是unlimited就表示可以，如果是0那就不会生成，需要修改ulimit的设置。&lt;/p&gt;
+&lt;h2 id=&#34;修改gotraceback环境变量&#34;&gt;修改GOTRACEBACK环境变量&lt;/h2&gt;
+&lt;p&gt;​	&lt;code&gt;GOTRACEBACK&lt;/code&gt;是用来控制panic发生时golang程序行为的，值是字符串，具体内容如下：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;值&lt;/th&gt;
+&lt;th&gt;行为&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;none&lt;/td&gt;
+&lt;td&gt;不打印任何堆栈跟踪信息，不过崩溃的原因和哪行代码触发的panic还是会打印&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;single&lt;/td&gt;
+&lt;td&gt;只打印当前正在运行的触发panic的goroutine的堆栈以及runtime的堆栈；如果panic是runtime里发出的，则打印所有goroutine的堆栈跟踪信息&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;all&lt;/td&gt;
+&lt;td&gt;打印所有用户创建的goroutine的堆栈信息（不包含runtime的）&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;system&lt;/td&gt;
+&lt;td&gt;在前面&lt;code&gt;all&lt;/code&gt;的基础上把runtime相关的所有协程的堆栈信息也一起打印出来&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;crash&lt;/td&gt;
+&lt;td&gt;打印的内容和前面&lt;code&gt;system&lt;/code&gt;一样，但还会额外生成对应操作系统上的 coredump 文件&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;​	将这个环境变量设置成&lt;code&gt;crash&lt;/code&gt;就可以获得信息最全面的coredump文件。&lt;/p&gt;
+&lt;h2 id=&#34;设置编译参数&#34;&gt;设置编译参数&lt;/h2&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 1
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 2
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 3
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 4
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 5
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 6
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 7
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 8
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt; 9
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;10
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;11
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;12
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;13
+&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;14
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff7b72&#34;&gt;package&lt;/span&gt; main
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff7b72&#34;&gt;import&lt;/span&gt; (
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a5d6ff&#34;&gt;&amp;#34;fmt&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a5d6ff&#34;&gt;&amp;#34;math/rand&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff7b72&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	arr &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;:=&lt;/span&gt; []&lt;span style=&#34;color:#ff7b72&#34;&gt;int&lt;/span&gt;{&lt;span style=&#34;color:#a5d6ff&#34;&gt;1&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;2&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;3&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;4&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;5&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;6&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;7&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;8&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;9&lt;/span&gt;, &lt;span style=&#34;color:#a5d6ff&#34;&gt;10&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff7b72&#34;&gt;for&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		index &lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;:=&lt;/span&gt; rand.&lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;Intn&lt;/span&gt;(&lt;span style=&#34;color:#a5d6ff&#34;&gt;11&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		fmt.&lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;Println&lt;/span&gt;(arr[index])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
+&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;go build -gcflags&lt;span style=&#34;color:#ff7b72;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#a5d6ff&#34;&gt;&amp;#34;all=-N -l&amp;#34;&lt;/span&gt; main.go
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;</description>
+      <content:encoded><![CDATA[<h1 id="core-dump-概念">core dump 概念</h1>
+<p>​	<code>core dump</code>文件实际上是进程在某个时间点时的内存映像，当时进程使用的内存是啥样就会被原样保存下来存在文件系统的某个位置上，这个时间点一般是触发了<code>SIGSEGV</code>或者<code>SIGABRT</code>这两个信号的时候，当进程的内存映像保存完毕后进程就会异常终止，也就是大家喜闻乐见的“程序崩了”和“段错误：核心已转储”。</p>
+<p>​	因此 <code>coredump</code> 就像是程序出错崩溃后的“第一现场”，是用来排查错误的主要资源。</p>
+<h1 id="golang-程序生成-coredump-方法">golang 程序生成 coredump 方法</h1>
+<blockquote>
+<p>设置环境变量和在代码里调用相关的标准库接口</p>
+</blockquote>
+<p>​    在这之前先用ulimit命令检测下系统当前能不能生成coredump：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ ulimit -c
+</span></span><span style="display:flex;"><span>unlimited
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	如果是unlimited就表示可以，如果是0那就不会生成，需要修改ulimit的设置。</p>
+<h2 id="修改gotraceback环境变量">修改GOTRACEBACK环境变量</h2>
+<p>​	<code>GOTRACEBACK</code>是用来控制panic发生时golang程序行为的，值是字符串，具体内容如下：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>none</td>
+<td>不打印任何堆栈跟踪信息，不过崩溃的原因和哪行代码触发的panic还是会打印</td>
+</tr>
+<tr>
+<td>single</td>
+<td>只打印当前正在运行的触发panic的goroutine的堆栈以及runtime的堆栈；如果panic是runtime里发出的，则打印所有goroutine的堆栈跟踪信息</td>
+</tr>
+<tr>
+<td>all</td>
+<td>打印所有用户创建的goroutine的堆栈信息（不包含runtime的）</td>
+</tr>
+<tr>
+<td>system</td>
+<td>在前面<code>all</code>的基础上把runtime相关的所有协程的堆栈信息也一起打印出来</td>
+</tr>
+<tr>
+<td>crash</td>
+<td>打印的内容和前面<code>system</code>一样，但还会额外生成对应操作系统上的 coredump 文件</td>
+</tr>
+</tbody>
+</table>
+<p>​	将这个环境变量设置成<code>crash</code>就可以获得信息最全面的coredump文件。</p>
+<h2 id="设置编译参数">设置编译参数</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;math/rand&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>	arr <span style="color:#ff7b72;font-weight:bold">:=</span> []<span style="color:#ff7b72">int</span>{<span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">2</span>, <span style="color:#a5d6ff">3</span>, <span style="color:#a5d6ff">4</span>, <span style="color:#a5d6ff">5</span>, <span style="color:#a5d6ff">6</span>, <span style="color:#a5d6ff">7</span>, <span style="color:#a5d6ff">8</span>, <span style="color:#a5d6ff">9</span>, <span style="color:#a5d6ff">10</span>}
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> {
+</span></span><span style="display:flex;"><span>		index <span style="color:#ff7b72;font-weight:bold">:=</span> rand.<span style="color:#d2a8ff;font-weight:bold">Intn</span>(<span style="color:#a5d6ff">11</span>)
+</span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(arr[index])
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>go build -gcflags<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;all=-N -l&#34;</span> main.go
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="运行程序生成-coredump">运行程序生成 coredump</h2>
+<h3 id="临时修改">临时修改</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#79c0ff">GOTRACEBACK</span><span style="color:#ff7b72;font-weight:bold">=</span>crash ./main
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="永久修改设置环境变量">永久修改(设置环境变量)</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># 修改 /etc/profile 新增一行</span>
+</span></span><span style="display:flex;"><span>export <span style="color:#79c0ff">GOTRACEBACK</span><span style="color:#ff7b72;font-weight:bold">=</span>crash
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="修改core-dump文件路径">修改core dump文件路径</h3>
+<blockquote>
+<p>ps: 如果是容器启动的程序，可设置挂载卷将coredump生成到挂载目录中，这样就可以防止程序panic，容器退出丢失 coredump 文件</p>
+</blockquote>
+<h4 id="默认路径">默认路径</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>cat /proc/sys/kernel/core_pattern
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="临时修改-1">临时修改</h4>
+<p>​	修改 <code>/proc/sys/kernel/core_pattern</code> 文件，但<code>/proc</code>目录本身是动态加载的，每次系统重启都会重新加载，因此这种方法只能作为临时修改。例如：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#echo ‘/var/log/%e.core.%p’ &gt; /proc/sys/kernel/core_pattern</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="永久修改">永久修改</h4>
+<p>​	使用 sysctl -w name=value 命令。例如：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#sysctl -w kernel.core_pattern=/var/log/%e.core.%p</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	另外，为了更详尽的记录core dump当时的系统状态，可通过以下参数来丰富core文件的命名：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>%% 单个%字符
+</span></span><span style="display:flex;"><span>%p 所dump进程的进程ID
+</span></span><span style="display:flex;"><span>%u 所dump进程的实际用户ID
+</span></span><span style="display:flex;"><span>%g 所dump进程的实际组ID
+</span></span><span style="display:flex;"><span>%s 导致本次core dump的信号
+</span></span><span style="display:flex;"><span>%t core dump的时间 <span style="color:#ff7b72;font-weight:bold">(</span>由1970年1月1日计起的秒数<span style="color:#ff7b72;font-weight:bold">)</span>
+</span></span><span style="display:flex;"><span>%h 主机名
+</span></span><span style="display:flex;"><span>%e 程序文件名
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="调试-coredump-文件">调试 coredump 文件</h1>
+<p>​	上述步骤会在获取到的 coredump 文件，使用 dlv（golang debug工具）调试。</p>
+<h2 id="dlv-安装">dlv 安装</h2>
+<p>go 版本在1.6之前</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git clone https://github.com/go-delve/delve
+</span></span><span style="display:flex;"><span>$ cd delve
+</span></span><span style="display:flex;"><span>$ go install github.com/go-delve/delve/cmd/dlv
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>1.6之后的版本</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Install the latest release:</span>
+</span></span><span style="display:flex;"><span>$ go install github.com/go-delve/delve/cmd/dlv@latest
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Install at tree head:</span>
+</span></span><span style="display:flex;"><span>$ go install github.com/go-delve/delve/cmd/dlv@master
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Install at a specific version or pseudo-version:</span>
+</span></span><span style="display:flex;"><span>$ go install github.com/go-delve/delve/cmd/dlv@v1.7.3
+</span></span><span style="display:flex;"><span>$ go install github.com/go-delve/delve/cmd/dlv@v1.7.4-0.20211208103735-2f13672765fe
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="开始调试">开始调试</h2>
+<p>按下面的步骤查看信息：
+<img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/image-20240220112416089.png" alt="image-20240220112416089"  />
+</p>
+<ol>
+<li><code>bt</code>，查看当前的调用堆栈，找到触发panic的那行代码在哪个frame（栈帧）里</li>
+<li>看到是编号为10的frame，使用<code>frame 10</code>进入这个栈帧</li>
+<li>使用<code>locals</code>查看当前栈帧内变量的值</li>
+<li><code>p &lt;变量名/表达式&gt;</code>查看变量的具体内容，或者执行一些简单的表达式</li>
+<li>还可以修改变量的值，设置断点后再次运行查看结果，不过例子里的问题到第四步就已经明了了。（数组索引为10，越界访问）</li>
+</ol>
+<h1 id="参考文章">参考文章</h1>
+<ul>
+<li>[<a href="https://blog.51cto.com/u_11529070/9213536">转帖]CoreDump设置方式_51CTO博客_coredump 配置</a></li>
+<li><a href="https://www.kawabangga.com/posts/5175">Golang 程序 crash 的时候自动 core dump | 卡瓦邦噶！ (kawabangga.com)</a></li>
+<li><a href="https://www.cnblogs.com/apocelipes/p/17536722.html">让golang程序生成coredump文件并进行调试 - apocelipes - 博客园 (cnblogs.com)</a></li>
+<li><a href="https://github.com/binderclip/clip/issues/22">尝试使用 dlv (delve) 查看 go 程序产生的 core dump · Issue #22 · binderclip/clip · GitHub</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

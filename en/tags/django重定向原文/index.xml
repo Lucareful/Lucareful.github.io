@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Django重定向原文 on Luenci</title>
+    <link>https://Lucareful.github.io/en/tags/django%E9%87%8D%E5%AE%9A%E5%90%91%E5%8E%9F%E6%96%87/</link>
+    <description>Recent content in Django重定向原文 on Luenci</description>
+    <generator>Hugo -- 0.131.0</generator>
+    <language>en</language>
+    <atom:link href="https://Lucareful.github.io/en/tags/django%E9%87%8D%E5%AE%9A%E5%90%91%E5%8E%9F%E6%96%87/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Django重定向指南（转载）</title>
+      <link>https://Lucareful.github.io/en/posts/django-%E9%87%8D%E5%AE%9A%E5%90%91%E7%BB%88%E6%9E%81%E6%8C%87%E5%8D%97/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://Lucareful.github.io/en/posts/django-%E9%87%8D%E5%AE%9A%E5%90%91%E7%BB%88%E6%9E%81%E6%8C%87%E5%8D%97/</guid>
+      <description>原文转载自：https://www.jianshu.com/p/5e322fb5b61c（简书：爱吃鱼de大猫） 当你使用 Django 框架构建 Python Web 应用程</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>原文转载自：https://www.jianshu.com/p/5e322fb5b61c（简书：<a href="https://www.jianshu.com/u/a4b0307eac4d">爱吃鱼de大猫</a>）</p>
+</blockquote>
+<p>当你使用 Django 框架构建 Python Web 应用程序时，在某些时候需要将用户从一个URL重定向到另一个URL。本指南将提供 HTTP 重定向所需要了解的所有知识，以及在 Django 中该如何处理。</p>
+<p>完成本教程，你将学到：</p>
+<ul>
+<li>能够将用户从一个URL重定向到另一个URL</li>
+<li>了解临时重定向和永久重定向之间的区别</li>
+<li>使用重定向时避免常见陷阱</li>
+</ul>
+<p>本教程假设你熟悉Django应用程序的基本构建块，如视图和URL模式。</p>
+<h2 id="一个超简单的-django-重定向例子">一个超简单的 Django 重定向例子</h2>
+<p>在 Django 中，通过从视图返回<code>HttpResponseRedirect</code>或<code>HttpResponsePermanentRedirect</code>的实例，可以将用户重定向到另一个URL。要做到这一点，最简单的方法是使用模块 <code>django.shortcuts</code> 中的函数 <code>redirect()</code>。比如：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># views.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.shortcuts</span> <span style="color:#ff7b72">import</span> redirect
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">redirect_view</span>(request):
+</span></span><span style="display:flex;"><span>    response <span style="color:#ff7b72;font-weight:bold">=</span> redirect(<span style="color:#a5d6ff">&#39;/redirect-success/&#39;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> response
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>只需在你的视图中将新的 URL 作为参数调用 redirect() 即可搞定。 该视图函数将返回一个 HttpResponseRedirect 类。</p>
+<p>注意，如同其他视图一样，返回的重定向URL必须在你的 urls.py 中注册：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># urls.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.urls</span> <span style="color:#ff7b72">import</span> path
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">.views</span> <span style="color:#ff7b72">import</span> redirect_view
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>urlpatterns <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    path(<span style="color:#a5d6ff">&#39;/redirect/&#39;</span>, redirect_view)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># ... more URL patterns here</span>
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>假定这个是 Django 项目的主 urls.py 文件，现在 URL<code>/redirect/</code> 将被重定向到 <code>/redirect-success/</code>。此外，为避免硬编码 URL，你可以用视图、URL 模式或者模型的名字来调用 redirect() 。通过传递关键字参数<code>Permanent=True</code>来创建永久重定向。</p>
+<p>好了，你需要了解的 Django 重定向就这么多。为让这篇教程配得上“终极指南”这个标题，下面我们将进一步探讨 redirect() 函数、HTTP 状态码以及 <code>HttpRedirectResponse</code> 类型。我们从头开始，从一个基本的问题开始。</p>
+<h2 id="为什么要使用重定向">为什么要使用重定向？</h2>
+<p>我们为什么要将用户的访问重定向到不同的 URL 地址？我们看看 Django 项目是怎么回答的：</p>
+<ul>
+<li>当你未登录并请求需要身份验证的URL(如Django管理员)时，Django会将你重定向到登录页面</li>
+<li>成功登录后，Django会将你重定向到最初请求的URL</li>
+<li>当你使用Django管理员更改密码时，系统会将你重定向到指示更改成功的页面</li>
+<li>当你在Django管理员中创建对象时，Django会将你重定向到对象列表。</li>
+</ul>
+<p>如果不使用重定向来实现会是什么样子？</p>
+<p>如果用户必须登录才能查看页面，则可以简单地显示类似“单击此处登录”之类的页面。这样子做也行，但它是对用户不友好的。</p>
+<p>另外，像 <a href="http://bit.ly/">http://bit.ly</a> 这样的短网址是重定向派上用场的另一个例子：你在浏览器的地址栏中键入一个短URL，然后被重定向到一个长而笨重的URL的页面。</p>
+<p>此外，重定向不仅仅是为了方便。重定向是引导用户正确使用 Web 应用程序的基本工具。在用户进行带有副作用的操作(如创建或删除对象)后，最佳做法是重定向到另一个URL，以防止意外执行该操作两次。</p>
+<p>下面的代码示例演示通常是如何处理表单的，一个用户在成功提交表单后会被重定向到另一个URL：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django</span> <span style="color:#ff7b72">import</span> forms
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.http</span> <span style="color:#ff7b72">import</span> HttpResponseRedirect
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.shortcuts</span> <span style="color:#ff7b72">import</span> redirect, render
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">send_message</span>(name, message):
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># Code for actually sending the message goes here</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">ContactForm</span>(forms<span style="color:#ff7b72;font-weight:bold">.</span>Form):
+</span></span><span style="display:flex;"><span>    name <span style="color:#ff7b72;font-weight:bold">=</span> forms<span style="color:#ff7b72;font-weight:bold">.</span>CharField()
+</span></span><span style="display:flex;"><span>    message <span style="color:#ff7b72;font-weight:bold">=</span> forms<span style="color:#ff7b72;font-weight:bold">.</span>CharField(widget<span style="color:#ff7b72;font-weight:bold">=</span>forms<span style="color:#ff7b72;font-weight:bold">.</span>Textarea)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">contact_view</span>(request):
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># The request method &#39;POST&#39; indicates</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># that the form was submitted</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> request<span style="color:#ff7b72;font-weight:bold">.</span>method <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#39;POST&#39;</span>:  <span style="color:#8b949e;font-style:italic"># 1</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># Create a form instance with the submitted data</span>
+</span></span><span style="display:flex;"><span>        form <span style="color:#ff7b72;font-weight:bold">=</span> ContactForm(request<span style="color:#ff7b72;font-weight:bold">.</span>POST)  <span style="color:#8b949e;font-style:italic"># 2</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># Validate the form</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> form<span style="color:#ff7b72;font-weight:bold">.</span>is_valid():  <span style="color:#8b949e;font-style:italic"># 3</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># If the form is valid, perform some kind of</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># operation, for example sending a message</span>
+</span></span><span style="display:flex;"><span>            send_message(
+</span></span><span style="display:flex;"><span>                form<span style="color:#ff7b72;font-weight:bold">.</span>cleaned_data[<span style="color:#a5d6ff">&#39;name&#39;</span>],
+</span></span><span style="display:flex;"><span>                form<span style="color:#ff7b72;font-weight:bold">.</span>cleaned_data[<span style="color:#a5d6ff">&#39;message&#39;</span>]
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># After the operation was successful,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic"># redirect to some other page</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;/success/&#39;</span>)  <span style="color:#8b949e;font-style:italic"># 4</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">else</span>:  <span style="color:#8b949e;font-style:italic"># 5</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic"># Create an empty form instance</span>
+</span></span><span style="display:flex;"><span>        form <span style="color:#ff7b72;font-weight:bold">=</span> ContactForm()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> render(request, <span style="color:#a5d6ff">&#39;contact_form.html&#39;</span>, {<span style="color:#a5d6ff">&#39;form&#39;</span>: form})
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>此视图的目的是用来处理和显示用户发送消息时的联系人表单。它有几个步骤：</p>
+<ol>
+<li>首先，视图查看请求方法。当用户访问连接到此视图的URL时，浏览器执行GET请求</li>
+<li>如果使用POST请求调用视图，则POST发送的数据将用于实例化<code>ContactForm</code>对象</li>
+<li>如果表单有效，则将表单数据传递给<code>send_message()</code>。此函数与此上下文无关，因此此处未显示</li>
+<li>发送消息后，视图返回到URL<code>/SUCCESS/</code>的重定向。这是我们重点关注的一步。为简单起见，这里对URL进行了硬编码（后面讲如何避免这种情况）</li>
+<li>如果视图接收到一个GET请求(或者确切地说，任何一种不是POST请求的请求)，它将创建一个<code>ContactForm</code>实例并使用<code>django.lowcuts.ender()</code>来呈现<code>Contact_form.html</code>模板</li>
+<li>如果用户现在刷新页面，则只重新加载/SUCCESS/URL。如果没有重定向，重新加载页面将重新提交表单并发送另一条消息</li>
+</ol>
+<!-- more -->
+<h2 id="幕后http重定向的工作原理">幕后：HTTP重定向的工作原理</h2>
+<p>现在你知道为什么重定向有意义了，但是它们是如何工作的呢？让我们快速回顾一下，当你在Web浏览器的地址栏中输入URL时会发生什么。</p>
+<h3 id="http-快速入门">HTTP 快速入门</h3>
+<p>假设你已经创建了一个带“HelloWorld”视图的Django应用程序，该视图处理路径/hello/。如果使用django开发服务器运行应用程序，完整的 url 将是 http://127.0.0.1:8000/hello/ 。</p>
+<p>当你在浏览器中输入该 URL 时，它将连接到IP地址为127.0.0.1的服务器的端口8000，并发送对路径 /hello/ 的 HTTP GET 请求。服务器返回 HTTP响应来回应。</p>
+<p>HTTP 是基于文本的，因此查看客户端和服务器之间的前后通信比较容易。你可以使用命令行工具 curl 加上选项 -include 查看包括标头的完整HTTP响应，如下所示：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>$ curl --include http://127.0.0.1:8000/hello/
+</span></span><span style="display:flex;"><span>HTTP/1.1 <span style="color:#a5d6ff">200</span> OK
+</span></span><span style="display:flex;"><span>Date: Sun, <span style="color:#a5d6ff">01</span> Jul <span style="color:#a5d6ff">2018</span> 20:32:55 GMT
+</span></span><span style="display:flex;"><span>Server: WSGIServer/0.2 CPython/3.6.3
+</span></span><span style="display:flex;"><span>Content-Type: text/html; <span style="color:#79c0ff">charset</span><span style="color:#ff7b72;font-weight:bold">=</span>utf-8
+</span></span><span style="display:flex;"><span>X-Frame-Options: SAMEORIGIN
+</span></span><span style="display:flex;"><span>Content-Length: <span style="color:#a5d6ff">11</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Hello World
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>HTTP 响应第一行为包含状态代码和状态信息状态行。后面跟着任意数量的 HTTP 标头。空行表示标头的结尾和响应正文的开头，正文为服务器发回的实际数据。</p>
+<h3 id="http-重定向状态码">HTTP 重定向状态码</h3>
+<p>重定向的响应是怎么样的呢？为简单起见，我们假设路径 /redirect/ 是经由 redirect_view() 处理，如果你访问 http://127.0.0.1:8000/redirect/ ，使用 curl 工具的话，命令行提示信息应该类似这样：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ curl --include http://127.0.0.1:8000/redirect/
+</span></span><span style="display:flex;"><span>HTTP/1.1 <span style="color:#a5d6ff">302</span> Found
+</span></span><span style="display:flex;"><span>Date: Sun, <span style="color:#a5d6ff">01</span> Jul <span style="color:#a5d6ff">2018</span> 20:35:34 GMT
+</span></span><span style="display:flex;"><span>Server: WSGIServer/0.2 CPython/3.6.3
+</span></span><span style="display:flex;"><span>Content-Type: text/html; <span style="color:#79c0ff">charset</span><span style="color:#ff7b72;font-weight:bold">=</span>utf-8
+</span></span><span style="display:flex;"><span>Location: /redirect-success/
+</span></span><span style="display:flex;"><span>X-Frame-Options: SAMEORIGIN
+</span></span><span style="display:flex;"><span>Content-Length: <span style="color:#a5d6ff">0</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>响应跟前面的例子很类似，只有少许的差别，重定向的响应：</p>
+<ul>
+<li>返回不同的状态代码(302 VS 200)</li>
+<li>包含具有相对URL的位置标头（Location: /redirect-success/）</li>
+<li>以空行结尾，因为重定向响应的正文为空</li>
+</ul>
+<p>主要区别在于状态码。HTTP 规范具体规定如下：</p>
+<blockquote>
+<p>302(Found)状态代码指示目标资源暂时位于不同的URI下。由于有时可能会更改重定向，因此客户端应该继续为将来的请求使用有效的请求URI。服务器应在响应中生成一个位置标头字段，其中包含一个 URI 对不同 URI 的引用。客户端可以使用位置字段值进行自动重定向。<a href="https://tools.ietf.org/html/rfc7231#section-6.4">来源</a></p>
+</blockquote>
+<p>也就是说，当服务器返回一个 302 状态码，它的意思是告诉客户端：“嘿，此刻，您正在寻找的东西可以在另一个位置找到”。</p>
+<p>规范中的一个关键短语是“可以使用位置字段值进行自动重定向”。这意味着您不能强制客户端加载另一个URL。客户端可以选择等待用户确认，也可以决定根本不加载URL。</p>
+<p>现在你已经了解了，重定向只是一个带有3xx状态代码和位置标头的HTTP响应。关键点是，HTTP重定向类似于通常的HTTP响应，但具有空主体、3xx状态代码和位置标头。要理解的就这么多，下面我们回到 Django 中，首先了解3xx状态码中的两种重定向，并了解它们在 Web 开发中的重要性。</p>
+<h3 id="临时与永久重定向">临时与永久重定向</h3>
+<p>HTTP标准指定了多个重定向状态代码，所有代码都在3xx范围内。两个最常见的状态代码是 301（永久重定向）和 302（Found/发现）。</p>
+<p>状态码302表示临时重定向。临时重定向是指：“此刻，你正在寻找的东西可以在另一个地址找到”。把它想象成一个商店的标志，上面写着：“我们的商店目前因装修而关闭。请到我们拐角处的另一家店”。由于这只是暂时的，所以下次购物时还是要检查原来的地址。</p>
+<blockquote>
+<p>注意：在 HTTP1.0 规范中，状态代码302的说明是临时重定向。HTTP 1.1中已更改为 Found 。</p>
+</blockquote>
+<p>顾名思义，永久重定向应该是永久的。永久重定向会告诉浏览器：“你要查找的内容不再位于此地址。它现在这个新地址上，再也不会在老地址上了”。永久重定向就像商店的标牌，上面写着“我们搬家了，我们的新店就在拐角处”。这个变化是永久性的，所以下次你想去商店的时候，你可以直接去新的地址。</p>
+<blockquote>
+<p>注意：永久重定向可能会产生一些意想不到的后果。在使用永久重定向之前请完成本指南，或者跳到“永久重定向是永久的”一节了解。</p>
+</blockquote>
+<p>浏览器在处理重定向时的行为大致差不多：当URL返回永久重定向响应时，此响应将被缓存。下一次浏览器遇到旧URL时，它会记住重定向并直接请求新地址。
+缓存重定向可以节省不必要的请求，并提供更好、更快的用户体验。此外，临时重定向和永久重定向之间的区别会与搜索引擎优化相关。</p>
+<h2 id="django-中的重定向">Django 中的重定向</h2>
+<p>现在你知道了，重定向只是一个带有 3xx 状态代码和位置标头的 HTTP 响应。你完全可以手工从常规<code>HttpResponse</code>对象构建这样的响应：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">hand_crafted_redirect_view</span>(request):
+</span></span><span style="display:flex;"><span>  response <span style="color:#ff7b72;font-weight:bold">=</span> HttpResponse(status<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">302</span>)
+</span></span><span style="display:flex;"><span>  response[<span style="color:#a5d6ff">&#39;Location&#39;</span>] <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;/redirect/success/&#39;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ff7b72">return</span> response
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这个在技术上是可行的，但它涉及到相当多的输入。</p>
+<h3 id="httpresponseredirect-类">HTTPResponseRedirect 类</h3>
+<p>使用 HttpResponseRedirect 类可以帮助我们减少输入, 它是 HttpResponse 的一个子类。 你只需要把需要重定向的 URL 作为第一个参数生成实例，初始化时会正确地匹配状态码和报文地址头：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">redirect_view</span>(request):
+</span></span><span style="display:flex;"><span>  <span style="color:#ff7b72">return</span> HttpResponseRedirect(<span style="color:#a5d6ff">&#39;/redirect/success/&#39;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在命令行中使用 HttpResponseRedirect 类的演示：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> <span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.http</span> <span style="color:#ff7b72">import</span> HttpResponseRedirect
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> redirect <span style="color:#ff7b72;font-weight:bold">=</span> HttpResponseRedirect(<span style="color:#a5d6ff">&#39;/redirect/success/&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> redirect<span style="color:#ff7b72;font-weight:bold">.</span>status_code
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">302</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> redirect[<span style="color:#a5d6ff">&#39;Location&#39;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">&#39;/redirect/success/&#39;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>还有一个用于永久重定向的类：HttpResponsePermanentRedirect 名字很直观。它的工作原理与 HttpResponseRedirect 相同，唯一的区别是它的状态代码为301(永久移动)。</p>
+<blockquote>
+<p>注意：在上面的示例中，重定向URL是硬编码的。对URL进行硬编码是一种不好的做法：如果URL发生了变化，你必须搜索所有的代码并改为正确的URL。下面我们来修复这个缺陷。</p>
+</blockquote>
+<p>我们可以使用 django.urls.reverse() 来构建URL，但是还有一种更方便的方法。</p>
+<h3 id="redirect-函数">redirect() 函数</h3>
+<p>为了使你的工作更轻松，Django提供了你在前面简介中已经看到的通用快捷函数: django.shortcuts.redirect()。</p>
+<p>可以使用以下命令调用此函数：</p>
+<ul>
+<li>带有get_absolute_url()方法的模型实例或任何其他对象。</li>
+<li>URL或视图名称以及位置和/或关键字参数。</li>
+<li>URL</li>
+</ul>
+<p>它将采取适当的步骤将参数转换为URL并返回<code>HTTPResponseRedirect</code>。如果传递<code>Permanent=True</code>，它将返回<code>HttpResponsePermanentRedirect</code>的实例，从而导致永久重定向。</p>
+<p>下面有三个示例来说明不同的用法：</p>
+<ol>
+<li>传入模型：</li>
+</ol>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.shortcuts</span> <span style="color:#ff7b72">import</span> redirect
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">model_redirect_view</span>(request):
+</span></span><span style="display:flex;"><span>    product <span style="color:#ff7b72;font-weight:bold">=</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(featured<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)<span style="color:#ff7b72;font-weight:bold">.</span>first()
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> redirect(product)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>redirect() 将调用 product.get_absolute_url() 并将结果用作重定向目标。如果给定的类(在本例中为Product)没有 get_absolute_url() 方法，则抛出 TypeError 异常。</p>
+<ol>
+<li>传入URL名称和参数：</li>
+</ol>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.shortcuts</span> <span style="color:#ff7b72">import</span> redirect
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">fixed_featured_product_view</span>(request):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">...</span>
+</span></span><span style="display:flex;"><span>    product_id <span style="color:#ff7b72;font-weight:bold">=</span> settings<span style="color:#ff7b72;font-weight:bold">.</span>FEATURED_PRODUCT_ID
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;product_detail&#39;</span>, product_id<span style="color:#ff7b72;font-weight:bold">=</span>product_id)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>redirect() 将尝试使用给定的参数来调换 URL。本例中假设你的 URL 模式中采用以下模式:</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>path(<span style="color:#a5d6ff">&#39;/product/&lt;product_id&gt;/&#39;</span>, <span style="color:#a5d6ff">&#39;product_detail_view&#39;</span>, name<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;product_detail&#39;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ol>
+<li>传入 URL:</li>
+</ol>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.shortcuts</span> <span style="color:#ff7b72">import</span> redirect
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">featured_product_view</span>(request):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;/products/42/&#39;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>redirect() 将处理任何包含<code>/</code>或<code>.</code>的字符串。作为URL并将其用作重定向目标。</p>
+<h3 id="基于类的视图-redirectview-重定向">基于类的视图 RedirectView 重定向</h3>
+<p>如果你的视图只返回一个重定向，那么可以使用基于类的视图<code>django.views.generic.base.RedirectView</code>。</p>
+<p>你可以通过定制 RedirectView 各种属性来满足你的需要。</p>
+<p>如果类具有<code>.url</code>属性，则它将用作重定向URL。字符串格式占位符将被替换为URL中的命名参数：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># urls.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.urls</span> <span style="color:#ff7b72">import</span> path
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">.views</span> <span style="color:#ff7b72">import</span> SearchRedirectView
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>urlpatterns <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    path(<span style="color:#a5d6ff">&#39;/search/&lt;term&gt;/&#39;</span>, SearchRedirectView<span style="color:#ff7b72;font-weight:bold">.</span>as_view())
+</span></span><span style="display:flex;"><span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># views.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.views.generic.base</span> <span style="color:#ff7b72">import</span> RedirectView
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">SearchRedirectView</span>(RedirectView):
+</span></span><span style="display:flex;"><span>  url <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;https://google.com/?q=</span><span style="color:#a5d6ff">%(term)s</span><span style="color:#a5d6ff">&#39;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>URL模式定义了一个参数，用于在<code>SearchRedirectView</code>中构建重定向URL。应用程序中的路径 <code>/search/kittens/</code> 将被重定向到 <code>https://google.com/?q=kittens</code>。</p>
+<p>你还可以将关键字参数url传递给<code>urlPatterns</code>中的<code>as_view()</code>，而不需通过重写 <code>RedirectView</code> 子类的 url 属性来实现：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">#urls.py</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.views.generic.base</span> <span style="color:#ff7b72">import</span> RedirectView
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>urlpatterns <span style="color:#ff7b72;font-weight:bold">=</span> [
+</span></span><span style="display:flex;"><span>    path(<span style="color:#a5d6ff">&#39;/search/&lt;term&gt;/&#39;</span>,
+</span></span><span style="display:flex;"><span>         RedirectView<span style="color:#ff7b72;font-weight:bold">.</span>as_view(url<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#39;https://google.com/?q=</span><span style="color:#a5d6ff">%(term)s</span><span style="color:#a5d6ff">&#39;</span>)),
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>你同样可以通过重写 get_redirect_url() 来获得完全地自定义重定向行为：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">random</span> <span style="color:#ff7b72">import</span> choice
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.views.generic.base</span> <span style="color:#ff7b72">import</span> RedirectView
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">RandomAnimalView</span>(RedirectView):
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     animal_urls <span style="color:#ff7b72;font-weight:bold">=</span> [<span style="color:#a5d6ff">&#39;/dog/&#39;</span>, <span style="color:#a5d6ff">&#39;/cat/&#39;</span>, <span style="color:#a5d6ff">&#39;/parrot/&#39;</span>]
+</span></span><span style="display:flex;"><span>     is_permanent <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">True</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>     <span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">get_redirect_url</span>(<span style="color:#ff7b72;font-weight:bold">*</span>args, <span style="color:#ff7b72;font-weight:bold">**</span>kwargs):
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> choice(self<span style="color:#ff7b72;font-weight:bold">.</span>animal_urls)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这个基于类的视图将重定向到从 .animal_urls 中随机选择的 URL。</p>
+<p><code>django.views.generic.base.RedirectView</code> 为定制提供了更多的挂钩。以下是完整的列表：</p>
+<ul>
+<li>.url</li>
+</ul>
+<p>如果设置了此属性，则它应该是一个带有要重定向到的URL字符串。如果它包含像<code>%(name)s</code>这样的字符串格式占位符，它们将被传递给视图的关键字参数替代展开。</p>
+<ul>
+<li>.pattern_name</li>
+</ul>
+<p>如果设置了此属性，则它应该是要重定向到的URL模式的名称。传递给视图的任何位置参数和关键字参数都用于URL模式互换。</p>
+<ul>
+<li>.permanent</li>
+</ul>
+<p>如果此属性为 True，视图将返回永久重定向。默认情况下为 False。</p>
+<ul>
+<li>.query_string</li>
+</ul>
+<p>如果此属性为 True，则视图将任何提供的查询字符串附加到重定向URL。如果为false(默认值)，则废弃查询字符串。</p>
+<ul>
+<li>get_redirect_url(*args, **kwargs)</li>
+</ul>
+<p>此方法负责构建重定向URL。如果此方法不返回任何值，视图将返回 410 Gone 状态。</p>
+<p>默认实现首先检查.url。它将.url视为“旧式”格式字符串，使用传递给视图的任何命名URL参数来展开任何命名格式说明符。如果未设置.url，则检查是否设置了.mode_name。如果是，它将使用它来互换它接收到的任何位置参数和关键字参数的URL。你可以通过覆盖此方法以任何方式更改该行为。只需确保它返回一个包含URL字符串。</p>
+<blockquote>
+<p>注意：基于类的视图是一个强大的概念，但是比较难理解它。与常规的基于函数的视图不同，在常规的基于函数的视图中，代码流程相对简单，而基于类的视图是由混合和基类组成的复杂层次结构组成的。</p>
+</blockquote>
+<p>要理解基于类的视图，一个很好的工具是基于类的网站视图。</p>
+<p>通过这个简单的基于函数的视图，你可以实现从面的示例中<code>RandomAnimalView</code>的功能：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">random</span> <span style="color:#ff7b72">import</span> choice
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.shortcuts</span> <span style="color:#ff7b72">import</span> redirect
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">random_animal_view</span>(request):
+</span></span><span style="display:flex;"><span>    animal_urls <span style="color:#ff7b72;font-weight:bold">=</span> [<span style="color:#a5d6ff">&#39;/dog/&#39;</span>, <span style="color:#a5d6ff">&#39;/cat/&#39;</span>, <span style="color:#a5d6ff">&#39;/parrot/&#39;</span>]
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> redirect(choice(animal_urls))
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>正如代码，基于类的方法在增加一些隐藏的复杂性的同时并没有提供任何明显的好处。这就提出了一个问题：什么时候应该使用<code>RedirectView</code>？</p>
+<p>如果你想在<code>urls.py</code>中直接添加重定向，那么使用<code>RedirectView</code>是有意义的。但是，如果你发现自己正在重写get_redirect_url，那么基于函数的视图可能更容易理解，并且对于未来的功能扩展也更灵活。</p>
+<h2 id="高级用法">高级用法</h2>
+<p>一旦知道使用 django.shortcuts.redirect()，那么重定向到一个不同的URL就非常简单了。但是有几个高级用例并不那么明显。
+通过重定向传递参数。
+有时，你希望将一些参数传递给要重定向到的视图。最佳选择是在重定向URL的查询字符串中传递数据，这意味着重定向的URL类似于：<code>http://example.com/redirect-path/?parameter=value</code>
+假设你希望从 some_view() 重定向到 product_view()，还要传递一个可选的参数：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.urls</span> <span style="color:#ff7b72">import</span> reverse
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">urllib.parse</span> <span style="color:#ff7b72">import</span> urlencode
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">some_view</span>(request):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72;font-weight:bold">...</span>
+</span></span><span style="display:flex;"><span>    base_url <span style="color:#ff7b72;font-weight:bold">=</span> reverse(<span style="color:#a5d6ff">&#39;product_view&#39;</span>)  <span style="color:#8b949e;font-style:italic"># 1 /products/</span>
+</span></span><span style="display:flex;"><span>    query_string <span style="color:#ff7b72;font-weight:bold">=</span>  urlencode({<span style="color:#a5d6ff">&#39;category&#39;</span>: category<span style="color:#ff7b72;font-weight:bold">.</span>id})  <span style="color:#8b949e;font-style:italic"># 2 category=42</span>
+</span></span><span style="display:flex;"><span>    url <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;</span><span style="color:#a5d6ff">{}</span><span style="color:#a5d6ff">?</span><span style="color:#a5d6ff">{}</span><span style="color:#a5d6ff">&#39;</span><span style="color:#ff7b72;font-weight:bold">.</span>format(base_url, query_string)  <span style="color:#8b949e;font-style:italic"># 3 /products/?category=42</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> redirect(url)  <span style="color:#8b949e;font-style:italic"># 4</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">product_view</span>(request):
+</span></span><span style="display:flex;"><span>    category_id <span style="color:#ff7b72;font-weight:bold">=</span> request<span style="color:#ff7b72;font-weight:bold">.</span>GET<span style="color:#ff7b72;font-weight:bold">.</span>get(<span style="color:#a5d6ff">&#39;category&#39;</span>)  <span style="color:#8b949e;font-style:italic"># 5</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic"># Do something with category_id</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这段代码有点多，我们分步来探讨：</p>
+<ol>
+<li>首先，使用 django.urls.verse() 获取到 product_view() 的URL映射。</li>
+<li>接下来，你必须构建查询字符串。这是问号之后的部分。建议此时使用 urllib.urlparse.urlcode()，因为它正确处理任何特殊字符的编码。</li>
+<li>现在使用问号将 base_ur l和 query_string 连接起来。格式字符串可以很好地实现这一点。</li>
+<li>最后，将 url 传递给 django.shortcuts.redirect() 或某个重定向响应类。</li>
+</ol>
+<p>在重定向目标 product_view() 中，该参数将在<code>request.GET</code>字典中可用。而参数可能会丢失，因此应使用<code>requests.GET.get('category')</code>而不是<code>requests.GET['category']</code>。当参数不存在时，前者不返回任何值，而后者将引发异常。</p>
+<blockquote>
+<p>注意：请确保验证从查询字符串读取的任何数据。看起来这些数据是在你自己的控制之下，因为是你创建了重定向URL。</p>
+</blockquote>
+<p>实际上，重定向可以被用户操作，如同任何其他的用户输入那样不能被信任。如果没有正确的验证，攻击者可能会获得未经授权的访问。</p>
+<h3 id="特殊重定向码">特殊重定向码</h3>
+<p>Django 为状态代码 301 和 302 提供 HTTP 响应类。这些应该涵盖了大多数用例，但是如果你必须返回状态代码303、307或308，那么你可以很容易地创建自己的响应类。只需简单地继承 <code>HttpResponseRedirectBase</code> 并在子类中重写<code>STATUS_CODE</code>属性：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">HttpResponseTemporaryRedirect</span>(HttpResponseRedirectBase):
+</span></span><span style="display:flex;"><span>    status_code <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">307</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>或者，你可以使用 <code>django.shortcuts.redirect()</code> 方法来创建响应对象并更改返回值。当你有要重定向到的视图、URL或模型的名字时，此方法可行：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">temporary_redirect_view</span>(request):
+</span></span><span style="display:flex;"><span>    response <span style="color:#ff7b72;font-weight:bold">=</span> redirect(<span style="color:#a5d6ff">&#39;success_view&#39;</span>)
+</span></span><span style="display:flex;"><span>    response<span style="color:#ff7b72;font-weight:bold">.</span>status_code <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">307</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> response
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>注意：实际上还有第三个类，它的状态代码在3xx范围内：<code>HttpResponseNotModified</code>，它的状态代码304。它指示URL的内容尚未更改，客户端可以使用缓存版本。</p>
+</blockquote>
+<blockquote>
+<p>有人可能会说，304并未修改响应重定向到一个URL的缓存版本，但这有点牵强。因此，它不再列在 HTTP 标准的 “重定向3xx” 部分中。</p>
+</blockquote>
+<h2 id="陷阱">陷阱</h2>
+<h3 id="重定向到并不会重定向的位置">重定向到并不会重定向的位置</h3>
+<p>django.shortcuts.redirect() 的简单性可能具有欺骗性。函数本身不执行重定向：它只返回一个重定向响应对象。你必须从视图(或在中间件中)返回此响应对象。否则，不会产生重定向。</p>
+<p>但是，即使你知道仅仅调用 redirect() 是不够的，也很容易进行简单的重构时将此错误引入工作的应用程序中。这里有一个例子来说明这一点。</p>
+<p>假设我们正在构建一个商店，并且有一个负责显示产品的视图。如果产品不存在，则重定向到主页：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">product_view</span>(request, product_id):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">try</span>:
+</span></span><span style="display:flex;"><span>        product <span style="color:#ff7b72;font-weight:bold">=</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(pk<span style="color:#ff7b72;font-weight:bold">=</span>product_id)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">except</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>DoesNotExist:
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;/&#39;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> render(request, <span style="color:#a5d6ff">&#39;product_detail.html&#39;</span>, {<span style="color:#a5d6ff">&#39;product&#39;</span>: product})
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>现在，你需要添加第二个视图来显示产品的客户评论。如果产品不存在它还应该重定向到主页，因此作为第一步，你可以将此功能从 product_view() 提取到辅助函数 get_product_or_redirect() 中：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">get_product_or_redirect</span>(product_id):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">try</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(pk<span style="color:#ff7b72;font-weight:bold">=</span>product_id)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">except</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>DoesNotExist:
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;/&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">product_view</span>(request, product_id):
+</span></span><span style="display:flex;"><span>    product <span style="color:#ff7b72;font-weight:bold">=</span> get_product_or_redirect(product_id)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> render(request, <span style="color:#a5d6ff">&#39;product_detail.html&#39;</span>, {<span style="color:#a5d6ff">&#39;product&#39;</span>: product})
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>不幸的是，在重构之后，重定向不再起作用。
+redirect() 的结果是从 get_product_or_redirect() 返回的，但 product_view() 不没有返回它。它将被传递给模板。根据在 product_detail.html模板中使用 product 变量的方式，这可能不会导致错误消息，而只是显示空值。</p>
+<h3 id="重定向循环">重定向循环</h3>
+<p>在处理重定向时，你可能会意外地创建一个重定向循环，方法是让URL A返回指向URL B的重定向，而URL B返回到URL A的重定向，以此类推。大多数HTTP客户端检测到这种重定向循环，并在多次请求后显示错误消息。</p>
+<p>不幸的是，这种错误可能很难发现，因为服务器端的一切看起来都很好。除非你的用户抱怨此问题，否则唯一可能出现问题的迹象是，你收到了来自一个客户端的多个请求，这些请求都会导致快速连续的重定向响应，但没有一个状态为200 OK的响应。</p>
+<p>以下是重定向循环的一个简单示例：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">a_view</span>(request):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;another_view&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">another_view</span>(request):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;a_view&#39;</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这个例子说明了原理，但过于简单化了。在现实生活中遇到的重定向循环可能更难发现。让我们来看一个更详细的例子：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">featured_products_view</span>(request):
+</span></span><span style="display:flex;"><span>    featured_products <span style="color:#ff7b72;font-weight:bold">=</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>filter(featured<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> len(featured_products <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">1</span>):
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;product_view&#39;</span>, kwargs<span style="color:#ff7b72;font-weight:bold">=</span>{<span style="color:#a5d6ff">&#39;product_id&#39;</span>: featured_products[<span style="color:#a5d6ff">0</span>]<span style="color:#ff7b72;font-weight:bold">.</span>id})
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> render(request, <span style="color:#a5d6ff">&#39;featured_products.html&#39;</span>, {<span style="color:#a5d6ff">&#39;product&#39;</span>: featured_products})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">product_view</span>(request, product_id):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">try</span>:
+</span></span><span style="display:flex;"><span>        product <span style="color:#ff7b72;font-weight:bold">=</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>objects<span style="color:#ff7b72;font-weight:bold">.</span>get(pk<span style="color:#ff7b72;font-weight:bold">=</span>product_id, in_stock<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">except</span> Product<span style="color:#ff7b72;font-weight:bold">.</span>DoesNotExist:
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> redirect(<span style="color:#a5d6ff">&#39;featured_products_view&#39;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> render(request, <span style="color:#a5d6ff">&#39;product_detail.html&#39;</span>, {<span style="color:#a5d6ff">&#39;product&#39;</span>: product})
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>featured_products_view() 获取所有特定的产品，也就是说，Product 实例的 .featured 属性被设置为True。如果只有一个特定产品存在，它将直接重定向到 product_view()。否则，它将用 featured_products 查询集渲染一个模板。</p>
+<p>product_view 与上一节看起来很相似，但它有两个微小的区别：</p>
+<ul>
+<li>该视图试图获取一个库存产品，将<code>.in_stock</code>设置为<code>True</code>来指示该产品。</li>
+<li>如果没有产品库存，视图将重定向到 featured_products_view()。</li>
+</ul>
+<p>这种逻辑工作的不错，直到你的商店成为自己成功的牺牲品，而你目前拥有的某种特色产品脱销为止。如果你将<code>.in_stock</code>设置为 False，但忘记将<code>.featured</code>也设置为False，那么任何访问 feature_product_view() 的访问者都将被困在重定向循环中。</p>
+<p>没有防止此类错误的万全方法，一个好的起点是检查要重定向到的视图是否使用了重定向本身。</p>
+<h3 id="永久重定向是永久的">永久重定向是永久的</h3>
+<p>永久重定向可能类似于糟糕的纹身：在当时，它们可能看起来是个好主意，但一旦你意识到它们是一个错误，就很难摆脱它们。</p>
+<p>当浏览器收到URL的永久重定向响应时，它会无限期地缓存此响应。你将来任何时候再请求旧的 URL，浏览器都不会再费事地加载它而是直接加载新URL。</p>
+<p>指示浏览器重新加载曾经返回过永久重定向的URL可能会非常困难。Google Chrome在缓存重定向方面尤为激进。</p>
+<p><strong>为什么这会成为个问题？</strong></p>
+<p>假设你希望使用 Django 构建 Web 应用程序。你可以在 <a href="http://myawesomedjangowebapp.com/">myawesomedjangowebapp.com</a> 注册你的域名。作为第一步，你可以在https://myawesomedjangowebapp.com/blog/ 安装了一个博客应用程序，并构建了邮件列表。</p>
+<p>你的站点 <a href="https://myawesomedjangowebapp.com/">https://myawesomedjangowebapp.com/</a> 的主页仍在建设中，因此你将主页重定向到 <a href="https://myawesomedjangowebapp.com/blog/">https://myawesomedjangowebapp.com/blog/</a> 。之所以决定使用永久重定向，是因为听说永久重定向是缓存的，缓存会让访问变得更快，因为速度是 Google 搜索结果排名的一个因素，所以速度越快越好。</p>
+<p>结果，你不仅是一位优秀的开发人员，而且还是一位才华横溢的作家。你的博客变得流行起来，你创建的邮件列表也不断增长。几个月后，你的应用程序准备就绪。它现在有了一个闪亮的主页，你决定移除重定向。</p>
+<p>你发送一封带有特殊折扣码的通知电子邮件到你已经相当大的运营邮件列表。你靠坐在电脑前，等待注册通知的滚动。</p>
+<p>可怕的是，你邮箱里充满了困惑的访问者发来的信息，他们想要访问你的应用程序，但总是被重定向到你的博客。</p>
+<p>什么情况？当你的博客读者访问 <a href="https://myawesomedjangowebapp.com/">https://myawesomedjangowebapp.com/</a> 时，重定向仍然处于活动状态，将会跳转到 <a href="https://myawesomedjangowebapp.com/blog/">https://myawesomedjangowebapp.com/blog/</a> 。因为这是一个永久的重定向，所以这个URL会缓存在他们的浏览器中。</p>
+<p>当他们点击你发布公告邮件中的链接时，他们的浏览器不会查找你的新主页而会直接访问你的博客。此时你不是在庆祝你的项目成功启动，而是忙于指导你的用户如何通过 <a href="chrome://net-internals/">chrome://net-internals</a> 来重置其浏览器的缓存。</p>
+<p>永久重定向的永久性质也会在本地计算机上开发时给你制造麻烦。让我们回到为 myawesomedjangowebapp.com 实现永久重定向的时刻。</p>
+<p>你启动开发服务器并打开 http://127.0.0.1:8000/ 。如预期那样，应用程序将你的浏览器访问重定向到 http://127.0.0.1:8000/blog/ 。当你对项目感到满意后，你关闭开发服务器去吃个午饭。</p>
+<p>当你吃饱回来，准备处理一些客户端的工作，需要对主页进行一些简单的更改，因此你启动开发服务器，打开客户端，但是异常情况发生了。这是怎么回事？主页被破坏了，它现在返回404！忙碌一下午，你过了一段时间才注意到你正被重定向到项目中已经不存在的 http://127.0.0.1:8000/blog/ 。对于浏览器来说，URL http://127.0.0.1:8000/ 现在是否服务于一个完全不同的应用程序并不重要。最重要的是这个 URL 曾经返回到http://127.0.0.1:8000/blog/ 的永久重定向。</p>
+<p>从这个故事的启示是，你计划今后不再打算再次使用的网址才安排永久重定向。永久重定向的地方，你必须意识到它们的后果。即使你确信你确实需要永久重定向，最好还是先实现临时重定向，并且只有在你100%确定一切正常工作后才切换到永久重定向。</p>
+<h3 id="未经验证的重定向可能导致安全问题">未经验证的重定向可能导致安全问题</h3>
+<p>从安全的角度来看，重定向是一种相对安全的技术。攻击者无法通过重定向攻击网站。毕竟，重定向只是重定向到一个URL，这个URL攻击者只需在浏览器地址栏中键入即可。</p>
+<p>但是，如果你使用某种类型的用户输入(如URL参数)，重定向URL时没有将其正确验证，则攻击者可能会利用此输入进行网络钓鱼攻击。这种重定向称为开放重定向或未经验证的重定向。</p>
+<p>有一些合法的重定向到的URL用例来自用户的输入。Django的登录视图就是一个很好的例子。它接受一个URL参数Next，该参数包含用户登录后重定向到的页面的URL。要在登录后将用户重定向到其配置文件，URL可能如下所示：</p>
+<p><a href="https://myawesomedjangowebapp.com/login/?next=/profile/">https://myawesomedjangowebapp.com/login/?next=/profile/</a></p>
+<p>Django确实验证了下一个参数，但是这里我们假设它没有验证下一个参数。在没有验证的情况下，攻击者可以创建URL，将用户重定向到其控制下的网站，例如：</p>
+<p><a href="https://myawesomedjangowebapp.com/login/?next=https://myawesomedjangowebapp.co/profile/">https://myawesomedjangowebapp.com/login/?next=https://myawesomedjangowebapp.co/profile/</a></p>
+<p>然后，myawesomedjangowebapp.co 网站可能会显示一条错误消息，并诱使用户再次输入他们的凭据。</p>
+<p>避免开放重定向的最佳方法是在构建重定向URL时不使用任何用户输入。</p>
+<p>如果不能确定重定向URL是否安全，可以使用函数 django.utils.http.is_safe_url() 对其进行验证。文档字符串很好地解释了它的用法：</p>
+<blockquote>
+<p>is_safe_url(url, host=None, allowed_hosts=None, require_https=False)
+如果url是安全重定向(即不会指向其他主机并使用安全方案)，则返回True。空 url 总是返回 False。如果 require_https 为 True（默认为 False），则只有 <code>https</code> 被视为有效方案。</p>
+</blockquote>
+<p>我们来看一些例子。</p>
+<p>相对URL被认为是安全的：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> <span style="color:#8b949e;font-style:italic"># Import the function first.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> <span style="color:#ff7b72">from</span> <span style="color:#ff7b72">django.utils.http</span> <span style="color:#ff7b72">import</span> is_safe_url
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> is_safe_url(<span style="color:#a5d6ff">&#39;/profile/&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">True</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>通常认为指向其他主机的URL不安全：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> is_safe_url(<span style="color:#a5d6ff">&#39;https://myawesomedjangowebapp.com/profile/&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">False</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>如果在 ALLOWED_HOSTS中 提供了指向另一个主机的URL，则该URL被认为是安全的：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> is_safe_url(<span style="color:#a5d6ff">&#39;https://myawesomedjangowebapp.com/profile/&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">...</span>             allowed_hosts<span style="color:#ff7b72;font-weight:bold">=</span>{<span style="color:#a5d6ff">&#39;myawesomedjangowebapp.com&#39;</span>})
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">True</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>如果参数 require_https 为True，则使用 http 方案的URL被视为不安全：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">&gt;&gt;&gt;</span> is_safe_url(<span style="color:#a5d6ff">&#39;http://myawesomedjangowebapp.com/profile/&#39;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">...</span>             allowed_hosts<span style="color:#ff7b72;font-weight:bold">=</span>{<span style="color:#a5d6ff">&#39;myawesomedjangowebapp.com&#39;</span>},
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">...</span>             require_https<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#79c0ff">True</span>)
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">False</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<p>到此终于结束了关于HTTP重定向的 Django 指南。现在你已经了解了重定向的各个方面，从HTTP协议的低级细节到Django中处理它们的高级方式。</p>
+<p>你了解了HTTP重定向在幕后看起来如何，不同的状态代码是什么，以及永久重定向和临时重定向有何不同。这些知识并不是Django所特有的，对于任何语言的Web开发都是有价值的。</p>
+<p>现在，你可以使用 Django 执行重定向，可以使用重定向响应类 HttpResponseRedirect 和 HttpResponsePermanentRedirect，也可以使用方便函数django.lowcuts.redirect()。你看到了一些高级用例的解决方案，并知道如何避免常见的陷阱。</p>
+<p>如果你有任何关于HTTP重定向的问题和建议，请在下面留言，同时，祝你重定向愉快！</p>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

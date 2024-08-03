@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Django的ORM多表操作 | Luenci</title>
+<meta name="keywords" content="ORM">
+<meta name="description" content="ORM多表操作 API 函数 说明 all() 查询所有结果 filter(**kwargs) 包含了与所给筛选条件相匹配的对象 get(**kwargs) 返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选条件的对象超过一个或者没有都会抛出错误。 exclude(**kwargs) 它包含了与所给筛选条件不匹配的对象 order_by(*field) 对查询结果排序 用法:order_by (&ldquo;price&rdquo;) DESC 降序 reverse(): 对查询结果反向排序 count() 返回数据库中匹配查询(QuerySet)的对象数量 first() 返回第一条记录 last() 返回最后一条记录 exists() 如果QuerySet包含数据，">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="http://localhost:1313/articles/1/01/django%E7%9A%84orm%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.54405a410796490bc874ab6181fac9b675753cc2b91375d8f882566459eca428.css" integrity="sha256-VEBaQQeWSQvIdKthgfrJtnV1PMK5E3XY&#43;IJWZFnspCg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/articles/1/01/django%E7%9A%84orm%E5%A4%9A%E8%A1%A8%E6%93%8D%E4%BD%9C/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Luenci (Alt + H)">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/index.xml" title="RSS Feed">
+                    <span>RSS Feed</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Django的ORM多表操作
+    </h1>
+    <div class="post-meta">Luenci
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="orm多表操作">ORM多表操作<a hidden class="anchor" aria-hidden="true" href="#orm多表操作">#</a></h1>
+<h2 id="api">API<a hidden class="anchor" aria-hidden="true" href="#api">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>函数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>all()</td>
+<td>查询所有结果</td>
+</tr>
+<tr>
+<td>filter(**kwargs)</td>
+<td>包含了与所给筛选条件相匹配的对象</td>
+</tr>
+<tr>
+<td>get(**kwargs)</td>
+<td>返回与所给筛选条件相匹配的对象，返回结果有且只有一个， 如果符合筛选条件的对象超过一个或者没有都会抛出错误。</td>
+</tr>
+<tr>
+<td>exclude(**kwargs)</td>
+<td>它包含了与所给筛选条件不匹配的对象</td>
+</tr>
+<tr>
+<td>order_by(*field)</td>
+<td>对查询结果排序 用法:order_by (&ldquo;price&rdquo;)  <code>DESC</code> 降序</td>
+</tr>
+<tr>
+<td>reverse():</td>
+<td>对查询结果反向排序</td>
+</tr>
+<tr>
+<td>count()</td>
+<td>返回数据库中匹配查询(<code>QuerySet</code>)的对象数量</td>
+</tr>
+<tr>
+<td>first()</td>
+<td>返回第一条记录</td>
+</tr>
+<tr>
+<td>last()</td>
+<td>返回最后一条记录</td>
+</tr>
+<tr>
+<td>exists()</td>
+<td>如果<code>QuerySet</code>包含数据，就返回<code>True</code>，否则返回<code>False</code> 相当于<code>limit 1</code>(用途查询这个表中是否有值)</td>
+</tr>
+<tr>
+<td>values(*field)</td>
+<td>用法:<code>Book.objects.all.values(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[{‘title’:‘aa’,‘pirce’:12},{}]</code></td>
+</tr>
+<tr>
+<td>values_list(*field):</td>
+<td>用法:<code>Book.objects.all.values_list(‘title’,‘price’)</code> 返回值是<code>&lt;queryset[(‘aa’,12),(‘bb’,33)]</code></td>
+</tr>
+<tr>
+<td>distinct()</td>
+<td>从返回结果中剔除重复纪录 用法:<code>Book.objects.all.values(‘title’,‘price’).distinct()</code> 错误用法 <code>Book.objects.all.distinct()</code> 因为id不相同,其他相同,无法去重</td>
+</tr>
+</tbody>
+</table>
+<h2 id="模糊查询">模糊查询<a hidden class="anchor" aria-hidden="true" href="#模糊查询">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cmd" data-lang="cmd"><span style="display:flex;"><span>__exact 	精确等于 like ‘aaa’
+</span></span><span style="display:flex;"><span>__iexact 	精确等于 忽略大小写 ilike ‘aaa’
+</span></span><span style="display:flex;"><span>__contains  是否包含 like ‘<span style="color:#8be9fd;font-style:italic">%aaa%</span>’
+</span></span><span style="display:flex;"><span>__icontains 包含 忽略大小写 ilike ‘<span style="color:#8be9fd;font-style:italic">%aaa%</span>’，但是对于sqlite来说，contains的作用效果等同于icontains。
+</span></span><span style="display:flex;"><span>__gt 		大于
+</span></span><span style="display:flex;"><span>__gte 		大于等于
+</span></span><span style="display:flex;"><span>__lt 		小于
+</span></span><span style="display:flex;"><span>__lte 		小于等于
+</span></span><span style="display:flex;"><span>__in 		存在于一个list范围内
+</span></span><span style="display:flex;"><span>__startswith 以…开头
+</span></span><span style="display:flex;"><span>__istartswith 以…开头 忽略大小写
+</span></span><span style="display:flex;"><span>__endswith  以…结尾
+</span></span><span style="display:flex;"><span>__iendswith 以…结尾，忽略大小写
+</span></span><span style="display:flex;"><span>__range 	在…范围内
+</span></span><span style="display:flex;"><span>__year 		日期字段的年份
+</span></span><span style="display:flex;"><span>__month 	日期字段的月份
+</span></span><span style="display:flex;"><span>__day 		日期字段的日
+</span></span><span style="display:flex;"><span>__isnull=True/False
+</span></span><span style="display:flex;"><span>__isnull=True 与 __exact=None的区别
+</span></span></code></pre></td></tr></table>
+</div>
+</div><!-- raw HTML omitted -->
+<h2 id="外键的定义">外键的定义<a hidden class="anchor" aria-hidden="true" href="#外键的定义">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4"># modeld.py</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">class</span> <span style="color:#50fa7b">Book</span>(models<span style="color:#ff79c6">.</span>Model):
+</span></span><span style="display:flex;"><span>    name <span style="color:#ff79c6">=</span> models<span style="color:#ff79c6">.</span>CharField(max_length<span style="color:#ff79c6">=</span><span style="color:#bd93f9">20</span>)
+</span></span><span style="display:flex;"><span>    price <span style="color:#ff79c6">=</span> models<span style="color:#ff79c6">.</span>FloatField()
+</span></span><span style="display:flex;"><span>    pub_date <span style="color:#ff79c6">=</span> models<span style="color:#ff79c6">.</span>DateField()
+</span></span><span style="display:flex;"><span>    publish <span style="color:#ff79c6">=</span> models<span style="color:#ff79c6">.</span>ForeignKey(<span style="color:#f1fa8c">&#34;Publish&#34;</span>,on_delete<span style="color:#ff79c6">=</span>models<span style="color:#ff79c6">.</span>CASCADE)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">class</span> <span style="color:#50fa7b">Publish</span>(models<span style="color:#ff79c6">.</span>Model):
+</span></span><span style="display:flex;"><span>    name <span style="color:#ff79c6">=</span> models<span style="color:#ff79c6">.</span>CharField(max_length<span style="color:#ff79c6">=</span><span style="color:#bd93f9">32</span>)
+</span></span><span style="display:flex;"><span>    city <span style="color:#ff79c6">=</span> models<span style="color:#ff79c6">.</span>CharField(max_length<span style="color:#ff79c6">=</span><span style="color:#bd93f9">32</span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="on_delete的参数"><code>on_delete</code>的参数<a hidden class="anchor" aria-hidden="true" href="#on_delete的参数">#</a></h3>
+<ul>
+<li><code>CASCADE</code>:这就是默认的选项，级联删除，你无需显性指定它。</li>
+<li><code>PROTECT</code>: 保护模式，如果采用该选项，删除的时候，会抛出<code>ProtectedError</code>错误。</li>
+<li><code>SET_NULL</code>: 置空模式，删除的时候，外键字段被设置为空，前提就是<code>blank=True</code>, <code>null=True</code>,定义该字段的时候，允许为空。</li>
+<li><code>SET_DEFAULT</code>: 置默认值，删除的时候，外键字段设置为默认值，所以定义外键的时候注意加上一个默认值。</li>
+<li><code>SET()</code>: 自定义一个值，该值只能是对应的实体了</li>
+<li><code>DO_NOTHING</code>:不采取行动。如果您的数据库后端强制执行参照完整性，会造成<code>IntegrityError</code>，除非您手动将SQL 约束<code>ON DELETE</code>添加到数据库字段。</li>
+</ul>
+<h2 id="一对多之对象查询">一对多之对象查询<a hidden class="anchor" aria-hidden="true" href="#一对多之对象查询">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4"># 通过外键实现关联查询</span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 一对多： book_obj ————————————》一定是一个对象</span>
+</span></span><span style="display:flex;"><span>book_obj <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>get(name<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;python进阶&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(book_obj<span style="color:#ff79c6">.</span>publish)
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(book_obj<span style="color:#ff79c6">.</span>publish<span style="color:#ff79c6">.</span>name)
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(book_obj<span style="color:#ff79c6">.</span>publish<span style="color:#ff79c6">.</span>city)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 查询出版社出版的所有书籍和价格</span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 方法一</span>
+</span></span><span style="display:flex;"><span>pub_obj <span style="color:#ff79c6">=</span> Publish<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(name<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;人民出版社&#34;</span>)[<span style="color:#bd93f9">0</span>]
+</span></span><span style="display:flex;"><span>ret <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(publish<span style="color:#ff79c6">=</span>pub_obj)<span style="color:#ff79c6">.</span>values(<span style="color:#f1fa8c">&#34;name&#34;</span>,<span style="color:#f1fa8c">&#34;price&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(ret) <span style="color:#6272a4"># &lt;QuerySet [{&#39;name&#39;: &#39;linux运维&#39;, &#39;price&#39;: 77.0}]&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 方法二</span>
+</span></span><span style="display:flex;"><span>pub_obj <span style="color:#ff79c6">=</span> Publish<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>filter(name<span style="color:#ff79c6">=</span><span style="color:#f1fa8c">&#34;机械出版社&#34;</span>)[<span style="color:#bd93f9">0</span>]
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(pub_obj<span style="color:#ff79c6">.</span>book_set<span style="color:#ff79c6">.</span>all())  <span style="color:#6272a4"># &lt;QuerySet [&lt;Book: python进阶&gt;]&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(<span style="color:#8be9fd;font-style:italic">type</span>(pub_obj<span style="color:#ff79c6">.</span>book_set<span style="color:#ff79c6">.</span>all()))  <span style="color:#6272a4"># &lt;class &#39;django.db.models.query.QuerySet&#39;&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(pub_obj<span style="color:#ff79c6">.</span>book_set<span style="color:#ff79c6">.</span>all()<span style="color:#ff79c6">.</span>values(<span style="color:#f1fa8c">&#34;name&#34;</span>, <span style="color:#f1fa8c">&#34;price&#34;</span>))
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="多对多对象添加">多对多对象添加<a hidden class="anchor" aria-hidden="true" href="#多对多对象添加">#</a></h2>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4"># 多对多添加信息</span>
+</span></span><span style="display:flex;"><span>book_obj <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>get(<span style="color:#8be9fd;font-style:italic">id</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">2</span>)
+</span></span><span style="display:flex;"><span>author_obj <span style="color:#ff79c6">=</span> Author<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>get(<span style="color:#8be9fd;font-style:italic">id</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 添加关系</span>
+</span></span><span style="display:flex;"><span>book_obj<span style="color:#ff79c6">.</span>author<span style="color:#ff79c6">.</span>add(author_obj)
+</span></span><span style="display:flex;"><span><span style="color:#6272a4"># 删除关系</span>
+</span></span><span style="display:flex;"><span>book_obj<span style="color:#ff79c6">.</span>author<span style="color:#ff79c6">.</span>remove(author_obj)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="聚合查询与分组查询">聚合查询与分组查询<a hidden class="anchor" aria-hidden="true" href="#聚合查询与分组查询">#</a></h2>
+<h3 id="聚合查询">聚合查询:<a hidden class="anchor" aria-hidden="true" href="#聚合查询">#</a></h3>
+<h4 id="aggregateargs-kwargs"><code>aggregate</code>(*args, **kwargs)<a hidden class="anchor" aria-hidden="true" href="#aggregateargs-kwargs">#</a></h4>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#6272a4">#1.聚合  aggregate:返回值是一个字典</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">from</span> django.db.models <span style="color:#ff79c6">import</span> Avg,Max,Min,Count
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">#问题:查询所有书籍的平均价格,最高价格,最低价格</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ret <span style="color:#ff79c6">=</span> Book<span style="color:#ff79c6">.</span>objects<span style="color:#ff79c6">.</span>all()<span style="color:#ff79c6">.</span>aggregate(avg_price<span style="color:#ff79c6">=</span>Avg(<span style="color:#f1fa8c">&#39;price&#39;</span>),max_price <span style="color:#ff79c6">=</span> Max(<span style="color:#f1fa8c">&#39;price&#39;</span>),min_price<span style="color:#ff79c6">=</span>Min(<span style="color:#f1fa8c">&#39;price&#39;</span>))
+</span></span><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">print</span>(ret)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>aggregate()</code>是<code>QuerySet</code> 的一个终止子句，意思是说，它返回一个包含一些键值对的字典。键的名称是聚合值的标识符，值是计算出来的聚合值。键的名称是按照字段和聚合函数的名称自动生成出来的。如果你想要为聚合值指定一个名称，可以向聚合子句提供它。</li>
+</ul>
+<h2 id="分组查询">分组查询<a hidden class="anchor" aria-hidden="true" href="#分组查询">#</a></h2>
+<h3 id="annotateargs-kwargs">annotate(*args, **kwargs)<a hidden class="anchor" aria-hidden="true" href="#annotateargs-kwargs">#</a></h3>
+<ul>
+<li>表单模型.objects.values(&ldquo;group by 分组字段&rdquo;).annotate(聚合函数(&lsquo;聚合字段&rsquo;))</li>
+</ul>
+<h2 id="f查询">F查询<a hidden class="anchor" aria-hidden="true" href="#f查询">#</a></h2>
+<ul>
+<li>Django 支持 F() 对象之间以及 F() 对象和常数之间的加减乘除和取模的操作。</li>
+</ul>
+<h2 id="q查询">Q查询<a hidden class="anchor" aria-hidden="true" href="#q查询">#</a></h2>
+<ul>
+<li>filter() 等方法中的关键字参数查询都是一起进行“AND” 的。 如果你需要执行更复杂的查询（例如OR语句），你可以使用Q对象</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/orm/">ORM</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

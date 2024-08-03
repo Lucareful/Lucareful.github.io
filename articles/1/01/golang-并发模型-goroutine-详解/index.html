@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Golang 并发模型 &amp; Goroutine 详解 | Luenci</title>
+<meta name="keywords" content="Goroutine模型">
+<meta name="description" content="Golang 并发模型 &amp; Goroutine 详解
+💡 并发不是并行，并发关乎结构，并行关乎执行
+
+操作系统的基本调度与执行单元是进程(process)
+
+
+操作系统的最小调度单位是线程-线程可作为执行单元可被独立调度到处理器上运行
+
+**CSP( Communicationing Sequential Processes，通信顺序进程)**并发模型
+Tony Hoare 的 CSP 模型旨在简化并发程序的编写，让并发程序的编写与编写顺序程序一样简单。Tony Hoare 认为输入输出应该是基本的编程原语，数据处理逻辑(也就是 CSP中的 P)只需调用输入原语获取数据，顺序地处理数据，并将结果数据通过输出原语输出就可以了。因此，在 Tony Hoare 眼中，一个符合 CSP 模型的并发程序应该是一组通过输入输出原语连接起来的 P 的集合。
+从这个角度来看，CSP理论不仅是一个并发参考模型，也是一种并发程序的程序组织方法。它的组合思想与 Go 的设计哲学不谋而合。
+Tony Hoare 的 CSP 理论中的 P，也就是“Process(进程)”，是一个抽象概念，它代表任何顺序处理逻辑的封装，它获取输入数据(或从其他 P 的输出获取)，并生产出可以被其他 P 消费的输出数据。这里我们可以简单看下 CSP 通信模型的示意图:
+
+
+注意了，这里的 P 并不一定与操作系统的进程或线程划等号。在 Go 中，与“Process”对 应的是 goroutine。
+为了实现 CSP 并发模型中的输入和输出原语，Go 还引入了 goroutine(P)之间的通信原语channel。goroutine 可以从 channel 获取输入数据， 再将处理后得到的结果数据通过 channel 输出。通过 channel 将 goroutine(P)组合连 接在一起，让设计和编写大型并发系统变得更加简单和清晰，我们再也不用为那些传统共 享内存并发模型中的问题而伤脑筋了。
+Goroutine 的优势
+
+资源占用小，每个 goroutine 的初始栈大小仅为 2k;
+由 Go 运行时而不是操作系统调度，goroutine 上下文切换在用户层完成，开销更小;
+在语言层面而不是通过标准库提供。goroutine 由go关键字创建，一退出就会被回收或 销毁，开发体验更佳
+语言内置 channel 作为 goroutine 间通信原语，为并发设计提供了强大支撑。
+
+Goroutine 调度器
+一个 Go 程序对于操作系统来说只是一个用户层程序，操作系统眼中只有线程，它甚至不知道有一种叫 Goroutine 的事物存在。所以，Goroutine 的调度全要靠 Go 自己完成。那么，实现 Go 程序内 Goroutine 之间“公平”竞争“CPU”资源的任务，就落到了Go 运行时(runtime)头上了。要知道在一个 Go 程序中，除了用户层代码，剩下的就是Go 运行时了。
+于是，Goroutine 的调度问题就演变为，Go 运行时如何将程序内的众多 Goroutine，按照一定算法调度到“CPU”资源上运行的问题了。
+💡 可是，在操作系统层面，线程竞争的“CPU”资源是真实的物理 CPU，但在 Go 程序层 面，各个 Goroutine 要竞争的“CPU”资源又是什么呢?
+
+Go 程序是用户层程序，它本身就是整体运行在一个或多个操作系统线程上的。所以这个答案就出来了: Goroutine 们要竞争的“CPU”资源就是操作系统线程。这样，Goroutine调度器的任务也就明确了: 将 Goroutine 按照一定算法放到不同的操作系统线程中去执行。
+">
+<meta name="author" content="Luenci">
+<link rel="canonical" href="http://localhost:1313/articles/1/01/golang-%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B-goroutine-%E8%AF%A6%E8%A7%A3/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.54405a410796490bc874ab6181fac9b675753cc2b91375d8f882566459eca428.css" integrity="sha256-VEBaQQeWSQvIdKthgfrJtnV1PMK5E3XY&#43;IJWZFnspCg=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/articles/1/01/golang-%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%9E%8B-goroutine-%E8%AF%A6%E8%A7%A3/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Luenci (Alt + H)">Luenci</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/" title="Home">
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories" title="Categories">
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/index.xml" title="RSS Feed">
+                    <span>RSS Feed</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Golang 并发模型 &amp; Goroutine 详解
+    </h1>
+    <div class="post-meta">Luenci
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="golang-并发模型--goroutine-详解"><code>Golang</code> 并发模型 &amp; Goroutine 详解<a hidden class="anchor" aria-hidden="true" href="#golang-并发模型--goroutine-详解">#</a></h1>
+<p>💡 <strong>并发不是并行，并发关乎结构，并行关乎执行</strong></p>
+<blockquote>
+<p>操作系统的基本调度与执行单元是进程(process)</p>
+</blockquote>
+<blockquote>
+<p><strong>操作系统</strong>的<strong>最小调度</strong>单位是线程-<code>线程可作为执行单元可被独立调度到处理器上运行</code></p>
+</blockquote>
+<h2 id="csp-communicationing-sequential-processes通信顺序进程并发模型">**<code>CSP</code>( Communicationing Sequential Processes，通信顺序进程)**并发模型<a hidden class="anchor" aria-hidden="true" href="#csp-communicationing-sequential-processes通信顺序进程并发模型">#</a></h2>
+<p>Tony Hoare 的 <code>CSP</code> 模型旨在简化并发程序的编写，让并发程序的编写与编写顺序程序一样简单。Tony Hoare 认为输入输出应该是基本的编程原语，数据处理逻辑(也就是 <code>CSP</code>中的 P)只需调用输入原语获取数据，顺序地处理数据，并将结果数据通过输出原语输出就可以了。因此，在 Tony Hoare 眼中，<strong>一个符合 <code>CSP</code> 模型的并发程序应该是一组通过输入输出原语连接起来的 P 的集合</strong>。</p>
+<p>从这个角度来看，<code>CSP</code>理论不仅是一个并发参考模型，也是一种并发程序的程序组织方法。它的组合思想与 Go 的设计哲学不谋而合。</p>
+<p>Tony Hoare 的 <code>CSP</code> 理论中的 P，也就是“Process(进程)”，是一个抽象概念，它代表任何顺序处理逻辑的封装，它获取输入数据(或从其他 P 的输出获取)，并生产出可以被其他 P 消费的输出数据。这里我们可以简单看下 <code>CSP</code> 通信模型的示意图:</p>
+<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202202112129599.png" alt="image-20220211212946539"  />
+</p>
+<p>注意了，这里的 P 并不一定与操作系统的进程或线程划等号。在 Go 中，与“Process”对 应的是 <code>goroutine</code>。</p>
+<p>为了实现 <code>CSP</code> 并发模型中的输入和输出原语，Go 还引入了 <code>goroutine</code>(P)之间的通信原语channel。goroutine 可以从 channel 获取输入数据， 再将处理后得到的结果数据通过 channel 输出。通过 channel 将 goroutine(P)组合连 接在一起，让设计和编写大型并发系统变得更加简单和清晰，我们再也不用为那些传统共 享内存并发模型中的问题而伤脑筋了。</p>
+<h2 id="goroutine-的优势"><code>Goroutine</code> 的优势<a hidden class="anchor" aria-hidden="true" href="#goroutine-的优势">#</a></h2>
+<ul>
+<li>资源占用小，每个 goroutine 的初始栈大小仅为 2k;</li>
+<li>由 Go 运行时而不是操作系统调度，goroutine 上下文切换在用户层完成，开销更小;</li>
+<li>在语言层面而不是通过标准库提供。goroutine 由go关键字创建，一退出就会被回收或 销毁，开发体验更佳</li>
+<li>语言内置 channel 作为 goroutine 间通信原语，为并发设计提供了强大支撑。</li>
+</ul>
+<h2 id="goroutine-调度器"><strong><code>Goroutine</code> 调度器</strong><a hidden class="anchor" aria-hidden="true" href="#goroutine-调度器">#</a></h2>
+<p>一个 Go 程序对于操作系统来说只是一个<strong>用户层程序</strong>，操作系统眼中只有线程，它甚至不知道有一种叫 <strong>Goroutine</strong> 的事物存在。所以，Goroutine 的调度全要靠 Go 自己完成。那么，实现 Go 程序内 Goroutine 之间“公平”竞争“CPU”资源的任务，就落到了Go 运行时(runtime)头上了。要知道在一个 Go 程序中，除了用户层代码，剩下的就是Go 运行时了。</p>
+<p>于是，Goroutine 的调度问题就演变为，Go 运行时如何将程序内的众多 Goroutine，按照一定算法调度到“CPU”资源上运行的问题了。</p>
+<p>💡 <strong>可是，在操作系统层面，线程竞争的“CPU”资源是真实的物理 CPU，但在 Go 程序层 面，各个 Goroutine 要竞争的“CPU”资源又是什么呢?</strong></p>
+<ul>
+<li>Go 程序是用户层程序，它本身就是整体运行在一个或多个操作系统线程上的。所以这个答案就出来了: <strong>Goroutine 们要竞争的“CPU”资源就是操作系统线程</strong>。这样，Goroutine调度器的任务也就明确了: <strong>将 Goroutine 按照一定算法放到不同的操作系统线程中去执行</strong>。</li>
+</ul>
+<h2 id="goroutine-调度器模型与演化过程"><strong>Goroutine 调度器模型与演化过程</strong><a hidden class="anchor" aria-hidden="true" href="#goroutine-调度器模型与演化过程">#</a></h2>
+<p>Goroutine 调度器的实现不是一蹴而就的，它的调度模型与算法也是几经演化，从最初的 G-M 模型、到 G-P-M 模型，从不支持抢占，到支持协作式抢占，再到支持基于信号的异步抢占。 Goroutine 调度器经历了不断地优化与打磨。</p>
+<h3 id="g-m-模型"><strong>G-M 模型</strong><a hidden class="anchor" aria-hidden="true" href="#g-m-模型">#</a></h3>
+<p>在这个调度器中，每个 Goroutine 对应于运行时中的一个抽象结构: G(<code>Goroutine</code>) ，而被视作“物理 CPU”的操作系统线程，则被抽象为另外一个结构:M(machine)。</p>
+<p>调度器的工作就是将 G 调度到 M 上去运行。为了更好地控制程序中活跃的 M 的数量，调度器引入了 <code>GOMAXPROCS</code> 变量来表示 Go 调度器可见的“处理器”的最大数量。</p>
+<p><strong>G-M 模型</strong>的一个重要不足:限制了 Go 并发程序的伸缩性，尤其是对那些有高吞吐或并行计算需求的服务程序。这个问题主要体现在这几个方面:</p>
+<ul>
+<li>单一全局互斥锁(<code>Sched.Lock</code>) 和集中状态存储的存在，导致所有 Goroutine 相关操作，比如创建、重新调度等，都要上锁;</li>
+<li>Goroutine 传递问题: M 经常在 M 之间传递“可运行”的 Goroutine，这导致调度延迟增大，也增加了额外的性能损耗;</li>
+<li>每个 M 都做内存缓存，导致内存占用过高，数据局部性较差;</li>
+<li>由于系统调用(<code>syscall</code>)而形成的频繁的工作线程阻塞和解除阻塞，导致额外的性能损耗。</li>
+</ul>
+<p>为了解决这些问题德米特里 - 维尤科夫又亲自操刀改进了 Go 调度器，在 Go 1.1 版本中实现了 <strong>G-P-M 调度模型。</strong></p>
+<h2 id="g-p-m-调度模型"><strong>G-P-M 调度模型</strong><a hidden class="anchor" aria-hidden="true" href="#g-p-m-调度模型">#</a></h2>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/202205201527275.png" alt="img"  />
+</p>
+<p>P 是一个“逻辑 <code>Proccessor</code>”，每个 G(Goroutine)要想真正运行起来，首先需要被分配一个 P，也就是进入到 P 的本地运行队列(<code>local runq</code>)中。</p>
+<p>对于 G 来说，P 就是运行它的“CPU”，可以说:<strong>在 G 的眼里只有 P</strong>。但从 Go 调度器的视角来看，真正的“CPU”是 M，只有将 P 和 M 绑定，才能让 P 的 <code>runq</code>中的 G 真正运行起来。</p>
+<p>G-P-M 模型的实现算是Go调度器的一大进步，但调度器仍然有一个令人头疼的问题，那就是<strong>不支持抢占式调度</strong>，这导致一旦某个 G 中出现死循环的代码逻辑，那么 G 将永久占用分配给它的 P 和 M，而位于同一个 P 中的其他 G 将得不到调度，出现“<strong>饿死</strong>”的情况。</p>
+<p>更为严重的是，当只有一个 P(<code>GOMAXPROCS=1</code>)时，整个 Go 程序中的其他 G 都 将“饿死”。</p>
+<h2 id="基于协作的抢占式调度"><strong>基于协作的“抢占式”调度</strong><a hidden class="anchor" aria-hidden="true" href="#基于协作的抢占式调度">#</a></h2>
+<p>Go 编译器在每个函数或方法的入口处加上了一段额外的代码 (<code>runtime.morestack_noctxt</code>)，让运行时有机会在这段代码中检查是否需要执行抢占调度。</p>
+<p>这种解决方案只能说局部解决了“饿死”问题，只在有函数调用的地方才能插入“抢 占”代码(埋点)，对于没有函数调用而是纯算法循环计算的 G，Go 调度器依然无法抢占。</p>
+<p>比如，死循环等并没有给编译器插入抢占代码的机会，这就会导致 <code>GC</code> 在等待所有 Goroutine 停止时的等待时间过长，从而导致 <code>GC</code> 延迟，内存占用瞬间冲高;甚至在一 些特殊情况下，导致在<code>STW(sweight the world)</code>时死锁。</p>
+<h2 id="非协作的抢占式调度"><strong>非协作的抢占式调度</strong><a hidden class="anchor" aria-hidden="true" href="#非协作的抢占式调度">#</a></h2>
+<p>这种抢占式调度是基于系统信号的，也就是通过向线程发送信号的方式来抢占正在运行Goroutine。</p>
+<h2 id="小结">小结<a hidden class="anchor" aria-hidden="true" href="#小结">#</a></h2>
+<p>除了这些大的迭代外，Goroutine 的调度器还有一些小的优化改动，比如<strong>通过文件 I/O poller 减少 M 的阻塞等</strong>。</p>
+<p>Go 运行时已经实现了<code>netpoller</code>，这使得即便 G 发起网络 I/O 操作，也不会导致 M 被阻塞(仅阻塞 G)，也就不会导致大量线程(M)被创建出来。但是对于文件 I/O 操作来说，一旦阻塞，那么线程(M)将进入挂起状态，等待 I/O 返回后被唤醒。这种情况下 P 将与挂起的 M 分离，再选择一个处于空闲状态(idle)的 M。如果此时没有空闲的 M，就会新创建一个 M(线程)，所以，这种情况下，大量 I/O 操作仍然会导致大量线程被创建。</p>
+<p>为了解决这个问题，Go 开发团队的伊恩 - 兰斯 - 泰勒(Ian Lance Taylor)在 Go 1.9 中 增加了一个针对文件 I/O 的 Poller的功能，这个功能可以像 <code>netpoller</code> 那样，在 G 操作 那些支持监听(<code>pollable</code>)的文件描述符时，仅会阻塞 G，而不会阻塞 M。不过这个功能 依然不能对常规文件有效，常规文件是不支持监听的(<code>pollable</code>)。但对于 Go 调度器而 言，这也算是一个不小的进步了。</p>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/goroutine%E6%A8%A1%E5%9E%8B/">Goroutine模型</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2024 <a href="http://localhost:1313/">Luenci</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
