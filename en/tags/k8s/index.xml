@@ -4,7 +4,7 @@
     <title>K8s on Luenci</title>
     <link>https://luenci.me/en/tags/k8s/</link>
     <description>Recent content in K8s on Luenci</description>
-    <generator>Hugo -- 0.133.0</generator>
+    <generator>Hugo -- 0.135.0</generator>
     <language>en</language>
     <lastBuildDate>Sat, 08 Jun 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.me/en/tags/k8s/index.xml" rel="self" type="application/rss+xml" />
@@ -13,7 +13,8 @@
       <link>https://luenci.me/en/posts/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D%E4%B8%80/</link>
       <pubDate>Sat, 08 Jun 2024 00:00:00 +0000</pubDate>
       <guid>https://luenci.me/en/posts/k8s%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D%E4%B8%80/</guid>
-      <description>Etcd 储存核心实现 ​ Eted 集群是分布式KV存储集群，提供了可靠的强一致性服务发现。Etcd 集群存储 Kubernetes 系统的集群状态和元数据，其中包括所有 Kubemetes 资源对象信</description>
+      <description>&lt;h1 id=&#34;etcd-储存核心实现&#34;&gt;Etcd 储存核心实现&lt;/h1&gt;
+&lt;p&gt;​	Eted 集群是分布式KV存储集群，提供了可靠的强一致性服务发现。Etcd 集群存储 Kubernetes 系统的集群状态和元数据，其中包括所有 Kubemetes 资源对象信息、 资源对象状态、集群节点信息等。Kubernetes 将所有数据存储至 Etcd 集群前缀为 /registry 的目录下。&lt;/p&gt;</description>
       <content:encoded><![CDATA[<h1 id="etcd-储存核心实现">Etcd 储存核心实现</h1>
 <p>​	Eted 集群是分布式KV存储集群，提供了可靠的强一致性服务发现。Etcd 集群存储 Kubernetes 系统的集群状态和元数据，其中包括所有 Kubemetes 资源对象信息、 资源对象状态、集群节点信息等。Kubernetes 将所有数据存储至 Etcd 集群前缀为 /registry 的目录下。</p>
 <h2 id="etcd-存储架构设计">Etcd 存储架构设计</h2>
@@ -56,270 +57,270 @@
 &lt;/blockquote&gt;
 &lt;h2 id=&#34;kubernetes-内置资源概览&#34;&gt;Kubernetes 内置资源概览&lt;/h2&gt;
 &lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;资源组&lt;/th&gt;
-&lt;th&gt;资源种类&lt;/th&gt;
-&lt;th&gt;说明&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;apiextensions.k8s.io&lt;/td&gt;
-&lt;td&gt;CustomResourceDefinition&lt;/td&gt;
-&lt;td&gt;自定义资源类型 ， 由 APIExtensions Server 负责管理该资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;apiregistration.k8s.io&lt;/td&gt;
-&lt;td&gt;APIService&lt;/td&gt;
-&lt;td&gt;聚合资源类型，由 AggregatorServer 负责管理该资源类&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;admissionregistration.k8s.io&lt;/td&gt;
-&lt;td&gt;MutatingWebhookConfiguration&lt;/td&gt;
-&lt;td&gt;变更准入控制器资源类型( Webhook)&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;ValidatingWebhookConfiguration&lt;/td&gt;
-&lt;td&gt;验证准入控制器资源类型 ( Webhook)&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;apps&lt;/td&gt;
-&lt;td&gt;ControllerRevision&lt;/td&gt;
-&lt;td&gt;记录资源对象所有的历史版本的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;DaemonSet&lt;/td&gt;
-&lt;td&gt;在 Pod 资源对象的基础上提供守护进程的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Deployment&lt;/td&gt;
-&lt;td&gt;在 Pod资源对象的基础上提供支持无状态服务的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;ReplicaSet&lt;/td&gt;
-&lt;td&gt;在 Pod 资源对象的基础上提供一组 Pod 副本的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;StatefulSet&lt;/td&gt;
-&lt;td&gt;在 Pod资源对象的基础上提供支持有状态服务的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;auditregistration.k8s.io&lt;/td&gt;
-&lt;td&gt;AuditSink&lt;/td&gt;
-&lt;td&gt;审计资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;authentication.k8s.io&lt;/td&gt;
-&lt;td&gt;TokenReview&lt;/td&gt;
-&lt;td&gt;认证资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;authorization.k8s.io&lt;/td&gt;
-&lt;td&gt;LocalSubjectAccessReview&lt;/td&gt;
-&lt;td&gt;授权检查用户是否可以在指定的命名空间中执行操作&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;SelfSubjectAccessReview&lt;/td&gt;
-&lt;td&gt;授权检查用户是否可以执行操作(若不指定 spec.namespace，则在所有的命名空间中执行操作）&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;SelfSubjectRulesReview&lt;/td&gt;
-&lt;td&gt;授权枚举用户可以在指定的命名空间中执行一组操作&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;SubjectAccessReview&lt;/td&gt;
-&lt;td&gt;授 权检查用户是否可以执行操作&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;autoscaling&lt;/td&gt;
-&lt;td&gt;HorizontalPodAutoscaler&lt;/td&gt;
-&lt;td&gt;在 Pod 资源对象的基础上提供水平自动伸缩资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;batch&lt;/td&gt;
-&lt;td&gt;Job&lt;/td&gt;
-&lt;td&gt;提供一次性任务的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;CronJob&lt;/td&gt;
-&lt;td&gt;提供定时任务的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;certificates.k8s.io&lt;/td&gt;
-&lt;td&gt;CertificateSigningRequest&lt;/td&gt;
-&lt;td&gt;提供证书管理的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;coordination.k8s.io&lt;/td&gt;
-&lt;td&gt;Leases&lt;/td&gt;
-&lt;td&gt;提供领导者选举机制的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;core&lt;/td&gt;
-&lt;td&gt;ComponentStatus&lt;/td&gt;
-&lt;td&gt;该资源类型已被奔用，其用于提供获取 Kuberetes 组件运行状况的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;ConfigMap&lt;/td&gt;
-&lt;td&gt;提供容器内应用程序配置管理的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Endpoints&lt;/td&gt;
-&lt;td&gt;提供将外部服务器映射为内部服务的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Event&lt;/td&gt;
-&lt;td&gt;提供 Kubernetes 集群事件管理的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;LimitRange&lt;/td&gt;
-&lt;td&gt;为命名空间中的每种资源对象设置资源(硬件资源)使 用限制&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Namespace&lt;/td&gt;
-&lt;td&gt;提供资源对象所在的命名空间的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Node&lt;/td&gt;
-&lt;td&gt;提供 Kubernetes 集群中管理工作节点的资源类型。每个节点都有一个唯一标识符&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;PersistentVolume&lt;/td&gt;
-&lt;td&gt;提供 PV 存储的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;PersistentVolumeClaim&lt;/td&gt;
-&lt;td&gt;提供 PVC 存储的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Pod&lt;/td&gt;
-&lt;td&gt;提供容器集合管理的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;PodTemplate&lt;/td&gt;
-&lt;td&gt;提供用于描述预定义 Pod 资源对象副本数模板的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;ReplicationController&lt;/td&gt;
-&lt;td&gt;在 Pod资源对象的基础上提供副本数保持不变的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;ResourceQuota&lt;/td&gt;
-&lt;td&gt;提供每个命名空间配额限制的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Secret&lt;/td&gt;
-&lt;td&gt;提供存储密码 、Token 、密钥等敏感数据的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Service&lt;/td&gt;
-&lt;td&gt;提供负载均衡器为 Pod 资源对象的代理服务的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;ServiceAccount&lt;/td&gt;
-&lt;td&gt;提供 ServiceAccount 认证的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;events.k8s.io&lt;/td&gt;
-&lt;td&gt;Event&lt;/td&gt;
-&lt;td&gt;提供Kuberetes集群事件管理的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;networking.k8s.io&lt;/td&gt;
-&lt;td&gt;RuntimeClass&lt;/td&gt;
-&lt;td&gt;提供容器运行时功能的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Ingress&lt;/td&gt;
-&lt;td&gt;提供 从Kubernetes 集群外部访问集群内部服务管理的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;node.k8s.io&lt;/td&gt;
-&lt;td&gt;RuntimeClass&lt;/td&gt;
-&lt;td&gt;提供容器运行时功能的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;policy&lt;/td&gt;
-&lt;td&gt;Evictions&lt;/td&gt;
-&lt;td&gt;在 Pod 资源对象的基础上提供驱逐策略的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;PodDisruptionBudget&lt;/td&gt;
-&lt;td&gt;提供限制同时中断 Pod 的数量 ，以保证集群的高可用性&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;PodSecurityPolicy&lt;/td&gt;
-&lt;td&gt;提供控制 Pod 资源安全相关策略的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;rbac.authorization.k8s.io&lt;/td&gt;
-&lt;td&gt;ClusterRole&lt;/td&gt;
-&lt;td&gt;提供 RBAC 集群角色的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;ClusterRoleBinding&lt;/td&gt;
-&lt;td&gt;提供 RBAC 集群角色鄉定的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;Role&lt;/td&gt;
-&lt;td&gt;提供 RBAC 角色的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;RoleBinding&lt;/td&gt;
-&lt;td&gt;提供 RBAC 角色绑定的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;scheduling.k8s.io&lt;/td&gt;
-&lt;td&gt;PriorityClass&lt;/td&gt;
-&lt;td&gt;提供 Pod 资源对象优先级管理的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;settings.k8s.10&lt;/td&gt;
-&lt;td&gt;PodPreset&lt;/td&gt;
-&lt;td&gt;在创建 Pod 资源对象时，可以将特定信息注入 Pod 资源对象中&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;storage.k8s.io&lt;/td&gt;
-&lt;td&gt;StorageClass&lt;/td&gt;
-&lt;td&gt;提供动态设置PV存储参数的资源类&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;VolumeAttachment&lt;/td&gt;
-&lt;td&gt;供触发 CSI ControllerPublish 和 ControllerUnpublish 操作的资源类型&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th style=&#34;text-align: left&#34;&gt;资源组&lt;/th&gt;
+          &lt;th style=&#34;text-align: left&#34;&gt;资源种类&lt;/th&gt;
+          &lt;th style=&#34;text-align: left&#34;&gt;说明&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;apiextensions.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;CustomResourceDefinition&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;自定义资源类型 ， 由 APIExtensions Server 负责管理该资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;apiregistration.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;APIService&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;聚合资源类型，由 AggregatorServer 负责管理该资源类&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;admissionregistration.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;MutatingWebhookConfiguration&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;变更准入控制器资源类型( Webhook)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ValidatingWebhookConfiguration&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;验证准入控制器资源类型 ( Webhook)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;apps&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ControllerRevision&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;记录资源对象所有的历史版本的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;DaemonSet&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在 Pod 资源对象的基础上提供守护进程的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Deployment&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在 Pod资源对象的基础上提供支持无状态服务的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ReplicaSet&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在 Pod 资源对象的基础上提供一组 Pod 副本的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;StatefulSet&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在 Pod资源对象的基础上提供支持有状态服务的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;auditregistration.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;AuditSink&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;审计资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;authentication.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;TokenReview&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;认证资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;authorization.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;LocalSubjectAccessReview&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;授权检查用户是否可以在指定的命名空间中执行操作&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;SelfSubjectAccessReview&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;授权检查用户是否可以执行操作(若不指定 spec.namespace，则在所有的命名空间中执行操作）&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;SelfSubjectRulesReview&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;授权枚举用户可以在指定的命名空间中执行一组操作&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;SubjectAccessReview&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;授 权检查用户是否可以执行操作&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;autoscaling&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;HorizontalPodAutoscaler&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在 Pod 资源对象的基础上提供水平自动伸缩资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;batch&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Job&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供一次性任务的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;CronJob&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供定时任务的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;certificates.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;CertificateSigningRequest&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供证书管理的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;coordination.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Leases&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供领导者选举机制的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;core&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ComponentStatus&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;该资源类型已被奔用，其用于提供获取 Kuberetes 组件运行状况的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ConfigMap&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供容器内应用程序配置管理的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Endpoints&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供将外部服务器映射为内部服务的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Event&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 Kubernetes 集群事件管理的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;LimitRange&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;为命名空间中的每种资源对象设置资源(硬件资源)使 用限制&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Namespace&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供资源对象所在的命名空间的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Node&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 Kubernetes 集群中管理工作节点的资源类型。每个节点都有一个唯一标识符&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;PersistentVolume&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 PV 存储的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;PersistentVolumeClaim&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 PVC 存储的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Pod&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供容器集合管理的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;PodTemplate&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供用于描述预定义 Pod 资源对象副本数模板的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ReplicationController&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在 Pod资源对象的基础上提供副本数保持不变的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ResourceQuota&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供每个命名空间配额限制的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Secret&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供存储密码 、Token 、密钥等敏感数据的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Service&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供负载均衡器为 Pod 资源对象的代理服务的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ServiceAccount&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 ServiceAccount 认证的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;events.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Event&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供Kuberetes集群事件管理的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;networking.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;RuntimeClass&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供容器运行时功能的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Ingress&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 从Kubernetes 集群外部访问集群内部服务管理的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;node.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;RuntimeClass&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供容器运行时功能的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;policy&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Evictions&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在 Pod 资源对象的基础上提供驱逐策略的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;PodDisruptionBudget&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供限制同时中断 Pod 的数量 ，以保证集群的高可用性&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;PodSecurityPolicy&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供控制 Pod 资源安全相关策略的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;rbac.authorization.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ClusterRole&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 RBAC 集群角色的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;ClusterRoleBinding&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 RBAC 集群角色鄉定的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;Role&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 RBAC 角色的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;RoleBinding&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 RBAC 角色绑定的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;scheduling.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;PriorityClass&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供 Pod 资源对象优先级管理的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;settings.k8s.10&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;PodPreset&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;在创建 Pod 资源对象时，可以将特定信息注入 Pod 资源对象中&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;storage.k8s.io&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;StorageClass&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;提供动态设置PV存储参数的资源类&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;VolumeAttachment&lt;/td&gt;
+          &lt;td style=&#34;text-align: left&#34;&gt;供触发 CSI ControllerPublish 和 ControllerUnpublish 操作的资源类型&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
 &lt;/table&gt;</description>
       <content:encoded><![CDATA[<h1 id="k8s-核心数据结构2">K8s 核心数据结构（2）</h1>
 <blockquote>
@@ -327,270 +328,270 @@
 </blockquote>
 <h2 id="kubernetes-内置资源概览">Kubernetes 内置资源概览</h2>
 <table>
-<thead>
-<tr>
-<th>资源组</th>
-<th>资源种类</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>apiextensions.k8s.io</td>
-<td>CustomResourceDefinition</td>
-<td>自定义资源类型 ， 由 APIExtensions Server 负责管理该资源类型</td>
-</tr>
-<tr>
-<td>apiregistration.k8s.io</td>
-<td>APIService</td>
-<td>聚合资源类型，由 AggregatorServer 负责管理该资源类</td>
-</tr>
-<tr>
-<td>admissionregistration.k8s.io</td>
-<td>MutatingWebhookConfiguration</td>
-<td>变更准入控制器资源类型( Webhook)</td>
-</tr>
-<tr>
-<td></td>
-<td>ValidatingWebhookConfiguration</td>
-<td>验证准入控制器资源类型 ( Webhook)</td>
-</tr>
-<tr>
-<td>apps</td>
-<td>ControllerRevision</td>
-<td>记录资源对象所有的历史版本的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>DaemonSet</td>
-<td>在 Pod 资源对象的基础上提供守护进程的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Deployment</td>
-<td>在 Pod资源对象的基础上提供支持无状态服务的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>ReplicaSet</td>
-<td>在 Pod 资源对象的基础上提供一组 Pod 副本的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>StatefulSet</td>
-<td>在 Pod资源对象的基础上提供支持有状态服务的资源类型</td>
-</tr>
-<tr>
-<td>auditregistration.k8s.io</td>
-<td>AuditSink</td>
-<td>审计资源类型</td>
-</tr>
-<tr>
-<td>authentication.k8s.io</td>
-<td>TokenReview</td>
-<td>认证资源类型</td>
-</tr>
-<tr>
-<td>authorization.k8s.io</td>
-<td>LocalSubjectAccessReview</td>
-<td>授权检查用户是否可以在指定的命名空间中执行操作</td>
-</tr>
-<tr>
-<td></td>
-<td>SelfSubjectAccessReview</td>
-<td>授权检查用户是否可以执行操作(若不指定 spec.namespace，则在所有的命名空间中执行操作）</td>
-</tr>
-<tr>
-<td></td>
-<td>SelfSubjectRulesReview</td>
-<td>授权枚举用户可以在指定的命名空间中执行一组操作</td>
-</tr>
-<tr>
-<td></td>
-<td>SubjectAccessReview</td>
-<td>授 权检查用户是否可以执行操作</td>
-</tr>
-<tr>
-<td>autoscaling</td>
-<td>HorizontalPodAutoscaler</td>
-<td>在 Pod 资源对象的基础上提供水平自动伸缩资源类型</td>
-</tr>
-<tr>
-<td>batch</td>
-<td>Job</td>
-<td>提供一次性任务的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>CronJob</td>
-<td>提供定时任务的资源类型</td>
-</tr>
-<tr>
-<td>certificates.k8s.io</td>
-<td>CertificateSigningRequest</td>
-<td>提供证书管理的资源类型</td>
-</tr>
-<tr>
-<td>coordination.k8s.io</td>
-<td>Leases</td>
-<td>提供领导者选举机制的资源类型</td>
-</tr>
-<tr>
-<td>core</td>
-<td>ComponentStatus</td>
-<td>该资源类型已被奔用，其用于提供获取 Kuberetes 组件运行状况的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>ConfigMap</td>
-<td>提供容器内应用程序配置管理的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Endpoints</td>
-<td>提供将外部服务器映射为内部服务的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Event</td>
-<td>提供 Kubernetes 集群事件管理的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>LimitRange</td>
-<td>为命名空间中的每种资源对象设置资源(硬件资源)使 用限制</td>
-</tr>
-<tr>
-<td></td>
-<td>Namespace</td>
-<td>提供资源对象所在的命名空间的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Node</td>
-<td>提供 Kubernetes 集群中管理工作节点的资源类型。每个节点都有一个唯一标识符</td>
-</tr>
-<tr>
-<td></td>
-<td>PersistentVolume</td>
-<td>提供 PV 存储的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>PersistentVolumeClaim</td>
-<td>提供 PVC 存储的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Pod</td>
-<td>提供容器集合管理的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>PodTemplate</td>
-<td>提供用于描述预定义 Pod 资源对象副本数模板的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>ReplicationController</td>
-<td>在 Pod资源对象的基础上提供副本数保持不变的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>ResourceQuota</td>
-<td>提供每个命名空间配额限制的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Secret</td>
-<td>提供存储密码 、Token 、密钥等敏感数据的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Service</td>
-<td>提供负载均衡器为 Pod 资源对象的代理服务的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>ServiceAccount</td>
-<td>提供 ServiceAccount 认证的资源类型</td>
-</tr>
-<tr>
-<td>events.k8s.io</td>
-<td>Event</td>
-<td>提供Kuberetes集群事件管理的资源类型</td>
-</tr>
-<tr>
-<td>networking.k8s.io</td>
-<td>RuntimeClass</td>
-<td>提供容器运行时功能的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Ingress</td>
-<td>提供 从Kubernetes 集群外部访问集群内部服务管理的资源类型</td>
-</tr>
-<tr>
-<td>node.k8s.io</td>
-<td>RuntimeClass</td>
-<td>提供容器运行时功能的资源类型</td>
-</tr>
-<tr>
-<td>policy</td>
-<td>Evictions</td>
-<td>在 Pod 资源对象的基础上提供驱逐策略的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>PodDisruptionBudget</td>
-<td>提供限制同时中断 Pod 的数量 ，以保证集群的高可用性</td>
-</tr>
-<tr>
-<td></td>
-<td>PodSecurityPolicy</td>
-<td>提供控制 Pod 资源安全相关策略的资源类型</td>
-</tr>
-<tr>
-<td>rbac.authorization.k8s.io</td>
-<td>ClusterRole</td>
-<td>提供 RBAC 集群角色的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>ClusterRoleBinding</td>
-<td>提供 RBAC 集群角色鄉定的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>Role</td>
-<td>提供 RBAC 角色的资源类型</td>
-</tr>
-<tr>
-<td></td>
-<td>RoleBinding</td>
-<td>提供 RBAC 角色绑定的资源类型</td>
-</tr>
-<tr>
-<td>scheduling.k8s.io</td>
-<td>PriorityClass</td>
-<td>提供 Pod 资源对象优先级管理的资源类型</td>
-</tr>
-<tr>
-<td>settings.k8s.10</td>
-<td>PodPreset</td>
-<td>在创建 Pod 资源对象时，可以将特定信息注入 Pod 资源对象中</td>
-</tr>
-<tr>
-<td>storage.k8s.io</td>
-<td>StorageClass</td>
-<td>提供动态设置PV存储参数的资源类</td>
-</tr>
-<tr>
-<td></td>
-<td>VolumeAttachment</td>
-<td>供触发 CSI ControllerPublish 和 ControllerUnpublish 操作的资源类型</td>
-</tr>
-</tbody>
+  <thead>
+      <tr>
+          <th style="text-align: left">资源组</th>
+          <th style="text-align: left">资源种类</th>
+          <th style="text-align: left">说明</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">apiextensions.k8s.io</td>
+          <td style="text-align: left">CustomResourceDefinition</td>
+          <td style="text-align: left">自定义资源类型 ， 由 APIExtensions Server 负责管理该资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">apiregistration.k8s.io</td>
+          <td style="text-align: left">APIService</td>
+          <td style="text-align: left">聚合资源类型，由 AggregatorServer 负责管理该资源类</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">admissionregistration.k8s.io</td>
+          <td style="text-align: left">MutatingWebhookConfiguration</td>
+          <td style="text-align: left">变更准入控制器资源类型( Webhook)</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">ValidatingWebhookConfiguration</td>
+          <td style="text-align: left">验证准入控制器资源类型 ( Webhook)</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">apps</td>
+          <td style="text-align: left">ControllerRevision</td>
+          <td style="text-align: left">记录资源对象所有的历史版本的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">DaemonSet</td>
+          <td style="text-align: left">在 Pod 资源对象的基础上提供守护进程的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Deployment</td>
+          <td style="text-align: left">在 Pod资源对象的基础上提供支持无状态服务的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">ReplicaSet</td>
+          <td style="text-align: left">在 Pod 资源对象的基础上提供一组 Pod 副本的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">StatefulSet</td>
+          <td style="text-align: left">在 Pod资源对象的基础上提供支持有状态服务的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">auditregistration.k8s.io</td>
+          <td style="text-align: left">AuditSink</td>
+          <td style="text-align: left">审计资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">authentication.k8s.io</td>
+          <td style="text-align: left">TokenReview</td>
+          <td style="text-align: left">认证资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">authorization.k8s.io</td>
+          <td style="text-align: left">LocalSubjectAccessReview</td>
+          <td style="text-align: left">授权检查用户是否可以在指定的命名空间中执行操作</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">SelfSubjectAccessReview</td>
+          <td style="text-align: left">授权检查用户是否可以执行操作(若不指定 spec.namespace，则在所有的命名空间中执行操作）</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">SelfSubjectRulesReview</td>
+          <td style="text-align: left">授权枚举用户可以在指定的命名空间中执行一组操作</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">SubjectAccessReview</td>
+          <td style="text-align: left">授 权检查用户是否可以执行操作</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">autoscaling</td>
+          <td style="text-align: left">HorizontalPodAutoscaler</td>
+          <td style="text-align: left">在 Pod 资源对象的基础上提供水平自动伸缩资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">batch</td>
+          <td style="text-align: left">Job</td>
+          <td style="text-align: left">提供一次性任务的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">CronJob</td>
+          <td style="text-align: left">提供定时任务的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">certificates.k8s.io</td>
+          <td style="text-align: left">CertificateSigningRequest</td>
+          <td style="text-align: left">提供证书管理的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">coordination.k8s.io</td>
+          <td style="text-align: left">Leases</td>
+          <td style="text-align: left">提供领导者选举机制的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">core</td>
+          <td style="text-align: left">ComponentStatus</td>
+          <td style="text-align: left">该资源类型已被奔用，其用于提供获取 Kuberetes 组件运行状况的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">ConfigMap</td>
+          <td style="text-align: left">提供容器内应用程序配置管理的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Endpoints</td>
+          <td style="text-align: left">提供将外部服务器映射为内部服务的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Event</td>
+          <td style="text-align: left">提供 Kubernetes 集群事件管理的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">LimitRange</td>
+          <td style="text-align: left">为命名空间中的每种资源对象设置资源(硬件资源)使 用限制</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Namespace</td>
+          <td style="text-align: left">提供资源对象所在的命名空间的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Node</td>
+          <td style="text-align: left">提供 Kubernetes 集群中管理工作节点的资源类型。每个节点都有一个唯一标识符</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">PersistentVolume</td>
+          <td style="text-align: left">提供 PV 存储的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">PersistentVolumeClaim</td>
+          <td style="text-align: left">提供 PVC 存储的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Pod</td>
+          <td style="text-align: left">提供容器集合管理的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">PodTemplate</td>
+          <td style="text-align: left">提供用于描述预定义 Pod 资源对象副本数模板的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">ReplicationController</td>
+          <td style="text-align: left">在 Pod资源对象的基础上提供副本数保持不变的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">ResourceQuota</td>
+          <td style="text-align: left">提供每个命名空间配额限制的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Secret</td>
+          <td style="text-align: left">提供存储密码 、Token 、密钥等敏感数据的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Service</td>
+          <td style="text-align: left">提供负载均衡器为 Pod 资源对象的代理服务的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">ServiceAccount</td>
+          <td style="text-align: left">提供 ServiceAccount 认证的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">events.k8s.io</td>
+          <td style="text-align: left">Event</td>
+          <td style="text-align: left">提供Kuberetes集群事件管理的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">networking.k8s.io</td>
+          <td style="text-align: left">RuntimeClass</td>
+          <td style="text-align: left">提供容器运行时功能的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Ingress</td>
+          <td style="text-align: left">提供 从Kubernetes 集群外部访问集群内部服务管理的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">node.k8s.io</td>
+          <td style="text-align: left">RuntimeClass</td>
+          <td style="text-align: left">提供容器运行时功能的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">policy</td>
+          <td style="text-align: left">Evictions</td>
+          <td style="text-align: left">在 Pod 资源对象的基础上提供驱逐策略的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">PodDisruptionBudget</td>
+          <td style="text-align: left">提供限制同时中断 Pod 的数量 ，以保证集群的高可用性</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">PodSecurityPolicy</td>
+          <td style="text-align: left">提供控制 Pod 资源安全相关策略的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">rbac.authorization.k8s.io</td>
+          <td style="text-align: left">ClusterRole</td>
+          <td style="text-align: left">提供 RBAC 集群角色的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">ClusterRoleBinding</td>
+          <td style="text-align: left">提供 RBAC 集群角色鄉定的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">Role</td>
+          <td style="text-align: left">提供 RBAC 角色的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">RoleBinding</td>
+          <td style="text-align: left">提供 RBAC 角色绑定的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">scheduling.k8s.io</td>
+          <td style="text-align: left">PriorityClass</td>
+          <td style="text-align: left">提供 Pod 资源对象优先级管理的资源类型</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">settings.k8s.10</td>
+          <td style="text-align: left">PodPreset</td>
+          <td style="text-align: left">在创建 Pod 资源对象时，可以将特定信息注入 Pod 资源对象中</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">storage.k8s.io</td>
+          <td style="text-align: left">StorageClass</td>
+          <td style="text-align: left">提供动态设置PV存储参数的资源类</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"></td>
+          <td style="text-align: left">VolumeAttachment</td>
+          <td style="text-align: left">供触发 CSI ControllerPublish 和 ControllerUnpublish 操作的资源类型</td>
+      </tr>
+  </tbody>
 </table>
 <h2 id="runtimeobject-类型基石"><code>runtime.Object</code> 类型基石</h2>
 <p>​	<code>runtime.Object</code> 是Kubernetes 类型系统的基石。Kubernetes 上的所有资源对象 ( Resource 0bject ) 实际上就是一种 Go 语言的 Struct 类型 ， 相当于一种数据结构 ，它们都有一个共同的结构叫<code>runtime.Object</code>。<code>runtime.Object</code> 被设计为 Interface 接口类型， 作为资源对象的通用资源对象，<code>runtime.Obejct</code> 类型基石如图</p>
