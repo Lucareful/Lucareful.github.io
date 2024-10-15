@@ -53,7 +53,7 @@
   &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h2 id=&#34;指标解释&#34;&gt;指标解释&lt;/h2&gt;
-&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://github.com/user-attachments/assets/c2182bee-333f-4ec3-94cb-7a36440bb105&#34; alt=&#34;image&#34;  /&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151739088.png&#34; alt=&#34;350959005-c2182bee-333f-4ec3-94cb-7a36440bb105&#34;  /&gt;
 &lt;/p&gt;
 &lt;p&gt;常用指标如下：&lt;/p&gt;
 &lt;ul&gt;
@@ -98,7 +98,8 @@
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
 &lt;/div&gt;
 &lt;/div&gt;&lt;/blockquote&gt;
-&lt;p&gt;​	注意，上文的所有信息都是实时的，如果你刷新一下，是可以看到数字在变化的。此时如果点击蓝色的连接，可以看到一些协程的栈信息，这些信息并不容易阅读。如果想要更加清晰的数据，需要将信息保存下来，在本地进行分析。&lt;/p&gt;</description>
+&lt;pre&gt;&lt;code&gt;注意，上文的所有信息都是实时的，如果你刷新一下，是可以看到数字在变化的。此时如果点击蓝色的连接，可以看到一些协程的栈信息，这些信息并不容易阅读。如果想要更加清晰的数据，需要将信息保存下来，在本地进行分析。
+&lt;/code&gt;&lt;/pre&gt;</description>
       <content:encoded><![CDATA[<h1 id="golang-pprof-性能分析指南">Golang pprof 性能分析指南</h1>
 <blockquote>
 <p>pprof 是一个用于可视化和分析分析数据的工具。</p>
@@ -139,7 +140,7 @@
   </tbody>
 </table>
 <h2 id="指标解释">指标解释</h2>
-<p><img loading="lazy" src="https://github.com/user-attachments/assets/c2182bee-333f-4ec3-94cb-7a36440bb105" alt="image"  />
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151739088.png" alt="350959005-c2182bee-333f-4ec3-94cb-7a36440bb105"  />
 </p>
 <p>常用指标如下：</p>
 <ul>
@@ -184,7 +185,8 @@
 </span></span></span></code></pre></td></tr></table>
 </div>
 </div></blockquote>
-<p>​	注意，上文的所有信息都是实时的，如果你刷新一下，是可以看到数字在变化的。此时如果点击蓝色的连接，可以看到一些协程的栈信息，这些信息并不容易阅读。如果想要更加清晰的数据，需要将信息保存下来，在本地进行分析。</p>
+<pre><code>注意，上文的所有信息都是实时的，如果你刷新一下，是可以看到数字在变化的。此时如果点击蓝色的连接，可以看到一些协程的栈信息，这些信息并不容易阅读。如果想要更加清晰的数据，需要将信息保存下来，在本地进行分析。
+</code></pre>
 <h2 id="理解指标">理解指标</h2>
 <ul>
 <li>flat：函数自身的运行耗时。</li>
@@ -194,7 +196,8 @@
 <li>cum%：函数自身及其调用函数的运行耗时总比例。</li>
 </ul>
 <h3 id="flat-flat"><code>flat flat%</code></h3>
-<p>​	一个函数内的 directly 操作的物理耗时。例如</p>
+<pre><code>一个函数内的 directly 操作的物理耗时。例如
+</code></pre>
 <blockquote>
 <p>flat只会记录 step2 和 step3 的时间</p>
 </blockquote>
@@ -218,17 +221,25 @@
 </span></span><span style="display:flex;"><span> }
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>​	flat%即是 <code>flat/总运行时间</code>。内存等参数同理。<strong>所有的 flat 相加即是总采样时间</strong>，所有的flat%相加应该等于100%。</p>
-<p>​	flat一般是我们最关注的。其代表一个函数可能非常耗时，或者调用了非常多次，或者两者兼而有之，从而导致这个函数消耗了最多的时间。</p>
-<p>​	如果是我们自己编写的代码，则很可能有一些无脑 for 循环、复杂的计算、字符串操作、频繁申请内存等等。</p>
-<p>​	如果是第三方库的代码，则很可能我们过于频繁地调用了这些第三方库，或者以不正确的方式使用了这些第三方库。</p>
+</div><pre><code>flat%即是 `flat/总运行时间`。内存等参数同理。**所有的 flat 相加即是总采样时间**，所有的flat%相加应该等于100%。
+
+flat一般是我们最关注的。其代表一个函数可能非常耗时，或者调用了非常多次，或者两者兼而有之，从而导致这个函数消耗了最多的时间。
+
+如果是我们自己编写的代码，则很可能有一些无脑 for 循环、复杂的计算、字符串操作、频繁申请内存等等。
+
+如果是第三方库的代码，则很可能我们过于频繁地调用了这些第三方库，或者以不正确的方式使用了这些第三方库。
+</code></pre>
 <h3 id="cum-cum"><code>cum cum%</code></h3>
-<p>​	相比 flat，cum则是这个函数内所有操作的物理耗时，比如包括了上述的 step1、2、3、4。</p>
-<p>​	cum%即是<code>cum的时间/总运行时间</code>。内存等参数同理。</p>
-<p>​	一般cum是我们次关注的，且需要结合flat来看。</p>
+<pre><code>相比 flat，cum则是这个函数内所有操作的物理耗时，比如包括了上述的 step1、2、3、4。
+
+cum%即是`cum的时间/总运行时间`。内存等参数同理。
+
+一般cum是我们次关注的，且需要结合flat来看。
+</code></pre>
 <p><strong>flat 可以让我们知道哪个函数耗时多，而 cum 可以帮助我们找到是哪些函数调用了这些耗时的（flat 值大的）函数。</strong></p>
 <h3 id="sum"><code>sum%</code></h3>
-<p>​	其上所有行的flat%的累加。可以视为，这一行及其以上行，其所有的 directly 操作一共占了多少物理时间。</p>
+<pre><code>其上所有行的flat%的累加。可以视为，这一行及其以上行，其所有的 directly 操作一共占了多少物理时间。
+</code></pre>
 <h2 id="案例分析">案例分析</h2>
 <h2 id="go-test">go test</h2>
 <ul>
@@ -320,7 +331,7 @@
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>​	接下来我们只需要对该方法进行调用就好了，其提供了 <code>io.Writer</code> 接口，也就是只要实现了对应的 Write 方法，我们可以将其写到任何支持地方去，如下：</p>
+</div><p>接下来我们只需要对该方法进行调用就好了，其提供了 <code>io.Writer</code> 接口，也就是只要实现了对应的 Write 方法，我们可以将其写到任何支持地方去，如下：</p>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
 <table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
 <pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
@@ -411,7 +422,7 @@
 </span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">$</span> go <span style="color:#ff7b72">tool</span> pprof http:<span style="color:#ff7b72;font-weight:bold">//</span><span style="color:#a5d6ff">127.0</span><span style="color:#ff7b72;font-weight:bold">.</span><span style="color:#a5d6ff">0.1</span>:<span style="color:#a5d6ff">8080</span><span style="color:#ff7b72;font-weight:bold">/</span>debug<span style="color:#ff7b72;font-weight:bold">/</span>pprof<span style="color:#ff7b72;font-weight:bold">/</span>profile
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p><img loading="lazy" src="https://github.com/user-attachments/assets/d56c6bdc-d272-4960-8ac0-943f42b46e54" alt="image"  />
+</div><p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151742895.png" alt="350959401-d56c6bdc-d272-4960-8ac0-943f42b46e54"  />
 </p>
 <h3 id="扩展参数选项">扩展参数选项</h3>
 <table>
@@ -448,12 +459,16 @@
 <blockquote>
 <p><code>web</code> 将会生成一张svg格式的图片，并用默认打开程序打开（一般是浏览器）。渲染图片需要下载 <a href="https://graphviz.org/download/">Download | Graphviz</a></p>
 </blockquote>
-<p><img loading="lazy" src="https://github.com/user-attachments/assets/f919098b-a923-4cbd-8349-89f0e3a0d52b" alt="image"  />
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151744662.png" alt="350959152-f919098b-a923-4cbd-8349-89f0e3a0d52b"  />
 </p>
-<p>​	节点的颜色越红，其cum和cum%越大。其颜色越灰白，则cum和cum%越小。</p>
-<p>​	节点越大，其flat和flat%越大；其越小，则flat和flat%越小</p>
-<p>​	线条代表了函数的调用链，线条越粗，代表指向的函数消耗了越多的资源。反之亦然。</p>
-<p>​	线条的样式代表了调用关系。实线代表直接调用；虚线代表中间少了几个节点；带有inline字段表示该函数被内联进了调用方（不用在意，可以理解成实线）。</p>
+<pre><code>节点的颜色越红，其cum和cum%越大。其颜色越灰白，则cum和cum%越小。
+
+节点越大，其flat和flat%越大；其越小，则flat和flat%越小
+
+线条代表了函数的调用链，线条越粗，代表指向的函数消耗了越多的资源。反之亦然。
+
+线条的样式代表了调用关系。实线代表直接调用；虚线代表中间少了几个节点；带有inline字段表示该函数被内联进了调用方（不用在意，可以理解成实线）。
+</code></pre>
 <blockquote>
 <p>对于一些代码行比较少的函数，编译器倾向于将它们在编译期展开从而消除函数调用，这种行为就是内联。</p>
 </blockquote>
@@ -461,17 +476,18 @@
 <blockquote>
 <p><code>weight</code>默认按flat排序，打印出消耗前10的函数。也可以选择消耗前N的函数，比如<code>weight5</code>，<code>weight20</code>。</p>
 </blockquote>
-<p><img loading="lazy" src="https://github.com/user-attachments/assets/a1c83317-3d82-4bfe-aaf7-4abfebd1884f" alt="image"  />
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151745485.png" alt="350959570-a1c83317-3d82-4bfe-aaf7-4abfebd1884f"  />
 </p>
 <h4 id="list">list</h4>
 <blockquote>
 <p>当发现某个函数资源占用情况可疑时，可以通过 <code>list 函数名</code> 定位到具体的代码位置。比如:<code> list Fire</code></p>
 </blockquote>
-<p><img loading="lazy" src="https://github.com/user-attachments/assets/87007000-e59a-43d1-bcce-2c8e5fe79a9c" alt="image"  />
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151746075.png" alt="350959588-87007000-e59a-43d1-bcce-2c8e5fe79a9c"  />
 </p>
 <h3 id="火焰图">火焰图</h3>
-<p>​	调用顺序<strong>由上到下</strong>，每一块代表一个函数，越大代表占用 CPU 的时间更长。同时它也可以支持点击块深入进行分析。</p>
-<p><img loading="lazy" src="https://github.com/user-attachments/assets/4992c35f-ac6f-4e44-8246-a99ce6302bfb" alt="image"  />
+<pre><code>调用顺序**由上到下**，每一块代表一个函数，越大代表占用 CPU 的时间更长。同时它也可以支持点击块深入进行分析。
+</code></pre>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151746996.png" alt="350959621-4992c35f-ac6f-4e44-8246-a99ce6302bfb"  />
 </p>
 <h2 id="代码优化建议">代码优化建议</h2>
 <p>以下是一些从其它项目借鉴或者自己总结的实践经验，它们只是建议，而不是准则，实际项目中应该以性能分析数据来作为优化的参考，<strong>避免过早优化</strong>。</p>
