@@ -4,10 +4,444 @@
     <title>Golang on Luenci</title>
     <link>https://luenci.com/en/tags/golang/</link>
     <description>Recent content in Golang on Luenci</description>
-    <generator>Hugo -- 0.139.3</generator>
+    <generator>Hugo -- 0.139.4</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 03 Aug 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 12 Dec 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/tags/golang/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>浅析 GO 中的内存对齐</title>
+      <link>https://luenci.com/en/posts/%E6%B5%85%E6%9E%90-go-%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90/</link>
+      <pubDate>Thu, 12 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/%E6%B5%85%E6%9E%90-go-%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90/</guid>
+      <description>&lt;h1 id=&#34;浅析-go-中的内存对齐&#34;&gt;浅析 GO 中的内存对齐&lt;/h1&gt;
+&lt;h2 id=&#34;前置概念&#34;&gt;前置概念&lt;/h2&gt;
+&lt;h3 id=&#34;位bit&#34;&gt;位（bit）&lt;/h3&gt;
+&lt;p&gt;​	所谓位，是最基本的概念，在计算机中，由于只有逻辑0和逻辑1的存在，因此很多东西、动作、数字都要表示为一串二进制的字码。例如： 1001 0000 1101等等。其中每一个逻辑0或者1便是一个位。例如这个例子里的&lt;code&gt;1000 1110&lt;/code&gt;共有八个位，它的英文名字叫（bit），是&lt;strong&gt;计算机中最基本的单位&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;字节byte&#34;&gt;字节(Byte)&lt;/h3&gt;
+&lt;p&gt;​	&lt;strong&gt;由八个位(bit)组成的一个单元&lt;/strong&gt;，也就是8个bit组成1个Byte。在计算机科学中，&lt;strong&gt;用于表示ASCII字符&lt;/strong&gt;，便是运用字节来记录表示字母和一些符号，例如字符A便用 “0100 0001”来表示。&lt;/p&gt;
+&lt;h3 id=&#34;字word&#34;&gt;字（word）&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;表示被处理信息的单位，用来度量数据类型的宽度&lt;/strong&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;​	在计算机体系结构中，&amp;ldquo;字&amp;quot;是处理器可以在单个操作中处理的数据单元 - 通常是内存中可寻址的最小单位。它是固定大小的比特（二进制数字）组。处理器的字长决定了它处理数据的效率。常见的字长包括 8、16、32 和 64 比特。一些计算机处理器体系结构支持半字，即一个字中的一半比特数，以及双字，即两个相邻字。&lt;/p&gt;
+&lt;p&gt;​	现在最常见的架构是 32 位和 64 位。如果你有 32 位处理器，那意味着它可以一次访问 4 个字节，也就是字长为 4 个字节。如果你有 64 位处理器，那意味着它可以一次访问 8 个字节，也就是字长为 8 个字节。&lt;/p&gt;
+&lt;p&gt;​	将数据存储在内存中时，每个 32 位数据字都有一个唯一地址，如下所示。&lt;/p&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111819119.jpg&#34; alt=&#34;memory&#34;  /&gt;
+&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;em&gt;Figure. 1 - 可寻址内存&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;​	我们可以使用加载字（lw）指令读取存储在内存中的数据并将其加载到一个寄存器中。&lt;/p&gt;
+&lt;p&gt;​	字的位数并不是确定值，如 x86 机器将字定义为16位(汇编语言课程中)，也就是两个字节，在32位arm机器中，字定义为32位(嵌入式课程中)。&lt;/p&gt;
+&lt;p&gt;​	指令字长：字节的整数倍，指一个指令字中包含的二进制代码位数。&lt;/p&gt;
+&lt;p&gt;​	存储字长：字节的整数倍，一个存储单元存储的二进制代码的长度。&lt;/p&gt;
+&lt;p&gt;字是单位，随系统而变，字长是同一时间处理二进制的长度。&lt;/p&gt;
+&lt;h3 id=&#34;字符与字节对应关系&#34;&gt;字符与字节对应关系&lt;/h3&gt;
+&lt;p&gt;​	常见的编码字符与字节的对应关系如下：&lt;/p&gt;
+&lt;p&gt;① ASCII 码中，一个英文字母（不分大小写）占一个字节的空间，一个中文汉字占两个字节的空间。一个二进制数字序列，在计算机中作为一个数字单元，一般为8位二进制数，换算为十进制。最小值0，最大值255。&lt;/p&gt;
+&lt;p&gt;② UTF-8 编码中，一个英文字符等于一个字节，一个中文（含繁体）等于三个字节。&lt;/p&gt;
+&lt;p&gt;③ Unicode 编码中，一个英文等于两个字节，一个中文（含繁体）等于两个字节。
+符号：英文标点占一个字节，中文标点占两个字节。举例：英文句号“.”占1个字节的大小，中文句号“。”占2个字节的大小。&lt;/p&gt;
+&lt;p&gt;④ GBK 编码方式是中文占两个字节，英文占1个字节。&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="浅析-go-中的内存对齐">浅析 GO 中的内存对齐</h1>
+<h2 id="前置概念">前置概念</h2>
+<h3 id="位bit">位（bit）</h3>
+<p>​	所谓位，是最基本的概念，在计算机中，由于只有逻辑0和逻辑1的存在，因此很多东西、动作、数字都要表示为一串二进制的字码。例如： 1001 0000 1101等等。其中每一个逻辑0或者1便是一个位。例如这个例子里的<code>1000 1110</code>共有八个位，它的英文名字叫（bit），是<strong>计算机中最基本的单位</strong>。</p>
+<h3 id="字节byte">字节(Byte)</h3>
+<p>​	<strong>由八个位(bit)组成的一个单元</strong>，也就是8个bit组成1个Byte。在计算机科学中，<strong>用于表示ASCII字符</strong>，便是运用字节来记录表示字母和一些符号，例如字符A便用 “0100 0001”来表示。</p>
+<h3 id="字word">字（word）</h3>
+<blockquote>
+<p><strong>表示被处理信息的单位，用来度量数据类型的宽度</strong>。</p>
+</blockquote>
+<p>​	在计算机体系结构中，&ldquo;字&quot;是处理器可以在单个操作中处理的数据单元 - 通常是内存中可寻址的最小单位。它是固定大小的比特（二进制数字）组。处理器的字长决定了它处理数据的效率。常见的字长包括 8、16、32 和 64 比特。一些计算机处理器体系结构支持半字，即一个字中的一半比特数，以及双字，即两个相邻字。</p>
+<p>​	现在最常见的架构是 32 位和 64 位。如果你有 32 位处理器，那意味着它可以一次访问 4 个字节，也就是字长为 4 个字节。如果你有 64 位处理器，那意味着它可以一次访问 8 个字节，也就是字长为 8 个字节。</p>
+<p>​	将数据存储在内存中时，每个 32 位数据字都有一个唯一地址，如下所示。</p>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111819119.jpg" alt="memory"  />
+</p>
+<blockquote>
+<p><em>Figure. 1 - 可寻址内存</em></p>
+</blockquote>
+<p>​	我们可以使用加载字（lw）指令读取存储在内存中的数据并将其加载到一个寄存器中。</p>
+<p>​	字的位数并不是确定值，如 x86 机器将字定义为16位(汇编语言课程中)，也就是两个字节，在32位arm机器中，字定义为32位(嵌入式课程中)。</p>
+<p>​	指令字长：字节的整数倍，指一个指令字中包含的二进制代码位数。</p>
+<p>​	存储字长：字节的整数倍，一个存储单元存储的二进制代码的长度。</p>
+<p>字是单位，随系统而变，字长是同一时间处理二进制的长度。</p>
+<h3 id="字符与字节对应关系">字符与字节对应关系</h3>
+<p>​	常见的编码字符与字节的对应关系如下：</p>
+<p>① ASCII 码中，一个英文字母（不分大小写）占一个字节的空间，一个中文汉字占两个字节的空间。一个二进制数字序列，在计算机中作为一个数字单元，一般为8位二进制数，换算为十进制。最小值0，最大值255。</p>
+<p>② UTF-8 编码中，一个英文字符等于一个字节，一个中文（含繁体）等于三个字节。</p>
+<p>③ Unicode 编码中，一个英文等于两个字节，一个中文（含繁体）等于两个字节。
+符号：英文标点占一个字节，中文标点占两个字节。举例：英文句号“.”占1个字节的大小，中文句号“。”占2个字节的大小。</p>
+<p>④ GBK 编码方式是中文占两个字节，英文占1个字节。</p>
+<h2 id="struct-内存对齐">struct 内存对齐</h2>
+<blockquote>
+<p><strong>结构体是一种用户定义的数据类型，它将不同类型的相关变量组合在一个名称下。</strong></p>
+</blockquote>
+<p>​	Go 使用一种称为“结构填充”的技术，以确保数据在内存中适当对齐，这可能会受到硬件和架构限制的影响，从而显著影响性能。数据填充和对齐符合系统架构的要求，主要是通过确保数据边界与字长对齐来优化 CPU 访问时间。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Employee <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>  IsAdmin  <span style="color:#ff7b72">bool</span>
+</span></span><span style="display:flex;"><span>  Id       <span style="color:#ff7b72">int64</span>
+</span></span><span style="display:flex;"><span>  Age      <span style="color:#ff7b72">int32</span>
+</span></span><span style="display:flex;"><span>  Salary   <span style="color:#ff7b72">float32</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	一个布尔型变量占用 1 字节， <code>int64</code> 占用 8 字节， <code>int32</code> 占用 4 字节， <code>float32</code> 占用 4 字节，总共为 17 字节。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#34;unsafe&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Employee <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    IsAdmin <span style="color:#ff7b72">bool</span>
+</span></span><span style="display:flex;"><span>    Id      <span style="color:#ff7b72">int64</span>
+</span></span><span style="display:flex;"><span>    Age     <span style="color:#ff7b72">int32</span>
+</span></span><span style="display:flex;"><span>    Salary  <span style="color:#ff7b72">float32</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">var</span> emp Employee
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;Size of Employee: %d\n&#34;</span>, unsafe.<span style="color:#d2a8ff;font-weight:bold">Sizeof</span>(emp))
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Size of Employee: 24
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>报告的大小是 24 字节，而不是 17 字节。这种差异是由内存对齐引起的。</p>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111822307.jpg" alt="dc2"  />
+</p>
+<blockquote>
+<p>图 未优化的内存布局</p>
+</blockquote>
+<p>​	Employee 结构将使用 8*3 = 24 字节。现在看到问题了， <code>Employee</code> 的布局中有很多空洞（对齐规则产生的间隙称为“填充”）。</p>
+<h2 id="填充优化和性能影响">填充优化和性能影响</h2>
+<p>​	理解内存对齐和填充如何影响应用程序性能至关重要。具体来说，数据对齐会影响访问结构体中字段所需的 CPU 周期数。这种影响主要来自 CPU 缓存效应，而不是原始时钟周期本身，因为缓存行为在很大程度上取决于数据局部性和内存块内的对齐。
+​	现代 CPU 将数据从内存提取到一个更快的中间存储器中，称为缓存，它以固定大小的块（通常为 64 字节）组织。当数据对齐良好且位于相同或更少的缓存行中时，CPU 可以更快地访问数据，因为减少了缓存加载操作。</p>
+<p>考虑以下 Go 结构以示出较差与最佳对齐：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Poorly aligned struct
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">type</span> Misaligned <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Age        <span style="color:#ff7b72">uint8</span>  <span style="color:#8b949e;font-style:italic">// Uses 1 byte, followed by 7 bytes of padding to align the next field
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    PassportId <span style="color:#ff7b72">uint64</span> <span style="color:#8b949e;font-style:italic">// 8-byte aligned uint64 for the passport ID
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    Children   <span style="color:#ff7b72">uint16</span> <span style="color:#8b949e;font-style:italic">//2-byte aligned uint16
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Well-aligned struct
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">type</span> Aligned <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Age        <span style="color:#ff7b72">uint8</span>  <span style="color:#8b949e;font-style:italic">// Starting with 1 byte
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    Children   <span style="color:#ff7b72">uint16</span> <span style="color:#8b949e;font-style:italic">// Next, 2 bytes; all these combine into a 3-byte sequence
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    PassportId <span style="color:#ff7b72">uint64</span> <span style="color:#8b949e;font-style:italic">// Finally, an 8-byte aligned uint64 without needing additional padding
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="对齐方式如何影响性能">对齐方式如何影响性能</h3>
+<p>​	CPU 以字长而非字节大小读取数据。在 64 位系统中，一个字是 8 字节，而在 32 位系统中，一个字是 4 字节。简而言之，CPU 以其字大小的倍数来读取地址。为了获取变量 passportId，我们的 CPU 需要两个周期来访问数据，而不是一个。第一个周期将提取内存 0 到 7，随后的周期将提取其余部分。这是低效的- 我们需要数据结构对齐。通过简单地对齐数据，计算机确保 <code>var passportId</code> 可以在一个 CPU 周期内检索到。</p>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111825038.jpg" alt="duiqi"  />
+</p>
+<blockquote>
+<p><em>比较内存访问效率</em></p>
+</blockquote>
+<p>​	填充是实现数据对齐的关键。填充发生是因为现代 CPU 被优化为从对齐地址的内存中读取数据。这种对齐使 CPU 能够在一次操作中读取数据。</p>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111826953.jpg" alt="di1"  />
+</p>
+<p>​	没有填充，数据可能不对齐，导致多次内存访问和性能较慢。因此，虽然填充可能会浪费一些内存，但它确保您的程序运行高效。</p>
+<h3 id="填充优化策略">填充优化策略</h3>
+<p>​	对齐的结构消耗更少的内存，仅因为它具备比未对齐更好的结构字段顺序。由于填充，两个 13 字节的数据结构分别变成了 16 字节和 24 字节。因此，通过简单地重新排列您的结构字段，可以节省额外的内存。</p>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111828383.jpg" alt="d12"  />
+</p>
+<blockquote>
+<p>优化字段顺序</p>
+</blockquote>
+<p>​	不正确对齐的数据可能会拖慢性能，因为 CPU 可能需要多个周期来访问未对齐的字段。相反，正确对齐的数据可减少缓存行的加载，这对性能至关重要，特别是在内存速度成为瓶颈的系统中。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">68
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">69
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">70
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">71
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">72
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">73
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">74
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">75
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Poorly aligned struct
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">type</span> Misaligned <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Age        <span style="color:#ff7b72">uint8</span>  <span style="color:#8b949e;font-style:italic">// Uses 1 byte, followed by 7 bytes of padding to align the next field
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    PassportId <span style="color:#ff7b72">uint64</span> <span style="color:#8b949e;font-style:italic">// 8-byte aligned uint64 for the passport ID
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    Children   <span style="color:#ff7b72">uint16</span> <span style="color:#8b949e;font-style:italic">//2-byte aligned uint16
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Well-aligned struct
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">type</span> Aligned <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Age        <span style="color:#ff7b72">uint8</span>  <span style="color:#8b949e;font-style:italic">// Starting with 1 byte
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    Children   <span style="color:#ff7b72">uint16</span> <span style="color:#8b949e;font-style:italic">// Next, 2 bytes; all these combine into a 3-byte sequence
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    PassportId <span style="color:#ff7b72">uint64</span> <span style="color:#8b949e;font-style:italic">// Finally, an 8-byte aligned uint64 without needing additional padding
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">var</span> AlignedArr []Aligned
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">var</span> MisalignedArr []Misaligned
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">init</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">const</span> sampleSize = <span style="color:#a5d6ff">1000</span>
+</span></span><span style="display:flex;"><span>    AlignedArr = make([]Aligned, sampleSize)
+</span></span><span style="display:flex;"><span>    MisalignedArr = make([]Misaligned, sampleSize)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; sampleSize; i<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>        AlignedArr[i] = Aligned{Age: uint8(i <span style="color:#ff7b72;font-weight:bold">%</span> <span style="color:#a5d6ff">256</span>), Siblings: uint16(i), Children: uint64(i)}
+</span></span><span style="display:flex;"><span>        MisalignedArr[i] = Misaligned{Age: uint8(i <span style="color:#ff7b72;font-weight:bold">%</span> <span style="color:#a5d6ff">256</span>), PassportId: uint64(i), Children: uint16(i)}
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">traverseAligned</span>() <span style="color:#ff7b72">uint16</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">var</span> arbitraryNum <span style="color:#ff7b72">uint16</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">for</span> _, item <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> AlignedArr {
+</span></span><span style="display:flex;"><span>        arbitraryNum <span style="color:#ff7b72;font-weight:bold">+=</span> item.Siblings
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> arbitraryNum
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">traverseMisaligned</span>() <span style="color:#ff7b72">uint16</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">var</span> arbitraryNum <span style="color:#ff7b72">uint16</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">for</span> _, item <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> MisalignedArr {
+</span></span><span style="display:flex;"><span>        arbitraryNum <span style="color:#ff7b72;font-weight:bold">+=</span> item.Children
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> arbitraryNum
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">BenchmarkTraverseAligned</span>(b <span style="color:#ff7b72;font-weight:bold">*</span>testing.B) {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">for</span> n <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; n &lt; b.N; n<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">traverseAligned</span>()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">BenchmarkTraverseMisaligned</span>(b <span style="color:#ff7b72;font-weight:bold">*</span>testing.B) {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">for</span> n <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; n &lt; b.N; n<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">traverseMisaligned</span>()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>   
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 插个眼： 需要禁止编译器优化，否则效果不是很明显
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#f85149">$</span> <span style="color:#ff7b72">go</span> test <span style="color:#ff7b72;font-weight:bold">-</span>gcflags=<span style="color:#a5d6ff">&#34;-m -l&#34;</span> <span style="color:#ff7b72;font-weight:bold">-</span>v <span style="color:#ff7b72;font-weight:bold">-</span>bench=BenchmarkTraverseMisaligned <span style="color:#ff7b72;font-weight:bold">-</span>count <span style="color:#a5d6ff">3</span>
+</span></span><span style="display:flex;"><span>goos: windows
+</span></span><span style="display:flex;"><span>goarch: amd64
+</span></span><span style="display:flex;"><span>pkg: xxx
+</span></span><span style="display:flex;"><span>cpu: <span style="color:#a5d6ff">12</span>th Gen <span style="color:#d2a8ff;font-weight:bold">Intel</span>(R) <span style="color:#d2a8ff;font-weight:bold">Core</span>(TM) i5<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">1240</span>P
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">16</span>           <span style="color:#a5d6ff">3843603</span>               <span style="color:#a5d6ff">322.5</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">16</span>           <span style="color:#a5d6ff">3888368</span>               <span style="color:#a5d6ff">318.4</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">16</span>           <span style="color:#a5d6ff">3600476</span>               <span style="color:#a5d6ff">313.6</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f85149">$</span> <span style="color:#ff7b72">go</span> test <span style="color:#ff7b72;font-weight:bold">-</span>gcflags=<span style="color:#a5d6ff">&#34;-m -l&#34;</span> <span style="color:#ff7b72;font-weight:bold">-</span>v <span style="color:#ff7b72;font-weight:bold">-</span>bench=BenchmarkTraverseMisaligned <span style="color:#ff7b72;font-weight:bold">-</span>count <span style="color:#a5d6ff">3</span>
+</span></span><span style="display:flex;"><span>goos: windows
+</span></span><span style="display:flex;"><span>goarch: amd64
+</span></span><span style="display:flex;"><span>pkg: xxx
+</span></span><span style="display:flex;"><span>cpu: <span style="color:#a5d6ff">12</span>th Gen <span style="color:#d2a8ff;font-weight:bold">Intel</span>(R) <span style="color:#d2a8ff;font-weight:bold">Core</span>(TM) i5<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">1240</span>P
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">16</span>           <span style="color:#a5d6ff">3843603</span>               <span style="color:#a5d6ff">322.5</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">16</span>           <span style="color:#a5d6ff">3888368</span>               <span style="color:#a5d6ff">318.4</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op
+</span></span><span style="display:flex;"><span>BenchmarkTraverseMisaligned<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">16</span>           <span style="color:#a5d6ff">3600476</span>               <span style="color:#a5d6ff">313.6</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op    
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	填充是为了确保每个结构字段根据其需要正确对齐在内存中，就像我们之前看到的那样。但是，虽然它可以实现高效访问，但如果字段顺序不合适，填充也可能会浪费空间。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#34;unsafe&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> PoorlyAlignedPerson <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Active   <span style="color:#ff7b72">bool</span>
+</span></span><span style="display:flex;"><span>    Salary   <span style="color:#ff7b72">float64</span>
+</span></span><span style="display:flex;"><span>    Age      <span style="color:#ff7b72">int32</span>
+</span></span><span style="display:flex;"><span>    Nickname <span style="color:#ff7b72">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> WellAlignedPerson <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>    Salary   <span style="color:#ff7b72">float64</span>
+</span></span><span style="display:flex;"><span>    Nickname <span style="color:#ff7b72">string</span>
+</span></span><span style="display:flex;"><span>    Age      <span style="color:#ff7b72">int32</span>
+</span></span><span style="display:flex;"><span>    Active   <span style="color:#ff7b72">bool</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>    poorlyAligned <span style="color:#ff7b72;font-weight:bold">:=</span> PoorlyAlignedPerson{}
+</span></span><span style="display:flex;"><span>    wellAligned <span style="color:#ff7b72;font-weight:bold">:=</span> WellAlignedPerson{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;Size of PoorlyAlignedPerson: %d bytes\n&#34;</span>, unsafe.<span style="color:#d2a8ff;font-weight:bold">Sizeof</span>(poorlyAligned))
+</span></span><span style="display:flex;"><span>    fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;Size of WellAlignedPerson: %d bytes\n&#34;</span>, unsafe.<span style="color:#d2a8ff;font-weight:bold">Sizeof</span>(wellAligned))
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Output<span style="color:#f85149">：</span>
+</span></span><span style="display:flex;"><span>Size of PoorlyAlignedPerson: <span style="color:#a5d6ff">40</span> bytes
+</span></span><span style="display:flex;"><span>Size of WellAlignedPerson: <span style="color:#a5d6ff">32</span> bytes
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p><a href="https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/fieldalignment">https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/fieldalignment</a> 一个自动内存对齐的工具</p>
+</blockquote>
+<h1 id="参考文章">参考文章</h1>
+<ul>
+<li><a href="https://dev.to/yanev/optimizing-memory-usage-in-go-mastering-data-structure-alignment-4beb">Optimizing Memory Usage in Go: Mastering Data Structure Alignment - DEV Community</a></li>
+</ul>]]></content:encoded>
+    </item>
     <item>
       <title>Golang pprof 性能分析指南</title>
       <link>https://luenci.com/en/posts/golang-pprof-%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E5%8D%97/</link>
