@@ -4,7 +4,7 @@
     <title>并发编程 on Luenci</title>
     <link>https://luenci.com/en/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/</link>
     <description>Recent content in 并发编程 on Luenci</description>
-    <generator>Hugo -- 0.140.0</generator>
+    <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
     <lastBuildDate>Fri, 25 Oct 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
@@ -308,8 +308,7 @@
 </div>
 </div><h1 id="基准测试">基准测试</h1>
 <blockquote>
-<p>留个疑点：这里无锁方案反而性能比不过有锁的。</p>
-</blockquote>
+<p>留个疑点：这里无锁方案反而性能比不过有锁的。</p></blockquote>
 <table>
   <thead>
       <tr>
@@ -506,8 +505,7 @@
 </div>
 </div><h4 id="通过带buffe的channel来控制">通过带<code>buffe</code>的<code>channel</code>来控制</h4>
 <blockquote>
-<p>无缓冲 channel，发送者会阻塞直到接收者接收了发送的值。</p>
-</blockquote>
+<p>无缓冲 channel，发送者会阻塞直到接收者接收了发送的值。</p></blockquote>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
 <table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
 <pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
@@ -576,8 +574,7 @@
 </div>
 </div><h4 id="通过synccond">通过<code>sync.Cond</code></h4>
 <blockquote>
-<p><code>sync.Cond</code> <strong>条件变量用来协调想要访问共享资源的那些 goroutine</strong>，当共享资源的状态发生变化的时候，它可以用来通知被互斥锁阻塞的 <code>goroutine</code>。</p>
-</blockquote>
+<p><code>sync.Cond</code> <strong>条件变量用来协调想要访问共享资源的那些 goroutine</strong>，当共享资源的状态发生变化的时候，它可以用来通知被互斥锁阻塞的 <code>goroutine</code>。</p></blockquote>
 <ul>
 <li><code>cond.L.Lock()</code>和<code>cond.L.Unlock()</code>：也可以使用<code>lock.Lock()</code>和<code>lock.Unlock()</code>，完全一样，因为是指针转递</li>
 <li><code>cond.Wait()</code>：Unlock()-&gt;*<strong>阻塞等待通知(即等待Signal()或Broadcast()的通知)-&gt;收到通知*</strong>-&gt;Lock()</li>
@@ -774,8 +771,8 @@
 </span></span><span style="display:flex;"><span>	x, y <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">1</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> {
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">select</span> {
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">case</span> ch <span style="color:#ff7b72;font-weight:bold">&lt;-</span> x: <span style="color:#8b949e;font-style:italic">// write to channel ch
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>			x, y = y, x<span style="color:#ff7b72;font-weight:bold">+</span>y
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">case</span> ch <span style="color:#ff7b72;font-weight:bold">&lt;-</span> x: <span style="color:#8b949e;font-style:italic">// write to channel ch</span>
+</span></span><span style="display:flex;"><span>			x, y = y, x<span style="color:#ff7b72;font-weight:bold">+</span>y
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">case</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>quit:
 </span></span><span style="display:flex;"><span>			fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;quit&#34;</span>)
 </span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">return</span>
@@ -790,8 +787,8 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>(n <span style="color:#ff7b72">int</span>) {
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; n; i<span style="color:#ff7b72;font-weight:bold">++</span> {
-</span></span><span style="display:flex;"><span>			fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#ff7b72;font-weight:bold">&lt;-</span>ch) <span style="color:#8b949e;font-style:italic">// read from channel ch
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		}
+</span></span><span style="display:flex;"><span>			fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#ff7b72;font-weight:bold">&lt;-</span>ch) <span style="color:#8b949e;font-style:italic">// read from channel ch</span>
+</span></span><span style="display:flex;"><span>		}
 </span></span><span style="display:flex;"><span>		quit <span style="color:#ff7b72;font-weight:bold">&lt;-</span> <span style="color:#79c0ff">false</span>
 </span></span><span style="display:flex;"><span>	}(n)
 </span></span><span style="display:flex;"><span>
@@ -920,13 +917,13 @@
 </span></span><span style="display:flex;"><span>	msgs <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// NewConsumer creates a Consumer
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewConsumer</span>(msgs <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>) <span style="color:#ff7b72;font-weight:bold">*</span>Consumer {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// NewConsumer creates a Consumer</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewConsumer</span>(msgs <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>) <span style="color:#ff7b72;font-weight:bold">*</span>Consumer {
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>Consumer{msgs: msgs}
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// consume reads the msgs channel
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> (c <span style="color:#ff7b72;font-weight:bold">*</span>Consumer) <span style="color:#d2a8ff;font-weight:bold">consume</span>() {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// consume reads the msgs channel</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (c <span style="color:#ff7b72;font-weight:bold">*</span>Consumer) <span style="color:#d2a8ff;font-weight:bold">consume</span>() {
 </span></span><span style="display:flex;"><span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;consume: Started&#34;</span>)
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> {
 </span></span><span style="display:flex;"><span>		msg <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72;font-weight:bold">&lt;-*</span>c.msgs
@@ -934,43 +931,43 @@
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Producer definition
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">type</span> Producer <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Producer definition</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Producer <span style="color:#ff7b72">struct</span> {
 </span></span><span style="display:flex;"><span>	msgs <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>
 </span></span><span style="display:flex;"><span>	done <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">bool</span>
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// NewProducer creates a Producer
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewProducer</span>(msgs <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>, done <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">bool</span>) <span style="color:#ff7b72;font-weight:bold">*</span>Producer {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// NewProducer creates a Producer</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">NewProducer</span>(msgs <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>, done <span style="color:#ff7b72;font-weight:bold">*</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">bool</span>) <span style="color:#ff7b72;font-weight:bold">*</span>Producer {
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>Producer{msgs: msgs, done: done}
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// produce creates and sends the message through msgs channel
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Producer) <span style="color:#d2a8ff;font-weight:bold">produce</span>(max <span style="color:#ff7b72">int</span>) {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// produce creates and sends the message through msgs channel</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Producer) <span style="color:#d2a8ff;font-weight:bold">produce</span>(max <span style="color:#ff7b72">int</span>) {
 </span></span><span style="display:flex;"><span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;produce: Started&#34;</span>)
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; max; i<span style="color:#ff7b72;font-weight:bold">++</span> {
 </span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;produce: Sending &#34;</span>, i)
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72;font-weight:bold">*</span>p.msgs <span style="color:#ff7b72;font-weight:bold">&lt;-</span> i
 </span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">*</span>p.done <span style="color:#ff7b72;font-weight:bold">&lt;-</span> <span style="color:#79c0ff">true</span> <span style="color:#8b949e;font-style:italic">// signal when done
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;produce: Done&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">*</span>p.done <span style="color:#ff7b72;font-weight:bold">&lt;-</span> <span style="color:#79c0ff">true</span> <span style="color:#8b949e;font-style:italic">// signal when done</span>
+</span></span><span style="display:flex;"><span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;produce: Done&#34;</span>)
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// profile flags
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	cpuprofile <span style="color:#ff7b72;font-weight:bold">:=</span> flag.<span style="color:#d2a8ff;font-weight:bold">String</span>(<span style="color:#a5d6ff">&#34;cpuprofile&#34;</span>, <span style="color:#a5d6ff">&#34;&#34;</span>, <span style="color:#a5d6ff">&#34;write cpu profile to `file`&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// profile flags</span>
+</span></span><span style="display:flex;"><span>	cpuprofile <span style="color:#ff7b72;font-weight:bold">:=</span> flag.<span style="color:#d2a8ff;font-weight:bold">String</span>(<span style="color:#a5d6ff">&#34;cpuprofile&#34;</span>, <span style="color:#a5d6ff">&#34;&#34;</span>, <span style="color:#a5d6ff">&#34;write cpu profile to `file`&#34;</span>)
 </span></span><span style="display:flex;"><span>	memprofile <span style="color:#ff7b72;font-weight:bold">:=</span> flag.<span style="color:#d2a8ff;font-weight:bold">String</span>(<span style="color:#a5d6ff">&#34;memprofile&#34;</span>, <span style="color:#a5d6ff">&#34;&#34;</span>, <span style="color:#a5d6ff">&#34;write memory profile to `file`&#34;</span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get the maximum number of messages from flags
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	max <span style="color:#ff7b72;font-weight:bold">:=</span> flag.<span style="color:#d2a8ff;font-weight:bold">Int</span>(<span style="color:#a5d6ff">&#34;n&#34;</span>, <span style="color:#a5d6ff">5</span>, <span style="color:#a5d6ff">&#34;defines the number of messages&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get the maximum number of messages from flags</span>
+</span></span><span style="display:flex;"><span>	max <span style="color:#ff7b72;font-weight:bold">:=</span> flag.<span style="color:#d2a8ff;font-weight:bold">Int</span>(<span style="color:#a5d6ff">&#34;n&#34;</span>, <span style="color:#a5d6ff">5</span>, <span style="color:#a5d6ff">&#34;defines the number of messages&#34;</span>)
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	flag.<span style="color:#d2a8ff;font-weight:bold">Parse</span>()
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// utilize the max num of cores available
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	runtime.<span style="color:#d2a8ff;font-weight:bold">GOMAXPROCS</span>(runtime.<span style="color:#d2a8ff;font-weight:bold">NumCPU</span>())
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// utilize the max num of cores available</span>
+</span></span><span style="display:flex;"><span>	runtime.<span style="color:#d2a8ff;font-weight:bold">GOMAXPROCS</span>(runtime.<span style="color:#d2a8ff;font-weight:bold">NumCPU</span>())
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// CPU Profile
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">if</span> <span style="color:#ff7b72;font-weight:bold">*</span>cpuprofile <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">&#34;&#34;</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// CPU Profile</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> <span style="color:#ff7b72;font-weight:bold">*</span>cpuprofile <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">&#34;&#34;</span> {
 </span></span><span style="display:flex;"><span>		f, err <span style="color:#ff7b72;font-weight:bold">:=</span> os.<span style="color:#d2a8ff;font-weight:bold">Create</span>(<span style="color:#ff7b72;font-weight:bold">*</span>cpuprofile)
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
 </span></span><span style="display:flex;"><span>			log.<span style="color:#d2a8ff;font-weight:bold">Fatal</span>(<span style="color:#a5d6ff">&#34;could not create CPU profile: &#34;</span>, err)
@@ -981,26 +978,26 @@
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">defer</span> pprof.<span style="color:#d2a8ff;font-weight:bold">SweightCPUProfile</span>()
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">var</span> msgs = make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>)  <span style="color:#8b949e;font-style:italic">// channel to send messages
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">var</span> done = make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">bool</span>) <span style="color:#8b949e;font-style:italic">// channel to control when production is done
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Start a goroutine for Produce.produce
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">go</span> <span style="color:#d2a8ff;font-weight:bold">NewProducer</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>msgs, <span style="color:#ff7b72;font-weight:bold">&amp;</span>done).<span style="color:#d2a8ff;font-weight:bold">produce</span>(<span style="color:#ff7b72;font-weight:bold">*</span>max)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">var</span> msgs = make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>)  <span style="color:#8b949e;font-style:italic">// channel to send messages</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">var</span> done = make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">bool</span>) <span style="color:#8b949e;font-style:italic">// channel to control when production is done</span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Start a goroutine for Consumer.consume
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">go</span> <span style="color:#d2a8ff;font-weight:bold">NewConsumer</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>msgs).<span style="color:#d2a8ff;font-weight:bold">consume</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Start a goroutine for Produce.produce</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">go</span> <span style="color:#d2a8ff;font-weight:bold">NewProducer</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>msgs, <span style="color:#ff7b72;font-weight:bold">&amp;</span>done).<span style="color:#d2a8ff;font-weight:bold">produce</span>(<span style="color:#ff7b72;font-weight:bold">*</span>max)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Finish the program when the production is done
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72;font-weight:bold">&lt;-</span>done
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Start a goroutine for Consumer.consume</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">go</span> <span style="color:#d2a8ff;font-weight:bold">NewConsumer</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>msgs).<span style="color:#d2a8ff;font-weight:bold">consume</span>()
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Memory Profile
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">if</span> <span style="color:#ff7b72;font-weight:bold">*</span>memprofile <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">&#34;&#34;</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Finish the program when the production is done</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">&lt;-</span>done
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Memory Profile</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> <span style="color:#ff7b72;font-weight:bold">*</span>memprofile <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">&#34;&#34;</span> {
 </span></span><span style="display:flex;"><span>		f, err <span style="color:#ff7b72;font-weight:bold">:=</span> os.<span style="color:#d2a8ff;font-weight:bold">Create</span>(<span style="color:#ff7b72;font-weight:bold">*</span>memprofile)
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
 </span></span><span style="display:flex;"><span>			log.<span style="color:#d2a8ff;font-weight:bold">Fatal</span>(<span style="color:#a5d6ff">&#34;could not create memory profile: &#34;</span>, err)
 </span></span><span style="display:flex;"><span>		}
-</span></span><span style="display:flex;"><span>		runtime.<span style="color:#d2a8ff;font-weight:bold">GC</span>() <span style="color:#8b949e;font-style:italic">// get up-to-date statistics
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">WriteHeapProfile</span>(f); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		runtime.<span style="color:#d2a8ff;font-weight:bold">GC</span>() <span style="color:#8b949e;font-style:italic">// get up-to-date statistics</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> pprof.<span style="color:#d2a8ff;font-weight:bold">WriteHeapProfile</span>(f); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
 </span></span><span style="display:flex;"><span>			log.<span style="color:#d2a8ff;font-weight:bold">Fatal</span>(<span style="color:#a5d6ff">&#34;could not write memory profile: &#34;</span>, err)
 </span></span><span style="display:flex;"><span>		}
 </span></span><span style="display:flex;"><span>		f.<span style="color:#d2a8ff;font-weight:bold">Close</span>()
@@ -1067,42 +1064,42 @@
 </span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;time&#34;</span>
 </span></span><span style="display:flex;"><span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// boring is a function that returns a channel to communicate with it.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// &lt;-chan string means receives-only channel of string.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">boring</span>(msg <span style="color:#ff7b72">string</span>) <span style="color:#ff7b72;font-weight:bold">&lt;-</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">string</span> {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// boring is a function that returns a channel to communicate with it.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// &lt;-chan string means receives-only channel of string.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">boring</span>(msg <span style="color:#ff7b72">string</span>) <span style="color:#ff7b72;font-weight:bold">&lt;-</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">string</span> {
 </span></span><span style="display:flex;"><span>	c <span style="color:#ff7b72;font-weight:bold">:=</span> make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">string</span>)
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// we launch goroutine inside a function
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// that sends the data to channel
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>() {
-</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// The for loop simulate the infinite sender.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; <span style="color:#a5d6ff">10</span>; i<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// we launch goroutine inside a function</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// that sends the data to channel</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// The for loop simulate the infinite sender.</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; <span style="color:#a5d6ff">10</span>; i<span style="color:#ff7b72;font-weight:bold">++</span> {
 </span></span><span style="display:flex;"><span>			c <span style="color:#ff7b72;font-weight:bold">&lt;-</span> fmt.<span style="color:#d2a8ff;font-weight:bold">Sprintf</span>(<span style="color:#a5d6ff">&#34;%s %d&#34;</span>, msg, i)
 </span></span><span style="display:flex;"><span>			time.<span style="color:#d2a8ff;font-weight:bold">Sleep</span>(time.<span style="color:#d2a8ff;font-weight:bold">Duration</span>(rand.<span style="color:#d2a8ff;font-weight:bold">Intn</span>(<span style="color:#a5d6ff">1e3</span>)) <span style="color:#ff7b72;font-weight:bold">*</span> time.Millisecond)
 </span></span><span style="display:flex;"><span>		}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// The sender should close the channel
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		close(c)
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// The sender should close the channel</span>
+</span></span><span style="display:flex;"><span>		close(c)
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	}()
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> c <span style="color:#8b949e;font-style:italic">// return a channel to caller.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>}
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> c <span style="color:#8b949e;font-style:italic">// return a channel to caller.</span>
+</span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	joe <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">boring</span>(<span style="color:#a5d6ff">&#34;Joe&#34;</span>)
 </span></span><span style="display:flex;"><span>	ahn <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">boring</span>(<span style="color:#a5d6ff">&#34;Ahn&#34;</span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// This loop yields 2 channels in sequence
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; <span style="color:#a5d6ff">10</span>; i<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// This loop yields 2 channels in sequence</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; <span style="color:#a5d6ff">10</span>; i<span style="color:#ff7b72;font-weight:bold">++</span> {
 </span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#ff7b72;font-weight:bold">&lt;-</span>joe)
 </span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#ff7b72;font-weight:bold">&lt;-</span>ahn)
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// or we can simply use the for range
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// for msg := range joe {
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// 	fmt.Println(msg)
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// }
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;You&#39;re both boring. I&#39;m leaving&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// or we can simply use the for range</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// for msg := range joe {</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 	fmt.Println(msg)</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// }</span>
+</span></span><span style="display:flex;"><span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;You&#39;re both boring. I&#39;m leaving&#34;</span>)
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></td></tr></table>
@@ -1222,25 +1219,25 @@
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// How do we avoid discarding result from the slow server.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// We duplicates to many instance, and perform parallel request.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">First</span>(query <span style="color:#ff7b72">string</span>, replicas <span style="color:#ff7b72;font-weight:bold">...</span>Search) Result {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// How do we avoid discarding result from the slow server.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// We duplicates to many instance, and perform parallel request.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">First</span>(query <span style="color:#ff7b72">string</span>, replicas <span style="color:#ff7b72;font-weight:bold">...</span>Search) Result {
 </span></span><span style="display:flex;"><span>	c <span style="color:#ff7b72;font-weight:bold">:=</span> make(<span style="color:#ff7b72">chan</span> Result)
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> replicas {
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>(idx <span style="color:#ff7b72">int</span>) {
 </span></span><span style="display:flex;"><span>			c <span style="color:#ff7b72;font-weight:bold">&lt;-</span> replicas[idx](query)
 </span></span><span style="display:flex;"><span>		}(i)
 </span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// the magic is here. First function always waits for 1 time after receiving the result
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>c
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// the magic is here. First function always waits for 1 time after receiving the result</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>c
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// I don&#39;t want to wait for slow server
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">Google</span>(query <span style="color:#ff7b72">string</span>) []Result {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// I don&#39;t want to wait for slow server</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">Google</span>(query <span style="color:#ff7b72">string</span>) []Result {
 </span></span><span style="display:flex;"><span>	c <span style="color:#ff7b72;font-weight:bold">:=</span> make(<span style="color:#ff7b72">chan</span> Result)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// each search performs in a goroutine
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// each search performs in a goroutine</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>() {
 </span></span><span style="display:flex;"><span>		c <span style="color:#ff7b72;font-weight:bold">&lt;-</span> <span style="color:#d2a8ff;font-weight:bold">First</span>(query, Web1, Web2)
 </span></span><span style="display:flex;"><span>	}()
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>() {
@@ -1252,15 +1249,15 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">var</span> results []Result
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// the global timeout for 3 queries
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// it means after 50ms, it ignores the result from the server that taking response greater than 50ms
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	timeout <span style="color:#ff7b72;font-weight:bold">:=</span> time.<span style="color:#d2a8ff;font-weight:bold">After</span>(<span style="color:#a5d6ff">50</span> <span style="color:#ff7b72;font-weight:bold">*</span> time.Millisecond)
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// the global timeout for 3 queries</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// it means after 50ms, it ignores the result from the server that taking response greater than 50ms</span>
+</span></span><span style="display:flex;"><span>	timeout <span style="color:#ff7b72;font-weight:bold">:=</span> time.<span style="color:#d2a8ff;font-weight:bold">After</span>(<span style="color:#a5d6ff">50</span> <span style="color:#ff7b72;font-weight:bold">*</span> time.Millisecond)
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt; <span style="color:#a5d6ff">3</span>; i<span style="color:#ff7b72;font-weight:bold">++</span> {
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">select</span> {
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">case</span> r <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>c:
 </span></span><span style="display:flex;"><span>			results = append(results, r)
-</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// this line ignore the slow server.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">case</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>timeout:
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// this line ignore the slow server.</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">case</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>timeout:
 </span></span><span style="display:flex;"><span>			fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;timeout&#34;</span>)
 </span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">return</span> results
 </span></span><span style="display:flex;"><span>		}
@@ -1368,21 +1365,21 @@
 </span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">83
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Credit:
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// https://gobyexample.com/worker-pools
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Worker pool benefits:
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// - Efficiency because it distributes the work across threads.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// - Flow control: Limit work in flight
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Disadvantage of worker:
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Lifetimes complexity: clean up and idle worker
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Principles:
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Start goroutines whenever you have the concurrent work to do.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// The goroutine should exit as soon as posible the work is done. This helps us
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// to clean up the resources and manage the lifetimes correctly.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">package</span> main
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Credit:</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// https://gobyexample.com/worker-pools</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Worker pool benefits:</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// - Efficiency because it distributes the work across threads.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// - Flow control: Limit work in flight</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Disadvantage of worker:</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Lifetimes complexity: clean up and idle worker</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Principles:</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Start goroutines whenever you have the concurrent work to do.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// The goroutine should exit as soon as posible the work is done. This helps us</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// to clean up the resources and manage the lifetimes correctly.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
 </span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;fmt&#34;</span>
@@ -1400,15 +1397,15 @@
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">workerEfficient</span>(id <span style="color:#ff7b72">int</span>, jobs <span style="color:#ff7b72;font-weight:bold">&lt;-</span><span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>, results <span style="color:#ff7b72">chan</span><span style="color:#ff7b72;font-weight:bold">&lt;-</span> <span style="color:#ff7b72">int</span>) {
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// sync.WaitGroup helps us to manage the job
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">var</span> wg sync.WaitGroup
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// sync.WaitGroup helps us to manage the job</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">var</span> wg sync.WaitGroup
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> j <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> jobs {
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>		wg.<span style="color:#d2a8ff;font-weight:bold">Add</span>(<span style="color:#a5d6ff">1</span>)
-</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// we start a goroutine to run the job
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>		<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>(job <span style="color:#ff7b72">int</span>) {
-</span></span><span style="display:flex;"><span>			<span style="color:#8b949e;font-style:italic">// start the job
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>			fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;worker&#34;</span>, id, <span style="color:#a5d6ff">&#34;started job&#34;</span>, job)
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// we start a goroutine to run the job</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>(job <span style="color:#ff7b72">int</span>) {
+</span></span><span style="display:flex;"><span>			<span style="color:#8b949e;font-style:italic">// start the job</span>
+</span></span><span style="display:flex;"><span>			fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;worker&#34;</span>, id, <span style="color:#a5d6ff">&#34;started job&#34;</span>, job)
 </span></span><span style="display:flex;"><span>			time.<span style="color:#d2a8ff;font-weight:bold">Sleep</span>(time.Second)
 </span></span><span style="display:flex;"><span>			fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;worker&#34;</span>, id, <span style="color:#a5d6ff">&#34;fnished job&#34;</span>, job)
 </span></span><span style="display:flex;"><span>			results <span style="color:#ff7b72;font-weight:bold">&lt;-</span> job <span style="color:#ff7b72;font-weight:bold">*</span> <span style="color:#a5d6ff">2</span>
@@ -1417,30 +1414,30 @@
 </span></span><span style="display:flex;"><span>		}(j)
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// With a help to manage the lifetimes of goroutines
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// we can add more handler when a goroutine finished
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	wg.<span style="color:#d2a8ff;font-weight:bold">Wait</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// With a help to manage the lifetimes of goroutines</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// we can add more handler when a goroutine finished</span>
+</span></span><span style="display:flex;"><span>	wg.<span style="color:#d2a8ff;font-weight:bold">Wait</span>()
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
 </span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">const</span> numbJobs = <span style="color:#a5d6ff">8</span>
 </span></span><span style="display:flex;"><span>	jobs <span style="color:#ff7b72;font-weight:bold">:=</span> make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>, numbJobs)
 </span></span><span style="display:flex;"><span>	results <span style="color:#ff7b72;font-weight:bold">:=</span> make(<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">int</span>, numbJobs)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 1. Start the worker
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// it is a fixed pool of goroutines receive and perform tasks from a channel
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// In this example, we define a fixed 3 workers
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// they receive the `jobs` from the channel jobs
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// we also naming the worker name with `w` variable.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">for</span> w <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">1</span>; w <span style="color:#ff7b72;font-weight:bold">&lt;=</span> <span style="color:#a5d6ff">3</span>; w<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 1. Start the worker</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// it is a fixed pool of goroutines receive and perform tasks from a channel</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// In this example, we define a fixed 3 workers</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// they receive the `jobs` from the channel jobs</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// we also naming the worker name with `w` variable.</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> w <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">1</span>; w <span style="color:#ff7b72;font-weight:bold">&lt;=</span> <span style="color:#a5d6ff">3</span>; w<span style="color:#ff7b72;font-weight:bold">++</span> {
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">go</span> <span style="color:#d2a8ff;font-weight:bold">workerEfficient</span>(w, jobs, results)
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 2. send the work
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#8b949e;font-style:italic">// other goroutine sends the work to the channels
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// in this example, the `main` goroutine sends the work to the channel `jobs`
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>	<span style="color:#ff7b72">for</span> j <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">1</span>; j <span style="color:#ff7b72;font-weight:bold">&lt;=</span> numbJobs; j<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// 2. send the work</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// other goroutine sends the work to the channels</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// in this example, the `main` goroutine sends the work to the channel `jobs`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> j <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">1</span>; j <span style="color:#ff7b72;font-weight:bold">&lt;=</span> numbJobs; j<span style="color:#ff7b72;font-weight:bold">++</span> {
 </span></span><span style="display:flex;"><span>		jobs <span style="color:#ff7b72;font-weight:bold">&lt;-</span> j
 </span></span><span style="display:flex;"><span>	}
 </span></span><span style="display:flex;"><span>	close(jobs)
@@ -1455,8 +1452,7 @@
 </div>
 </div><h2 id="崩溃处理recover">崩溃处理(recover)</h2>
 <blockquote>
-<p><strong>在Go语言中，如果一个协程崩溃了，则所有协程都会退出</strong>，比如数组越界，会触发panic(相当于throw exception), 这对持续可运行的应用来说，显然不是我们想要的效果．那这个时候我们需要对崩溃进行修复.</p>
-</blockquote>
+<p><strong>在Go语言中，如果一个协程崩溃了，则所有协程都会退出</strong>，比如数组越界，会触发panic(相当于throw exception), 这对持续可运行的应用来说，显然不是我们想要的效果．那这个时候我们需要对崩溃进行修复.</p></blockquote>
 <p>​     在<code>Go</code>语言中提供了一个<code>defer</code>和<code>recover</code>来实现崩溃恢复，这个相当于其它语言的<code>try catch</code>的方式．在使用<code>recover</code>函数时，如果要达到能捕获异常的作用，有几点需要注意：</p>
 <ul>
 <li><code>recover</code>如果想起作用的话， 必须在<code>defer</code>函数前声明，因为只要<code>panic</code>，后面的函数不会被执行</li>
@@ -1522,8 +1518,8 @@
 </span></span><span style="display:flex;"><span>	
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>(i <span style="color:#ff7b72">int</span>) {
 </span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">defer</span> <span style="color:#ff7b72">func</span>() { 
-</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">//在调用A函数前声明defer recover,能捕获异常
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>			<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> recover(); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">//在调用A函数前声明defer recover,能捕获异常</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> recover(); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
 </span></span><span style="display:flex;"><span>				fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;恢复&#34;</span>, err)
 </span></span><span style="display:flex;"><span>			}
 </span></span><span style="display:flex;"><span>			wg.<span style="color:#d2a8ff;font-weight:bold">Done</span>()

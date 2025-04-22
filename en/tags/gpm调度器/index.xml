@@ -4,7 +4,7 @@
     <title>GPM调度器 on Luenci</title>
     <link>https://luenci.com/en/tags/gpm%E8%B0%83%E5%BA%A6%E5%99%A8/</link>
     <description>Recent content in GPM调度器 on Luenci</description>
-    <generator>Hugo -- 0.140.0</generator>
+    <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
     <atom:link href="https://luenci.com/en/tags/gpm%E8%B0%83%E5%BA%A6%E5%99%A8/index.xml" rel="self" type="application/rss+xml" />
     <item>
@@ -20,8 +20,7 @@
 &lt;li&gt;此外，&lt;code&gt;GC&lt;/code&gt;还会周期性地将不再使用的内存回收，收缩栈空间。 因此，Go程序可以同时并发成千上万个Goroutine是得益于它&lt;strong&gt;强劲的调度器和高效的内存模型&lt;/strong&gt;。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;任何用户线程最终肯定都是要交由OS线程来执行&lt;/strong&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;任何用户线程最终肯定都是要交由OS线程来执行&lt;/strong&gt;&lt;/p&gt;&lt;/blockquote&gt;
 &lt;p&gt;​    Goroutine（称为G）也不例外，但是G并不直接绑定OS线程运行，而是由Goroutine Scheduler中的 &lt;code&gt;P - Logical Processor &lt;/code&gt;（逻辑处理器）来作为两者的&lt;code&gt;『中介』&lt;/code&gt;。&lt;/p&gt;
 &lt;p&gt;P 可以看作是一个抽象的资源或者一个上下文，一个P绑定一个OS线程，在Golang的实现里把OS线程抽象成一个数据结构。&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;M，G实际上是由M通过P来进行调度运行的&lt;/strong&gt;，但是在G的层面来看，&lt;strong&gt;P提供了G运行所需的一切资源和环境&lt;/strong&gt;，因此在G看来P就是运行它的 “CPU”，由 G、P、M 这三种由Go抽象出来的实现，最终形成了Go调度器的基本结构：&lt;/p&gt;
@@ -73,7 +72,7 @@
 &lt;p&gt;在绝大多数时候，其实&lt;code&gt;P&lt;/code&gt;的数量和&lt;code&gt;M&lt;/code&gt;的数量是相等。 每创建一个&lt;code&gt;p&lt;/code&gt;, 就会创建一个对应的&lt;code&gt;M&lt;/code&gt;只有少数情况下，&lt;code&gt;M&lt;/code&gt;的数量会大于&lt;code&gt;P&lt;/code&gt;&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;h1 id=&#34;work-stealinghttpssupertechcsailmitedupapersstealpdf-的调度算法&#34;&gt;&lt;em&gt;&lt;a href=&#34;https://supertech.csail.mit.edu/papers/steal.pdf&#34;&gt;work-stealing&lt;/a&gt;&lt;/em&gt; 的调度算法&lt;/h1&gt;
+&lt;h1 id=&#34;work-stealing-的调度算法&#34;&gt;&lt;em&gt;&lt;a href=&#34;https://supertech.csail.mit.edu/papers/steal.pdf&#34;&gt;work-stealing&lt;/a&gt;&lt;/em&gt; 的调度算法&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;每个P维护一个G的本地队列；&lt;/li&gt;
 &lt;li&gt;当一个G被创建出来，或者变为可执行状态时，就把他放到P的可执行队列中；&lt;/li&gt;
@@ -89,8 +88,7 @@
 <li>此外，<code>GC</code>还会周期性地将不再使用的内存回收，收缩栈空间。 因此，Go程序可以同时并发成千上万个Goroutine是得益于它<strong>强劲的调度器和高效的内存模型</strong>。</li>
 </ul>
 <blockquote>
-<p><strong>任何用户线程最终肯定都是要交由OS线程来执行</strong></p>
-</blockquote>
+<p><strong>任何用户线程最终肯定都是要交由OS线程来执行</strong></p></blockquote>
 <p>​    Goroutine（称为G）也不例外，但是G并不直接绑定OS线程运行，而是由Goroutine Scheduler中的 <code>P - Logical Processor </code>（逻辑处理器）来作为两者的<code>『中介』</code>。</p>
 <p>P 可以看作是一个抽象的资源或者一个上下文，一个P绑定一个OS线程，在Golang的实现里把OS线程抽象成一个数据结构。</p>
 <p><strong>M，G实际上是由M通过P来进行调度运行的</strong>，但是在G的层面来看，<strong>P提供了G运行所需的一切资源和环境</strong>，因此在G看来P就是运行它的 “CPU”，由 G、P、M 这三种由Go抽象出来的实现，最终形成了Go调度器的基本结构：</p>
@@ -142,7 +140,7 @@
 <p>在绝大多数时候，其实<code>P</code>的数量和<code>M</code>的数量是相等。 每创建一个<code>p</code>, 就会创建一个对应的<code>M</code>只有少数情况下，<code>M</code>的数量会大于<code>P</code></p>
 </li>
 </ul>
-<h1 id="work-stealinghttpssupertechcsailmitedupapersstealpdf-的调度算法"><em><a href="https://supertech.csail.mit.edu/papers/steal.pdf">work-stealing</a></em> 的调度算法</h1>
+<h1 id="work-stealing-的调度算法"><em><a href="https://supertech.csail.mit.edu/papers/steal.pdf">work-stealing</a></em> 的调度算法</h1>
 <ul>
 <li>每个P维护一个G的本地队列；</li>
 <li>当一个G被创建出来，或者变为可执行状态时，就把他放到P的可执行队列中；</li>
@@ -183,8 +181,7 @@
 <h1 id="参考链接">参考链接</h1>
 <blockquote>
 <p><a href="https://juejin.cn/post/6927264515193045000#heading-10">Go协程管理</a></p>
-<p><a href="https://segmentfault.com/a/1190000022871460">Go 调度模型 GPM</a></p>
-</blockquote>]]></content:encoded>
+<p><a href="https://segmentfault.com/a/1190000022871460">Go 调度模型 GPM</a></p></blockquote>]]></content:encoded>
     </item>
     <item>
       <title>Runtime:Golang 处理系统调用阻塞方式</title>
@@ -193,8 +190,7 @@
       <guid>https://luenci.com/en/posts/runtimegolang-%E5%A4%84%E7%90%86%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E9%98%BB%E5%A1%9E%E6%96%B9%E5%BC%8F/</guid>
       <description>&lt;h1 id=&#34;runtimegolang-处理系统调用阻塞方式&#34;&gt;Runtime：Golang 处理系统调用阻塞方式&lt;/h1&gt;
 &lt;blockquote&gt;
-&lt;p&gt;当一个Goroutine由于执行 &lt;code&gt;系统调用&lt;/code&gt; 而阻塞时，会将M从GPM中分离出去，然后P再找一个G和M重新执行，避免浪费CPU资源。&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;当一个Goroutine由于执行 &lt;code&gt;系统调用&lt;/code&gt; 而阻塞时，会将M从GPM中分离出去，然后P再找一个G和M重新执行，避免浪费CPU资源。&lt;/p&gt;&lt;/blockquote&gt;
 &lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
 &lt;h2 id=&#34;什么是-runtime&#34;&gt;什么是 runtime&lt;/h2&gt;
 &lt;p&gt;​    runtime 描述了&lt;strong&gt;程序运行时候&lt;/strong&gt;执行的软件/指令， 在每种语言有着不同的实现。可大可小，在 C 中，runtime 是库代码， 等同于&lt;code&gt; C runtime library&lt;/code&gt;，一系列 &lt;code&gt;C &lt;/code&gt;程序运行所需的函数，在&lt;code&gt;Java&lt;/code&gt;中，&lt;code&gt;runtime&lt;/code&gt; 还提供了 &lt;code&gt;Java&lt;/code&gt; 程序运行所需的虚拟机等。&lt;/p&gt;
@@ -208,8 +204,7 @@
 &lt;p&gt;​    从上图我们可以看出 &lt;code&gt;P&lt;/code&gt; 执行系统调用时会执行 &lt;code&gt;entersyscall()&lt;/code&gt; 函数（另还有一个类似的阻塞函数 &lt;a href=&#34;https://github.com/golang/go/blob/go1.15.6/src/runtime/proc.go#L3171-L3212&#34;&gt;&lt;code&gt;entersyscallblock()&lt;/code&gt;&lt;/a&gt; ，注意两者的区别）。当系统调用执行完毕切换回去会执行 &lt;a href=&#34;https://github.com/golang/go/blob/go1.15.6/src/runtime/proc.go#L3222-L3305&#34;&gt;&lt;code&gt;exitsyscall()&lt;/code&gt;&lt;/a&gt; 函数，下面我们看一下这两个函数的实现。&lt;/p&gt;</description>
       <content:encoded><![CDATA[<h1 id="runtimegolang-处理系统调用阻塞方式">Runtime：Golang 处理系统调用阻塞方式</h1>
 <blockquote>
-<p>当一个Goroutine由于执行 <code>系统调用</code> 而阻塞时，会将M从GPM中分离出去，然后P再找一个G和M重新执行，避免浪费CPU资源。</p>
-</blockquote>
+<p>当一个Goroutine由于执行 <code>系统调用</code> 而阻塞时，会将M从GPM中分离出去，然后P再找一个G和M重新执行，避免浪费CPU资源。</p></blockquote>
 <h2 id="前言">前言</h2>
 <h2 id="什么是-runtime">什么是 runtime</h2>
 <p>​    runtime 描述了<strong>程序运行时候</strong>执行的软件/指令， 在每种语言有着不同的实现。可大可小，在 C 中，runtime 是库代码， 等同于<code> C runtime library</code>，一系列 <code>C </code>程序运行所需的函数，在<code>Java</code>中，<code>runtime</code> 还提供了 <code>Java</code> 程序运行所需的虚拟机等。</p>
@@ -241,18 +236,18 @@
 </span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Standard syscall entry used by the go syscall library and normal cgo calls.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is exported via linkname to assembly in the syscall package.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:linkname entersyscall
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Standard syscall entry used by the go syscall library and normal cgo calls.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is exported via linkname to assembly in the syscall package.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:linkname entersyscall</span>
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">entersyscall</span>() {
 </span></span><span style="display:flex;"><span>	<span style="color:#d2a8ff;font-weight:bold">reentersyscall</span>(<span style="color:#d2a8ff;font-weight:bold">getcallerpc</span>(), <span style="color:#d2a8ff;font-weight:bold">getcallersp</span>())
 </span></span><span style="display:flex;"><span>}
@@ -422,26 +417,26 @@
 </span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">reentersyscall</span>(pc, sp <span style="color:#ff7b72">uintptr</span>) {
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">reentersyscall</span>(pc, sp <span style="color:#ff7b72">uintptr</span>) {
 </span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Disable preemption because during this function g is in Gsyscall status,
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// but can have inconsistent g-&gt;sched, do not let GC observe it.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">++</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Entersyscall must not call any function that might split/grow the stack.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// (See details in comment above.)
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// Catch calls that might, by replacing the stack guard with something that
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// will trip any stack check and leaving a flag to tell newstack to die.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.stackguard0 = stackPreempt
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Disable preemption because during this function g is in Gsyscall status,</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// but can have inconsistent g-&gt;sched, do not let GC observe it.</span>
+</span></span><span style="display:flex;"><span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">++</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Entersyscall must not call any function that might split/grow the stack.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// (See details in comment above.)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Catch calls that might, by replacing the stack guard with something that</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// will trip any stack check and leaving a flag to tell newstack to die.</span>
+</span></span><span style="display:flex;"><span>    _g_.stackguard0 = stackPreempt
 </span></span><span style="display:flex;"><span>    _g_.throwsplit = <span style="color:#79c0ff">true</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Leave SP around for GC and traceback.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 更新 g.sched 相关信息，后期需要读取这些信息
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 记录g的系统调用SP/PC
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.syscallsp = sp
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Leave SP around for GC and traceback.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 更新 g.sched 相关信息，后期需要读取这些信息</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 记录g的系统调用SP/PC</span>
+</span></span><span style="display:flex;"><span>    _g_.syscallsp = sp
 </span></span><span style="display:flex;"><span>    _g_.syscallpc = pc
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 设置g的状态为 _Gsyscall
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(_g_, _Grunning, _Gsyscall)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 设置g的状态为 _Gsyscall</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(_g_, _Grunning, _Gsyscall)
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _g_.syscallsp &lt; _g_.stack.lo <span style="color:#ff7b72;font-weight:bold">||</span> _g_.stack.hi &lt; _g_.syscallsp {
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(<span style="color:#ff7b72">func</span>() {
 </span></span><span style="display:flex;"><span>            print(<span style="color:#a5d6ff">&#34;entersyscall inconsistent &#34;</span>, <span style="color:#d2a8ff;font-weight:bold">hex</span>(_g_.syscallsp), <span style="color:#a5d6ff">&#34; [&#34;</span>, <span style="color:#d2a8ff;font-weight:bold">hex</span>(_g_.stack.lo), <span style="color:#a5d6ff">&#34;,&#34;</span>, <span style="color:#d2a8ff;font-weight:bold">hex</span>(_g_.stack.hi), <span style="color:#a5d6ff">&#34;]n&#34;</span>)
@@ -450,31 +445,31 @@
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> trace.enabled {
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(traceGoSysCall)
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// systemstack itself clobbers g.sched.{pc,sp} and we might
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// need them later when the G is genuinely blocked in a
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// syscall
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// systemstack itself clobbers g.sched.{pc,sp} and we might</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// need them later when the G is genuinely blocked in a</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// syscall</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> atomic.<span style="color:#d2a8ff;font-weight:bold">Load</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonwait) <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(entersyscall_sysmon)
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().runSafePointFn <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// runSafePointFn may stack split if run on this stack
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(runSafePointFn)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// runSafePointFn may stack split if run on this stack</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(runSafePointFn)
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
 </span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 更新与当前g关联P的执行调用系统调用次数
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.m.syscalltick = _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 更新与当前g关联P的执行调用系统调用次数</span>
+</span></span><span style="display:flex;"><span>    _g_.m.syscalltick = _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick
 </span></span><span style="display:flex;"><span>    _g_.sysblocktraced = <span style="color:#79c0ff">true</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 设置当前 m 所关联的 P 为下次优先使用的P（m.oldp = p), 实现亲和性
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    pp <span style="color:#ff7b72;font-weight:bold">:=</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 设置当前 m 所关联的 P 为下次优先使用的P（m.oldp = p), 实现亲和性</span>
+</span></span><span style="display:flex;"><span>    pp <span style="color:#ff7b72;font-weight:bold">:=</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
 </span></span><span style="display:flex;"><span>    pp.m = <span style="color:#a5d6ff">0</span>
 </span></span><span style="display:flex;"><span>    _g_.m.oldp.<span style="color:#d2a8ff;font-weight:bold">set</span>(pp)
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">//  解除 m 与 p 的关联
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.m.p = <span style="color:#a5d6ff">0</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 修改P的状态为 _Psyscall
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    atomic.<span style="color:#d2a8ff;font-weight:bold">Store</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>pp.status, _Psyscall)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">//  解除 m 与 p 的关联</span>
+</span></span><span style="display:flex;"><span>    _g_.m.p = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 修改P的状态为 _Psyscall</span>
+</span></span><span style="display:flex;"><span>    atomic.<span style="color:#d2a8ff;font-weight:bold">Store</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>pp.status, _Psyscall)
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> sched.gcwaiting <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(entersyscall_gcwait)
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">save</span>(pc, sp)
@@ -510,19 +505,19 @@
 </span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// The goroutine g exited its system call.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Arrange for it to run on a cpu again.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is called only from the go syscall library, not
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// from the low-level system calls used by the runtime.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Write barriers are not allowed because our P may have been stolen.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is exported via linkname to assembly in the syscall package.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:linkname exitsyscall
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall</span>() {}
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// The goroutine g exited its system call.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Arrange for it to run on a cpu again.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is called only from the go syscall library, not</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// from the low-level system calls used by the runtime.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Write barriers are not allowed because our P may have been stolen.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// This is exported via linkname to assembly in the syscall package.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:linkname exitsyscall</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall</span>() {}
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p>同 <code>reentersyscall()</code> 函数一样，<code>exitsyscall() </code>函数也是通过调用go的标准系统调用库实现的，而不是使用底层的<code>runtime</code>调用方法。</p>
@@ -601,70 +596,70 @@
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
 <pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall</span>() {
 </span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
-</span></span><span style="display:flex;"><span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">++</span> <span style="color:#8b949e;font-style:italic">// see comment in entersyscall
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">getcallersp</span>() &gt; _g_.syscallsp {
+</span></span><span style="display:flex;"><span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">++</span> <span style="color:#8b949e;font-style:italic">// see comment in entersyscall</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">getcallersp</span>() &gt; _g_.syscallsp {
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">throw</span>(<span style="color:#a5d6ff">&#34;exitsyscall: syscall frame is no longer valid&#34;</span>)
 </span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 重置g阻塞时间为0
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.waitsince = <span style="color:#a5d6ff">0</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 取出上次关联的P，优先使用
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    oldp <span style="color:#ff7b72;font-weight:bold">:=</span> _g_.m.oldp.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 重置g阻塞时间为0</span>
+</span></span><span style="display:flex;"><span>    _g_.waitsince = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 取出上次关联的P，优先使用</span>
+</span></span><span style="display:flex;"><span>    oldp <span style="color:#ff7b72;font-weight:bold">:=</span> _g_.m.oldp.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
 </span></span><span style="display:flex;"><span>    _g_.m.oldp = <span style="color:#a5d6ff">0</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 与原来的P进行关联
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast</span>(oldp) {
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 与原来的P进行关联</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast</span>(oldp) {
 </span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> trace.enabled {
 </span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">if</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>() <span style="color:#ff7b72;font-weight:bold">||</span> _g_.m.syscalltick <span style="color:#ff7b72;font-weight:bold">!=</span> _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick {
 </span></span><span style="display:flex;"><span>                <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(traceGoStart)
 </span></span><span style="display:flex;"><span>            }
 </span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// There&#39;s a cpu for us, so we can run.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick<span style="color:#ff7b72;font-weight:bold">++</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// We need to cas the status and scan before resuming...
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// G 的状态恢复为 _Grunning
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(_g_, _Gsyscall, _Grunning)
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Garbage collector isn&#39;t running (since we are),
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// so okay to clear syscallsp.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        _g_.syscallsp = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// There&#39;s a cpu for us, so we can run.</span>
+</span></span><span style="display:flex;"><span>        _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick<span style="color:#ff7b72;font-weight:bold">++</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// We need to cas the status and scan before resuming...</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// G 的状态恢复为 _Grunning</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(_g_, _Gsyscall, _Grunning)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Garbage collector isn&#39;t running (since we are),</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// so okay to clear syscallsp.</span>
+</span></span><span style="display:flex;"><span>        _g_.syscallsp = <span style="color:#a5d6ff">0</span>
 </span></span><span style="display:flex;"><span>        _g_.m.locks<span style="color:#ff7b72;font-weight:bold">--</span>
 </span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> _g_.preempt {
-</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// restore the preemption request in case we&#39;ve cleared it in newstack
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            _g_.stackguard0 = stackPreempt
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// restore the preemption request in case we&#39;ve cleared it in newstack</span>
+</span></span><span style="display:flex;"><span>            _g_.stackguard0 = stackPreempt
 </span></span><span style="display:flex;"><span>        } <span style="color:#ff7b72">else</span> {
-</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// otherwise restore the real _StackGuard, we&#39;ve spoiled it in entersyscall/entersyscallblock
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            _g_.stackguard0 = _g_.stack.lo <span style="color:#ff7b72;font-weight:bold">+</span> _StackGuard
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// otherwise restore the real _StackGuard, we&#39;ve spoiled it in entersyscall/entersyscallblock</span>
+</span></span><span style="display:flex;"><span>            _g_.stackguard0 = _g_.stack.lo <span style="color:#ff7b72;font-weight:bold">+</span> _StackGuard
 </span></span><span style="display:flex;"><span>        }
 </span></span><span style="display:flex;"><span>        _g_.throwsplit = <span style="color:#79c0ff">false</span>
 </span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">if</span> sched.disable.user <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> !<span style="color:#d2a8ff;font-weight:bold">schedEnabled</span>(_g_) {
-</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// Scheduling of this goroutine is disabled.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            <span style="color:#d2a8ff;font-weight:bold">Gosched</span>()
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// Scheduling of this goroutine is disabled.</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#d2a8ff;font-weight:bold">Gosched</span>()
 </span></span><span style="display:flex;"><span>        }
 </span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span>
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    _g_.sysexitticks = <span style="color:#a5d6ff">0</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> trace.enabled {
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Wait till traceGoSysBlock event is emitted.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// This ensures consistency of the trace (the goroutine is started after it is blocked).
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#ff7b72">for</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> oldp.syscalltick <span style="color:#ff7b72;font-weight:bold">==</span> _g_.m.syscalltick {
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Wait till traceGoSysBlock event is emitted.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// This ensures consistency of the trace (the goroutine is started after it is blocked).</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">for</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> oldp.syscalltick <span style="color:#ff7b72;font-weight:bold">==</span> _g_.m.syscalltick {
 </span></span><span style="display:flex;"><span>            <span style="color:#d2a8ff;font-weight:bold">osyield</span>()
 </span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// We can&#39;t trace syscall exit right now because we don&#39;t have a P.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// Tracing code can invoke write barriers that cannot run without a P.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// So instead we remember the syscall exit time and emit the event
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#8b949e;font-style:italic">// in execute when we have a P.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        _g_.sysexitticks = <span style="color:#d2a8ff;font-weight:bold">cputicks</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// We can&#39;t trace syscall exit right now because we don&#39;t have a P.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Tracing code can invoke write barriers that cannot run without a P.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// So instead we remember the syscall exit time and emit the event</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// in execute when we have a P.</span>
+</span></span><span style="display:flex;"><span>        _g_.sysexitticks = <span style="color:#d2a8ff;font-weight:bold">cputicks</span>()
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    _g_.m.locks<span style="color:#ff7b72;font-weight:bold">--</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Call the scheduler.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 在g0上调用 exitsyscall0() 函数, 执行流程到这里的话，说明并没有找到空闲的P，此时需要将G和M进行解绑，分别入相应的队列等待下次执行
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">mcall</span>(exitsyscall0)
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Scheduler returned, so we&#39;re allowed to run now.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// Delete the syscallsp information that we left for
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// the garbage collector during the system call.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// Must wait until now because until gosched returns
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// we don&#39;t know for sure that the garbage collector
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// is not running.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 以下信息必须等待调度器返回才可以重置，gc考虑
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    _g_.syscallsp = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Call the scheduler.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 在g0上调用 exitsyscall0() 函数, 执行流程到这里的话，说明并没有找到空闲的P，此时需要将G和M进行解绑，分别入相应的队列等待下次执行</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">mcall</span>(exitsyscall0)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Scheduler returned, so we&#39;re allowed to run now.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Delete the syscallsp information that we left for</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// the garbage collector during the system call.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Must wait until now because until gosched returns</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// we don&#39;t know for sure that the garbage collector</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// is not running.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 以下信息必须等待调度器返回才可以重置，gc考虑</span>
+</span></span><span style="display:flex;"><span>    _g_.syscallsp = <span style="color:#a5d6ff">0</span>
 </span></span><span style="display:flex;"><span>    _g_.m.p.<span style="color:#d2a8ff;font-weight:bold">ptr</span>().syscalltick<span style="color:#ff7b72;font-weight:bold">++</span>
 </span></span><span style="display:flex;"><span>    _g_.throwsplit = <span style="color:#79c0ff">false</span>
 </span></span><span style="display:flex;"><span>}
@@ -720,35 +715,35 @@
 </span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast</span>(oldp <span style="color:#ff7b72;font-weight:bold">*</span>p) <span style="color:#ff7b72">bool</span> {
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nosplit</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast</span>(oldp <span style="color:#ff7b72;font-weight:bold">*</span>p) <span style="color:#ff7b72">bool</span> {
 </span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Freezetheworld sets sweightwait but does not retake P&#39;s.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> sched.sweightwait <span style="color:#ff7b72;font-weight:bold">==</span> freezeSweightWait {
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Freezetheworld sets sweightwait but does not retake P&#39;s.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> sched.sweightwait <span style="color:#ff7b72;font-weight:bold">==</span> freezeSweightWait {
 </span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">false</span>
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Try to re-acquire the last P.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#8b949e;font-style:italic">// 尝试与上次的P关联
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> oldp.status <span style="color:#ff7b72;font-weight:bold">==</span> _Psyscall <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> atomic.<span style="color:#d2a8ff;font-weight:bold">Cas</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>oldp.status, _Psyscall, _Pidle) {
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// There&#39;s a cpu for us, so we can run.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">wirep</span>(oldp)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Try to re-acquire the last P.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 尝试与上次的P关联</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> oldp.status <span style="color:#ff7b72;font-weight:bold">==</span> _Psyscall <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> atomic.<span style="color:#d2a8ff;font-weight:bold">Cas</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>oldp.status, _Psyscall, _Pidle) {
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// There&#39;s a cpu for us, so we can run.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">wirep</span>(oldp)
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast_reacquired</span>()
 </span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">true</span>
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Try to get any other idle P.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> sched.pidle <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// Try to get any other idle P.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> sched.pidle <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
 </span></span><span style="display:flex;"><span>        <span style="color:#ff7b72">var</span> ok <span style="color:#ff7b72">bool</span>
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">systemstack</span>(<span style="color:#ff7b72">func</span>() {
-</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// 获取另一个P
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>            ok = <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast_pidle</span>()
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// 获取另一个P</span>
+</span></span><span style="display:flex;"><span>            ok = <span style="color:#d2a8ff;font-weight:bold">exitsyscallfast_pidle</span>()
 </span></span><span style="display:flex;"><span>            <span style="color:#ff7b72">if</span> ok <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> trace.enabled {
 </span></span><span style="display:flex;"><span>                <span style="color:#ff7b72">if</span> oldp <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>                    <span style="color:#8b949e;font-style:italic">// Wait till traceGoSysBlock event is emitted.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>                    <span style="color:#8b949e;font-style:italic">// This ensures consistency of the trace (the goroutine is started after it is blocked).
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>                    <span style="color:#ff7b72">for</span> oldp.syscalltick <span style="color:#ff7b72;font-weight:bold">==</span> _g_.m.syscalltick {
+</span></span><span style="display:flex;"><span>                    <span style="color:#8b949e;font-style:italic">// Wait till traceGoSysBlock event is emitted.</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#8b949e;font-style:italic">// This ensures consistency of the trace (the goroutine is started after it is blocked).</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#ff7b72">for</span> oldp.syscalltick <span style="color:#ff7b72;font-weight:bold">==</span> _g_.m.syscalltick {
 </span></span><span style="display:flex;"><span>                        <span style="color:#d2a8ff;font-weight:bold">osyield</span>()
 </span></span><span style="display:flex;"><span>                    }
 </span></span><span style="display:flex;"><span>                }
@@ -780,16 +775,16 @@
 </span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Try get a p from _Pidle list.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Sched must be locked.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// May run during STW, so write barriers are not allowed.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">pidleget</span>() <span style="color:#ff7b72;font-weight:bold">*</span>p {
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Try get a p from _Pidle list.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Sched must be locked.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// May run during STW, so write barriers are not allowed.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">pidleget</span>() <span style="color:#ff7b72;font-weight:bold">*</span>p {
 </span></span><span style="display:flex;"><span>    _p_ <span style="color:#ff7b72;font-weight:bold">:=</span> sched.pidle.<span style="color:#d2a8ff;font-weight:bold">ptr</span>()
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _p_ <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
 </span></span><span style="display:flex;"><span>        sched.pidle = _p_.link
-</span></span><span style="display:flex;"><span>        atomic.<span style="color:#d2a8ff;font-weight:bold">Xadd</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.npidle, <span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">1</span>) <span style="color:#8b949e;font-style:italic">// TODO: fast atomic
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    }
+</span></span><span style="display:flex;"><span>        atomic.<span style="color:#d2a8ff;font-weight:bold">Xadd</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.npidle, <span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">1</span>) <span style="color:#8b949e;font-style:italic">// TODO: fast atomic</span>
+</span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> _p_
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></td></tr></table>
@@ -843,18 +838,18 @@
 </span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
 </span></code></pre></td>
 <td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// exitsyscall slow path on g0.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Failed to acquire P, enqueue gp as runnable.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall0</span>(gp <span style="color:#ff7b72;font-weight:bold">*</span>g) {
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// exitsyscall slow path on g0.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Failed to acquire P, enqueue gp as runnable.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">//go:nowritebarrierrec</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">exitsyscall0</span>(gp <span style="color:#ff7b72;font-weight:bold">*</span>g) {
 </span></span><span style="display:flex;"><span>    _g_ <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getg</span>()
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// G 状态为等待执行状态
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(gp, _Gsyscall, _Grunnable)
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// G 状态为等待执行状态</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">casgstatus</span>(gp, _Gsyscall, _Grunnable)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 解除m与G的关联
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">dropg</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 解除m与G的关联</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">dropg</span>()
 </span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">lock</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.lock)
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">var</span> _p_ <span style="color:#ff7b72;font-weight:bold">*</span>p
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">schedEnabled</span>(_g_) {
@@ -862,30 +857,30 @@
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span> 
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _p_ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// 将g 放放全局运行队列
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">globrunqput</span>(gp)
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// 将g 放放全局运行队列</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">globrunqput</span>(gp)
 </span></span><span style="display:flex;"><span>    } <span style="color:#ff7b72">else</span> <span style="color:#ff7b72">if</span> atomic.<span style="color:#d2a8ff;font-weight:bold">Load</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonwait) <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
 </span></span><span style="display:flex;"><span>        atomic.<span style="color:#d2a8ff;font-weight:bold">Store</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonwait, <span style="color:#a5d6ff">0</span>)
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">notewakeup</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.sysmonnote)
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">unlock</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>sched.lock)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 这里再检查一次是否有p可用，有的话，正好重新再获取一个G立即执行
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#ff7b72">if</span> _p_ <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 这里再检查一次是否有p可用，有的话，正好重新再获取一个G立即执行</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _p_ <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
 </span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">acquirep</span>(_p_)
-</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">execute</span>(gp, <span style="color:#79c0ff">false</span>) <span style="color:#8b949e;font-style:italic">// Never returns.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    }
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">execute</span>(gp, <span style="color:#79c0ff">false</span>) <span style="color:#8b949e;font-style:italic">// Never returns.</span>
+</span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> _g_.m.lockedg <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span> {
-</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Wait until another thread schedules gp and so m again.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>        <span style="color:#d2a8ff;font-weight:bold">sweightlockedm</span>()
-</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">execute</span>(gp, <span style="color:#79c0ff">false</span>) <span style="color:#8b949e;font-style:italic">// Never returns.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    }
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 停止M
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">sweightm</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#8b949e;font-style:italic">// Wait until another thread schedules gp and so m again.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">sweightlockedm</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#d2a8ff;font-weight:bold">execute</span>(gp, <span style="color:#79c0ff">false</span>) <span style="color:#8b949e;font-style:italic">// Never returns.</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 停止M</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">sweightm</span>()
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 重新调度
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>    <span style="color:#d2a8ff;font-weight:bold">schedule</span>() <span style="color:#8b949e;font-style:italic">// Never returns.
-</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>}
+</span></span><span style="display:flex;"><span>    <span style="color:#8b949e;font-style:italic">// 重新调度</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#d2a8ff;font-weight:bold">schedule</span>() <span style="color:#8b949e;font-style:italic">// Never returns.</span>
+</span></span><span style="display:flex;"><span>}
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p><code>sweightm() </code>函数会停止当前<code>m</code>执行，直到有新的G需要执行。m停止后被调用 <code>mput()</code> 函数将当前<code>m</code>放在一下 <code>sched.midle</code> 空闲列表里。</p>

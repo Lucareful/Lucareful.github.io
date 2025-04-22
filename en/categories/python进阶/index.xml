@@ -4,7 +4,7 @@
     <title>Python进阶 on Luenci</title>
     <link>https://luenci.com/en/categories/python%E8%BF%9B%E9%98%B6/</link>
     <description>Recent content in Python进阶 on Luenci</description>
-    <generator>Hugo -- 0.140.0</generator>
+    <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
     <lastBuildDate>Sun, 07 Jul 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/categories/python%E8%BF%9B%E9%98%B6/index.xml" rel="self" type="application/rss+xml" />
@@ -217,8 +217,7 @@
 </div>
 </div><p>分析：</p>
 <blockquote>
-<p>在函数 test内部生成了两个列表 list_a 和 list_b，然后将两个列表分别添加到另外一个中。由结果可以看出，即使 foo 函数结束之后其所占用的内存空间依然未被释放。这是因为对于 list_a 和 list_b 来说虽然没有被任何外部对象引用，但因为二者之间交叉引用，以至于每个对象的引用计数都不为零，这也就造成了其所占用的空间永远不会被回收的尴尬局面。这个缺点是致命的。</p>
-</blockquote>
+<p>在函数 test内部生成了两个列表 list_a 和 list_b，然后将两个列表分别添加到另外一个中。由结果可以看出，即使 foo 函数结束之后其所占用的内存空间依然未被释放。这是因为对于 list_a 和 list_b 来说虽然没有被任何外部对象引用，但因为二者之间交叉引用，以至于每个对象的引用计数都不为零，这也就造成了其所占用的空间永远不会被回收的尴尬局面。这个缺点是致命的。</p></blockquote>
 <p><strong>为了解决交叉引用的问题，Python 引入了标记清除算法和分代回收算法。</strong></p>
 <!-- more -->
 <h2 id="标记清除">标记清除</h2>
@@ -238,14 +237,12 @@
 <p>在上图中，可以从程序变量直接访问块1，并且可以间接访问块2和3。程序无法访问块4和5。第一步将标记块1，并记住块2和3以供稍后处理。第二步将标记块2，第三步将标记块3，但不记得块2，因为它已被标记。扫描阶段将忽略块1，2和3，因为它们已被标记，但会回收块4和5。</p>
 <p>标记清除算法作为Python的辅助垃圾收集技术，主要处理的是一些容器对象，比如list、dict、tuple等，因为对于字符串、数值对象是不可能造成循环引用问题。Python使用一个双向链表将这些容器对象组织起来。</p>
 <blockquote>
-<p>不过，这种简单粗暴的标记清除算法也有明显的缺点：<strong>清除非活动的对象前它必须顺序扫描整个堆内存，哪怕只剩下小部分活动对象也要扫描所有对象。</strong></p>
-</blockquote>
+<p>不过，这种简单粗暴的标记清除算法也有明显的缺点：<strong>清除非活动的对象前它必须顺序扫描整个堆内存，哪怕只剩下小部分活动对象也要扫描所有对象。</strong></p></blockquote>
 </li>
 </ul>
 <h2 id="分代回收">分代回收</h2>
 <blockquote>
-<p>分代回收是建立在标记清除技术基础之上的，是一种以空间换时间的操作方式。</p>
-</blockquote>
+<p>分代回收是建立在标记清除技术基础之上的，是一种以空间换时间的操作方式。</p></blockquote>
 <ul>
 <li>由于标记清除算法需要扫描整个堆的所有对象导致其性能有所损耗，而且当可以回收的对象越少时性能损耗越高。因此 Python 引入了分代回收算法，将系统中存活时间不同的对象划分到不同的内存区域，共三代，分别是 0 代，1 代 和 2 代。新生成的对象是 0 代，经过一次垃圾回收之后，还存活的对象将会升级到 1 代，以此类推，2 代中的对象是存活最久的对象。</li>
 </ul>
@@ -261,7 +258,7 @@
 <p>事实上，所有的程序都有一个相同的现象，那就是大部分的对象生存周期都是相当短的，只有少量对象生命周期比较长，甚至会常驻内存，从程序开始运行持续到程序结束。而通过分代回收算法，做到了针对不同的区域采取不同的回收频率，节约了大量的计算从而提高 Python 的性能。</p>
 <p>除了上面所说的差值达到一定<strong>阈值</strong>会触发垃圾回收之外，<strong>我们还可以显式的调用 <code>gc.collect()</code> 来触发垃圾回收，最后当程序退出时也会进行垃圾回收</strong>。</p>
 <h1 id="python的gc模块">python的gc模块</h1>
-<h2 id="gchttpsdocspythonorgzh-cn3librarygchtmlmodule-gc-----垃圾回收器接口"><a href="https://docs.python.org/zh-cn/3/library/gc.html#module-gc"><code>gc</code></a> &mdash; 垃圾回收器接口</h2>
+<h2 id="gc--垃圾回收器接口"><a href="https://docs.python.org/zh-cn/3/library/gc.html#module-gc"><code>gc</code></a> &mdash; 垃圾回收器接口</h2>
 <hr>
 <ul>
 <li>此模块提供可选的垃圾回收器的接口，提供的功能包括：
@@ -380,8 +377,7 @@
 <p>参考文章：</p>
 <p><a href="https://docs.python.org/zh-cn/3/library/gc.html">https://docs.python.org/zh-cn/3/library/gc.html</a></p>
 <p><a href="http://www.ityouknow.com/python/2020/01/06/python-gc-111.html">http://www.ityouknow.com/python/2020/01/06/python-gc-111.html</a></p>
-<p><a href="http://www.bieryun.com/5338.html">http://www.bieryun.com/5338.html</a></p>
-</blockquote>
+<p><a href="http://www.bieryun.com/5338.html">http://www.bieryun.com/5338.html</a></p></blockquote>
 ]]></content:encoded>
     </item>
     <item>

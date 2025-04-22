@@ -4,7 +4,7 @@
     <title>GIL锁 on Luenci</title>
     <link>https://luenci.com/en/tags/gil%E9%94%81/</link>
     <description>Recent content in GIL锁 on Luenci</description>
-    <generator>Hugo -- 0.140.0</generator>
+    <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
     <atom:link href="https://luenci.com/en/tags/gil%E9%94%81/index.xml" rel="self" type="application/rss+xml" />
     <item>
@@ -19,13 +19,11 @@
       <content:encoded><![CDATA[<h2 id="gll锁定义">GlL锁定义</h2>
 <p>Gll锁：Global Interpreter Lock，又称：全局解释器锁</p>
 <blockquote>
-<p>任何Python线程执行前，必须先获得GlL锁，然后，每执行100条字节码，解释器就自动释放GL锁，让别的线程有机会执行。这个GlL全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在Python中只能交替执行，即使100个线程跑在100核CPU上，也只能用到1个核。</p>
-</blockquote>
+<p>任何Python线程执行前，必须先获得GlL锁，然后，每执行100条字节码，解释器就自动释放GL锁，让别的线程有机会执行。这个GlL全局锁实际上把所有线程的执行代码都给上了锁，所以，多线程在Python中只能交替执行，即使100个线程跑在100核CPU上，也只能用到1个核。</p></blockquote>
 <h2 id="gll不是python特性">GlL不是Python特性</h2>
 <p>GlL是Pythn解释器（Cpython）时引入的概念，在JPython、PyPy中没有GlL。GIL并不是Python的语言缺陷。是解释器层级的锁，跟Python语言特性无关</p>
 <blockquote>
-<p>言外之意，就是全局解释器就是为了锁定整个解释器内部的全局资源，每个线程想要运行首先获取GlL，而GlL本身又是一把互斥锁，造成所有线程只能一个一个one-by-one-并发-交替的执行。</p>
-</blockquote>
+<p>言外之意，就是全局解释器就是为了锁定整个解释器内部的全局资源，每个线程想要运行首先获取GlL，而GlL本身又是一把互斥锁，造成所有线程只能一个一个one-by-one-并发-交替的执行。</p></blockquote>
 <h2 id="gll存在的原因">GlL存在的原因</h2>
 <ul>
 <li>
@@ -36,8 +34,7 @@
 </li>
 </ul>
 <blockquote>
-<p>GlL产生的背景在CPython解释内部运行多个线程的时候，每个线程都需要解释器内部申请相应的全局资源，由于C语言本身比较底层造成CPython在管理所有全局资源的时候并不能应对所有线程同时的资源请求，因此为了防止资源竞争而发生错误，对所有线程申请全局资源增加了限制-全局解释器锁。</p>
-</blockquote>
+<p>GlL产生的背景在CPython解释内部运行多个线程的时候，每个线程都需要解释器内部申请相应的全局资源，由于C语言本身比较底层造成CPython在管理所有全局资源的时候并不能应对所有线程同时的资源请求，因此为了防止资源竞争而发生错误，对所有线程申请全局资源增加了限制-全局解释器锁。</p></blockquote>
 <!-- more -->
 <h2 id="gll锁什么时候释放">GlL锁什么时候释放？</h2>
 <ul>
@@ -72,12 +69,10 @@
 </li>
 </ul>
 <blockquote>
-<p>严重问题：既然CPython解释存在GL是否意味每个线程在全局变量就不用加Lock互斥锁了呢？这是一个严重错误的想法，为什么用户操作全局数据还需要加Lock，因为GlL的释放时机我们无法控制-操作非常可能并没有完成，而不像Lock那样我们用完才释放（操作完整）</p>
-</blockquote>
+<p>严重问题：既然CPython解释存在GL是否意味每个线程在全局变量就不用加Lock互斥锁了呢？这是一个严重错误的想法，为什么用户操作全局数据还需要加Lock，因为GlL的释放时机我们无法控制-操作非常可能并没有完成，而不像Lock那样我们用完才释放（操作完整）</p></blockquote>
 <p>举例</p>
 <blockquote>
-<p>线程1取出全局变量g_number==0一直加到20000，但是还没有来得及将20000写入g_number中，就超时了自动释放GIL 而线程2取出g_number==19999加到39999由于超时自动释放GlL此时线程2获取到GIL继续着未完成的事业将20000写入g_number….这就是之前的多线程案例没有加互斥锁的情况晨终结果是140w东右的盾因</p>
-</blockquote>
+<p>线程1取出全局变量g_number==0一直加到20000，但是还没有来得及将20000写入g_number中，就超时了自动释放GIL 而线程2取出g_number==19999加到39999由于超时自动释放GlL此时线程2获取到GIL继续着未完成的事业将20000写入g_number….这就是之前的多线程案例没有加互斥锁的情况晨终结果是140w东右的盾因</p></blockquote>
 <h2 id="gil锁解决方案">GIL锁解决方案</h2>
 <h3 id="解决方案一不推荐">解决方案一（不推荐）：</h3>
 <ul>
@@ -124,8 +119,7 @@
 <p>-shared：将其编译成so文件</p>
 <p>-o：表示output，用来输出的文件名</p>
 <p>库文件是以lib开头</p>
-<p>编译过后，在当前的文件夹下就会生成一个.so文件</p>
-</blockquote>
+<p>编译过后，在当前的文件夹下就会生成一个.so文件</p></blockquote>
 <p>第二步，编写python文件04-04_GIL锁解决方案.py：</p>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
 <table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">

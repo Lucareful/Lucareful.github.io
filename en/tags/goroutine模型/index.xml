@@ -4,7 +4,7 @@
     <title>Goroutine模型 on Luenci</title>
     <link>https://luenci.com/en/tags/goroutine%E6%A8%A1%E5%9E%8B/</link>
     <description>Recent content in Goroutine模型 on Luenci</description>
-    <generator>Hugo -- 0.140.0</generator>
+    <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
     <atom:link href="https://luenci.com/en/tags/goroutine%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml" />
     <item>
@@ -15,11 +15,9 @@
       <description>&lt;h1 id=&#34;golang-并发模型--goroutine-详解&#34;&gt;&lt;code&gt;Golang&lt;/code&gt; 并发模型 &amp;amp; Goroutine 详解&lt;/h1&gt;
 &lt;p&gt;💡 &lt;strong&gt;并发不是并行，并发关乎结构，并行关乎执行&lt;/strong&gt;&lt;/p&gt;
 &lt;blockquote&gt;
-&lt;p&gt;操作系统的基本调度与执行单元是进程(process)&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;操作系统的基本调度与执行单元是进程(process)&lt;/p&gt;&lt;/blockquote&gt;
 &lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;操作系统&lt;/strong&gt;的&lt;strong&gt;最小调度&lt;/strong&gt;单位是线程-&lt;code&gt;线程可作为执行单元可被独立调度到处理器上运行&lt;/code&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;&lt;strong&gt;操作系统&lt;/strong&gt;的&lt;strong&gt;最小调度&lt;/strong&gt;单位是线程-&lt;code&gt;线程可作为执行单元可被独立调度到处理器上运行&lt;/code&gt;&lt;/p&gt;&lt;/blockquote&gt;
 &lt;h2 id=&#34;csp-communicationing-sequential-processes通信顺序进程并发模型&#34;&gt;**&lt;code&gt;CSP&lt;/code&gt;( Communicationing Sequential Processes，通信顺序进程)**并发模型&lt;/h2&gt;
 &lt;p&gt;Tony Hoare 的 &lt;code&gt;CSP&lt;/code&gt; 模型旨在简化并发程序的编写，让并发程序的编写与编写顺序程序一样简单。Tony Hoare 认为输入输出应该是基本的编程原语，数据处理逻辑(也就是 &lt;code&gt;CSP&lt;/code&gt;中的 P)只需调用输入原语获取数据，顺序地处理数据，并将结果数据通过输出原语输出就可以了。因此，在 Tony Hoare 眼中，&lt;strong&gt;一个符合 &lt;code&gt;CSP&lt;/code&gt; 模型的并发程序应该是一组通过输入输出原语连接起来的 P 的集合&lt;/strong&gt;。&lt;/p&gt;
 &lt;p&gt;从这个角度来看，&lt;code&gt;CSP&lt;/code&gt;理论不仅是一个并发参考模型，也是一种并发程序的程序组织方法。它的组合思想与 Go 的设计哲学不谋而合。&lt;/p&gt;
@@ -35,7 +33,7 @@
 &lt;li&gt;在语言层面而不是通过标准库提供。goroutine 由go关键字创建，一退出就会被回收或 销毁，开发体验更佳&lt;/li&gt;
 &lt;li&gt;语言内置 channel 作为 goroutine 间通信原语，为并发设计提供了强大支撑。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;h2 id=&#34;goroutine-调度器&#34;&gt;&lt;strong&gt;&lt;code&gt;Goroutine&lt;/code&gt; 调度器&lt;/strong&gt;&lt;/h2&gt;
+&lt;h2 id=&#34;goroutine&#34;&gt;&lt;strong&gt;&lt;code&gt;Goroutine&lt;/code&gt; 调度器&lt;/strong&gt;&lt;/h2&gt;
 &lt;p&gt;一个 Go 程序对于操作系统来说只是一个&lt;strong&gt;用户层程序&lt;/strong&gt;，操作系统眼中只有线程，它甚至不知道有一种叫 &lt;strong&gt;Goroutine&lt;/strong&gt; 的事物存在。所以，Goroutine 的调度全要靠 Go 自己完成。那么，实现 Go 程序内 Goroutine 之间“公平”竞争“CPU”资源的任务，就落到了Go 运行时(runtime)头上了。要知道在一个 Go 程序中，除了用户层代码，剩下的就是Go 运行时了。&lt;/p&gt;
 &lt;p&gt;于是，Goroutine 的调度问题就演变为，Go 运行时如何将程序内的众多 Goroutine，按照一定算法调度到“CPU”资源上运行的问题了。&lt;/p&gt;
 &lt;p&gt;💡 &lt;strong&gt;可是，在操作系统层面，线程竞争的“CPU”资源是真实的物理 CPU，但在 Go 程序层 面，各个 Goroutine 要竞争的“CPU”资源又是什么呢?&lt;/strong&gt;&lt;/p&gt;
@@ -45,11 +43,9 @@
       <content:encoded><![CDATA[<h1 id="golang-并发模型--goroutine-详解"><code>Golang</code> 并发模型 &amp; Goroutine 详解</h1>
 <p>💡 <strong>并发不是并行，并发关乎结构，并行关乎执行</strong></p>
 <blockquote>
-<p>操作系统的基本调度与执行单元是进程(process)</p>
-</blockquote>
+<p>操作系统的基本调度与执行单元是进程(process)</p></blockquote>
 <blockquote>
-<p><strong>操作系统</strong>的<strong>最小调度</strong>单位是线程-<code>线程可作为执行单元可被独立调度到处理器上运行</code></p>
-</blockquote>
+<p><strong>操作系统</strong>的<strong>最小调度</strong>单位是线程-<code>线程可作为执行单元可被独立调度到处理器上运行</code></p></blockquote>
 <h2 id="csp-communicationing-sequential-processes通信顺序进程并发模型">**<code>CSP</code>( Communicationing Sequential Processes，通信顺序进程)**并发模型</h2>
 <p>Tony Hoare 的 <code>CSP</code> 模型旨在简化并发程序的编写，让并发程序的编写与编写顺序程序一样简单。Tony Hoare 认为输入输出应该是基本的编程原语，数据处理逻辑(也就是 <code>CSP</code>中的 P)只需调用输入原语获取数据，顺序地处理数据，并将结果数据通过输出原语输出就可以了。因此，在 Tony Hoare 眼中，<strong>一个符合 <code>CSP</code> 模型的并发程序应该是一组通过输入输出原语连接起来的 P 的集合</strong>。</p>
 <p>从这个角度来看，<code>CSP</code>理论不仅是一个并发参考模型，也是一种并发程序的程序组织方法。它的组合思想与 Go 的设计哲学不谋而合。</p>
@@ -65,7 +61,7 @@
 <li>在语言层面而不是通过标准库提供。goroutine 由go关键字创建，一退出就会被回收或 销毁，开发体验更佳</li>
 <li>语言内置 channel 作为 goroutine 间通信原语，为并发设计提供了强大支撑。</li>
 </ul>
-<h2 id="goroutine-调度器"><strong><code>Goroutine</code> 调度器</strong></h2>
+<h2 id="goroutine"><strong><code>Goroutine</code> 调度器</strong></h2>
 <p>一个 Go 程序对于操作系统来说只是一个<strong>用户层程序</strong>，操作系统眼中只有线程，它甚至不知道有一种叫 <strong>Goroutine</strong> 的事物存在。所以，Goroutine 的调度全要靠 Go 自己完成。那么，实现 Go 程序内 Goroutine 之间“公平”竞争“CPU”资源的任务，就落到了Go 运行时(runtime)头上了。要知道在一个 Go 程序中，除了用户层代码，剩下的就是Go 运行时了。</p>
 <p>于是，Goroutine 的调度问题就演变为，Go 运行时如何将程序内的众多 Goroutine，按照一定算法调度到“CPU”资源上运行的问题了。</p>
 <p>💡 <strong>可是，在操作系统层面，线程竞争的“CPU”资源是真实的物理 CPU，但在 Go 程序层 面，各个 Goroutine 要竞争的“CPU”资源又是什么呢?</strong></p>
