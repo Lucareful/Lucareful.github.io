@@ -6,7 +6,531 @@
     <description>Recent content in MCP on Luenci</description>
     <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
+    <lastBuildDate>Tue, 06 May 2025 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/categories/mcp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MCP 入门（实践篇）</title>
+      <link>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E5%AE%9E%E8%B7%B5%E7%AF%87/</link>
+      <pubDate>Tue, 06 May 2025 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E5%AE%9E%E8%B7%B5%E7%AF%87/</guid>
+      <description>&lt;h1 id=&#34;mcp-入门实践篇&#34;&gt;mcp 入门（实践篇）&lt;/h1&gt;
+&lt;p&gt;​	本文将会从 0 实现一个 mcp server，一个基于高德天气api的 天气查询 mcp服务。完整代码见：（https://github.com/Lucareful/mcp-wather）&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="mcp-入门实践篇">mcp 入门（实践篇）</h1>
+<p>​	本文将会从 0 实现一个 mcp server，一个基于高德天气api的 天气查询 mcp服务。完整代码见：（https://github.com/Lucareful/mcp-wather）</p>
+<h2 id="开始">开始</h2>
+<p>​	安装创建一个带有 MCP Go 库。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>go mod init mcp-weather
+</span></span><span style="display:flex;"><span>go get github.com/mark3labs/mcp-go
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="定义api数据结构">定义API数据结构</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> weather
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 见文档：https://lbs.amap.com/api/webservice/guide/api-advanced/weatherinfo</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> AllInfo <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	Status    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;status&#34;`</span>
+</span></span><span style="display:flex;"><span>	Count     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;count&#34;`</span>
+</span></span><span style="display:flex;"><span>	Info      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;info&#34;`</span>
+</span></span><span style="display:flex;"><span>	Infocode  <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;infocode&#34;`</span>
+</span></span><span style="display:flex;"><span>	Forecasts []<span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>		City       <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;city&#34;`</span>
+</span></span><span style="display:flex;"><span>		Adcode     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;adcode&#34;`</span>
+</span></span><span style="display:flex;"><span>		Province   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;province&#34;`</span>
+</span></span><span style="display:flex;"><span>		Reporttime <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;reporttime&#34;`</span>
+</span></span><span style="display:flex;"><span>		Casts      []<span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>			Date           <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;date&#34;`</span>
+</span></span><span style="display:flex;"><span>			Week           <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;week&#34;`</span>
+</span></span><span style="display:flex;"><span>			Dayweather     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;dayweather&#34;`</span>
+</span></span><span style="display:flex;"><span>			Nightweather   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nightweather&#34;`</span>
+</span></span><span style="display:flex;"><span>			Daytemp        <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daytemp&#34;`</span>
+</span></span><span style="display:flex;"><span>			Nighttemp      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nighttemp&#34;`</span>
+</span></span><span style="display:flex;"><span>			Daywind        <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daywind&#34;`</span>
+</span></span><span style="display:flex;"><span>			Nightwind      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nightwind&#34;`</span>
+</span></span><span style="display:flex;"><span>			Daypower       <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daypower&#34;`</span>
+</span></span><span style="display:flex;"><span>			Nightpower     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nightpower&#34;`</span>
+</span></span><span style="display:flex;"><span>			DaytempFloat   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daytemp_float&#34;`</span>
+</span></span><span style="display:flex;"><span>			NighttempFloat <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nighttemp_float&#34;`</span>
+</span></span><span style="display:flex;"><span>		} <span style="color:#a5d6ff">`json:&#34;casts&#34;`</span>
+</span></span><span style="display:flex;"><span>	} <span style="color:#a5d6ff">`json:&#34;forecasts&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> BaseInfo <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	Status   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;status&#34;`</span>
+</span></span><span style="display:flex;"><span>	Count    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;count&#34;`</span>
+</span></span><span style="display:flex;"><span>	Info     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;info&#34;`</span>
+</span></span><span style="display:flex;"><span>	Infocode <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;infocode&#34;`</span>
+</span></span><span style="display:flex;"><span>	Lives    []<span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>		Province         <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;province&#34;`</span>
+</span></span><span style="display:flex;"><span>		City             <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;city&#34;`</span>
+</span></span><span style="display:flex;"><span>		Adcode           <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;adcode&#34;`</span>
+</span></span><span style="display:flex;"><span>		Weather          <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;weather&#34;`</span>
+</span></span><span style="display:flex;"><span>		Temperature      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;temperature&#34;`</span>
+</span></span><span style="display:flex;"><span>		Winddirection    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;winddirection&#34;`</span>
+</span></span><span style="display:flex;"><span>		Windpower        <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;windpower&#34;`</span>
+</span></span><span style="display:flex;"><span>		Humidity         <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;humidity&#34;`</span>
+</span></span><span style="display:flex;"><span>		Reporttime       <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;reporttime&#34;`</span>
+</span></span><span style="display:flex;"><span>		TemperatureFloat <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;temperature_float&#34;`</span>
+</span></span><span style="display:flex;"><span>		HumidityFloat    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;humidity_float&#34;`</span>
+</span></span><span style="display:flex;"><span>	} <span style="color:#a5d6ff">`json:&#34;lives&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="构建天气工具">构建天气工具</h3>
+<p>​	输入: 城市（city），天气信息（type）（枚举类型：完整，摘要）。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// GetForecast Add forecast tool</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">GetForecast</span>() mcp.Tool {
+</span></span><span style="display:flex;"><span>	weatherTool <span style="color:#ff7b72;font-weight:bold">:=</span> mcp.<span style="color:#d2a8ff;font-weight:bold">NewTool</span>(<span style="color:#a5d6ff">&#34;get_weather_forecast&#34;</span>,
+</span></span><span style="display:flex;"><span>		mcp.<span style="color:#d2a8ff;font-weight:bold">WithDescription</span>(<span style="color:#a5d6ff">&#34;Get weather forecast for a city&#34;</span>),
+</span></span><span style="display:flex;"><span>		mcp.<span style="color:#d2a8ff;font-weight:bold">WithString</span>(<span style="color:#a5d6ff">&#34;city&#34;</span>,
+</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Required</span>(),
+</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Description</span>(<span style="color:#a5d6ff">&#34;city name&#34;</span>),
+</span></span><span style="display:flex;"><span>		),
+</span></span><span style="display:flex;"><span>		mcp.<span style="color:#d2a8ff;font-weight:bold">WithString</span>(<span style="color:#a5d6ff">&#34;type&#34;</span>,
+</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Required</span>(),
+</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Description</span>(<span style="color:#a5d6ff">&#34;get weather forecast info base/all&#34;</span>),
+</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Enum</span>(<span style="color:#a5d6ff">&#34;base&#34;</span>, <span style="color:#a5d6ff">&#34;all&#34;</span>),
+</span></span><span style="display:flex;"><span>		),
+</span></span><span style="display:flex;"><span>	)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> weatherTool
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	当 MCP 客户端连接到 MCP 服务器时，MCP 服务器会公开 GetForecast 作为有效 mcp 工具，请求city和type。当LLM 传入参数之后，程序会执行获取天气信息，返回给LLM。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">68
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">ForecastCall</span>(ctx context.Context, request mcp.CallToolRequest) (<span style="color:#ff7b72;font-weight:bold">*</span>mcp.CallToolResult, <span style="color:#ff7b72">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get city name</span>
+</span></span><span style="display:flex;"><span>	city <span style="color:#ff7b72;font-weight:bold">:=</span> request.Params.Arguments[<span style="color:#a5d6ff">&#34;city&#34;</span>].(<span style="color:#ff7b72">string</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> len(city) <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;city name is empty&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get info type</span>
+</span></span><span style="display:flex;"><span>	infoType <span style="color:#ff7b72;font-weight:bold">:=</span> request.Params.Arguments[<span style="color:#a5d6ff">&#34;type&#34;</span>].(<span style="color:#ff7b72">string</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> len(infoType) <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;info type is empty&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	adcode, exists <span style="color:#ff7b72;font-weight:bold">:=</span> cityMap.CityClient.<span style="color:#d2a8ff;font-weight:bold">GetAdcode</span>(city)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> !exists {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;city %s not found, code %s&#34;</span>, city, adcode)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get weather forecast</span>
+</span></span><span style="display:flex;"><span>	weatherInfo, err <span style="color:#ff7b72;font-weight:bold">:=</span> weather.<span style="color:#d2a8ff;font-weight:bold">FetchWeatherData</span>(adcode, infoType)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, err
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// parse weather info</span>
+</span></span><span style="display:flex;"><span>	forecast <span style="color:#ff7b72;font-weight:bold">:=</span> make([]ForecastResult, <span style="color:#a5d6ff">0</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> infoType <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;base&#34;</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// parse base info</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">var</span> baseInfo weather.BaseInfo
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Unmarshal</span>([]byte(weatherInfo), <span style="color:#ff7b72;font-weight:bold">&amp;</span>baseInfo); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;parse base info failed: %v&#34;</span>, err)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">for</span> _, forecastInfo <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> baseInfo.Lives {
+</span></span><span style="display:flex;"><span>			<span style="color:#8b949e;font-style:italic">// append forecast info</span>
+</span></span><span style="display:flex;"><span>			forecast = append(forecast, ForecastResult{
+</span></span><span style="display:flex;"><span>				Name:        forecastInfo.City,
+</span></span><span style="display:flex;"><span>				Temperature: forecastInfo.Temperature,
+</span></span><span style="display:flex;"><span>				Wind:        forecastInfo.Windpower,
+</span></span><span style="display:flex;"><span>				Forecast:    forecastInfo.Weather,
+</span></span><span style="display:flex;"><span>				Date:        forecastInfo.Reporttime,
+</span></span><span style="display:flex;"><span>			})
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	} <span style="color:#ff7b72">else</span> <span style="color:#ff7b72">if</span> infoType <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;all&#34;</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// parse all info</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">var</span> allInfo weather.AllInfo
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Unmarshal</span>([]byte(weatherInfo), <span style="color:#ff7b72;font-weight:bold">&amp;</span>allInfo); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;parse all info failed: %v&#34;</span>, err)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">for</span> _, forecastInfo <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> allInfo.Forecasts {
+</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">for</span> _, cast <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> forecastInfo.Casts {
+</span></span><span style="display:flex;"><span>				forecast = append(forecast, ForecastResult{
+</span></span><span style="display:flex;"><span>					Name:        forecastInfo.City,
+</span></span><span style="display:flex;"><span>					Temperature: cast.Daytemp,
+</span></span><span style="display:flex;"><span>					Wind:        cast.Daywind,
+</span></span><span style="display:flex;"><span>					Forecast:    cast.Dayweather,
+</span></span><span style="display:flex;"><span>					Date:        cast.Date,
+</span></span><span style="display:flex;"><span>				})
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	forecastResponse, err <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Marshal</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>forecast)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;error marshalling forecast: %w&#34;</span>, err)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> mcp.<span style="color:#d2a8ff;font-weight:bold">NewToolResultText</span>(string(forecastResponse)), <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="程序入口">程序入口</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;github.com/mark3labs/mcp-go/server&#34;</span>
+</span></span><span style="display:flex;"><span>	_ <span style="color:#a5d6ff">&#34;go.uber.org/automaxprocs&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;mcp-weather/internal/city&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;mcp-weather/pkg/mcp&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Create a new MCP server</span>
+</span></span><span style="display:flex;"><span>	s <span style="color:#ff7b72;font-weight:bold">:=</span> server.<span style="color:#d2a8ff;font-weight:bold">NewMCPServer</span>(
+</span></span><span style="display:flex;"><span>		<span style="color:#a5d6ff">&#34;Weather Demo&#34;</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#a5d6ff">&#34;1.0.0&#34;</span>,
+</span></span><span style="display:flex;"><span>		server.<span style="color:#d2a8ff;font-weight:bold">WithResourceCapabilities</span>(<span style="color:#79c0ff">true</span>, <span style="color:#79c0ff">true</span>),
+</span></span><span style="display:flex;"><span>		server.<span style="color:#d2a8ff;font-weight:bold">WithLogging</span>(),
+</span></span><span style="display:flex;"><span>		server.<span style="color:#d2a8ff;font-weight:bold">WithRecovery</span>(),
+</span></span><span style="display:flex;"><span>	)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Load the city code map</span>
+</span></span><span style="display:flex;"><span>	err <span style="color:#ff7b72;font-weight:bold">:=</span> city.CityClient.<span style="color:#d2a8ff;font-weight:bold">LoadCodeMap</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;Error loading city code map: %v\n&#34;</span>, err)
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Add the forecast tool and its handler function</span>
+</span></span><span style="display:flex;"><span>	s.<span style="color:#d2a8ff;font-weight:bold">AddTool</span>(mcp.<span style="color:#d2a8ff;font-weight:bold">GetForecast</span>(), mcp.ForecastCall)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;Weather Demo started, waiting for requests...&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Start the server</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> server.<span style="color:#d2a8ff;font-weight:bold">ServeStdio</span>(s); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;Server error: %v\n&#34;</span>, err)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="集成到-llm">集成到 LLM</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">go</span> build <span style="color:#ff7b72;font-weight:bold">-</span>o forecast .
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 配置 mcp 服务器</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#34;mcpServers&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;weather&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// 程序二进制路径 </span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;command&#34;</span>: <span style="color:#a5d6ff">&#34;/your-path/forecast&#34;</span> 
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><img width="818" alt="image" src="https://github.com/user-attachments/assets/43a963f6-5d78-48d0-9559-3277c4c6d39f" />
+]]></content:encoded>
+    </item>
+    <item>
+      <title>MCP 入门（概念篇）</title>
+      <link>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E6%A6%82%E5%BF%B5%E7%AF%87/</link>
+      <pubDate>Wed, 30 Apr 2025 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E6%A6%82%E5%BF%B5%E7%AF%87/</guid>
+      <description>&lt;h1 id=&#34;mcp-入门概念篇&#34;&gt;MCP 入门（概念篇）&lt;/h1&gt;
+&lt;h2 id=&#34;mcp--诞生背景&#34;&gt;MCP  诞生背景&lt;/h2&gt;
+&lt;h3 id=&#34;model-context-protocol-mcp&#34;&gt;Model Context Protocol (MCP)&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;MCP 是 Claude(Anthropic) 主导发布的一个开放的、通用的、有共识的协议标准。&lt;/p&gt;&lt;/blockquote&gt;
+&lt;p&gt;​	MCP 于 2024 年 11 月由 Anthropic 发布，旨在&lt;strong&gt;标准化 AI 模型与外部数据源（如数据库、API、文件系统）的连接&lt;/strong&gt;。它的目标是让 AI 助理能够访问和利用上下文数据，提升响应质量。MCP正在统一不同模型和框架的“函数调用”功能，这催生了一个工具服务商生态系统，大幅降低了智能体与工具/数据的对接复杂度。随着更多框架、服务商和平台采用MCP，这一趋势将持续深化。&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h1 id="mcp-入门概念篇">MCP 入门（概念篇）</h1>
+<h2 id="mcp--诞生背景">MCP  诞生背景</h2>
+<h3 id="model-context-protocol-mcp">Model Context Protocol (MCP)</h3>
+<blockquote>
+<p>MCP 是 Claude(Anthropic) 主导发布的一个开放的、通用的、有共识的协议标准。</p></blockquote>
+<p>​	MCP 于 2024 年 11 月由 Anthropic 发布，旨在<strong>标准化 AI 模型与外部数据源（如数据库、API、文件系统）的连接</strong>。它的目标是让 AI 助理能够访问和利用上下文数据，提升响应质量。MCP正在统一不同模型和框架的“函数调用”功能，这催生了一个工具服务商生态系统，大幅降低了智能体与工具/数据的对接复杂度。随着更多框架、服务商和平台采用MCP，这一趋势将持续深化。</p>
+<ul>
+<li>MCP 是一个标准协议，如同电子设备的 Type C 协议(可以充电也可以传输数据)，使 AI 模型能够与不同的 API 和数据源无缝交互。</li>
+<li>MCP 旨在替换碎片化的 Agent 代码集成，从而使 AI 系统更可靠，更有效。通过建立通用标准，服务商可以基于协议来推出它们自己服务的 AI 能力，从而支持开发者更快的构建更强大的 AI 应用。开发者也不需要重复造轮子，通过开源项目可以建立强大的 AI Agent 生态。</li>
+<li>MCP 可以在不同的应用/服务之间保持上下文，从而增强整体自主执行任务的能力。</li>
+</ul>
+<p>​	可以理解为 MCP 是将不同任务进行分层处理，每一层都提供特定的能力、描述和限制。而 MCP Client 端根据不同的任务判断，选择是否需要调用某个能力，然后通过每层的输入和输出，构建一个可以处理复杂、多步对话和统一上下文的 Agent。</p>
+<h3 id="通用-ai-agent-落地的最好桥梁">通用 AI Agent 落地的最好桥梁</h3>
+<ul>
+<li>AI Agent 是一个智能系统，它可以自主运行以实现特定目标。传统的 AI 聊天仅提供建议或者需要手动执行任务，AI Agent 则可以分析具体情况，做出决策，并自行采取行动。</li>
+<li>AI Agent 可以利用 MCP 提供的功能描述来理解更多的上下文，并在各种平台/服务自动执行任务。</li>
+</ul>
+<p>MCP 对于社区生态的好处主要是下面两点：</p>
+<ul>
+<li>开放标准给服务商，服务商可以针对 MCP 开放自己的 API 和部分能力。</li>
+<li>不需要重复造轮子，开发者可以用已有的开源 MCP 服务来增强自己的 Agent。</li>
+</ul>
+<h2 id="工作原理">工作原理</h2>
+<img width="675" alt="image-20250430110449166" src="https://github.com/user-attachments/assets/67a8ef22-f893-4f82-9280-6e452b16d564" />
+<ul>
+<li><strong>MCP 主机</strong> ：像 Claude Desktop、IDE 或 AI 工具这样的程序，需要通过 MCP 访问数据（例如 <a href="https://claude.ai/">Claude Desktop</a>、IDE 或 AI 工具）</li>
+<li><strong>MCP 客户端</strong> ：与服务器保持 1:1 连接的协议客户端</li>
+<li><strong>MCP 服务器</strong> ：轻量级程序，每个程序都通过标准化模型上下文协议公开特定功能</li>
+<li><strong>本地数据源</strong> ：MCP 服务器可以安全访问的您的计算机文件、数据库和服务</li>
+<li><strong>远程服务</strong> ：MCP 服务器可以通过互联网（例如通过 API）连接到的外部系统</li>
+</ul>
+<h4 id="mcp-client"><strong>MCP Client</strong></h4>
+<p>MCP client 充当 LLM 和 MCP server 之间的桥梁，MCP client 的工作流程如下：</p>
+<ul>
+<li>MCP client 首先从 MCP server 获取可用的工具列表。</li>
+<li>将用户的查询连同工具描述通过 function calling 一起发送给 LLM。</li>
+<li>LLM 决定是否需要使用工具以及使用哪些工具。</li>
+<li>如果需要使用工具，MCP client 会通过 MCP server 执行相应的工具调用。</li>
+<li>工具调用的结果会被发送回 LLM。</li>
+<li>LLM 基于所有信息生成自然语言响应。</li>
+<li>最后将响应展示给用户。</li>
+</ul>
+<p>Claude Desktop 和Cursor都支持了MCP Server接入能力，它们就是作为 MCP client来连接某个MCP Server感知和实现调用。</p>
+<h4 id="mcp-server"><strong>MCP Server</strong></h4>
+<p>MCP server 是 MCP 架构中的关键组件，它可以提供 3 种主要类型的功能：</p>
+<ul>
+<li>资源（Resources）：类似文件的数据，可以被客户端读取，如 API 响应或文件内容。</li>
+<li>工具（Tools）：可以被 LLM 调用的函数（需要用户批准）。</li>
+<li>提示（Prompts）：预先编写的模板，帮助用户完成特定任务。</li>
+</ul>
+<p>​	MCP Server 就是为了实现 AI Agent 的自动化而存在的，它是一个中间层，告诉 AI Agent 目前存在哪些服务，哪些 API，哪些数据源，AI Agent 可以根据 Server 提供的信息来决定是否调用某个服务，然后通过 Function Calling 来执行函数。</p>
+<h4 id="通信机制"><strong>通信机制</strong></h4>
+<p>MCP 协议支持两种主要的通信机制：基于标准输入输出的本地通信和基于[SSE]（<a href="https://en.wikipedia.org/wiki/Server-sent_events">Server-Sent Events</a>）的远程通信。</p>
+<p>这两种机制都使用 <a href="https://www.jsonrpc.org/specification">JSON-RPC 2.0</a> 格式进行消息传输，确保了通信的标准化和可扩展性。</p>
+<ul>
+<li>本地通信**：**通过 stdio 传输数据，适用于在同一台机器上运行的客户端和服务器之间的通信。</li>
+<li>远程通信**：**利用 SSE 与 HTTP 结合，实</li>
+<li>现跨网络的实时数据传输，适用于需要访问远程资源或分布式部署的场景。</li>
+</ul>
+<h2 id="使用-mcp-iterm-mcp-演示">使用 MCP （iterm-mcp 演示）</h2>
+<p>​	本次演示我用的是 claude 客户端，使用的mcp-server是 iterm-mcp。</p>
+<p>1.先将mcp server 工具加入客户端。
+<img width="792" alt="image-20250430114123912" src="https://github.com/user-attachments/assets/b0291200-0ef8-4584-8b6b-00a9f9dc1fff" /></p>
+<p>2.输入 prompt<code>在终端中画一个golang吉祥物土拨鼠 </code>。允许会话使用mcp server
+<img width="1000" alt="image-20250430113633360" src="https://github.com/user-attachments/assets/2a645549-c964-4fcb-8f2d-b3b766defff3" /></p>
+<p>3.大模型会开始调用 mcp server 开始自动在终端中写程序绘制图。
+<img width="1675" alt="image-20250430113940404" src="https://github.com/user-attachments/assets/a7944eff-ba3c-453a-b645-a514257c4b1f" /></p>
+<p>​	可以看见大模型会自动在终端中执行命令，根据返回的结果试错，纠正。</p>
+<h2 id="mcp-官方资源">MCP 官方资源</h2>
+<ul>
+<li><a href="https://github.com/modelcontextprotocol">官方的开源组织 Model Context Protocol</a>。</li>
+<li><a href="https://guangzhengli.com/blog/zh/[modelcontextprotocol]%28https://modelcontextprotocol.io/introduction%29">官方的文档 modelcontextprotocol</a>。</li>
+<li><a href="https://github.com/modelcontextprotocol/servers">官方的 MCP Server 列表</a></li>
+<li><a href="https://www.anthropic.com/news/model-context-protocol">Claude Blog</a></li>
+</ul>
+<h1 id="参考文章">参考文章</h1>
+<ul>
+<li><a href="https://guangzhengli.com/blog/zh/model-context-protocol">https://guangzhengli.com/blog/zh/model-context-protocol</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/27327515233">https://zhuanlan.zhihu.com/p/27327515233</a></li>
+</ul>
+]]></content:encoded>
+    </item>
     <item>
       <title>MCP 入门（协议篇）</title>
       <link>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E5%8D%8F%E8%AE%AE%E7%AF%87/</link>
@@ -783,529 +1307,6 @@
 <ul>
 <li><a href="https://mp.weixin.qq.com/s/P2uJlG21Y0C6bPn9mibSSA">https://mp.weixin.qq.com/s/P2uJlG21Y0C6bPn9mibSSA</a></li>
 <li><a href="https://blog.csdn.net/luduoyuan/article/details/144861119">https://blog.csdn.net/luduoyuan/article/details/144861119</a></li>
-</ul>
-]]></content:encoded>
-    </item>
-    <item>
-      <title>MCP 入门（实践篇）</title>
-      <link>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E5%AE%9E%E8%B7%B5%E7%AF%87/</link>
-      <pubDate>Tue, 06 May 2025 00:00:00 +0000</pubDate>
-      <guid>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E5%AE%9E%E8%B7%B5%E7%AF%87/</guid>
-      <description>&lt;h1 id=&#34;mcp-入门实践篇&#34;&gt;mcp 入门（实践篇）&lt;/h1&gt;
-&lt;p&gt;​	本文将会从 0 实现一个 mcp server，一个基于高德天气api的 天气查询 mcp服务。完整代码见：（https://github.com/Lucareful/mcp-wather）&lt;/p&gt;</description>
-      <content:encoded><![CDATA[<h1 id="mcp-入门实践篇">mcp 入门（实践篇）</h1>
-<p>​	本文将会从 0 实现一个 mcp server，一个基于高德天气api的 天气查询 mcp服务。完整代码见：（https://github.com/Lucareful/mcp-wather）</p>
-<h2 id="开始">开始</h2>
-<p>​	安装创建一个带有 MCP Go 库。</p>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>go mod init mcp-weather
-</span></span><span style="display:flex;"><span>go get github.com/mark3labs/mcp-go
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="定义api数据结构">定义API数据结构</h3>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> weather
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 见文档：https://lbs.amap.com/api/webservice/guide/api-advanced/weatherinfo</span>
-</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> AllInfo <span style="color:#ff7b72">struct</span> {
-</span></span><span style="display:flex;"><span>	Status    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;status&#34;`</span>
-</span></span><span style="display:flex;"><span>	Count     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;count&#34;`</span>
-</span></span><span style="display:flex;"><span>	Info      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;info&#34;`</span>
-</span></span><span style="display:flex;"><span>	Infocode  <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;infocode&#34;`</span>
-</span></span><span style="display:flex;"><span>	Forecasts []<span style="color:#ff7b72">struct</span> {
-</span></span><span style="display:flex;"><span>		City       <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;city&#34;`</span>
-</span></span><span style="display:flex;"><span>		Adcode     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;adcode&#34;`</span>
-</span></span><span style="display:flex;"><span>		Province   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;province&#34;`</span>
-</span></span><span style="display:flex;"><span>		Reporttime <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;reporttime&#34;`</span>
-</span></span><span style="display:flex;"><span>		Casts      []<span style="color:#ff7b72">struct</span> {
-</span></span><span style="display:flex;"><span>			Date           <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;date&#34;`</span>
-</span></span><span style="display:flex;"><span>			Week           <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;week&#34;`</span>
-</span></span><span style="display:flex;"><span>			Dayweather     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;dayweather&#34;`</span>
-</span></span><span style="display:flex;"><span>			Nightweather   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nightweather&#34;`</span>
-</span></span><span style="display:flex;"><span>			Daytemp        <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daytemp&#34;`</span>
-</span></span><span style="display:flex;"><span>			Nighttemp      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nighttemp&#34;`</span>
-</span></span><span style="display:flex;"><span>			Daywind        <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daywind&#34;`</span>
-</span></span><span style="display:flex;"><span>			Nightwind      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nightwind&#34;`</span>
-</span></span><span style="display:flex;"><span>			Daypower       <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daypower&#34;`</span>
-</span></span><span style="display:flex;"><span>			Nightpower     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nightpower&#34;`</span>
-</span></span><span style="display:flex;"><span>			DaytempFloat   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;daytemp_float&#34;`</span>
-</span></span><span style="display:flex;"><span>			NighttempFloat <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;nighttemp_float&#34;`</span>
-</span></span><span style="display:flex;"><span>		} <span style="color:#a5d6ff">`json:&#34;casts&#34;`</span>
-</span></span><span style="display:flex;"><span>	} <span style="color:#a5d6ff">`json:&#34;forecasts&#34;`</span>
-</span></span><span style="display:flex;"><span>}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> BaseInfo <span style="color:#ff7b72">struct</span> {
-</span></span><span style="display:flex;"><span>	Status   <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;status&#34;`</span>
-</span></span><span style="display:flex;"><span>	Count    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;count&#34;`</span>
-</span></span><span style="display:flex;"><span>	Info     <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;info&#34;`</span>
-</span></span><span style="display:flex;"><span>	Infocode <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;infocode&#34;`</span>
-</span></span><span style="display:flex;"><span>	Lives    []<span style="color:#ff7b72">struct</span> {
-</span></span><span style="display:flex;"><span>		Province         <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;province&#34;`</span>
-</span></span><span style="display:flex;"><span>		City             <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;city&#34;`</span>
-</span></span><span style="display:flex;"><span>		Adcode           <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;adcode&#34;`</span>
-</span></span><span style="display:flex;"><span>		Weather          <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;weather&#34;`</span>
-</span></span><span style="display:flex;"><span>		Temperature      <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;temperature&#34;`</span>
-</span></span><span style="display:flex;"><span>		Winddirection    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;winddirection&#34;`</span>
-</span></span><span style="display:flex;"><span>		Windpower        <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;windpower&#34;`</span>
-</span></span><span style="display:flex;"><span>		Humidity         <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;humidity&#34;`</span>
-</span></span><span style="display:flex;"><span>		Reporttime       <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;reporttime&#34;`</span>
-</span></span><span style="display:flex;"><span>		TemperatureFloat <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;temperature_float&#34;`</span>
-</span></span><span style="display:flex;"><span>		HumidityFloat    <span style="color:#ff7b72">string</span> <span style="color:#a5d6ff">`json:&#34;humidity_float&#34;`</span>
-</span></span><span style="display:flex;"><span>	} <span style="color:#a5d6ff">`json:&#34;lives&#34;`</span>
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="构建天气工具">构建天气工具</h3>
-<p>​	输入: 城市（city），天气信息（type）（枚举类型：完整，摘要）。</p>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// GetForecast Add forecast tool</span>
-</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">GetForecast</span>() mcp.Tool {
-</span></span><span style="display:flex;"><span>	weatherTool <span style="color:#ff7b72;font-weight:bold">:=</span> mcp.<span style="color:#d2a8ff;font-weight:bold">NewTool</span>(<span style="color:#a5d6ff">&#34;get_weather_forecast&#34;</span>,
-</span></span><span style="display:flex;"><span>		mcp.<span style="color:#d2a8ff;font-weight:bold">WithDescription</span>(<span style="color:#a5d6ff">&#34;Get weather forecast for a city&#34;</span>),
-</span></span><span style="display:flex;"><span>		mcp.<span style="color:#d2a8ff;font-weight:bold">WithString</span>(<span style="color:#a5d6ff">&#34;city&#34;</span>,
-</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Required</span>(),
-</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Description</span>(<span style="color:#a5d6ff">&#34;city name&#34;</span>),
-</span></span><span style="display:flex;"><span>		),
-</span></span><span style="display:flex;"><span>		mcp.<span style="color:#d2a8ff;font-weight:bold">WithString</span>(<span style="color:#a5d6ff">&#34;type&#34;</span>,
-</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Required</span>(),
-</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Description</span>(<span style="color:#a5d6ff">&#34;get weather forecast info base/all&#34;</span>),
-</span></span><span style="display:flex;"><span>			mcp.<span style="color:#d2a8ff;font-weight:bold">Enum</span>(<span style="color:#a5d6ff">&#34;base&#34;</span>, <span style="color:#a5d6ff">&#34;all&#34;</span>),
-</span></span><span style="display:flex;"><span>		),
-</span></span><span style="display:flex;"><span>	)
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> weatherTool
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>​	当 MCP 客户端连接到 MCP 服务器时，MCP 服务器会公开 GetForecast 作为有效 mcp 工具，请求city和type。当LLM 传入参数之后，程序会执行获取天气信息，返回给LLM。</p>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">68
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">ForecastCall</span>(ctx context.Context, request mcp.CallToolRequest) (<span style="color:#ff7b72;font-weight:bold">*</span>mcp.CallToolResult, <span style="color:#ff7b72">error</span>) {
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get city name</span>
-</span></span><span style="display:flex;"><span>	city <span style="color:#ff7b72;font-weight:bold">:=</span> request.Params.Arguments[<span style="color:#a5d6ff">&#34;city&#34;</span>].(<span style="color:#ff7b72">string</span>)
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> len(city) <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">0</span> {
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;city name is empty&#34;</span>)
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get info type</span>
-</span></span><span style="display:flex;"><span>	infoType <span style="color:#ff7b72;font-weight:bold">:=</span> request.Params.Arguments[<span style="color:#a5d6ff">&#34;type&#34;</span>].(<span style="color:#ff7b72">string</span>)
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> len(infoType) <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">0</span> {
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;info type is empty&#34;</span>)
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	adcode, exists <span style="color:#ff7b72;font-weight:bold">:=</span> cityMap.CityClient.<span style="color:#d2a8ff;font-weight:bold">GetAdcode</span>(city)
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> !exists {
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;city %s not found, code %s&#34;</span>, city, adcode)
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// get weather forecast</span>
-</span></span><span style="display:flex;"><span>	weatherInfo, err <span style="color:#ff7b72;font-weight:bold">:=</span> weather.<span style="color:#d2a8ff;font-weight:bold">FetchWeatherData</span>(adcode, infoType)
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, err
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// parse weather info</span>
-</span></span><span style="display:flex;"><span>	forecast <span style="color:#ff7b72;font-weight:bold">:=</span> make([]ForecastResult, <span style="color:#a5d6ff">0</span>)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> infoType <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;base&#34;</span> {
-</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// parse base info</span>
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">var</span> baseInfo weather.BaseInfo
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Unmarshal</span>([]byte(weatherInfo), <span style="color:#ff7b72;font-weight:bold">&amp;</span>baseInfo); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;parse base info failed: %v&#34;</span>, err)
-</span></span><span style="display:flex;"><span>		}
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">for</span> _, forecastInfo <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> baseInfo.Lives {
-</span></span><span style="display:flex;"><span>			<span style="color:#8b949e;font-style:italic">// append forecast info</span>
-</span></span><span style="display:flex;"><span>			forecast = append(forecast, ForecastResult{
-</span></span><span style="display:flex;"><span>				Name:        forecastInfo.City,
-</span></span><span style="display:flex;"><span>				Temperature: forecastInfo.Temperature,
-</span></span><span style="display:flex;"><span>				Wind:        forecastInfo.Windpower,
-</span></span><span style="display:flex;"><span>				Forecast:    forecastInfo.Weather,
-</span></span><span style="display:flex;"><span>				Date:        forecastInfo.Reporttime,
-</span></span><span style="display:flex;"><span>			})
-</span></span><span style="display:flex;"><span>		}
-</span></span><span style="display:flex;"><span>	} <span style="color:#ff7b72">else</span> <span style="color:#ff7b72">if</span> infoType <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;all&#34;</span> {
-</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// parse all info</span>
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">var</span> allInfo weather.AllInfo
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Unmarshal</span>([]byte(weatherInfo), <span style="color:#ff7b72;font-weight:bold">&amp;</span>allInfo); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;parse all info failed: %v&#34;</span>, err)
-</span></span><span style="display:flex;"><span>		}
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">for</span> _, forecastInfo <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> allInfo.Forecasts {
-</span></span><span style="display:flex;"><span>			<span style="color:#ff7b72">for</span> _, cast <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> forecastInfo.Casts {
-</span></span><span style="display:flex;"><span>				forecast = append(forecast, ForecastResult{
-</span></span><span style="display:flex;"><span>					Name:        forecastInfo.City,
-</span></span><span style="display:flex;"><span>					Temperature: cast.Daytemp,
-</span></span><span style="display:flex;"><span>					Wind:        cast.Daywind,
-</span></span><span style="display:flex;"><span>					Forecast:    cast.Dayweather,
-</span></span><span style="display:flex;"><span>					Date:        cast.Date,
-</span></span><span style="display:flex;"><span>				})
-</span></span><span style="display:flex;"><span>			}
-</span></span><span style="display:flex;"><span>		}
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	forecastResponse, err <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Marshal</span>(<span style="color:#ff7b72;font-weight:bold">&amp;</span>forecast)
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#79c0ff">nil</span>, fmt.<span style="color:#d2a8ff;font-weight:bold">Errorf</span>(<span style="color:#a5d6ff">&#34;error marshalling forecast: %w&#34;</span>, err)
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> mcp.<span style="color:#d2a8ff;font-weight:bold">NewToolResultText</span>(string(forecastResponse)), <span style="color:#79c0ff">nil</span>
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="程序入口">程序入口</h3>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
-</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;fmt&#34;</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;github.com/mark3labs/mcp-go/server&#34;</span>
-</span></span><span style="display:flex;"><span>	_ <span style="color:#a5d6ff">&#34;go.uber.org/automaxprocs&#34;</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;mcp-weather/internal/city&#34;</span>
-</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;mcp-weather/pkg/mcp&#34;</span>
-</span></span><span style="display:flex;"><span>)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Create a new MCP server</span>
-</span></span><span style="display:flex;"><span>	s <span style="color:#ff7b72;font-weight:bold">:=</span> server.<span style="color:#d2a8ff;font-weight:bold">NewMCPServer</span>(
-</span></span><span style="display:flex;"><span>		<span style="color:#a5d6ff">&#34;Weather Demo&#34;</span>,
-</span></span><span style="display:flex;"><span>		<span style="color:#a5d6ff">&#34;1.0.0&#34;</span>,
-</span></span><span style="display:flex;"><span>		server.<span style="color:#d2a8ff;font-weight:bold">WithResourceCapabilities</span>(<span style="color:#79c0ff">true</span>, <span style="color:#79c0ff">true</span>),
-</span></span><span style="display:flex;"><span>		server.<span style="color:#d2a8ff;font-weight:bold">WithLogging</span>(),
-</span></span><span style="display:flex;"><span>		server.<span style="color:#d2a8ff;font-weight:bold">WithRecovery</span>(),
-</span></span><span style="display:flex;"><span>	)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Load the city code map</span>
-</span></span><span style="display:flex;"><span>	err <span style="color:#ff7b72;font-weight:bold">:=</span> city.CityClient.<span style="color:#d2a8ff;font-weight:bold">LoadCodeMap</span>()
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;Error loading city code map: %v\n&#34;</span>, err)
-</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span>
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Add the forecast tool and its handler function</span>
-</span></span><span style="display:flex;"><span>	s.<span style="color:#d2a8ff;font-weight:bold">AddTool</span>(mcp.<span style="color:#d2a8ff;font-weight:bold">GetForecast</span>(), mcp.ForecastCall)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;Weather Demo started, waiting for requests...&#34;</span>)
-</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Start the server</span>
-</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> server.<span style="color:#d2a8ff;font-weight:bold">ServeStdio</span>(s); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span>		fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;Server error: %v\n&#34;</span>, err)
-</span></span><span style="display:flex;"><span>	}
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="集成到-llm">集成到 LLM</h3>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">go</span> build <span style="color:#ff7b72;font-weight:bold">-</span>o forecast .
-</span></span></code></pre></td></tr></table>
-</div>
-</div><div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 配置 mcp 服务器</span>
-</span></span><span style="display:flex;"><span>{
-</span></span><span style="display:flex;"><span>    <span style="color:#a5d6ff">&#34;mcpServers&#34;</span>: {
-</span></span><span style="display:flex;"><span>        <span style="color:#a5d6ff">&#34;weather&#34;</span>: {
-</span></span><span style="display:flex;"><span>            <span style="color:#8b949e;font-style:italic">// 程序二进制路径 </span>
-</span></span><span style="display:flex;"><span>            <span style="color:#a5d6ff">&#34;command&#34;</span>: <span style="color:#a5d6ff">&#34;/your-path/forecast&#34;</span> 
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></td></tr></table>
-</div>
-</div><img width="818" alt="image" src="https://github.com/user-attachments/assets/43a963f6-5d78-48d0-9559-3277c4c6d39f" />
-]]></content:encoded>
-    </item>
-    <item>
-      <title>MCP 入门（概念篇）</title>
-      <link>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E6%A6%82%E5%BF%B5%E7%AF%87/</link>
-      <pubDate>Wed, 30 Apr 2025 00:00:00 +0000</pubDate>
-      <guid>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E6%A6%82%E5%BF%B5%E7%AF%87/</guid>
-      <description>&lt;h1 id=&#34;mcp-入门概念篇&#34;&gt;MCP 入门（概念篇）&lt;/h1&gt;
-&lt;h2 id=&#34;mcp--诞生背景&#34;&gt;MCP  诞生背景&lt;/h2&gt;
-&lt;h3 id=&#34;model-context-protocol-mcp&#34;&gt;Model Context Protocol (MCP)&lt;/h3&gt;
-&lt;blockquote&gt;
-&lt;p&gt;MCP 是 Claude(Anthropic) 主导发布的一个开放的、通用的、有共识的协议标准。&lt;/p&gt;&lt;/blockquote&gt;
-&lt;p&gt;​	MCP 于 2024 年 11 月由 Anthropic 发布，旨在&lt;strong&gt;标准化 AI 模型与外部数据源（如数据库、API、文件系统）的连接&lt;/strong&gt;。它的目标是让 AI 助理能够访问和利用上下文数据，提升响应质量。MCP正在统一不同模型和框架的“函数调用”功能，这催生了一个工具服务商生态系统，大幅降低了智能体与工具/数据的对接复杂度。随着更多框架、服务商和平台采用MCP，这一趋势将持续深化。&lt;/p&gt;</description>
-      <content:encoded><![CDATA[<h1 id="mcp-入门概念篇">MCP 入门（概念篇）</h1>
-<h2 id="mcp--诞生背景">MCP  诞生背景</h2>
-<h3 id="model-context-protocol-mcp">Model Context Protocol (MCP)</h3>
-<blockquote>
-<p>MCP 是 Claude(Anthropic) 主导发布的一个开放的、通用的、有共识的协议标准。</p></blockquote>
-<p>​	MCP 于 2024 年 11 月由 Anthropic 发布，旨在<strong>标准化 AI 模型与外部数据源（如数据库、API、文件系统）的连接</strong>。它的目标是让 AI 助理能够访问和利用上下文数据，提升响应质量。MCP正在统一不同模型和框架的“函数调用”功能，这催生了一个工具服务商生态系统，大幅降低了智能体与工具/数据的对接复杂度。随着更多框架、服务商和平台采用MCP，这一趋势将持续深化。</p>
-<ul>
-<li>MCP 是一个标准协议，如同电子设备的 Type C 协议(可以充电也可以传输数据)，使 AI 模型能够与不同的 API 和数据源无缝交互。</li>
-<li>MCP 旨在替换碎片化的 Agent 代码集成，从而使 AI 系统更可靠，更有效。通过建立通用标准，服务商可以基于协议来推出它们自己服务的 AI 能力，从而支持开发者更快的构建更强大的 AI 应用。开发者也不需要重复造轮子，通过开源项目可以建立强大的 AI Agent 生态。</li>
-<li>MCP 可以在不同的应用/服务之间保持上下文，从而增强整体自主执行任务的能力。</li>
-</ul>
-<p>​	可以理解为 MCP 是将不同任务进行分层处理，每一层都提供特定的能力、描述和限制。而 MCP Client 端根据不同的任务判断，选择是否需要调用某个能力，然后通过每层的输入和输出，构建一个可以处理复杂、多步对话和统一上下文的 Agent。</p>
-<h3 id="通用-ai-agent-落地的最好桥梁">通用 AI Agent 落地的最好桥梁</h3>
-<ul>
-<li>AI Agent 是一个智能系统，它可以自主运行以实现特定目标。传统的 AI 聊天仅提供建议或者需要手动执行任务，AI Agent 则可以分析具体情况，做出决策，并自行采取行动。</li>
-<li>AI Agent 可以利用 MCP 提供的功能描述来理解更多的上下文，并在各种平台/服务自动执行任务。</li>
-</ul>
-<p>MCP 对于社区生态的好处主要是下面两点：</p>
-<ul>
-<li>开放标准给服务商，服务商可以针对 MCP 开放自己的 API 和部分能力。</li>
-<li>不需要重复造轮子，开发者可以用已有的开源 MCP 服务来增强自己的 Agent。</li>
-</ul>
-<h2 id="工作原理">工作原理</h2>
-<img width="675" alt="image-20250430110449166" src="https://github.com/user-attachments/assets/67a8ef22-f893-4f82-9280-6e452b16d564" />
-<ul>
-<li><strong>MCP 主机</strong> ：像 Claude Desktop、IDE 或 AI 工具这样的程序，需要通过 MCP 访问数据（例如 <a href="https://claude.ai/">Claude Desktop</a>、IDE 或 AI 工具）</li>
-<li><strong>MCP 客户端</strong> ：与服务器保持 1:1 连接的协议客户端</li>
-<li><strong>MCP 服务器</strong> ：轻量级程序，每个程序都通过标准化模型上下文协议公开特定功能</li>
-<li><strong>本地数据源</strong> ：MCP 服务器可以安全访问的您的计算机文件、数据库和服务</li>
-<li><strong>远程服务</strong> ：MCP 服务器可以通过互联网（例如通过 API）连接到的外部系统</li>
-</ul>
-<h4 id="mcp-client"><strong>MCP Client</strong></h4>
-<p>MCP client 充当 LLM 和 MCP server 之间的桥梁，MCP client 的工作流程如下：</p>
-<ul>
-<li>MCP client 首先从 MCP server 获取可用的工具列表。</li>
-<li>将用户的查询连同工具描述通过 function calling 一起发送给 LLM。</li>
-<li>LLM 决定是否需要使用工具以及使用哪些工具。</li>
-<li>如果需要使用工具，MCP client 会通过 MCP server 执行相应的工具调用。</li>
-<li>工具调用的结果会被发送回 LLM。</li>
-<li>LLM 基于所有信息生成自然语言响应。</li>
-<li>最后将响应展示给用户。</li>
-</ul>
-<p>Claude Desktop 和Cursor都支持了MCP Server接入能力，它们就是作为 MCP client来连接某个MCP Server感知和实现调用。</p>
-<h4 id="mcp-server"><strong>MCP Server</strong></h4>
-<p>MCP server 是 MCP 架构中的关键组件，它可以提供 3 种主要类型的功能：</p>
-<ul>
-<li>资源（Resources）：类似文件的数据，可以被客户端读取，如 API 响应或文件内容。</li>
-<li>工具（Tools）：可以被 LLM 调用的函数（需要用户批准）。</li>
-<li>提示（Prompts）：预先编写的模板，帮助用户完成特定任务。</li>
-</ul>
-<p>​	MCP Server 就是为了实现 AI Agent 的自动化而存在的，它是一个中间层，告诉 AI Agent 目前存在哪些服务，哪些 API，哪些数据源，AI Agent 可以根据 Server 提供的信息来决定是否调用某个服务，然后通过 Function Calling 来执行函数。</p>
-<h4 id="通信机制"><strong>通信机制</strong></h4>
-<p>MCP 协议支持两种主要的通信机制：基于标准输入输出的本地通信和基于[SSE]（<a href="https://en.wikipedia.org/wiki/Server-sent_events">Server-Sent Events</a>）的远程通信。</p>
-<p>这两种机制都使用 <a href="https://www.jsonrpc.org/specification">JSON-RPC 2.0</a> 格式进行消息传输，确保了通信的标准化和可扩展性。</p>
-<ul>
-<li>本地通信**：**通过 stdio 传输数据，适用于在同一台机器上运行的客户端和服务器之间的通信。</li>
-<li>远程通信**：**利用 SSE 与 HTTP 结合，实</li>
-<li>现跨网络的实时数据传输，适用于需要访问远程资源或分布式部署的场景。</li>
-</ul>
-<h2 id="使用-mcp-iterm-mcp-演示">使用 MCP （iterm-mcp 演示）</h2>
-<p>​	本次演示我用的是 claude 客户端，使用的mcp-server是 iterm-mcp。</p>
-<p>1.先将mcp server 工具加入客户端。
-<img width="792" alt="image-20250430114123912" src="https://github.com/user-attachments/assets/b0291200-0ef8-4584-8b6b-00a9f9dc1fff" /></p>
-<p>2.输入 prompt<code>在终端中画一个golang吉祥物土拨鼠 </code>。允许会话使用mcp server
-<img width="1000" alt="image-20250430113633360" src="https://github.com/user-attachments/assets/2a645549-c964-4fcb-8f2d-b3b766defff3" /></p>
-<p>3.大模型会开始调用 mcp server 开始自动在终端中写程序绘制图。
-<img width="1675" alt="image-20250430113940404" src="https://github.com/user-attachments/assets/a7944eff-ba3c-453a-b645-a514257c4b1f" /></p>
-<p>​	可以看见大模型会自动在终端中执行命令，根据返回的结果试错，纠正。</p>
-<h2 id="mcp-官方资源">MCP 官方资源</h2>
-<ul>
-<li><a href="https://github.com/modelcontextprotocol">官方的开源组织 Model Context Protocol</a>。</li>
-<li><a href="https://guangzhengli.com/blog/zh/[modelcontextprotocol]%28https://modelcontextprotocol.io/introduction%29">官方的文档 modelcontextprotocol</a>。</li>
-<li><a href="https://github.com/modelcontextprotocol/servers">官方的 MCP Server 列表</a></li>
-<li><a href="https://www.anthropic.com/news/model-context-protocol">Claude Blog</a></li>
-</ul>
-<h1 id="参考文章">参考文章</h1>
-<ul>
-<li><a href="https://guangzhengli.com/blog/zh/model-context-protocol">https://guangzhengli.com/blog/zh/model-context-protocol</a></li>
-<li><a href="https://zhuanlan.zhihu.com/p/27327515233">https://zhuanlan.zhihu.com/p/27327515233</a></li>
 </ul>
 ]]></content:encoded>
     </item>
