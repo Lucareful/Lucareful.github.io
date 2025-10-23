@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>缓存 on Luenci</title>
+    <link>https://luenci.com/en/tags/%E7%BC%93%E5%AD%98/</link>
+    <description>Recent content in 缓存 on Luenci</description>
+    <generator>Hugo -- 0.145.0</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 23 Oct 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://luenci.com/en/tags/%E7%BC%93%E5%AD%98/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>缓存 Golang API 响应以实现高性能</title>
+      <link>https://luenci.com/en/posts/%E7%BC%93%E5%AD%98-golang-api-%E5%93%8D%E5%BA%94%E4%BB%A5%E5%AE%9E%E7%8E%B0%E9%AB%98%E6%80%A7%E8%83%BD/</link>
+      <pubDate>Thu, 23 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/%E7%BC%93%E5%AD%98-golang-api-%E5%93%8D%E5%BA%94%E4%BB%A5%E5%AE%9E%E7%8E%B0%E9%AB%98%E6%80%A7%E8%83%BD/</guid>
+      <description>&lt;blockquote&gt;
+&lt;p&gt;原文链接：https://www.freecodecamp.org/news/how-to-cache-golang-api-responses&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>原文链接：https://www.freecodecamp.org/news/how-to-cache-golang-api-responses</p></blockquote>
+<pre><code>Go 语言让构建开箱即用的高性能 API 变得简单。但随着使用量的增长，仅靠语言层面的速度优势已不足够。如果每个请求都持续访问数据库、反复处理相同数据或序列化相同 JSON，延迟将悄然上升，吞吐量也会受到影响。缓存正是通过存储已完成的工作来保持高性能的工具，让后续请求能够即时复用这些结果。接下来我们将探讨四种在 Go 中实现 API 缓存的实用方法，每种方法都配有通俗类比和可直接适配的简易代码。
+</code></pre>
+<h2 id="基于本地存储与-redis-的响应缓存">基于本地存储与 Redis 的响应缓存</h2>
+<pre><code>当生成 API 响应的过程变得昂贵时，最快的解决方案是存储完整响应。想象早高峰时段的咖啡店场景：如果每位顾客都点相同的拿铁，咖啡师本可以为每单现磨咖啡豆并蒸煮牛奶，但队伍行进速度会极其缓慢。更聪明的做法是一次性冲泡整壶咖啡反复取用。为兼顾速度与规模，店铺会在柜台放置小壶供即时取用，后厨则备有大容量容器用于补充——对应到软件领域，柜台小壶相当于 Ristretto 或 BigCache 这类本地内存缓存，而后厨容器则是支持多台 API 服务器共享缓存响应的 Redis。
+在 Go 语言中，这种双层架构通常采用缓存旁路模式：先查询本地内存，未命中则回退至 Redis 查询，仅当两层缓存均未命中时才执行计算。计算结果生成后，既会存入 Redis 供所有服务节点共享，也会缓存在内存中供下次调用时即时复用。
+</code></pre>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>val, ok <span style="color:#ff7b72;font-weight:bold">:=</span> local.<span style="color:#d2a8ff;font-weight:bold">Get</span>(key)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> !ok {
+</span></span><span style="display:flex;"><span>    val, err = rdb.<span style="color:#d2a8ff;font-weight:bold">Get</span>(ctx, key).<span style="color:#d2a8ff;font-weight:bold">Result</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">==</span> redis.Nil {
+</span></span><span style="display:flex;"><span>        val = <span style="color:#d2a8ff;font-weight:bold">computeResponse</span>() <span style="color:#8b949e;font-style:italic">// expensive DB or logic</span>
+</span></span><span style="display:flex;"><span>        _ = rdb.<span style="color:#d2a8ff;font-weight:bold">Set</span>(ctx, key, val, <span style="color:#a5d6ff">60</span><span style="color:#ff7b72;font-weight:bold">*</span>time.Second).<span style="color:#d2a8ff;font-weight:bold">Err</span>()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    local.<span style="color:#d2a8ff;font-weight:bold">Set</span>(key, val, <span style="color:#a5d6ff">1</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>w.<span style="color:#d2a8ff;font-weight:bold">Header</span>().<span style="color:#d2a8ff;font-weight:bold">Set</span>(<span style="color:#a5d6ff">&#34;Content-Type&#34;</span>, <span style="color:#a5d6ff">&#34;application/json&#34;</span>)
+</span></span><span style="display:flex;"><span>w.<span style="color:#d2a8ff;font-weight:bold">Write</span>([]byte(val))
+</span></span></code></pre></td></tr></table>
+</div>
+</div><pre><code>在上述代码中，首先尝试从本地缓存获取响应——若键或数据存在则立即返回。若未找到，则查询作为第二层缓存的 Redis。若 Redis 同样返回空值，系统将执行高开销计算，并将结果存入 Redis（设置 60 秒过期时间供其他服务访问），随后存入本地缓存以供即时复用。最终，响应将以 JSON 格式返回客户端。
+这让你两全其美：重复调用时获得闪电般快速的响应，同时所有 API 服务器间保持一致的缓存。
+</code></pre>
+<h2 id="数据库查询结果缓存">数据库查询结果缓存</h2>
+<pre><code>有时 API 本身很简单，但真正的成本隐藏在数据库中。想象一下新闻编辑室等待选举结果的情景。如果每位编辑都不断致电计票站询问相同数据，电话线路可能会堵塞。相反，只需一名记者致电一次，将结果写在公告板上，其他编辑皆可从此处抄录。这块公告板就是缓存，它既节省了时间，又减轻了计票站的压力。
+在 Go 语言中，您可以通过缓存查询结果应用相同原理。无需为每个相同请求访问数据库，而是将结果存储在 Redis 中，并使用代表查询意图的键名。当后续请求到达时，直接从 Redis 获取数据，跳过数据库查询，从而实现更快的响应速度。
+</code></pre>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>key <span style="color:#ff7b72;font-weight:bold">:=</span> fmt.<span style="color:#d2a8ff;font-weight:bold">Sprintf</span>(<span style="color:#a5d6ff">&#34;q:UserByID:%d&#34;</span>, id) 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> b, err <span style="color:#ff7b72;font-weight:bold">:=</span> rdb.<span style="color:#d2a8ff;font-weight:bold">Get</span>(ctx, key).<span style="color:#d2a8ff;font-weight:bold">Bytes</span>(); err <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> { 
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">var</span> u User _ = json.<span style="color:#d2a8ff;font-weight:bold">Unmarshal</span>(b, <span style="color:#ff7b72;font-weight:bold">&amp;</span>u) 
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> u 
+</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>u, _ <span style="color:#ff7b72;font-weight:bold">:=</span> repo.<span style="color:#d2a8ff;font-weight:bold">GetUser</span>(ctx, id) <span style="color:#8b949e;font-style:italic">// real DB call </span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>bb, _ <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Marshal</span>(u) _ = rdb.<span style="color:#d2a8ff;font-weight:bold">Set</span>(ctx, key, bb, <span style="color:#a5d6ff">2</span><span style="color:#ff7b72;font-weight:bold">*</span>time.Minute).<span style="color:#d2a8ff;font-weight:bold">Err</span>() 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">return</span> u
+</span></span></code></pre></td></tr></table>
+</div>
+</div><pre><code>在此，我们构建一个使用用户 ID 唯一标识查询的缓存键，然后尝试从 Redis 中获取序列化结果。如果键存在，则将字节反序列化回 `User` 结构体并立即返回，无需访问数据库。若缓存未命中，则通过存储库执行实际数据库查询，将 `User` 对象序列化为 JSON，以两分钟过期时间存储到 Redis 中，并返回结果。
+这种模式显著降低了读密集型 API 的数据库负载和响应时间，但必须记住在数据变更时清除或刷新缓存条目，或设置较短的生存时间值以保持结果的合理时效性。
+</code></pre>
+<h2 id="使用-etag-和-cache-control-实现-http-缓存">使用 ETag 和 Cache-Control 实现 HTTP 缓存</h2>
+<pre><code>并非所有缓存都必须在服务器内部进行。HTTP 标准已提供了让客户端或 CDN 复用响应的工具。通过设置 `ETag` 和 `Cache-Control` 等标头，您可以告知客户端响应是否已变更。若内容无更新，客户端将保留其本地副本，服务器仅需发送轻量级的 304 响应。
+这就像经理在办公室公告板上张贴通知。每张通知都带有一个小印章。员工会将这个印章与自己已有的进行比较。如果匹配，他们就知道自己的副本仍然有效，无需领取新的。只有当印章发生变化时，他们才会更换通知。
+在 Go 语言中，这很简单。从响应体中计算 ETag，与客户端发送的进行比较，然后决定是返回完整负载还是仅返回 304 状态码。
+</code></pre>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>etag <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">computeETag</span>(responseBytes)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> match <span style="color:#ff7b72;font-weight:bold">:=</span> r.Header.<span style="color:#d2a8ff;font-weight:bold">Get</span>(<span style="color:#a5d6ff">&#34;If-None-Match&#34;</span>); match <span style="color:#ff7b72;font-weight:bold">==</span> etag {
+</span></span><span style="display:flex;"><span>    w.<span style="color:#d2a8ff;font-weight:bold">WriteHeader</span>(http.StatusNotModified)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>w.<span style="color:#d2a8ff;font-weight:bold">Header</span>().<span style="color:#d2a8ff;font-weight:bold">Set</span>(<span style="color:#a5d6ff">&#34;ETag&#34;</span>, etag)
+</span></span><span style="display:flex;"><span>w.<span style="color:#d2a8ff;font-weight:bold">Header</span>().<span style="color:#d2a8ff;font-weight:bold">Set</span>(<span style="color:#a5d6ff">&#34;Cache-Control&#34;</span>, <span style="color:#a5d6ff">&#34;public, max-age=60&#34;</span>)
+</span></span><span style="display:flex;"><span>w.<span style="color:#d2a8ff;font-weight:bold">Write</span>(responseBytes)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><pre><code>上述代码会生成一个 ETag，即响应内容的指纹或哈希值，随后检查客户端是否在 `If-None-Match` 请求头中携带了与之前请求匹配的 ETag。若 ETag 匹配，说明内容未发生变更，此时服务器将返回 304 未修改状态码且不传输响应体，从而节省带宽。当 ETag 不匹配或客户端无缓存版本时，服务器会附加新的 ETag 及允许公开缓存六十秒的 `Cache-Control` 响应头，随后发送完整响应内容。
+这种方法能减少带宽占用、降低 CPU 使用率，并能与可直接缓存和提供响应的 CDN 良好配合。
+</code></pre>
+<h2 id="后台刷新与陈旧内容同时生效">后台刷新与陈旧内容同时生效</h2>
+<pre><code>在某些情况下，如果能够保持 API 的高速响应，提供略微过时的数据是可以接受的。股票仪表盘、分析摘要或信息流端点通常符合这种模式。与其让用户每次请求都等待最新数据，不如立即返回缓存值，并在后台静默更新。这种技术被称为&quot;陈旧数据优先-后台刷新&quot;策略。
+想象一下大厅里的股票行情显示屏。数字可能延迟几秒，但依然对扫视屏幕的人有用。与此同时，后台进程会获取最新数据并更新行情。用户永远不会面对空白屏幕，系统即使在流量高峰时也能保持响应。
+在 Go 语言中，可以通过不仅存储缓存数据，还记录定义数据新鲜度的时间戳来实现这一机制——包括数据何时处于新鲜状态、何时仍可作为陈旧数据提供，以及何时必须重新计算。 `singleflight` 包能确保仅有一个 goroutine 执行刷新任务，从而避免更新请求的雪崩效应。
+</code></pre>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>entry <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">getEntry</span>(key) <span style="color:#8b949e;font-style:italic">// {data, freshUntil, staleUntil}</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">switch</span> {
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">case</span> time.<span style="color:#d2a8ff;font-weight:bold">Now</span>().<span style="color:#d2a8ff;font-weight:bold">Before</span>(entry.freshUntil):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> entry.data
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">case</span> time.<span style="color:#d2a8ff;font-weight:bold">Now</span>().<span style="color:#d2a8ff;font-weight:bold">Before</span>(entry.staleUntil):
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">go</span> <span style="color:#d2a8ff;font-weight:bold">refreshSingleflight</span>(key) <span style="color:#8b949e;font-style:italic">// background refresh</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> entry.data
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">default</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> <span style="color:#d2a8ff;font-weight:bold">refreshSingleflight</span>(key) <span style="color:#8b949e;font-style:italic">// must refresh now</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><pre><code>此处代码获取包含数据及标记新鲜度和陈旧度边界的两个时间戳的缓存条目。若当前时间早于新鲜阈值，数据被视为完全新鲜并立即返回。若时间已过新鲜阈值但仍处于陈旧窗口内，代码会即刻返回略微过时的数据，同时启动后台协程异步刷新，确保下次请求获得更新信息。一旦时间超过陈旧边界，数据因过于陈旧而无法使用，代码将阻塞并执行同步刷新后再返回。
+这既保持了较低的延迟，又确保缓存定期更新，在数据新鲜度和性能之间取得了平衡。
+</code></pre>
+<h2 id="小结">小结</h2>
+<pre><code>缓存并非单一策略，而是一套适应不同需求的方法体系。全响应缓存从顶层消除重复工作，查询结果缓存保护数据库免于重复负载，HTTP 缓存利用协议特性减少数据传输，而&quot;过时但可重验证&quot;机制则在追求速度的同时，确保数据不会长期处于陈旧状态
+在实际应用中，这些方法往往分层实施。一个 Go API 可能同时使用本地内存和 Redis 缓存响应数据，对热点数据表启用查询级缓存，并设置 ETag 让客户端避免重复下载。通过合理搭配这些策略，您可以将延迟降低数个数量级，承载更高并发流量，同时节省计算资源与数据库开销。
+</code></pre>
+<h2 id="trdlai总结分析">TRDL;(AI总结分析)</h2>
+<h3 id="核心思想">核心思想</h3>
+<p>随着请求量上升，单靠 Go 语言的高效执行不足以维持低延迟与高吞吐。<br>
+<strong>缓存（Caching）</strong> 通过“存储已完成的计算结果”，让后续请求复用，从而显著提升性能、减少数据库与网络压力。</p>
+<h3 id="四种主要缓存策略">四种主要缓存策略</h3>
+<h4 id="1-本地缓存--redis-双层缓存">1. <strong>本地缓存 + Redis 双层缓存</strong></h4>
+<ul>
+<li>
+<p><strong>类比</strong>：柜台小壶（内存缓存）+ 后厨大壶（Redis）。</p>
+</li>
+<li>
+<p><strong>流程</strong>：</p>
+<ol>
+<li>
+<p>先查本地缓存（Ristretto/BigCache）</p>
+</li>
+<li>
+<p>未命中 → 查 Redis</p>
+</li>
+<li>
+<p>再未命中 → 执行计算并写回两级缓存</p>
+</li>
+</ol>
+</li>
+<li>
+<p><strong>优点</strong>：快速响应、分布式一致性兼顾。</p>
+</li>
+</ul>
+<hr>
+<h4 id="2-数据库查询结果缓存">2. <strong>数据库查询结果缓存</strong></h4>
+<ul>
+<li>
+<p><strong>类比</strong>：一名记者打电话问结果写在公告板上，其他人直接看公告板。</p>
+</li>
+<li>
+<p><strong>实现</strong>：</p>
+<ul>
+<li>
+<p>以查询参数生成唯一 key，结果存入 Redis。</p>
+</li>
+<li>
+<p>后续请求直接返回缓存，跳过数据库访问。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>要点</strong>：</p>
+<ul>
+<li>
+<p>需在数据变更时清理或更新缓存。</p>
+</li>
+<li>
+<p>设置合理 TTL 防止脏数据长期存在。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>收益</strong>：显著减轻数据库负载，适合读多写少的 API。</p>
+</li>
+</ul>
+<hr>
+<h4 id="3-http-层缓存etag--cache-control">3. <strong>HTTP 层缓存（ETag + Cache-Control）</strong></h4>
+<ul>
+<li>
+<p><strong>类比</strong>：带印章的公告，印章未变就不用重新领取。</p>
+</li>
+<li>
+<p><strong>实现</strong>：</p>
+<ul>
+<li>
+<p>生成响应内容的哈希（ETag）。</p>
+</li>
+<li>
+<p>若客户端的 ETag 匹配 → 返回 304（未修改）。</p>
+</li>
+<li>
+<p>否则返回完整内容并设置 <code>Cache-Control</code>。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>优势</strong>：减少带宽占用，适合静态或低频变更资源，可与 CDN 协同。</p>
+</li>
+</ul>
+<hr>
+<h4 id="4-陈旧数据优先--后台刷新stale-while-revalidate">4. <strong>陈旧数据优先 + 后台刷新（Stale-While-Revalidate）</strong></h4>
+<ul>
+<li>
+<p><strong>类比</strong>：股票行情略有延迟但实时刷新。</p>
+</li>
+<li>
+<p><strong>实现逻辑</strong>：</p>
+<ul>
+<li>
+<p>缓存条目包含 <code>freshUntil</code> 和 <code>staleUntil</code>。</p>
+</li>
+<li>
+<p>新鲜 → 直接返回。</p>
+</li>
+<li>
+<p>陈旧但可接受 → 异步后台刷新。</p>
+</li>
+<li>
+<p>超陈旧 → 阻塞等待同步刷新。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>工具</strong>：<code>singleflight</code> 确保同一键只由一个 goroutine 刷新，防止雪崩。</p>
+</li>
+<li>
+<p><strong>适用场景</strong>：如仪表盘、统计接口、新闻流等允许轻微延迟的系统。</p>
+</li>
+</ul>
+<hr>
+<h3 id="总结与实践建议">总结与实践建议</h3>
+<ul>
+<li>
+<p>缓存不是单一方案，而是可组合的多层体系。</p>
+</li>
+<li>
+<p>常见组合策略：</p>
+<ul>
+<li>
+<p>内存 + Redis（响应缓存）</p>
+</li>
+<li>
+<p>查询结果缓存（数据库保护）</p>
+</li>
+<li>
+<p>HTTP 缓存（节省带宽）</p>
+</li>
+<li>
+<p>后台刷新（平衡实时与性能）</p>
+</li>
+</ul>
+</li>
+<li>
+<p>通过合理搭配，可以：</p>
+<ul>
+<li>
+<p>降低响应延迟数个数量级</p>
+</li>
+<li>
+<p>承载更高并发流量</p>
+</li>
+<li>
+<p>节省 CPU 与数据库资源</p>
+</li>
+</ul>
+</li>
+</ul>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>
