@@ -6,8 +6,832 @@
     <description>Recent content in Golang on Luenci</description>
     <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 25 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 21 Jan 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/categories/golang/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang Sync.pool 解密</title>
+      <link>https://luenci.com/en/posts/golang-sync.pool-%E8%A7%A3%E5%AF%86/</link>
+      <pubDate>Wed, 21 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/golang-sync.pool-%E8%A7%A3%E5%AF%86/</guid>
+      <description>&lt;h2 id=&#34;为什么需要对象复用syncpool&#34;&gt;为什么需要对象复用（Sync.pool）？&lt;/h2&gt;
+&lt;p&gt;​	&lt;strong&gt;GC&lt;/strong&gt; 的全称是 &lt;strong&gt;Garbage Collection&lt;/strong&gt;（垃圾回收）。它是编程语言中的一种&lt;strong&gt;自动内存管理机制&lt;/strong&gt;。Golang 作为一门编译型语言内置了GC机制，让开发者从繁琐且容易出错的“手动申请和释放”中解脱出来。Go 的 GC 虽然极大地方便了开发者，但它确实不是“免费”的。它的性能损耗主要来自 &lt;strong&gt;CPU 占用&lt;/strong&gt;、&lt;strong&gt;内存压力&lt;/strong&gt;和&lt;strong&gt;短暂的停顿 (STW)&lt;/strong&gt;。&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h2 id="为什么需要对象复用syncpool">为什么需要对象复用（Sync.pool）？</h2>
+<p>​	<strong>GC</strong> 的全称是 <strong>Garbage Collection</strong>（垃圾回收）。它是编程语言中的一种<strong>自动内存管理机制</strong>。Golang 作为一门编译型语言内置了GC机制，让开发者从繁琐且容易出错的“手动申请和释放”中解脱出来。Go 的 GC 虽然极大地方便了开发者，但它确实不是“免费”的。它的性能损耗主要来自 <strong>CPU 占用</strong>、<strong>内存压力</strong>和<strong>短暂的停顿 (STW)</strong>。</p>
+<p>​	当大量 goroutine 同时运行时，它们常常需要相似的对象。想象一下同时多次运行 <code>go f()</code> 的场景。如果每个 goroutine 都创建自己的对象，内存使用量会迅速增加，这会给垃圾回收器带来压力，因为它必须在这些对象不再需要时清理它们。这种情况形成了一个循环：<strong>高并发导致高内存使用，进而拖慢垃圾回收器的速度</strong>。</p>
+<p>​	另外每次分配新对象时，都会消耗CPU时间和内存资源，而当这些对象变得不可达时，GC又需要花费资源来识别和回收它们。在高并发场景下，这种开销会被成倍放大，最终导致：</p>
+<ul>
+<li>内存使用呈锯齿状波动</li>
+<li>程序响应时间不稳定</li>
+<li>CPU使用率周期性飙升</li>
+<li>整体吞吐量下降（单位时间程序处理速度变慢）</li>
+</ul>
+<p>​	这时候 <code>sync.Pool</code>就可以大显身手了，<code>sync.Pool</code>的设计初衷很简单：<strong>提供一种复用临时对象的机制，减少GC压力，提升程序性能</strong>。它特别适合那些创建成本较高、使用频率高但只需短暂使用的对象。</p>
+<h2 id="常见应用场景">常见应用场景</h2>
+<p>​	当你的代码中有这样的模式：创建对象 → 短暂使用 → 丢弃，并且这个过程高频发生时，<code>sync.Pool</code>能显著提升性能。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Object <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	Data []<span style="color:#ff7b72">byte</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">var</span> pool sync.Pool = sync.Pool{
+</span></span><span style="display:flex;"><span>	New: <span style="color:#ff7b72">func</span>() <span style="color:#ff7b72">any</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>Object{
+</span></span><span style="display:flex;"><span>			Data: make([]<span style="color:#ff7b72">byte</span>, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">1024</span>),
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	},
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	要创建一个池，你可以提供一个 <code>New()</code> 函数，当池为空时返回一个新对象。这个函数是可选的，如果你不提供它，池为空时就只会返回 <code>nil</code> 。</p>
+<p>​	在上面的代码片段中，目标是重用 <code>Object</code> 结构体实例，特别是其中的切片。<strong>重用切片有助于减少不必要的扩容</strong>。</p>
+<p>​	例如，如果切片在使用过程中增长到 8192 字节，你可以在将其放回池中之前将其长度重置为零。底层数组的容量仍然是 8192，因此下次需要时，这 8192 字节就可以直接复用。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (o <span style="color:#ff7b72;font-weight:bold">*</span>Object) <span style="color:#d2a8ff;font-weight:bold">Reset</span>() {
+</span></span><span style="display:flex;"><span>	o.Data = o.Data[:<span style="color:#a5d6ff">0</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>	testObject <span style="color:#ff7b72;font-weight:bold">:=</span> pool.<span style="color:#d2a8ff;font-weight:bold">Get</span>().(<span style="color:#ff7b72;font-weight:bold">*</span>Object)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// do something with testObject</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	testObject.<span style="color:#d2a8ff;font-weight:bold">Reset</span>()
+</span></span><span style="display:flex;"><span>	pool.<span style="color:#d2a8ff;font-weight:bold">Put</span>(testObject)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	如上代码：从池中获取对象，使用它，重置它，然后将其放回池中。<strong>重置对象可以在放回池之前进行，也可以在从池中取出后立即进行，但这并非强制要求，而是一种常见的做法</strong>。</p>
+<p>​	如果你不喜欢使用类型断言 <code>pool.Get().(*Object)</code> ，有几种方法可以避免它：</p>
+<p>​	1.使用专门的函数从池中获取对象</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">getObjectFromPool</span>() <span style="color:#ff7b72;font-weight:bold">*</span>Object {
+</span></span><span style="display:flex;"><span>	obj <span style="color:#ff7b72;font-weight:bold">:=</span> pool.<span style="color:#d2a8ff;font-weight:bold">Get</span>().(<span style="color:#ff7b72;font-weight:bold">*</span>Object)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> obj
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	2.创建你自己的 <code>sync.Pool</code> 泛型版本：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Pool[T <span style="color:#ff7b72">any</span>] <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	sync.Pool
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Pool[T]) <span style="color:#d2a8ff;font-weight:bold">Get</span>() T {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> p.Pool.<span style="color:#d2a8ff;font-weight:bold">Get</span>().(T)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Pool[T]) <span style="color:#d2a8ff;font-weight:bold">Put</span>(x T) {
+</span></span><span style="display:flex;"><span>	p.Pool.<span style="color:#d2a8ff;font-weight:bold">Put</span>(x)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> NewPool[T <span style="color:#ff7b72">any</span>](newF <span style="color:#ff7b72">func</span>() T) <span style="color:#ff7b72;font-weight:bold">*</span>Pool[T] {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>Pool[T]{
+</span></span><span style="display:flex;"><span>		Pool: sync.Pool{
+</span></span><span style="display:flex;"><span>			New: <span style="color:#ff7b72">func</span>() <span style="color:#ff7b72">interface</span>{} {
+</span></span><span style="display:flex;"><span>				<span style="color:#ff7b72">return</span> <span style="color:#d2a8ff;font-weight:bold">newF</span>()
+</span></span><span style="display:flex;"><span>			},
+</span></span><span style="display:flex;"><span>		},
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	泛型包装器为你提供了一种更类型安全的方式来使用池，避免了类型断言。</p>
+<p>​	只需注意，由于额外的间接层，它会带来一点微小的开销。在大多数情况下，这种开销可以忽略不计，但如果你处于对 CPU 高度敏感的环境中，最好运行基准测试来判断是否值得。</p>
+<h3 id="benchmark-对比">Benchmark 对比</h3>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#a5d6ff">&#34;sync&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">var</span> pool = sync.Pool{
+</span></span><span style="display:flex;"><span>	New: <span style="color:#ff7b72">func</span>() <span style="color:#ff7b72">any</span> {
+</span></span><span style="display:flex;"><span>		b <span style="color:#ff7b72;font-weight:bold">:=</span> make([]<span style="color:#ff7b72">byte</span>, <span style="color:#a5d6ff">0</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>b
+</span></span><span style="display:flex;"><span>	},
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">noPoolExample</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">var</span> bytes []<span style="color:#ff7b72">byte</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// do something with bytes</span>
+</span></span><span style="display:flex;"><span>	bytes = append(bytes, <span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">2</span>, <span style="color:#a5d6ff">3</span>, <span style="color:#a5d6ff">4</span>, <span style="color:#a5d6ff">5</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">poolExample</span>() {
+</span></span><span style="display:flex;"><span>	bytes <span style="color:#ff7b72;font-weight:bold">:=</span> pool.<span style="color:#d2a8ff;font-weight:bold">Get</span>().(<span style="color:#ff7b72;font-weight:bold">*</span>[]<span style="color:#ff7b72">byte</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// do something with bytes</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">*</span>bytes = append(<span style="color:#ff7b72;font-weight:bold">*</span>bytes, <span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">2</span>, <span style="color:#a5d6ff">3</span>, <span style="color:#a5d6ff">4</span>, <span style="color:#a5d6ff">5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// reset bytes before putting it back to the pool</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72;font-weight:bold">*</span>bytes = (<span style="color:#ff7b72;font-weight:bold">*</span>bytes)[:<span style="color:#a5d6ff">0</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	pool.<span style="color:#d2a8ff;font-weight:bold">Put</span>(bytes)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">-----------------------</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#a5d6ff">&#34;testing&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">BenchmarkPool</span>(b <span style="color:#ff7b72;font-weight:bold">*</span>testing.B) {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> n <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; n &lt; b.N; n<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#d2a8ff;font-weight:bold">poolExample</span>()
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">BenchmarkBufferPool</span>(b <span style="color:#ff7b72;font-weight:bold">*</span>testing.B) {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> n <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; n &lt; b.N; n<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#d2a8ff;font-weight:bold">noPoolExample</span>()
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">-----------------------------</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f85149">❯</span> <span style="color:#ff7b72">go</span> test <span style="color:#ff7b72;font-weight:bold">-</span>bench=^Benchmark <span style="color:#ff7b72;font-weight:bold">-</span>benchmem .        
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>goos: darwin
+</span></span><span style="display:flex;"><span>goarch: arm64
+</span></span><span style="display:flex;"><span>pkg: github.com<span style="color:#ff7b72;font-weight:bold">/</span>Luenci
+</span></span><span style="display:flex;"><span>cpu: Apple M4
+</span></span><span style="display:flex;"><span>BenchmarkPool<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">10</span>                <span style="color:#a5d6ff">169598262</span>                <span style="color:#a5d6ff">7.024</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op           <span style="color:#a5d6ff">0</span> B<span style="color:#ff7b72;font-weight:bold">/</span>op          <span style="color:#a5d6ff">0</span> allocs<span style="color:#ff7b72;font-weight:bold">/</span>op
+</span></span><span style="display:flex;"><span>BenchmarkBufferPool<span style="color:#ff7b72;font-weight:bold">-</span><span style="color:#a5d6ff">10</span>          <span style="color:#a5d6ff">125689365</span>                <span style="color:#a5d6ff">8.957</span> ns<span style="color:#ff7b72;font-weight:bold">/</span>op           <span style="color:#a5d6ff">8</span> B<span style="color:#ff7b72;font-weight:bold">/</span>op          <span style="color:#a5d6ff">1</span> allocs<span style="color:#ff7b72;font-weight:bold">/</span>op
+</span></span><span style="display:flex;"><span>PASS
+</span></span><span style="display:flex;"><span>ok      github.com<span style="color:#ff7b72;font-weight:bold">/</span>Luenci      <span style="color:#a5d6ff">4.171</span>s
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​    可以看到使用<code>sync.Pool</code>内存分配为 0，操作也更加快！！！</p>
+<h2 id="syncpool与内存分配"><code>sync.Pool</code>与内存分配</h2>
+<p>​	我们存储在池中的通常不是对象本身，而是指向对象的指针。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">var</span> pool = sync.Pool{
+</span></span><span style="display:flex;"><span>	New: <span style="color:#ff7b72">func</span>() <span style="color:#ff7b72">any</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> []<span style="color:#ff7b72">byte</span>{}
+</span></span><span style="display:flex;"><span>	},
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>	bytes <span style="color:#ff7b72;font-weight:bold">:=</span> pool.<span style="color:#d2a8ff;font-weight:bold">Get</span>().([]<span style="color:#ff7b72">byte</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// do something with bytes</span>
+</span></span><span style="display:flex;"><span>	_ = bytes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	pool.<span style="color:#d2a8ff;font-weight:bold">Put</span>(bytes)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	我们正在使用一个 <code>[]byte</code> 的池。通常（尽管并非总是如此），当你将一个值传递给接口时，可能会导致该值被分配到堆上。这里也是如此，不仅对于切片，对于任何<strong>传递给 <code>pool.Put()</code> 的非指针值都会发生这种情况</strong>。</p>
+<p>​	如果通过逃逸分析检查：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f85149">$</span> <span style="color:#ff7b72">go</span> build <span style="color:#ff7b72;font-weight:bold">-</span>gcflags=<span style="color:#ff7b72;font-weight:bold">-</span>m
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">...</span>.
+</span></span><span style="display:flex;"><span>.<span style="color:#ff7b72;font-weight:bold">/</span>main.<span style="color:#ff7b72">go</span>:<span style="color:#a5d6ff">7</span>:<span style="color:#a5d6ff">16</span>: []<span style="color:#ff7b72">byte</span>{} escapes to heap
+</span></span><span style="display:flex;"><span>.<span style="color:#ff7b72;font-weight:bold">/</span>main.<span style="color:#ff7b72">go</span>:<span style="color:#a5d6ff">7</span>:<span style="color:#a5d6ff">16</span>: []<span style="color:#ff7b72">byte</span>{} escapes to heap
+</span></span><span style="display:flex;"><span>.<span style="color:#ff7b72;font-weight:bold">/</span>main.<span style="color:#ff7b72">go</span>:<span style="color:#a5d6ff">17</span>:<span style="color:#a5d6ff">11</span>: bytes escapes to heap
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	现在，我不会说我们的变量 <code>bytes</code> 移动到了堆上，我会说“bytes 的值通过接口逃逸到了堆上”。</p>
+<p>​	然而，如果我们传递一个指向 <code>pool.Put()</code> 的指针，就不会有额外的分配：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">var</span> pool = sync.Pool{
+</span></span><span style="display:flex;"><span>	New: <span style="color:#ff7b72">func</span>() <span style="color:#ff7b72">any</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> []<span style="color:#ff7b72">byte</span>{}
+</span></span><span style="display:flex;"><span>	},
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>	bytes <span style="color:#ff7b72;font-weight:bold">:=</span> pool.<span style="color:#d2a8ff;font-weight:bold">Get</span>().(<span style="color:#ff7b72;font-weight:bold">*</span>[]<span style="color:#ff7b72">byte</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// do something with bytes</span>
+</span></span><span style="display:flex;"><span>	_ = bytes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	pool.<span style="color:#d2a8ff;font-weight:bold">Put</span>(bytes)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="syncpool原理"><code>sync.Pool</code>原理</h2>
+<h3 id="1-核心设计分层的存储结构">1. 核心设计：分层的存储结构</h3>
+<p>为了在高并发下减少锁争用，<code>sync.Pool</code> 为每个 P（调度器中的处理器）分配了私有存储。它的结构如下：</p>
+<ul>
+<li>
+<p><strong>localPool (Per-P 存储):</strong></p>
+<ul>
+<li>
+<p><strong>private (私有缓存):</strong> 每个 P 独有的一个对象。存取不需要加锁，速度极快。</p>
+</li>
+<li>
+<p><strong>shared (共享链表):</strong> 一个双端队列。本 P 存取需要加锁，其他 P 如果没东西了，可以来这里“偷”数据。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="池本地与伪共享问题">池本地与伪共享问题</h4>
+<p>​	**private (私有缓存):**这是一个巧妙的设计选择，因为这意味着每个逻辑处理器（P）都拥有自己的一组对象可供使用。这减少了 goroutine 之间的争用，因为每次只有一个 goroutine 可以访问其 P 本地池。</p>
+<p>因此，这个过程非常迅速，因为两个 goroutine 不可能同时从同一个本地池中获取同一个对象。</p>
+<p>本地池子的数据结构：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> poolLocalInternal <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	private <span style="color:#ff7b72">any</span>       
+</span></span><span style="display:flex;"><span>	shared  poolChain 
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> poolLocal <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	poolLocalInternal
+</span></span><span style="display:flex;"><span>	pad [<span style="color:#a5d6ff">128</span> <span style="color:#ff7b72;font-weight:bold">-</span> unsafe.<span style="color:#d2a8ff;font-weight:bold">Sizeof</span>(poolLocalInternal{})<span style="color:#ff7b72;font-weight:bold">%</span><span style="color:#a5d6ff">128</span>]<span style="color:#ff7b72">byte</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	<code>private</code> 字段用于存储单个对象，只有拥有此 P 本地池的 P 才能访问它，我们称之为私有对象。</p>
+<p>​	它的设计使得一个 goroutine 能够快速获取一个可重用的对象（即私有对象），而无需涉及任何互斥锁或同步技巧。换句话说，只有一个 goroutine 可以访问其自身的私有对象，其他 goroutine 无法与之竞争。</p>
+<p>​	但如果私有对象不可用，共享池链（ <code>shared</code> ）就会介入。</p>
+<p>​	虽然确实每次只有一个 goroutine 能访问 P 的私有对象，但这里有个问题。如果 goroutine A 获取了私有对象后<strong>发生阻塞或被抢占</strong>，goroutine B 可能会在同一个 P 上开始运行。此时 goroutine B 将无法访问该私有对象，因为 goroutine A 仍然持有它。</p>
+<p>​	与简单的私有对象不同，共享池链（ <code>shared</code> ）则略显复杂。</p>
+<p>​	查看 P 本地池结构时，一个引人注目的细节是 pad 属性。这个 <code>pad</code> 看起来可能有点奇怪，因为它没有添加任何直接功能，但实际上它是为了防止在现代多核处理器上可能出现的一个问题，即伪共享。</p>
+<p>​	现代 CPU 使用一种称为 CPU 缓存的组件来加速内存访问，这种缓存被划分为称为缓存行的单元，通常容纳 64 或 128 字节的数据。当 CPU 需要访问内存时，它不会只抓取单个字节或字——而是加载整个缓存行。</p>
+<p>​	这意味着如果两块数据在内存中位置相近，即使它们在逻辑上是独立的，最终也可能位于同一缓存行上。</p>
+<p>​	在 Go 的 <code>sync.Pool</code> 机制中，每个逻辑处理器（P）都拥有独立的 <code>poolLocal</code> ，这些结构存储在一个数组中。若 <code>poolLocal</code> 结构的尺寸小于缓存行容量，来自不同 P 的多个 <code>poolLocal</code> 实例就可能被分配到同一缓存行。此时问题便会产生：当运行在不同 CPU 核心的两个 P 同时访问各自的 <code>poolLocal</code> 时，它们可能会无意间产生资源冲突。</p>
+<p>​	尽管每个 P 仅操作自身的 <code>poolLocal</code> ，但这些结构仍可能共享同一缓存行。</p>
+<p>​	当某个处理器修改缓存行中的数据时，即使其他处理器仅操作该行内的不同变量，其缓存中的整条缓存行也会失效。这种机制会导致不必要的缓存失效和额外的内存流量，从而造成严重的性能损耗。</p>
+<p>​	这就是 <code>128 - unsafe.Sizeof(poolLocalInternal{})%128</code> 发挥作用的地方。它会计算需要填充的字节数，以使 P 本地池的总大小成为 128 字节的倍数。这种填充有助于每个 poolLocal 获得自己的缓存行，从而防止伪共享并保持运行速度更快，实现无冲突。</p>
+<h4 id="池链与池双端队列">池链与池双端队列</h4>
+<p>​	<code>sync.Pool</code> 中的共享池链由一个名为 <code>poolChain</code> 的类型表示。</p>
+<p>​	从名称来看，你可能会猜测它是一个双向链表，而你的猜测是正确的。但这里有个转折：这个链表中的每个节点不仅仅是一个可重用的对象。相反，它是另一个被称为池双端队列（ <code>poolDequeue</code> ）的结构。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> poolChain <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	head <span style="color:#ff7b72;font-weight:bold">*</span>poolChainElt
+</span></span><span style="display:flex;"><span>	tail atomic.Pointer[poolChainElt]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">type</span> poolChainElt <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	poolDequeue
+</span></span><span style="display:flex;"><span>	next, prev atomic.Pointer[poolChainElt]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	当当前池队列（链表头部的那个）已满时，会创建一个新的池队列，其大小是前一个的两倍。这个新的、更大的池随后被添加到链表中。</p>
+<p>​	如果你查看 poolChain 结构体，会发现它有两个字段：一个指针 <code>head *poolChainElt</code> 和一个原子指针 <code>tail atomic.Pointer[poolChainElt]</code> 。</p>
+<ul>
+<li>生产者（拥有当前 P 本地池的 P）只向最新的池双端队列（我们称之为头部）添加新项。由于只有生产者会操作头部，因此无需锁或任何复杂的同步技巧，所以速度非常快。</li>
+<li>消费者（其他 P）从池队列的尾部取出项目。由于多个消费者可能同时尝试弹出项目，因此通过原子操作同步对尾部的访问，以保持顺序。</li>
+</ul>
+<p>关键在于：</p>
+<ol>
+<li>当尾部的池队列完全清空时，它会被从列表中移除，而队列中的下一个池队列将成为新的尾部。但头部的情况则略有不同。</li>
+<li>当头部池队列耗尽项目时，它不会被移除。相反，它会留在原地，准备在添加新项目时重新填充。</li>
+</ol>
+<p>​	现在，让我们来看看池双端队列是如何定义的。顾名思义，&ldquo;dequeue&rdquo; 就是一个双端队列。与普通队列只能在尾部添加元素、从头部移除元素不同，双端队列允许你在头部和尾部两端插入和删除元素。</p>
+<p>​	其机制实际上与池链颇为相似。它被设计成允许一个生产者从头部添加或移除项目，而多个消费者则可以从尾部获取项目。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> poolDequeue <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	headTail atomic.Uint64
+</span></span><span style="display:flex;"><span>	vals []eface
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	生产者（即当前的 P）可以向队列前端添加新项目或从中取出项目。与此同时，消费者仅从队列尾部获取项目。这个队列是无锁的，意味着它不使用锁来管理生产者和消费者之间的协调，仅通过原子操作实现。</p>
+<p>​	你可以将这个队列视为一种环形缓冲区。</p>
+<p>​	环形缓冲区，或称循环缓冲区，是一种使用固定大小数组以循环方式存储元素的数据结构。它之所以被称为“环形”，是因为缓冲区的末尾会回绕到开头，使其看起来像一个圆圈。</p>
+<p>​	在我们讨论的池双端队列上下文中， <code>headTail</code> 字段是一个 64 位整数，它将两个 32 位索引打包成一个值。这些索引是队列的头和尾，有助于追踪数据在缓冲区中的存储和访问位置</p>
+<ul>
+<li>尾索引指向缓冲区中最旧的项目所在位置，当消费者（如其他 goroutine）从缓冲区读取时，它们从这里开始并向前移动。</li>
+<li>头索引是下一个数据将被写入的位置。当新数据到来时，它被放置在这个头索引处，然后索引移动到下一个可用槽位。</li>
+</ul>
+<p>通过将头部和尾部索引打包成一个 64 位值，代码可以一次性更新两个索引，使操作具有原子性。当两个消费者（或一个消费者与一个生产者）同时尝试从队列中弹出项目时，这一点尤其有用。比较并交换（CAS）操作， <code>d.headTail.CompareAndSwap(ptrs, ptrs2)</code> ，确保其中只有一个能够成功。另一个则会失败并重试，从而保持秩序，无需任何复杂的锁机制。</p>
+<p>​	队列中的实际数据存储在一个名为 <code>vals</code> 的环形缓冲区中，其大小必须是 2 的幂。这种设计选择使得在队列到达缓冲区末尾时更容易处理循环回绕。缓冲区中的每个槽位都是一个 <code>eface</code> 值，这是 Go 在底层表示空接口（<code>interface{}</code>）的方式。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> eface <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span>	typ, val unsafe.Pointer
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>缓冲区中的一个槽位会保持“使用中”状态，直到满足两个条件：</p>
+<ul>
+<li>尾部索引移过该槽位，意味着该槽位中的数据已被某个消费者消费。</li>
+<li>访问该槽位的消费者将其设置为 nil，表示生产者现在可以使用该槽位来存储新数据。</li>
+</ul>
+<p>简而言之，池链为每个节点结合了链表和环形缓冲区。当一个出队操作填满时，会创建一个新的、更大的缓冲区，并将其链接到链表的头部。这种设置有助于高效管理大量对象。</p>
+<p>​	现在，让我们深入探讨其流程：对象是如何被取出、放回以及自动释放的。这将阐明 Go 关于 sync.Pool 的声明：“存储在池中的任何项目都可能在任何时候被自动移除，且不会发出通知。”</p>
+<h3 id="2-存取流程先私有再共享最后偷">2. 存取流程：先私有，再共享，最后偷</h3>
+<p>当你调用 <code>Get()</code> 获取对象时，优先级如下：</p>
+<ol>
+<li><strong>尝试私有区：</strong> 检查当前 P 的 <code>private</code> 是否有对象，有就直接拿走。</li>
+<li><strong>尝试共享区：</strong> 检查当前 P 的 <code>shared</code> 队列是否有对象。</li>
+<li><strong>去别人家“偷”：</strong> 如果自己这没东西了，会随机去<strong>其他 P</strong> 的 <code>shared</code> 队列尾部偷一个。</li>
+<li><strong>最后兜底：</strong> 如果全都没有，就执行你定义的 <code>New()</code> 函数创建一个新对象。</li>
+</ol>
+<p><code>Put()</code> 对象的逻辑正好相反：优先放 <code>private</code>，如果满了再推入 <code>shared</code> 队列。</p>
+<h4 id="poolput">Pool.Put()</h4>
+<p>​	接下来让我们从 <code>Put()</code> 流程开始，因为它比 <code>Get()</code> 稍微直接一些，而且它还涉及另一个过程：将 goroutine 固定到 P 上。</p>
+<p>​	当一个 goroutine 在 <code>sync.Pool</code> 上调用 <code>Put()</code> 时，它首先尝试将对象存储在当前 P 的 P 本地池的私有槽中。如果该私有槽已被占用，对象就会被推入池链的头部，即共享部分。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Pool) <span style="color:#d2a8ff;font-weight:bold">Put</span>(x <span style="color:#ff7b72">interface</span>{}) {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// If the object is nil, it will do nothing</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> x <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Pin the current P&#39;s P-local pool</span>
+</span></span><span style="display:flex;"><span>	l, _ <span style="color:#ff7b72;font-weight:bold">:=</span> p.<span style="color:#d2a8ff;font-weight:bold">pin</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// If the private pool is not there, create it and set the object to it</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> l.private <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		l.private = x
+</span></span><span style="display:flex;"><span>		x = <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// If the private object is there, push it to the head of the shared chain</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> x <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		l.shared.<span style="color:#d2a8ff;font-weight:bold">pushHead</span>(x)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Unpin the current P</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#d2a8ff;font-weight:bold">runtime_procUnpin</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	我们还没有讨论过 <code>pin()</code> 或 <code>runtime_procUnpin()</code> 函数，但它们对于 <code>Get()</code> 和 <code>Put()</code> 操作都很重要，因为它们确保 goroutine 保持“固定”在当前 P 上。我的意思是：</p>
+<p>​	从 Go 1.14 开始，Go 引入了抢占式调度，这意味着如果某个 goroutine 在处理器 P 上运行时间过长（通常约为 10 毫秒），运行时可以暂停它，以便给其他 goroutine 运行的机会。这通常有助于保持公平性和响应性，但在处理 <code>sync.Pool</code> 时可能会引发问题。<code>sync.Pool</code> 中的 <code>Put()</code> 和 <code>Get()</code> 等操作假设 goroutine 在整个操作过程中都保持在同一个处理器（例如 P1）上。如果 goroutine 在这些操作过程中被抢占，然后在不同的处理器（P2）上恢复执行，那么它正在处理的本地数据最终可能来自错误的处理器。</p>
+<p>​	那么， <code>pin()</code> 函数具体是做什么的呢？以下是 Go 源代码中的一段注释，对此进行了解释：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// pin pins the current goroutine to P, disables preemption and</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// returns poolLocal pool for the P and the P&#39;s id.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Caller must call runtime_procUnpin() when done with the pool.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// pin 函数将当前 goroutine 绑定到指定的 P，禁用抢占，并返回该 P 的本地池 (poolLocal) 和 P 的 ID。</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 调用者在使用完该池后必须调用 runtime_procUnpin() 函数。</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Pool) <span style="color:#d2a8ff;font-weight:bold">pin</span>() (<span style="color:#ff7b72;font-weight:bold">*</span>poolLocal, <span style="color:#ff7b72">int</span>) { <span style="color:#ff7b72;font-weight:bold">...</span> }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	基本上， <code>pin()</code> 在将对象放入池中时，会暂时禁用调度器抢占该 goroutine 的能力。</p>
+<p>​	尽管它说的是&quot;将当前 goroutine 固定到 P 上&quot;，但实际上发生的是当前线程（M）被锁定到处理器（P），这防止了它被抢占。因此，在该线程上运行的 goroutine 也不会被抢占。</p>
+<p>​	作为副作用， <code>pin()</code> 还会在运行时更改 GOMAXPROCS(n)（它控制着 P 的数量）时更新处理器（P）的数量。不过，这不是这里的主要关注点。</p>
+<h5 id="共享池链的情况">共享池链的情况</h5>
+<p>​	当你需要向链中添加一个项目时，操作首先会检查链的头部。还记得 <code>head *poolChainElt</code> 指针吗？那是链表中最近使用的池出队。</p>
+<p>根据具体情况，可能会发生以下情况：</p>
+<ul>
+<li>如果链的头部缓冲区是 <code>nil</code> ，意味着链中还没有池出队，那么会创建一个初始缓冲区大小为 8 的新池出队。然后，该项目会被放入这个全新的池出队中。</li>
+<li>如果链表的头部缓冲区不是 <code>nil</code> 且该缓冲区未满，则直接将项目添加到缓冲区的头部位置。</li>
+<li>如果链表的头部缓冲区不是 <code>nil</code> ，但该缓冲区已满，意味着头部索引已回绕并追上了尾部索引，此时会创建一个新的池双端队列。这个新池的缓冲区大小是当前头部缓冲区大小的两倍。项目被放入这个新的池双端队列中，并且池链表的头部被更新为指向这个新池。</li>
+</ul>
+<p>以上就是 <code>Put()</code> 流程的主要内容。这是一个相对简单的过程，因为它不涉及与其他处理器（Ps）的本地池交互；所有操作都在池链表的当前头部内完成。</p>
+<h4 id="syncpoolget">sync.Pool.Get()</h4>
+<p>​	乍一看， <code>Get()</code> 函数似乎与 <code>Put()</code> 非常相似。它首先将当前 goroutine 固定到其 P 上以防止被抢占，然后检查并从其 P 本地池中获取私有对象，无需任何同步。如果私有对象不存在，它会检查共享池链并弹出链的头部。</p>
+<p>​	只有运行在当前 P 本地池上的 goroutine 才能访问链的头部，这就是我们使用 <code>popHead()</code> 的原因：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (p <span style="color:#ff7b72;font-weight:bold">*</span>Pool) <span style="color:#d2a8ff;font-weight:bold">Get</span>() <span style="color:#ff7b72">interface</span>{} {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Pin the current P&#39;s P-local pool</span>
+</span></span><span style="display:flex;"><span>	l, pid <span style="color:#ff7b72;font-weight:bold">:=</span> p.<span style="color:#d2a8ff;font-weight:bold">pin</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Get the private object from the current P-local pool</span>
+</span></span><span style="display:flex;"><span>	x <span style="color:#ff7b72;font-weight:bold">:=</span> l.private
+</span></span><span style="display:flex;"><span>	l.private = <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// If the private object is not there, pop the head of the shared pool chain</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> x <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		x, _ = l.shared.<span style="color:#d2a8ff;font-weight:bold">popHead</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#8b949e;font-style:italic">// Steal from other P&#39;s cache</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">if</span> x <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>			x = p.<span style="color:#d2a8ff;font-weight:bold">getSlow</span>(pid)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#d2a8ff;font-weight:bold">runtime_procUnpin</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// If the object is still not there, create a new object from the factory function</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> x <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#79c0ff">nil</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> p.New <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		x = p.<span style="color:#d2a8ff;font-weight:bold">New</span>()
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">return</span> x
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	与 <code>Put()</code> 中的 <code>p.pin()</code> 不同，这里我们还获取了 <code>pid</code> ，即当前 goroutine 正在运行的 P 的 ID。我们需要这个用于窃取过程，该过程在快速路径失败时发挥作用。</p>
+<p>​	快速路径是指对象在当前 P 的缓存中可用的情况。但如果这行不通，意味着私有对象和共享链的头部都为空，慢速路径（ <code>getSlow</code> ）就会接管。在慢速路径中，我们尝试从其他处理器（P）的缓存池中窃取对象。</p>
+<p>​	窃取背后的理念是重用可能闲置在其他处理器缓存中的对象，而不是从头开始创建新对象。如果另一个 P 的缓存池中有额外的对象，当前 P 可以获取这些对象并加以利用。</p>
+<p>​	窃取过程基本上会遍历除当前 P（ <code>pid</code> ）之外的所有 P，并尝试从每个 P 的共享池链中获取对象：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">for</span> i <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; i &lt;int(size); i<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span>	l <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">indexLocal</span>(locals, (pid<span style="color:#ff7b72;font-weight:bold">+</span>i<span style="color:#ff7b72;font-weight:bold">+</span><span style="color:#a5d6ff">1</span>)<span style="color:#ff7b72;font-weight:bold">%</span>int(size))
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">if</span> x, _ <span style="color:#ff7b72;font-weight:bold">:=</span> l.shared.<span style="color:#d2a8ff;font-weight:bold">popTail</span>(); x <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff7b72">return</span> x
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	正如我们之前讨论过的，在 poolChain 中，提供者（当前 P）在头部进行推送和弹出操作，而多个消费者（其他 P）则从尾部弹出。因此， <code>popTail</code> 会查看链表中的最后一个池双端队列，并尝试从该池双端队列的末尾获取数据。</p>
+<ul>
+<li>如果找到数据，窃取成功，数据将被返回。</li>
+<li>如果在该池队列中找不到任何数据，尾索引会增加，该池队列会从链中被移除。</li>
+</ul>
+<p>​	这个过程会持续进行，直到它要么成功窃取到一些数据，要么在所有池链中耗尽选项。如果经过所有窃取尝试后仍然找不到任何数据，该函数会尝试从所谓的&quot;牺牲者(victim)&ldquo;缓存中获取数据。这是一个与 <code>sync.Pool</code> 清理对象机制相关的新概念.</p>
+<h3 id="3-gc-清理机制为什么它是临时的">3. GC 清理机制（为什么它是“临时”的）</h3>
+<blockquote>
+<p>这就像是给垃圾桶加了一个“撤回”键：你扔掉的东西并不会立刻被焚烧，如果你突然又要用，还能从桶里捡回来，从而省去了重新买个新的开销。</p></blockquote>
+<p>这是 <code>sync.Pool</code> 最特殊的地方。在 Go 1.13 之后的版本中：</p>
+<ul>
+<li><strong>victim 机制：</strong> 当 GC 发生时，<code>sync.Pool</code> 不会立刻清空所有对象，而是把当前活跃的对象移动到 <code>victim</code>（受害者）区域。</li>
+<li><strong>两轮清理：</strong> 如果下一轮 GC 还没被用到，这些 <code>victim</code> 对象才会被真正回收。</li>
+<li><strong>效果：</strong> 这种设计平滑了 GC 时的对象清理，防止 GC 完瞬间池子全空导致程序性能剧烈抖动。</li>
+</ul>
+<h4 id="victim-pool">victim Pool</h4>
+<p>​	还记得我们之前讨论过的 <code>pin()</code> 吗？原来 <code>pin()</code> 还有另一个作用。每当一个 <code>sync.Pool</code> 首次调用 <code>pin()</code> 时（或者在通过 <code>GOMAXPROCS</code> 改变 P 的数量之后），它会被添加到一个名为 <code>allPools</code> 的全局切片中，这个切片位于 sync 包内：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> sync
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">var</span> (
+</span></span><span style="display:flex;"><span>	allPoolsMu Mutex
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// allPools is the set of pools that have non-empty primary</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// caches. Protected by either 1) allPoolsMu and pinning or 2)</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// STW.</span>
+</span></span><span style="display:flex;"><span>	allPools []<span style="color:#ff7b72;font-weight:bold">*</span>Pool
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// oldPools is the set of pools that may have non-empty victim</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// caches. Protected by STW.</span>
+</span></span><span style="display:flex;"><span>	oldPools []<span style="color:#ff7b72;font-weight:bold">*</span>Pool
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	这个 <code>allPools []*Pool</code> 切片会追踪你应用程序中所有活跃的 <code>sync.Pool</code> 实例。在每次垃圾回收（GC）周期开始之前，Go 的运行时都会触发一个清理过程，清空 allPools 切片。具体工作原理如下：</p>
+<ul>
+<li>在 GC 启动之前，它会调用 <code>clearPool</code> ，将 <code>sync.Pool</code> 中的所有对象（包括私有对象和共享池链）转移到所谓的“受害者（victim）区域”。</li>
+<li>这些对象并不会立即被丢弃，它们暂时被保留在这个受害者区域中。</li>
+<li>与此同时，在上一个垃圾回收周期中已经存在于受害者区域的对象，在当前垃圾回收周期中会被完全清除。</li>
+</ul>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">poolCleanup</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Drop victim caches from all pools.</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> _, p <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> oldPools {
+</span></span><span style="display:flex;"><span>		p.victim = <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>		p.victimSize = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// Move primary cache to victim cache.</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">for</span> _, p <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> allPools {
+</span></span><span style="display:flex;"><span>		p.victim = p.local
+</span></span><span style="display:flex;"><span>		p.victimSize = p.localSize
+</span></span><span style="display:flex;"><span>		p.local = <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>		p.localSize = <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// The pools with non-empty primary caches now have non-empty</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#8b949e;font-style:italic">// victim caches and no pools have primary caches.</span>
+</span></span><span style="display:flex;"><span>	oldPools, allPools = allPools, <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	在 <code>sync.Pool</code> 中使用受害者机制的原因是为了避免在 GC 周期后突然完全清空池。如果池被一次性清空，可能会导致性能问题，因为任何新的对象请求都需要从头开始重新创建。因此，我们先将对象移动到受害者区域， <code>sync.Pool</code> 确保在对象被完全丢弃之前，仍有一个缓冲期可以重用它们。总之， <code>sync.Pool</code> 中的一个对象至少需要 2 个 GC 周期才能被完全移除。这对于 <code>GOGC</code> 值较低的程序来说可能是个问题，该值控制 GC 运行以清理未使用对象的频率。如果 <code>GOGC</code> 设置得太低，清理过程可能会过快移除未使用的对象，导致更多的缓存未命中。</p>
+<h3 id="4-为什么它能优化性能">4. 为什么它能优化性能？</h3>
+<ol>
+<li><strong>减少分配：</strong> 对象被复用了，堆上产生的新对象就少了。</li>
+<li><strong>减轻扫描压力：</strong> GC 只扫描活跃指针。如果对象在 <code>sync.Pool</code> 里被复用，而不是频繁创建和销毁，GC 标记的工作量会大幅下降。</li>
+</ol>
+<h2 id="使用-syncpool-的注意点">使用 <code>sync.Pool</code> 的注意点</h2>
+<ul>
+<li>
+<p><strong>不要复用连接：</strong> 池子里的对象随时会被 GC 清理，不适合放数据库连接或 TCP 连接。</p>
+</li>
+<li>
+<p><strong>状态重置：</strong> 取出的对象可能带有旧数据，<strong>必须手动重置</strong>（例如 <code>slice</code> 要 <code>set length to 0</code>），否则会导致业务逻辑出错。</p>
+</li>
+<li>
+<p><strong>内存浪费：</strong> 如果放进去的对象太大且不再使用，可能会导致内存占用长时间下不来（直到 GC 清理）。</p>
+<p>即使使用了 <code>sync.Pool</code> ，如果你正在处理极高的并发和缓慢的垃圾回收，你可能会遇到更多的开销。在这种情况下，一个不错的解决方案可能是在 <code>sync.Pool</code> 的使用上实施速率限制。</p>
+</li>
+</ul>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="https://victoriametrics.com/blog/go-sync-pool/">https://victoriametrics.com/blog/go-sync-pool/</a></p>
+<p><a href="https://victoriametrics.com/blog/tsdb-performance-techniques-sync-pool/">https://victoriametrics.com/blog/tsdb-performance-techniques-sync-pool/</a></p>
+<p><a href="https://blog.csdn.net/sinat_27016095/article/details/147962376">https://blog.csdn.net/sinat_27016095/article/details/147962376</a></p>
+]]></content:encoded>
+    </item>
     <item>
       <title>golang slice 并发写入</title>
       <link>https://luenci.com/en/posts/golang-slice-%E5%B9%B6%E5%8F%91%E5%86%99%E5%85%A5/</link>
