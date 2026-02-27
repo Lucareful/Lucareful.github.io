@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Runtime on Luenci</title>
+    <link>https://luenci.com/en/categories/runtime/</link>
+    <description>Recent content in Runtime on Luenci</description>
+    <generator>Hugo -- 0.145.0</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 27 Feb 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://luenci.com/en/categories/runtime/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>转载 | 理解 Go 运行时：引导程序</title>
+      <link>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E5%BC%95%E5%AF%BC%E7%A8%8B%E5%BA%8F/</link>
+      <pubDate>Fri, 27 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E5%BC%95%E5%AF%BC%E7%A8%8B%E5%BA%8F/</guid>
+      <description>&lt;blockquote&gt;
+&lt;p&gt;参考文章：https://internals-for-interns.com/posts/understanding-go-runtime&lt;/p&gt;
+&lt;p&gt;本次程序实验环境均在 ： mac os arm64  架构上运行&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>参考文章：https://internals-for-interns.com/posts/understanding-go-runtime</p>
+<p>本次程序实验环境均在 ： mac os arm64  架构上运行</p></blockquote>
+<h1 id="tldrai总结人工审核">TL,DR（AI总结，人工审核）</h1>
+<p>​	文章介绍 Go 程序启动时 runtime 的引导过程：从创建首个线程与 goroutine、初始化 TLS、CPU 检测，到调度器、内存分配器、GC 与 P 结构建立，最终启动 system monitor 并执行包初始化，才进入 main。</p>
+<h2 id="前言">前言</h2>
+<p>​	当你编写 Go 代码时，幕后会发生许多事情。协程是轻量级的，通道能直接运行，内存会自动管理，你完全无需考虑线程池。这一切都由 Go 运行时驱动——这是一个复杂的底层架构，会被编译进每个 Go 二进制文件中。</p>
+<p>​	但在这些机制开始工作之前，必须完成初始化。这就是引导程序的作用——它是操作系统启动二进制文件后，到你的 <code>func main()</code> 获得控制权之前运行的进程。</p>
+<h2 id="go-语言执行空操作的速度有多快">Go 语言执行空操作的速度有多快？</h2>
+<p>这是一个完全不做任何事情的 C 程序：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#ff7b72">int</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span> <span style="color:#a5d6ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这是等价的 Go 语言版本：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>等价的 python 语言版本（个人探究对比）：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">def</span> <span style="color:#d2a8ff;font-weight:bold">main</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> __name__ <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span>    main()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>三者编译后对比:</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ gcc -o nothing_c nothing.c
+</span></span><span style="display:flex;"><span>$ go build -o nothing_go nothing.go
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$ ls -lh nothing_c nothing_go dist/nothing
+</span></span><span style="display:flex;"><span>-rwxr-xr-x@ <span style="color:#a5d6ff">1</span> luenci  staff   6.8M  2月 <span style="color:#a5d6ff">26</span> 11:04 dist/nothing
+</span></span><span style="display:flex;"><span>-rwxr-xr-x@ <span style="color:#a5d6ff">1</span> luenci  staff    16K  2月 <span style="color:#a5d6ff">26</span> 10:44 nothing_c
+</span></span><span style="display:flex;"><span>-rwxr-xr-x@ <span style="color:#a5d6ff">1</span> luenci  staff   1.7M  2月 <span style="color:#a5d6ff">26</span> 10:44 nothing_go
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$ time ./nothing_c
+</span></span><span style="display:flex;"><span>real    0m0.001s
+</span></span><span style="display:flex;"><span>$ time ./nothing_go
+</span></span><span style="display:flex;"><span>real    0m0.002s
+</span></span><span style="display:flex;"><span>$ time dist/nothing
+</span></span><span style="display:flex;"><span>real	  0.11s
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>虽然编译型语言和解释性语言有天然性能只查，但 python 确实很遥遥落后，当然也有一些技术手段来对 python 进行编译优化，见下表</p></blockquote>
+<table>
+  <thead>
+      <tr>
+          <th><strong>工具</strong></th>
+          <th><strong>原理</strong></th>
+          <th><strong>易用性</strong></th>
+          <th><strong>代码安全性</strong></th>
+          <th><strong>运行速度</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>PyInstaller</strong></td>
+          <td>捆绑打包</td>
+          <td>⭐⭐⭐⭐⭐</td>
+          <td>低 (易被反编译)</td>
+          <td>正常</td>
+      </tr>
+      <tr>
+          <td><strong>Nuitka</strong></td>
+          <td>转译为 C++</td>
+          <td>⭐⭐⭐</td>
+          <td>高</td>
+          <td>较快</td>
+      </tr>
+      <tr>
+          <td><strong>PyOxidizer</strong></td>
+          <td>内存加载/Rust 构建</td>
+          <td>⭐⭐</td>
+          <td>极高</td>
+          <td>快</td>
+      </tr>
+  </tbody>
+</table>
+<p>回到正题，Go 语言编译出的二进制文件几乎大了 100 倍，运行时间也大约长了两倍。而我们什么都没做。这是怎么回事？</p>
+<p>​	答案是，Go 语言在你的 <code>main</code> 函数运行之前做了大量工作。那额外的 1.5MB 二进制文件包含了完整的运行时系统：内存分配器、垃圾回收器、调度器、系统监控器，以及支持协程、通道和映射所需的所有机制。在你获得控制权之前，Go 必须完成所有这些设置。</p>
+<h2 id="引导概览">引导概览</h2>
+<p>让我们逐步了解整个引导过程——从操作系统启动你的二进制文件，到你的 <code>func main()</code> 函数最终运行之间发生的一切。</p>
+<p>以下是全局概览——运行时系统在你的代码运行前采取的每一步：</p>
+<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260226132531697.png" alt="Go bootstrap big picture"  />
+</p>
+<h2 id="入口点并非你的-main函数">入口点：并非你的 main()函数</h2>
+<p>第一个令人惊讶的事实：你的 <code>main</code> 函数并非程序的入口点。我们可以证明这一点。让我们使用 <code>readelf</code> 来找出我们那个什么都不做的二进制文件的实际入口点：</p>
+<blockquote>
+<p>也可以自己将完整的 nm 堆栈信息输出到文件中查看，main.main 函数并不是在最上面！</p>
+<p>❯  go tool nm nothing_linux &gt; a.txt</p></blockquote>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ readelf -h nothing_go | grep <span style="color:#a5d6ff">&#34;Entry point&#34;</span>
+</span></span><span style="display:flex;"><span>  Entry point address:               0x4787a0
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>那是一个原始地址。那里存放的是什么函数呢？ <code>go tool nm</code> 可以将地址映射到符号名称：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ go tool nm nothing_linux | grep 4787a0
+</span></span><span style="display:flex;"><span> 4787a0 T _rt0_amd64_linux
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	这就是入口点—— <code>_rt0_amd64_linux</code> ，而非 <code>main.main</code> 。实际的入口点位于运行时内部的一个汇编函数中（在 <code>src/runtime/rt0_linux_amd64.s</code> ）。Go 支持的每种架构都有对应的入口点： <code>_rt0_arm64_linux</code> 、 <code>_rt0_386_linux</code> 等等。它们所做的就是从栈中获取命令行参数，然后跳转到 <code>rt0_go</code> （位于 <code>src/runtime/asm_amd64.s</code> ），真正的引导程序就从这里开始。这是一个庞大的汇编函数，在 Go 代码运行之前奠定基础。以下是它大致按顺序执行的操作：</p>
+<p>​	首先，它创建了 Go 从一开始就需要的两样东西：g0 和 m0。可以这样理解——<strong>Go 在 goroutine 上运行你的代码，而 goroutine 又在操作系统线程上运行</strong>。因此，在一切开始之前，运行时至少需要各一个。这就是 g0 和 m0：第一个 goroutine 和第一个线程。不过 g0 有点特殊——它不会运行你的代码。它被保留用于运行时自身的内部管理，比如调度其他 goroutine。</p>
+<p>​	接着它会设置线程本地存储（TLS）。TLS 是一种操作系统级别的机制，为每个线程提供独立的私有存储区域——不同线程读取同一个 TLS 槽位会获得不同的值。Go 语言利用 TLS 存储指向当前线程上运行协程的指针，这样运行时系统就能快速且无需加锁地回答“我现在是哪个协程？”这个关键问题。其重要性使得运行时系统会立即通过写入特定校验值并读回进行测试——若 TLS 无法正常工作，程序将立即中止。</p>
+<p>​	它还会检查运行在何种 CPU 上——包括制造商以及支持的功能特性。Go 二进制文件可以编译以利用更新的 CPU 指令来提升性能，因此运行时会验证 CPU 是否确实具备这些功能。如果 CPU 不支持，程序会输出错误信息并退出，而不是在后续执行中因非法指令而崩溃。</p>
+<p>如果二进制文件是使用 CGO 支持构建的，那么在继续之前需要额外初始化 C 运行时的步骤。</p>
+<p>​	所有汇编层面的基础工作完成后——TLS 正常运行、CPU 特性已知、g0 和 m0 已链接—— <code>rt0_go</code> 通过四次函数调用过渡到 Go 代码： <code>check()</code> 验证编译器假设是否正确， <code>args()</code> 保存命令行参数， <code>osinit()</code> 检测 CPU 数量（这将作为默认的 <code>GOMAXPROCS</code> ），最后是 <code>schedinit()</code> ——真正的工作在此处展开。</p>
+<h2 id="调度器初始化schedinit">调度器初始化（schedinit）</h2>
+<p>现在轮到重头戏了。 <code>schedinit()</code> （位于 <code>src/runtime/proc.go</code> 中）是负责初始化所有关键运行时子系统的主函数。让我们按顺序梳理它的执行流程。</p>
+<h3 id="stop-the-world--停止世界">Stop the World （ 停止世界）</h3>
+<p>​	<code>schedinit()</code> 首先要做的是将世界标记为停止状态。&ldquo;停止世界&quot;是你在 Go 运行时讨论中经常听到的一个术语——它意味着暂停所有 goroutine，以便运行时能够安全地执行需要同时没有其他任务运行的工作。在这种情况下，还没有任何 goroutine 存在，所以根据定义，世界已经停止了。但运行时明确地标记了这一点，因为几个子系统的行为会根据 goroutine 是否可能并发运行而有所不同。</p>
+<h3 id="stack-pool-initialization-栈池初始化">Stack Pool Initialization （栈池初始化）</h3>
+<p>​	goroutine 需要栈才能运行。Go 的 goroutine 从微小的 2KB 栈开始，动态增长，运行时按大小组织预分配的栈段池，以便快速创建新的 goroutine。 <code>stackinit()</code> 负责设置这些池。</p>
+<p>​	当一个 goroutine 完成执行且其栈被释放时，它会回到池中等待重用，而不是归还给操作系统。这对性能至关重要——goroutine 的创建必须成本低廉，若每次执行 <code>go</code> 语句都向操作系统申请内存，速度将慢得无法接受。</p>
+<p>但栈只是 goroutine 使用的内存类型之一。它们还需要堆内存——用于任何逃逸出栈的内容，比如切片、映射或通过指针返回的值。</p>
+<h3 id="memory-allocator-initialization-内存分配器初始化">Memory Allocator Initialization （内存分配器初始化）</h3>
+<p>​	这就是 <code>mallocinit()</code> 负责处理的部分。它负责设置 Go 的内存分配器，其核心理念相当直观：与其每次代码执行 <code>make([]byte, 100)</code> 时都向操作系统请求内存，Go 会预先获取大块内存，然后从这些大块中分配小块内存。这样速度要快得多。</p>
+<p>​	分配器按大小类别组织内存——共有 68 个类别，范围从 8 字节到 32KB。当你分配一个 50 字节的对象时，Go 不会精确地给你 50 字节。它会向上取整到最接近的大小类别（本例中为 64 字节），并从预先划分的 64 字节槽块中分配一个槽位给你。这种做法简化了操作并避免了内存碎片。对于任何大于 32KB 的对象，分配器会完全跳过大小类别，直接从堆中分配内存。</p>
+<p>​	真正巧妙的部分在于后续创建 P（处理器）时。每个 P 都拥有自己的本地内存缓存，因此大多数内存分配完全不需要加锁——goroutine 只需从所属 P 的缓存中获取内存。只有当该缓存耗尽时，才需要访问共享的中心列表进行补充。这正是 Go 语言即使在高并发场景下仍能实现极速内存分配的重要原因。</p>
+<p>在栈和堆内存这两大核心组件就位后，运行时系统开始处理一些规模较小但至关重要的细节。</p>
+<h3 id="cpu-flags-and-hash-initialization-cpu-标志与哈希初始化">CPU Flags and Hash Initialization （CPU 标志与哈希初始化）</h3>
+<p><code>cpuinit()</code> 执行比汇编代码已检测内容更详细的 CPU 能力检查——精确确定哪些指令集扩展可用。</p>
+<p>​	接着， <code>alginit()</code> 会选取 Go 语言映射表将使用的哈希函数。如果 CPU 支持硬件 AES 指令，Go 会利用它们进行哈希计算——这能显著提升速度。否则，它将回退到软件实现。这一选择会影响程序中每一个映射表操作，因此值得在早期就做出正确决策。</p>
+<p>既然运行时已经了解了硬件的性能，现在就该在其之上搭建软件基础设施了。</p>
+<h3 id="modules-types-and-the-main-thread-模块类型与主线程">Modules, Types, and the Main Thread （模块、类型与主线程）</h3>
+<p>​	运行时在此构建支撑 Go 类型系统的内部表格。 <code>modulesinit()</code> 构建所有已编译包的表格——每个表格都包含类型信息、函数元数据以及 GC 位图。 <code>typelinksinit()</code> 和 <code>itabsinit()</code> 建立实现 Go 接口功能的接口分发表。而 <code>mcommoninit()</code> 则完成 m0（我们的主线程）的设置，并将其注册到全局线程列表中。</p>
+<p>内部管道就绪后，运行时终于可以开始向外探索——审视程序从外部世界接收的输入。</p>
+<h3 id="args-environment-and-security-参数环境与安全">Args, Environment, and Security （参数、环境与安全）</h3>
+<p>​	<code>goargs()</code> 将原始的 C 风格 <code>argv</code> 转换为将成为 <code>os.Args</code> 的 Go 字符串切片。 <code>goenvs()</code> 对环境变量执行相同的操作。接着 <code>secure()</code> 执行安全检查，而 <code>checkfds()</code> 确保标准输入、标准输出和标准错误实际上处于打开状态——防止因关闭的标准文件描述符而可能引发的一类安全问题。</p>
+<p>其中一个环境变量值得特别关注。</p>
+<h4 id="debug-environment-调试环境变量">Debug Environment （调试环境变量）</h4>
+<p><code>GODEBUG</code> 变量控制着各种运行时行为。以下是几个实用的设置：</p>
+<ul>
+<li><code>GODEBUG=inittrace=1</code> — 打印每个包初始化函数的计时信息</li>
+<li><code>GODEBUG=schedtrace=1000</code> — 每秒打印调度器状态</li>
+<li><code>GODEBUG=gctrace=1</code> — 打印垃圾回收事件</li>
+</ul>
+<p>这些内容在此处被解析并应用，以便在后续的引导过程中生效。至此，所有支撑组件都已就位。运行时现在转向两个剩余的主要子系统。</p>
+<h3 id="garbage-collector-initialization-垃圾回收器初始化">Garbage Collector Initialization （垃圾回收器初始化）</h3>
+<p>​	<code>gcinit()</code> 准备启动 Go 的垃圾回收器——这个系统会自动释放程序不再需要的内存。Go 采用并发标记清除式垃圾回收机制，这意味着它的大部分工作会在程序持续运行的同时进行，而非完全暂停所有程序执行。</p>
+<p>​	在初始化过程中，运行时会设置垃圾收集器后续所需的机制：包括决定何时触发回收的步调器（默认在堆内存翻倍时启动）、在回收后回收未使用内存的清扫器，以及供垃圾收集工作线程使用的每个处理器专属工作队列，用于追踪哪些对象仍然存活。</p>
+<p>​	但这里有一个重要细节：垃圾回收器已初始化但尚未启用。它实际上要等到稍后在 <code>runtime.main()</code> 中调用 <code>gcenable()</code> 时才会开始运行。为什么呢？因为启用垃圾回收器需要启动 goroutine（用于后台清理和内存回收）并创建通道——而在调度器和运行时的其他部分完全设置好之前，这些操作都无法进行。更重要的是，在类型元数据和指针映射准备就绪前触发垃圾回收周期，可能导致收集器扫描不完整的数据结构。</p>
+<h3 id="processor-p-initialization-处理器p初始化">Processor (P) Initialization （处理器（P）初始化）</h3>
+<p>​	运行时需要创建 P（处理器）结构。可以将 P 视为一个工作站：goroutine 需要坐在上面才能完成任何工作，而操作系统线程则是操作它的工人。每个 P 都自带等待运行的 goroutine 队列、自己的内存缓存（因此分配速度快且无需锁）、以及自己的定时器和垃圾回收工作器状态。</p>
+<p>​	P 的数量由 <code>GOMAXPROCS</code> 决定，默认值为之前检测到的 CPU 核心数。因此，在 8 核机器上，你将获得 8 个 P——这意味着在任何给定时刻，最多可以有 8 个 goroutine 真正并行运行。</p>
+<h3 id="start-the-world-启动世界">Start the World （启动世界)</h3>
+<p>​	至此， <code>schedinit()</code> 调用了 <code>worldStarted()</code> 。“世界”现在被视为已启动——所有基础设施都已就位，goroutine 可以并发运行。餐厅正式开门营业。随着调度器、分配器、垃圾回收器以及所有支持基础设施就位，运行时终于准备好创建它的第一个真正的 goroutine。</p>
+<h2 id="creating-the-main-goroutine-创建主-goroutine">Creating the Main Goroutine (创建主 Goroutine)</h2>
+<p>​	可以把到目前为止的一切想象成造车——我们已经组装好了发动机（调度器）、燃油系统（内存分配器）和排气系统（垃圾回收器）。现在该转动钥匙启动了。</p>
+<p>​	回到 <code>rt0_go</code> ，在 <code>schedinit()</code> 返回后，运行时创建了它的第一个 goroutine。但请注意——这个 goroutine 并不运行你的 <code>main.main</code> 。它运行的是 <code>runtime.main</code> ，这是运行时自己的主函数。你的代码稍后才会执行。</p>
+<p>​	该协程获得一个 2KB 的初始栈（来自我们之前设置的栈池），并被放置到第一个 P 的运行队列中，准备就绪。随后运行时在 m0 上启动调度循环——这是关键的转折点。调度器立即选取该协程并开始执行 <code>runtime.main()</code> 。</p>
+<p>​	引擎正在运行。我们即将抵达你的代码——但还差一点。</p>
+<h2 id="runtimemain-最后一英里">runtime.main (最后一英里)</h2>
+<p>​	我们终于进入了以适当 goroutine 运行的 Go 代码。但在你的代码运行之前，仍有工作要做。以下是 <code>runtime.main()</code> （位于 <code>src/runtime/proc.go</code> 中）：</p>
+<h3 id="max-stack-size-and-system-monitor-最大栈大小与系统监控器">Max Stack Size and System Monitor (最大栈大小与系统监控器)</h3>
+<p>​	首先， <code>runtime.main()</code> 对任何 goroutine 栈的最大增长设置了限制——在 64 位系统上为 1GB。如果一个 goroutine 超出了这个限制（通常是由于无限递归），程序会因栈溢出而 panic。</p>
+<p>​	接着启动系统监控器（sysmon）——这是一个专用的后台线程，充当运行时的看门狗。它独立于调度器运行，负责监控各种情况：如果某个 goroutine 占用处理器（P）时间过长，sysmon 会强制其让出；如果操作系统线程在系统调用中卡住，sysmon 会收回其处理器并分配给其他线程，以便其他 goroutine 能继续运行。它还会在垃圾回收（GC）长时间未运行时触发回收，检查就绪的网络 I/O，并将未使用的内存返还给操作系统。</p>
+<p>​	主 goroutine 此时也会被锁定到主操作系统线程上。这是为了兼容某些 C 语言库和 GUI 框架，这些库和框架期望特定操作始终在“主”线程上执行。</p>
+<p>看门狗已启动，主线程也已就绪，运行时现在可以开始运行你的代码了——嗯，差不多吧。还有一些事情需要处理。</p>
+<h3 id="runtime-init-functions-运行时初始化函数">Runtime init() Functions (运行时初始化函数)</h3>
+<p>​	首先，运行时运行其内部的 <code>init()</code> 函数——这些函数属于 <code>runtime</code> 包及其依赖项。这些函数完成在 <code>schedinit()</code> 期间尚未完全准备好的内部数据结构的设置。</p>
+<p>​	运行时自身的初始化完成后，调度器已全面就绪，类型元数据准备就绪，通道功能正常。这意味着终于可以安全地启用垃圾回收器了。</p>
+<h3 id="enabling-the-garbage-collector-启用垃圾回收器">Enabling the Garbage Collector (启用垃圾回收器)</h3>
+<p>​	还记得我们说过 GC 已初始化但未启用吗？现在它终于被激活了。 <code>gcenable()</code> 会启动后台清扫器和回收器的 goroutine，从此刻起，GC 将在后台运行，每当堆内存增长到足够大时，就会自动回收未使用的内存。</p>
+<p>为何现在启用而非稍后？因为下一步——运行包的初始化函数——可能会分配大量内存。届时垃圾回收器必须处于活跃状态。</p>
+<h3 id="running-package-init-functions-运行包初始化函数">Running Package init() Functions (运行包初始化函数)</h3>
+<p>​	现在来谈谈你可能熟悉的内容： <code>init()</code> 函数。运行时系统会遍历程序中的每个包，并按照依赖顺序执行它们的 <code>init()</code> 函数——如果你的包导入了 <code>fmt</code> ，那么 <code>fmt</code> （以及 <code>fmt</code> 所依赖的一切）会在你的包初始化之前完成初始化。</p>
+<p>​	这也是包级变量初始化的时刻。因此，如果你在文件顶部有类似 <code>var db = connectToDB()</code> 的代码，它会在引导阶段运行——而不是在 <code>main()</code> 启动时。</p>
+<p>现在，终于，运行时和你的代码之间再无任何隔阂。</p>
+<h3 id="finally-your-main--最后你的-main-函数">Finally: Your main() ( 最后：你的 main() 函数)</h3>
+<p>​	经历了这一切——汇编入口点、线程本地存储、CPU 检测、内存分配器、调度器、垃圾回收器、系统监视器、初始化函数——运行时终于调用了你的 <code>main</code> 函数。</p>
+<p>但当它返回时会发生什么？</p>
+<h3 id="after-main-returns-main-返回之后">After main() Returns main() 返回之后</h3>
+<p>​	当你的 <code>main</code> 返回时，运行时并不会立即退出。它会给予一个短暂的宽限期，让那些正在处理恐慌的 goroutine 完成它们的延迟清理工作。但其他仍在运行的 goroutine 呢？它们会被直接终止——没有警告，没有清理。如果你需要它们完成，你必须显式地进行同步（例如，使用 <code>sync.WaitGroup</code> ）。</p>
+<h1 id="总结">总结</h1>
+<p>​	那么，回到我们最初的问题：为什么 Go 在“什么都不做”时显得“慢”？现在你明白了——它其实并非无所事事。当你的<code>main</code>函数开始运行时，运行时环境已经从零开始构建了完整的执行环境：第一个 goroutine 和线程、线程本地存储、栈池、内存分配器、映射的哈希函数、垃圾回收器、每个 CPU 核心对应一个 P 的调度器、系统监控线程，以及所有包的初始化函数。</p>
+<p>​	这套机制相当复杂。但正是这些让 Go 语言在编写时显得如此轻松——协程之所以轻量，是因为栈池和分配器早已就位；内存管理之所以无感，是因为垃圾回收器已在后台运行；并发之所以能自然运作，是因为调度器在你的第一行代码执行前就已准备就绪。</p>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>
