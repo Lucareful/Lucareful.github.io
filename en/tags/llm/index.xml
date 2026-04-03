@@ -6,8 +6,160 @@
     <description>Recent content in LLM on Luenci</description>
     <generator>Hugo -- 0.145.0</generator>
     <language>en</language>
-    <lastBuildDate>Tue, 06 May 2025 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 03 Apr 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/tags/llm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>AI协同 | MCP vs CLI vs Skills：AI Agent 协作该选哪一套？</title>
+      <link>https://luenci.com/en/posts/ai-agent-%E5%8D%8F%E4%BD%9C%E8%AF%A5%E9%80%89%E5%93%AA%E4%B8%80%E5%A5%97/</link>
+      <pubDate>Fri, 03 Apr 2026 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/ai-agent-%E5%8D%8F%E4%BD%9C%E8%AF%A5%E9%80%89%E5%93%AA%E4%B8%80%E5%A5%97/</guid>
+      <description>&lt;blockquote&gt;
+&lt;p&gt;本文由AI🤖进行润色和校对，本人亲自审核可以放心阅读&lt;/p&gt;&lt;/blockquote&gt;
+&lt;p&gt;过去一年，围绕 AI Agent 的工程化落地，业内逐渐收敛出三条主线：&lt;strong&gt;MCP、CLI 和 Skills&lt;/strong&gt;。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;MCP&lt;/strong&gt;（&lt;a href=&#34;https://link.csdn.net/?target=https%3A%2F%2Fgitcode.com%2FopenHiTLS%2Fopenhitls%3Futm_source%3Ddevpress_gitcode_keyword%26login%3Dfrom_csdn&#34;&gt;Model Context Protocol&lt;/a&gt;）：Anthropic 在 2024 年底提出的开放标准。它用 JSON-RPC 统一封装工具和服务，让 Agent 可以通过一致的接口调用不同系统。OpenAI、Google、Microsoft、AWS 也都在跟进。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;CLI&lt;/strong&gt;：直接让 Agent 执行 shell 命令，例如 &lt;code&gt;git log&lt;/code&gt;、&lt;code&gt;gh pr list&lt;/code&gt;、&lt;code&gt;curl&lt;/code&gt;、&lt;code&gt;kubectl&lt;/code&gt;。没有额外协议层，也不需要单独起一个工具服务。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Skills&lt;/strong&gt;：把经验沉淀成一份 Markdown“操作说明书”，告诉 Agent 在什么场景下该调用什么工具、走什么流程。平时几乎不占上下文，触发时再加载完整内容。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果只看“概念完整度”，MCP 最像一个标准答案；但如果看实际交付效率，很多团队最后反而会落到 &lt;strong&gt;CLI + Skills&lt;/strong&gt; 这组组合上。&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>本文由AI🤖进行润色和校对，本人亲自审核可以放心阅读</p></blockquote>
+<p>过去一年，围绕 AI Agent 的工程化落地，业内逐渐收敛出三条主线：<strong>MCP、CLI 和 Skills</strong>。</p>
+<ul>
+<li><strong>MCP</strong>（<a href="https://link.csdn.net/?target=https%3A%2F%2Fgitcode.com%2FopenHiTLS%2Fopenhitls%3Futm_source%3Ddevpress_gitcode_keyword%26login%3Dfrom_csdn">Model Context Protocol</a>）：Anthropic 在 2024 年底提出的开放标准。它用 JSON-RPC 统一封装工具和服务，让 Agent 可以通过一致的接口调用不同系统。OpenAI、Google、Microsoft、AWS 也都在跟进。</li>
+<li><strong>CLI</strong>：直接让 Agent 执行 shell 命令，例如 <code>git log</code>、<code>gh pr list</code>、<code>curl</code>、<code>kubectl</code>。没有额外协议层，也不需要单独起一个工具服务。</li>
+<li><strong>Skills</strong>：把经验沉淀成一份 Markdown“操作说明书”，告诉 Agent 在什么场景下该调用什么工具、走什么流程。平时几乎不占上下文，触发时再加载完整内容。</li>
+</ul>
+<p>如果只看“概念完整度”，MCP 最像一个标准答案；但如果看实际交付效率，很多团队最后反而会落到 <strong>CLI + Skills</strong> 这组组合上。</p>
+<p>这篇文章想讨论的，就是三者各自适合什么场景，以及为什么我认为：<strong>MCP 更像特定约束下的基础设施，CLI + Skills 更像默认工作流。</strong></p>
+<h2 id="一mcp-的价值标准化接入">一、MCP 的价值：标准化接入</h2>
+<p>先说结论：</p>
+<blockquote>
+<p>MCP 最大的价值是标准化。
+但它成立的前提，是平台真的愿意实现它，而且安全边界足够清晰。</p></blockquote>
+<p>MCP 的核心吸引力并不神秘：它想解决的是 <strong>“工具接入碎片化”</strong> 的问题。如果没有 MCP，不同服务要分别适配，Agent 要分别理解；而有了 MCP 之后，理论上所有工具都能暴露成统一协议，Agent 只需要学会一套调用方式。</p>
+<p>这在以下场景里尤其有价值：</p>
+<ul>
+<li><strong>远程服务接入</strong>：Agent 需要访问本地没有 CLI 的远程服务。</li>
+<li><strong>多租户环境</strong>：不同用户访问同一服务，但权限不同，需要统一认证与授权。</li>
+<li><strong>企业审计与合规</strong>：需要记录 Agent 的每次工具调用，结构化协议更方便留痕。</li>
+<li><strong>受限沙箱环境</strong>：Agent 运行在没有文件系统权限的容器里，CLI 根本无从使用。</li>
+</ul>
+<p>从这个角度看，MCP 确实解决了一个真实问题：它除了让 Agent“更聪明”，也是为了让工具接入“更统一”。</p>
+<h2 id="二mcp-的问题上下文成本和信任模型">二、MCP 的问题：上下文成本和信任模型</h2>
+<p>但 MCP 的问题也同样明显。一句话概括就是：</p>
+<blockquote>
+<p>MCP 最大的问题是：<strong>Agent 一启动，往往就要把大量工具 schema 带进上下文；与此同时，它的信任模型和隔离机制并没有成熟到足以支撑这种开放连接。</strong></p></blockquote>
+<p>这个问题可以拆成两层。</p>
+<h3 id="1-上下文成本高">1. 上下文成本高</h3>
+<p>MCP 工具不是凭空出现的。每个工具都有 schema、description、参数说明。 Agent 要调用它们，首先得“知道它们存在，并理解它们怎么用”。这意味着：<strong>工具越多，上下文负担越重。</strong></p>
+<p>而上下文一旦膨胀，就会直接影响两件事：</p>
+<ul>
+<li>模型推理成本上升</li>
+<li>工具选择质量下降</li>
+</ul>
+<p>换句话说，MCP 想解决的是“统一调用”，但代价往往是“统一塞进上下文”。</p>
+<h3 id="2-安全问题不是边角料而是架构问题">2. 安全问题不是边角料，而是架构问题</h3>
+<p>MCP 更麻烦的不是“复杂”，而是“默认信任过多”。目前比较典型的风险包括：</p>
+<h4 id="tool-poisoning工具投毒">Tool Poisoning：工具投毒</h4>
+<p>​	MCP Server 可以在工具描述里嵌入用户不可见、但模型可见的提示。用户看到的是“查询天气”；模型读到的可能是“顺便发送环境变量”。问题不在于模型“笨”，而在于它必须依赖 description 来决定怎么用工具，而 description 本身又可能成为攻击面。</p>
+<h4 id="rug-pull地毯抽拉">Rug Pull：地毯抽拉</h4>
+<p>​	今天正常的 MCP Server，明天更新后可能就变了。Agent 往往不会重新审查它的行为边界，只会继续信任并调用它。传统软件当然也有供应链风险，但 MCP 的特殊之处在于：<strong>这种信任是隐式的，而且是持续存在的。</strong></p>
+<h4 id="shadowing影子工具">Shadowing：影子工具</h4>
+<p>​	恶意 MCP Server 可以注册一个同名工具，覆盖合法工具。Agent 以为自己在调用正常能力，实际却落到了另一个实现上。</p>
+<p>这些风险之所以危险，不是因为它们“听起来像安全术语”，而是因为它们指向了同一个根因：</p>
+<blockquote>
+<p><strong>MCP 的架构天然倾向于共享上下文、共享信任，但隔离机制并没有同步到位。</strong></p></blockquote>
+<p>​	一个恶意 Server 不一定只影响自己。它可能影响 Agent 对其他工具的选择，也可能借助上下文读取本不该暴露的信息。所以，MCP 的问题并不是“还能再打磨一下的产品细节”，而是它在标准化之外，还需要补上足够强的安全和隔离能力。</p>
+<h2 id="三cli-的优势简单可组合而且模型天然会用">三、CLI 的优势：简单、可组合，而且模型天然会用</h2>
+<p>​	和 MCP 相比，CLI 的优点非常“土”，但也正因为如此，它特别有效。</p>
+<blockquote>
+<p>LLM 天然会用 CLI。</p></blockquote>
+<p>这不是一句夸张的判断，而是训练数据决定的结果。Unix 文档、Stack Overflow、GitHub Actions、各种 shell 脚本——这些内容早就大量存在于模型训练语料里。对模型来说，<code>git</code>、<code>grep</code>、<code>curl</code>、<code>awk</code>、<code>jq</code> 本来就是熟悉的语言。CLI 最大的优势不是“功能强”，而是三点：</p>
+<h3 id="1-不需要额外协议层">1. 不需要额外协议层</h3>
+<p>​	直接执行命令即可。 没有 schema 编排，没有工具注册，也没有额外的服务端实现。</p>
+<h3 id="2-可组合性极强">2. 可组合性极强</h3>
+<p>​	MCP 工具的返回结果如果还要过滤、搜索、截取，通常得额外写后处理逻辑。 但 CLI 可以直接用 pipe 串起来：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>gh pr list --json number,title | jq <span style="color:#a5d6ff">&#39;.[] | select(.title | contains(&#34;fix&#34;))&#39;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这种组合能力，是 CLI 在 AI 场景里被重新激活的关键原因。Agent 不只是“调用工具”，而是在拼接一个可执行的数据处理链。</p>
+<h3 id="3-维护成本低">3. 维护成本低</h3>
+<p>​	CLI 往往复用的是现有系统能力，不需要再维护一层自定义协议。能直接调命令的时候，通常没必要额外包一层。所以在很多本地开发、运维、数据处理、自动化脚本场景里，CLI 不是“退而求其次”，反而是最顺手的默认方案。</p>
+<h2 id="四skills-的价值把经验压缩成低成本上下文">四、Skills 的价值：把经验压缩成低成本上下文</h2>
+<p>​	如果说 CLI 解决的是“怎么执行”，那 Skills 解决的就是“什么时候执行、按什么套路执行”。Skill 的形式很简单，本质上就是一份 Markdown 指南。例如：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-md" data-lang="md"><span style="display:flex;"><span><span style="color:#79c0ff">## 查看 PR 状态
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>gh pr list --state open --json number,title,author
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>看起来朴素，但它恰好命中了 Agent 工作流里的一个核心问题：**上下文预算是稀缺资源。**Skill 的好处主要有四点：</p>
+<h3 id="1-平时几乎不占上下文">1. 平时几乎不占上下文</h3>
+<p>​	不是一启动就把所有说明都塞进去，而是触发时再加载。这比把整套工具 schema 常驻上下文要轻得多。</p>
+<h3 id="2-更贴近任务而不是贴近协议">2. 更贴近任务，而不是贴近协议</h3>
+<p>​	Skill 关心的是“如何完成任务”，而不是“工具如何定义自己”。 它写的是动作、流程和判断，而不是接口元数据。</p>
+<h3 id="3-维护成本更低">3. 维护成本更低</h3>
+<p>​	更新一份 Markdown，通常比维护一个 MCP Server 容易得多。 很多团队真正需要沉淀的，并不是“再造一个协议”，而是把已有操作经验写清楚。</p>
+<h3 id="4-更符合模型的理解方式">4. 更符合模型的理解方式</h3>
+<p>​	模型擅长读说明、执行步骤、模仿范式。Skill 恰好就是这种表达形式。所以从 Agent 视角看，<strong>Skills 不是 MCP 的替代品，而是对模型认知方式更友好的组织层。</strong></p>
+<h2 id="五cli--skills为什么这组组合经常更实用">五、CLI + Skills：为什么这组组合经常更实用</h2>
+<p>CLI 和 Skills 放在一起，效果往往比单独使用更强。</p>
+<ul>
+<li><strong>CLI 提供执行能力</strong></li>
+<li><strong>Skills 提供任务模板</strong></li>
+<li>两者都不需要引入额外的协议系统</li>
+<li>两者都更贴近模型已有能力</li>
+</ul>
+<p>这套组合最大的优点，是它足够“低摩擦”。</p>
+<p>很多团队在落地 Agent 时，真正的问题不是“缺少标准”，而是：</p>
+<ul>
+<li>怎么让 Agent 少走弯路</li>
+<li>怎么让高频任务稳定复现</li>
+<li>怎么在不引入太多基础设施的前提下，把事情做完</li>
+</ul>
+<p>CLI + Skills 往往恰好满足这几个条件。</p>
+<p>当然，它也不是没有缺点。最典型的问题就是：</p>
+<blockquote>
+<p><strong>多租户场景下，CLI 不容易统一做权限治理。</strong></p></blockquote>
+<p>如果不同用户、不同环境、不同机器的授权方式都不一样，那 CLI 的适配成本会迅速上升。审计、权限隔离、集中管理这些能力，CLI 也确实不如 MCP 天然。</p>
+<p>因此，CLI + Skills 并不是“全场景最佳”，而是：</p>
+<blockquote>
+<p><strong>在大量单机、本地开发、工程自动化、团队内部提效场景里，它通常是更现实的默认选择。</strong></p></blockquote>
+<h2 id="六该怎么选">六、该怎么选？</h2>
+<p>如果把三者放到同一张图里，我的判断是：</p>
+<ul>
+<li><strong>MCP 解决的是标准化接入</strong></li>
+<li><strong>CLI 解决的是高效执行</strong></li>
+<li><strong>Skills 解决的是经验复用</strong></li>
+</ul>
+<p>所以真正合理的选择，不是“只押一个”，而是按场景分层：</p>
+<h3 id="优先用-cli">优先用 CLI</h3>
+<p>​	只要本地能完成，CLI 往往都是最直接、最灵活、最容易组合的方案。</p>
+<h3 id="用-skills-沉淀经验">用 Skills 沉淀经验</h3>
+<p>​	把常见任务、最佳实践、命令套路写成可触发的说明，让 Agent 在需要时加载，而不是把所有知识长期放在上下文里。</p>
+<h3 id="只在必要时使用-mcp">只在必要时使用 MCP</h3>
+<blockquote>
+<p><strong>CLI + Skills 更像默认工作流，MCP 更像带有明确约束条件的基础设施方案。</strong></p></blockquote>
+<p>​	当你遇到远程服务接入、多租户授权、审计留痕、受限沙箱这类 CLI 明显不适合的问题时，MCP 才真正体现价值。换句话说：</p>
+<p>​	MCP 的价值没问题，它更擅长解决工具统一接入和平台管理的问题；但 CLI + Skills 更偏实用，效率更高、改造更轻，也更容易真正落地。</p>
+<p>​	如果目标是尽快让 Agent 可靠地把事情做完，而不是先搭一套完整的协议体系，那么多数时候，<strong>从 CLI + Skills 开始，会是一个更现实的选择。</strong></p>
+<h2 id="参考文章">参考文章</h2>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/2016588581183977351">https://zhuanlan.zhihu.com/p/2016588581183977351</a></li>
+<li><a href="https://gitcode.csdn.net/69c5205d0a2f6a37c59acfac.html">https://gitcode.csdn.net/69c5205d0a2f6a37c59acfac.html</a></li>
+</ul>
+]]></content:encoded>
+    </item>
     <item>
       <title>MCP 入门（实践篇）</title>
       <link>https://luenci.com/en/posts/mcp%E5%85%A5%E9%97%A8%E5%AE%9E%E8%B7%B5%E7%AF%87/</link>
