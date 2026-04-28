@@ -9,6 +9,513 @@
     <lastBuildDate>Fri, 17 Apr 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>Agent Skill 指南</title>
+      <link>https://luenci.com/en/posts/agent-skill-%E6%8C%87%E5%8D%97/</link>
+      <pubDate>Fri, 17 Apr 2026 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/agent-skill-%E6%8C%87%E5%8D%97/</guid>
+      <description>&lt;h2 id=&#34;skill-定义&#34;&gt;Skill 定义&lt;/h2&gt;
+&lt;p&gt;​	Skill 是一种给 AI agent 用的“小插件”或“工作说明书”。它会教大模型 &lt;strong&gt;如何稳定地完成某类特定任务&lt;/strong&gt;，尤其适合重复、固定流程、需要遵循格式或团队规范的工作。简单概括：&lt;strong&gt;专业知识 + 操作流程 + 工具调用&lt;/strong&gt;&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h2 id="skill-定义">Skill 定义</h2>
+<p>​	Skill 是一种给 AI agent 用的“小插件”或“工作说明书”。它会教大模型 <strong>如何稳定地完成某类特定任务</strong>，尤其适合重复、固定流程、需要遵循格式或团队规范的工作。简单概括：<strong>专业知识 + 操作流程 + 工具调用</strong></p>
+<h3 id="和-mcp-及-prompt-的区别">和 MCP 及 Prompt 的区别</h3>
+<p><strong>System Prompt</strong> 是一次性指令，<strong>MCP</strong> 是给 AI 装新手臂，<strong>Skill</strong> 是给 AI 装行为准则。</p>
+<table>
+  <thead>
+      <tr>
+          <th>维度</th>
+          <th>System Prompt</th>
+          <th>MCP</th>
+          <th>Skill</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>本质</td>
+          <td>一次性角色设定</td>
+          <td>工具/能力扩展协议</td>
+          <td>可复用行为约束</td>
+      </tr>
+      <tr>
+          <td>解决什么问题</td>
+          <td>临时调整 AI 风格</td>
+          <td>AI 连不到外部系统</td>
+          <td>AI 不按规范工作</td>
+      </tr>
+      <tr>
+          <td>需要写代码</td>
+          <td>否</td>
+          <td>是（Server/Client）</td>
+          <td>非必须（纯 Markdown就可以，scripts为可选）</td>
+      </tr>
+      <tr>
+          <td>持久性</td>
+          <td>仅当前对话</td>
+          <td>持久（服务常驻）</td>
+          <td>持久（文件存储）</td>
+      </tr>
+      <tr>
+          <td>面向人群</td>
+          <td>所有人</td>
+          <td>开发者</td>
+          <td>所有人</td>
+      </tr>
+      <tr>
+          <td>典型例子</td>
+          <td>&ldquo;你是一个翻译助手&rdquo;</td>
+          <td>连接数据库、调用 API</td>
+          <td>强制 TDD、规范 Git 提交</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="skill-构成">Skill 构成</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>my-skill/
+</span></span><span style="display:flex;"><span>├── SKILL.md          <span style="color:#8b949e;font-style:italic"># Required: metadata + instructions</span>
+</span></span><span style="display:flex;"><span>├── scripts/          <span style="color:#8b949e;font-style:italic"># Optional: executable code</span>
+</span></span><span style="display:flex;"><span>├── references/       <span style="color:#8b949e;font-style:italic"># Optional: documentation</span>
+</span></span><span style="display:flex;"><span>├── assets/           <span style="color:#8b949e;font-style:italic"># Optional: templates, resources</span>
+</span></span><span style="display:flex;"><span>└── ...               <span style="color:#8b949e;font-style:italic"># Any additional files or directories</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>​	一个技能就是一个包含 <code>SKILL.md</code> 文件的文件夹。该文件包含元数据（至少包括 <code>name</code> 和 <code>description</code> ）以及指导代理如何执行特定任务的指令。技能还可以捆绑脚本、参考资料、模板和其他资源。</p>
+<blockquote>
+<p>SKILL.md = 触发说明 + 任务目标 + 输入要求 + 执行流程 + 输出格式 + 质量标准 + 限制规则 + 示例 + 外部资源说明</p></blockquote>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-md" data-lang="md"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>name: skill-unique-name  （必须）
+</span></span><span style="display:flex;"><span>description （必须）: |
+</span></span><span style="display:flex;"><span>  触发场景描述。说明这个 Skill 做什么、什么时候应该使用。
+</span></span><span style="display:flex;"><span>  AI 会优先根据这里判断是否启用该 Skill。
+</span></span><span style="display:flex;"><span>license(可选): Apache-2.0 
+</span></span><span style="display:flex;"><span>metadata(可选) : 
+</span></span><span style="display:flex;"><span>  author: Luenci
+</span></span><span style="display:flex;"><span>  version: &#34;1.0&#34;
+</span></span><span style="display:flex;"><span>---  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"># Skill 名称
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"></span>
+</span></span><span style="display:flex;"><span><span style="color:#a5d6ff">`SKILL.md`</span> 是 Skill 的入口文件，用来告诉 AI：这个 Skill 的用途、触发条件、输入要求、执行步骤、输出格式和限制规则。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 1. Skill 做什么
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>说明 Skill 的核心能力和目标，例如：用于整理会议纪要、分析客户反馈、生成周报、处理文件等。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 2. 什么时候使用
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>说明 Skill 的触发场景。用户提出哪些任务、提供哪些材料或使用哪些关键词时，AI 应该调用该 Skill。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 3. 需要什么输入
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>说明用户需要提供的内容，例如文本、文件、表格、链接、模板、字段信息或其他上下文。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 4. 具体执行步骤
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>说明 AI 应该按照什么流程完成任务，通常用 1、2、3 的步骤列出。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 5. 输出格式
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>规定最终结果的结构，例如 Markdown、表格、JSON、邮件、报告模板或固定标题层级。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 6. 质量标准
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>说明结果应满足的要求，例如准确、完整、简洁、结构化、可执行、不遗漏关键信息。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 7. 特殊规则或限制
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>说明必须遵守的边界，例如不要编造、不要跳过校验、不要改变格式、缺失信息要标注“待确认”。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 8. 示例
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>提供一个简短的用户输入和期望输出，帮助 AI 理解正确的处理方式和输出风格。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 9. 需要调用的脚本、模板、参考资料
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>说明是否需要使用 <span style="color:#a5d6ff">`scripts/`</span>、<span style="color:#a5d6ff">`references/`</span>、<span style="color:#a5d6ff">`assets/`</span> 中的脚本、模板、规范或示例文件。
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="三类可选资源详解">三类可选资源详解</h3>
+<h4 id="scripts--确定性脚本">scripts/  确定性脚本</h4>
+<p><strong>用途：</strong> 把反复编写的代码固化成可直接执行的脚本。<strong>Skill 执行过程中可调用的脚本</strong></p>
+<p><strong>适合场景：</strong></p>
+<ul>
+<li>旋转 PDF：<code>scripts/rotate_pdf.py</code></li>
+<li>解密音频：<code>scripts/decrypt_ncm.py</code></li>
+<li>分析日志：<code>scripts/parse_log.py</code></li>
+</ul>
+<p><strong>优势：</strong> 不需要读入上下文就能执行，节省 token。</p>
+<h4 id="references-参考文档">references/ 参考文档</h4>
+<p><strong>用途：</strong> 存储 AI 需要参考但不必一直占用上下文的知识。<strong>给 AI 提供背景知识和参考规范</strong></p>
+<p><strong>适合场景：</strong></p>
+<ul>
+<li>数据库表结构：<code>references/schema.md</code></li>
+<li>API 文档：<code>references/api_docs.md</code></li>
+<li>公司政策：<code>references/policies.md</code></li>
+</ul>
+<p><strong>设计原则：</strong> 按领域拆分成独立文件，用户问销售数据时只加载 <code>sales.md</code>，不加载 <code>finance.md</code>。</p>
+<h4 id="assets-静态资源">assets/ 静态资源</h4>
+<p><strong>用途：</strong> 存储输出中会用到的文件，不需要读入上下文。<strong>模板、静态文件</strong></p>
+<p><strong>适合场景：</strong></p>
+<ul>
+<li>前端模板：<code>assets/frontend-template/</code></li>
+<li>PPT 模板：<code>assets/slides.pptx</code></li>
+<li>品牌 Logo：<code>assets/logo.png</code></li>
+<li>checklist 模板：<code>checklist.md</code></li>
+</ul>
+<h4 id="使用参考">使用参考</h4>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-md" data-lang="md"><span style="display:flex;"><span><span style="color:#79c0ff">## 参考规范 请在审查前阅读 reference/style-guide.md 中的编码规范。 
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 执行流程 
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>	<span style="color:#ff7b72">1.</span> 运行 scripts/validate.sh 做静态检查 
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">2.</span> 按照 assets/checklist.md 逐项审查 
+</span></span><span style="display:flex;"><span>	<span style="color:#ff7b72">3.</span> 使用 assets/templates/report.md 格式输出结果
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="skill-工作流程">Skill 工作流程</h2>
+<ol>
+<li><strong>Discovery</strong>（发现）: agent 启动时，智能体仅加载每个可用技能的名称和描述，加载技能介绍。后续按需调用技能</li>
+<li><strong>Activation</strong>（加载）：当任务与技能的描述匹配时，agent 会将完整的 <code>SKILL.md</code> 指令读入上下文。</li>
+<li><strong>Execution</strong>（执行）：agent 遵循指令，根据需要可选地执行捆绑的代码或加载引用的文件。</li>
+</ol>
+<h3 id="三级加载机制">三级加载机制</h3>
+<p>Skill 采用&quot;按需加载&quot;的设计，避免浪费上下文窗口：</p>
+<table>
+  <thead>
+      <tr>
+          <th>级别</th>
+          <th>内容</th>
+          <th>何时加载</th>
+          <th>大小</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>第一级</td>
+          <td><code>name</code> + <code>description</code></td>
+          <td><strong>始终在上下文中</strong></td>
+          <td>~100 词</td>
+      </tr>
+      <tr>
+          <td>第二级</td>
+          <td><code>SKILL.md</code> 正文</td>
+          <td><strong>Skill 被触发后</strong></td>
+          <td>&lt; 5000 词</td>
+      </tr>
+      <tr>
+          <td>第三级</td>
+          <td><code>scripts/</code> <code>references/</code> <code>assets/</code></td>
+          <td><strong>AI 判断需要时</strong></td>
+          <td>无限制</td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>实际效果：</strong> AI 随时知道有哪些 Skill，但只有真正需要时才&quot;打开&quot;它。</p>
+<h2 id="skill-编写实践">Skill 编写实践</h2>
+<h3 id="核心设计原则">核心设计原则</h3>
+<h4 id="原则-1精简优先">原则 1：精简优先</h4>
+<p>上下文窗口是公共资源。每加一段文字都问自己：</p>
+<blockquote>
+<p>&ldquo;这是 AI 不知道的信息吗？删掉会有什么后果？&rdquo;</p></blockquote>
+<p><strong>不要写：</strong> &ldquo;在开始之前，你需要理解这个任务的重要性&hellip;&rdquo;
+<strong>要写：</strong> 直接给出操作步骤。</p>
+<h4 id="原则-2自由度要匹配任务">原则 2：自由度要匹配任务</h4>
+<table>
+  <thead>
+      <tr>
+          <th>任务特性</th>
+          <th>自由度</th>
+          <th>写法</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>步骤固定、易出错</td>
+          <td>低</td>
+          <td>具体脚本 + 严格参数</td>
+      </tr>
+      <tr>
+          <td>有首选方案、允许变化</td>
+          <td>中</td>
+          <td>伪代码 + 可配置参数</td>
+      </tr>
+      <tr>
+          <td>多种方案均可、依赖上下文</td>
+          <td>高</td>
+          <td>文字指导 + 启发式原则</td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="原则-3渐进式披露">原则 3：渐进式披露</h4>
+<p>SKILL.md 只放核心工作流，细节通过引用指向 <code>references/</code> 文件：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#79c0ff">## 高级功能
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> **表单填写**：详见 [<span style="color:#7ee787">FORMS.md</span>](references/FORMS.md)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> **API 参考**：详见 [<span style="color:#7ee787">API.md</span>](references/API.md)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 日志格式
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span>详见 [<span style="color:#7ee787">references/log-format.md</span>](references/log-format.md)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="常见误区">常见误区</h3>
+<table>
+  <thead>
+      <tr>
+          <th>误区</th>
+          <th>正确做法</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>在 SKILL.md 正文写&quot;何时使用&quot;</td>
+          <td>应写在 <code>description</code> 字段（正文触发后才加载，写了也没用）</td>
+      </tr>
+      <tr>
+          <td>创建 README.md、CHANGELOG.md</td>
+          <td>只保留任务必需的文件</td>
+      </tr>
+      <tr>
+          <td>把所有细节塞进 SKILL.md</td>
+          <td>细节放 <code>references/</code>，<strong>SKILL.md 只放核心流程</strong></td>
+      </tr>
+      <tr>
+          <td>跳过脚本测试</td>
+          <td>脚本必须实际运行验证</td>
+      </tr>
+      <tr>
+          <td>深层嵌套引用</td>
+          <td><strong>所有 references 文件直接从 SKILL.md 一层引用</strong></td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="skill-示例">SKill 示例</h2>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">53
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">54
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">55
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">56
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">57
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">58
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">59
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">60
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">61
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">62
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">63
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">64
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">65
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">66
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">67
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">68
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">69
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">70
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">71
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">72
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">73
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">74
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>name: meeting-notes-summarizer
+</span></span><span style="display:flex;"><span>description: |
+</span></span><span style="display:flex;"><span>  Use when the user provides Chinese meeting notes, call transcripts, chat logs, or project discussions and asks to generate a structured meeting summary, action items, owners, deadlines, risks, and open questions.
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"># 会议纪要整理助手
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"></span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 核心原则
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span><span style="color:#ff7b72">-</span> 只基于用户提供的内容总结，不编造信息。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 区分“已确认结论”“讨论中事项”和“待确认问题”。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 输出必须结构化、简洁、可执行。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 缺失信息明确标注“未提及”或“待确认”。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 适用输入
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>用户可能提供以下内容：
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 原始会议转写文本
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 零散会议笔记
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 项目讨论记录
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Slack、飞书、微信等聊天记录
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 多人评审或复盘材料
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 执行流程
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span><span style="color:#ff7b72">1.</span> 阅读用户提供的全部内容。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">2.</span> 识别会议主题、背景和核心讨论点。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">3.</span> 提取明确达成一致的关键结论。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">4.</span> 提取行动项，包括任务、负责人、截止时间和状态。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">5.</span> 标记风险、阻塞点和待确认问题。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">6.</span> 按指定输出格式生成会议纪要。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">7.</span> 输出前检查是否存在编造、遗漏或格式错误。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 输出格式
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span>请按以下格式输出：
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"># 会议纪要
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"></span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 一、会议主题
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 二、会议背景
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 三、关键结论
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span><span style="color:#ff7b72">1.</span> ...
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">2.</span> ...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 四、行动项
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>| 任务 | 负责人 | 截止时间 | 状态 |
+</span></span><span style="display:flex;"><span>|---|---|---|---|
+</span></span><span style="display:flex;"><span>| ... | ... | ... | ... |
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 五、风险与阻塞
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span><span style="color:#ff7b72">-</span> ...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 六、待确认问题
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span><span style="color:#ff7b72">-</span> ...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 七、简短总结
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 禁止行为
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span><span style="color:#ff7b72">-</span> 不要编造参会人、负责人、截止时间或结论。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 不要把未确认的讨论写成已决定事项。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 不要逐字复述原文。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 不要省略风险、阻塞和待确认问题。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 不要改变输出结构，除非用户明确要求。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## 质量检查
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>输出前确认：
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 关键结论是否都能从原文找到依据。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 行动项是否包含任务、负责人、截止时间和状态。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 缺失信息是否已标注“未提及”或“待确认”。
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 是否区分了结论、风险和待确认问题。
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h1 id="参考链接">参考链接</h1>
+<ul>
+<li>岛雨AI：https://juejin.cn/post/7620262637797408808</li>
+<li>agentskills：https://agentskills.io/specification</li>
+</ul>
+]]></content:encoded>
+    </item>
+    <item>
       <title>译文 | 规范驱动开发（SDD）</title>
       <link>https://luenci.com/en/posts/%E8%A7%84%E8%8C%83%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91sdd/</link>
       <pubDate>Fri, 17 Apr 2026 00:00:00 +0000</pubDate>
