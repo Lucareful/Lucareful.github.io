@@ -4,19 +4,25 @@
     <title>Runtime on Luenci</title>
     <link>https://luenci.com/en/categories/runtime/</link>
     <description>Recent content in Runtime on Luenci</description>
-    <generator>Hugo -- 0.145.0</generator>
+    <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 11 Mar 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/categories/runtime/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>转载 | 理解 Go 运行时（二）：内存分配器</title>
       <link>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BA%8C%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%99%A8/</link>
       <pubDate>Wed, 11 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BA%8C%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%99%A8/</guid>
-      <description>&lt;blockquote&gt;
-&lt;p&gt;原文链接：https://internals-for-interns.com/posts/go-memory-allocator/&lt;/p&gt;&lt;/blockquote&gt;
-&lt;p&gt;​	你可以将内存分配器想象成一位仓库管理员。你的程序持续需要各种尺寸的&amp;quot;箱子&amp;quot;——有时极小，有时极大——并且需要快速获取。分配器的职责就是尽可能迅速地分发这些箱子，保持仓库井然有序以避免浪费，同时与垃圾回收器协同回收那些不再被使用的箱子。&lt;/p&gt;</description>
+      <description>译解 Go runtime 内存分配器的 mcache、mcentral、mheap、span 和大小类别，说明堆分配如何与 GC 协作。</description>
       <content:encoded><![CDATA[<blockquote>
+<p>一句话结论：Go 内存分配器通过 mcache、mcentral、mheap 的分层设计，把常见小对象分配尽量留在低锁竞争路径上。</p>
+<p>本文回答：</p>
+<ul>
+<li>哪些变量会走堆分配？</li>
+<li>span、大小类别和 arena 如何组织内存？</li>
+<li>mcache、mcentral、mheap 分别负责什么？</li>
+</ul></blockquote>
+<blockquote>
 <p>原文链接：https://internals-for-interns.com/posts/go-memory-allocator/</p></blockquote>
 <p>​	你可以将内存分配器想象成一位仓库管理员。你的程序持续需要各种尺寸的&quot;箱子&quot;——有时极小，有时极大——并且需要快速获取。分配器的职责就是尽可能迅速地分发这些箱子，保持仓库井然有序以避免浪费，同时与垃圾回收器协同回收那些不再被使用的箱子。</p>
 <h2 id="内存分配何时发生">内存分配何时发生？</h2>
@@ -199,8 +205,7 @@
 <p>​	内存分配器不仅关心对象的大小，还关心对象是否包含指针。为什么？因为垃圾回收器需要扫描包含指针的对象，以便追踪引用并找到存活数据。不包含指针的对象（比如一个 <code>[100]byte</code> 或仅包含整数的结构体）在垃圾回收期间可以安全跳过——没有需要追踪的内容。</p>
 <p>​	因此，Go 为每种情况维护独立的跨度：一种用于需要扫描的对象（scan），另一种用于不需要扫描的对象（noscan）。大小类别与扫描/非扫描标志的组合被称为跨度类别。由于有 68 种大小类别，每种又有 2 种变体，总共就有 136 种跨度类别。</p>
 <p>​	综合以上，完整的图景如下所示：</p>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310174420478.webp" alt="Arena, pages, spans and objects layout"  />
-</p>
+<p><img alt="Arena, pages, spans and objects layout" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310174420478.webp"></p>
 <p>​	分配器向操作系统请求内存区域，将其划分为页面，将页面分组为跨度，再将跨度划分为固定大小的槽位。每一级都使下一级变得易于管理。但我们还有一个尚未讨论的大问题：Go 程序同时运行许多 goroutine，它们都需要分配内存。如何在不使分配器成为瓶颈的情况下，保持这一切的有序运行？</p>
 <h2 id="锁竞争问题">锁竞争问题</h2>
 <p>​	至此我们已经了解了内存的组织方式——竞技场、页面、跨度、槽位。但还有一个关键问题尚未解决：当多个协程同时尝试分配内存时会发生什么？</p>
@@ -214,8 +219,7 @@
 <p>​	当一个 mcentral 没有更多 span 可以分配时，它会向 mheap 请求新的页面来创建一个新的 span。mheap 是全局的页面分配器——只有一个，访问它需要一个全局锁。这是慢速路径。它涉及搜索空闲页面，可能向操作系统请求一个新的 arena，并初始化一个新的 span。但这种情况很少发生，因为上面的层级吸收了大部分的需求。</p>
 <p>​	这也是我们之前提到的大对象（&gt;32KB）最终的去处——它们跳过 mcache 和 mcentral，直接进入 mheap。</p>
 <p>整个设计就像一个缓存链：</p>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310231232488.webp" alt="Memory allocator hierarchy levels"  />
-</p>
+<p><img alt="Memory allocator hierarchy levels" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310231232488.webp"></p>
 <p>​	每一层都充当下一层的缓存。快速路径是无锁的，中等路径使用细粒度锁，而慢速路径在实际中足够罕见，其开销可以忽略不计。这一设计基于名为 tcmalloc（线程缓存分配器）的方法，最初由谷歌为 C/C++程序设计，但已针对 Go 的特定需求进行了调整。</p>
 <p>​	既然我们已经理解了结构和层级，接下来让我们一步步了解实际发生的过程。</p>
 <h2 id="分配流程">分配流程</h2>
@@ -267,13 +271,19 @@
       <link>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%B8%80%E5%BC%95%E5%AF%BC%E7%A8%8B%E5%BA%8F/</link>
       <pubDate>Fri, 27 Feb 2026 00:00:00 +0000</pubDate>
       <guid>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%B8%80%E5%BC%95%E5%AF%BC%E7%A8%8B%E5%BA%8F/</guid>
-      <description>&lt;blockquote&gt;
-&lt;p&gt;参考文章：https://internals-for-interns.com/posts/understanding-go-runtime&lt;/p&gt;
-&lt;p&gt;本次程序实验环境均在 ： mac os arm64  架构上运行&lt;/p&gt;</description>
+      <description>译解 Go 程序进入 main 前的 runtime 引导流程，包括线程、goroutine、调度器、内存分配器和 GC 初始化。</description>
       <content:encoded><![CDATA[<blockquote>
+<p>一句话结论：Go 程序真正执行 main 之前，runtime 已经完成线程、栈、调度器、内存分配器和 GC 等关键初始化。</p>
+<p>本文回答：</p>
+<ul>
+<li>Go 程序入口为什么不是直接进入 main？</li>
+<li>runtime 在 schedinit 阶段初始化了什么？</li>
+<li>system monitor 和 package init 在启动流程中处于什么位置？</li>
+</ul></blockquote>
+<blockquote>
 <p>参考文章：https://internals-for-interns.com/posts/understanding-go-runtime</p>
 <p>本次程序实验环境均在 ： mac os arm64  架构上运行</p></blockquote>
-<h1 id="tldrai总结人工审核">TL,DR（AI总结，人工审核）</h1>
+<h2 id="tldrai总结人工审核">TL,DR（AI总结，人工审核）</h2>
 <p>​	文章介绍 Go 程序启动时 runtime 的引导过程：从创建首个线程与 goroutine、初始化 TLS、CPU 检测，到调度器、内存分配器、GC 与 P 结构建立，最终启动 system monitor 并执行包初始化，才进入 main。</p>
 <h2 id="前言">前言</h2>
 <p>​	当你编写 Go 代码时，幕后会发生许多事情。协程是轻量级的，通道能直接运行，内存会自动管理，你完全无需考虑线程池。这一切都由 Go 运行时驱动——这是一个复杂的底层架构，会被编译进每个 Go 二进制文件中。</p>
@@ -400,8 +410,7 @@
 <h2 id="引导概览">引导概览</h2>
 <p>让我们逐步了解整个引导过程——从操作系统启动你的二进制文件，到你的 <code>func main()</code> 函数最终运行之间发生的一切。</p>
 <p>以下是全局概览——运行时系统在你的代码运行前采取的每一步：</p>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260226132531697.png" alt="Go bootstrap big picture"  />
-</p>
+<p><img alt="Go bootstrap big picture" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260226132531697.png"></p>
 <h2 id="入口点并非你的-main函数">入口点：并非你的 main()函数</h2>
 <p>第一个令人惊讶的事实：你的 <code>main</code> 函数并非程序的入口点。我们可以证明这一点。让我们使用 <code>readelf</code> 来找出我们那个什么都不做的二进制文件的实际入口点：</p>
 <blockquote>
@@ -501,7 +510,7 @@
 <p>但当它返回时会发生什么？</p>
 <h3 id="after-main-returns-main-返回之后">After main() Returns main() 返回之后</h3>
 <p>​	当你的 <code>main</code> 返回时，运行时并不会立即退出。它会给予一个短暂的宽限期，让那些正在处理恐慌的 goroutine 完成它们的延迟清理工作。但其他仍在运行的 goroutine 呢？它们会被直接终止——没有警告，没有清理。如果你需要它们完成，你必须显式地进行同步（例如，使用 <code>sync.WaitGroup</code> ）。</p>
-<h1 id="总结">总结</h1>
+<h2 id="总结">总结</h2>
 <p>​	那么，回到我们最初的问题：为什么 Go 在“什么都不做”时显得“慢”？现在你明白了——它其实并非无所事事。当你的<code>main</code>函数开始运行时，运行时环境已经从零开始构建了完整的执行环境：第一个 goroutine 和线程、线程本地存储、栈池、内存分配器、映射的哈希函数、垃圾回收器、每个 CPU 核心对应一个 P 的调度器、系统监控线程，以及所有包的初始化函数。</p>
 <p>​	这套机制相当复杂。但正是这些让 Go 语言在编写时显得如此轻松——协程之所以轻量，是因为栈池和分配器早已就位；内存管理之所以无感，是因为垃圾回收器已在后台运行；并发之所以能自然运作，是因为调度器在你的第一行代码执行前就已准备就绪。</p>
 ]]></content:encoded>

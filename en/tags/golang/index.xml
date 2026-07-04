@@ -4,19 +4,25 @@
     <title>Golang on Luenci</title>
     <link>https://luenci.com/en/tags/golang/</link>
     <description>Recent content in Golang on Luenci</description>
-    <generator>Hugo -- 0.145.0</generator>
+    <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 11 Mar 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/tags/golang/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>转载 | 理解 Go 运行时（二）：内存分配器</title>
       <link>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BA%8C%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%99%A8/</link>
       <pubDate>Wed, 11 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BA%8C%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%99%A8/</guid>
-      <description>&lt;blockquote&gt;
-&lt;p&gt;原文链接：https://internals-for-interns.com/posts/go-memory-allocator/&lt;/p&gt;&lt;/blockquote&gt;
-&lt;p&gt;​	你可以将内存分配器想象成一位仓库管理员。你的程序持续需要各种尺寸的&amp;quot;箱子&amp;quot;——有时极小，有时极大——并且需要快速获取。分配器的职责就是尽可能迅速地分发这些箱子，保持仓库井然有序以避免浪费，同时与垃圾回收器协同回收那些不再被使用的箱子。&lt;/p&gt;</description>
+      <description>译解 Go runtime 内存分配器的 mcache、mcentral、mheap、span 和大小类别，说明堆分配如何与 GC 协作。</description>
       <content:encoded><![CDATA[<blockquote>
+<p>一句话结论：Go 内存分配器通过 mcache、mcentral、mheap 的分层设计，把常见小对象分配尽量留在低锁竞争路径上。</p>
+<p>本文回答：</p>
+<ul>
+<li>哪些变量会走堆分配？</li>
+<li>span、大小类别和 arena 如何组织内存？</li>
+<li>mcache、mcentral、mheap 分别负责什么？</li>
+</ul></blockquote>
+<blockquote>
 <p>原文链接：https://internals-for-interns.com/posts/go-memory-allocator/</p></blockquote>
 <p>​	你可以将内存分配器想象成一位仓库管理员。你的程序持续需要各种尺寸的&quot;箱子&quot;——有时极小，有时极大——并且需要快速获取。分配器的职责就是尽可能迅速地分发这些箱子，保持仓库井然有序以避免浪费，同时与垃圾回收器协同回收那些不再被使用的箱子。</p>
 <h2 id="内存分配何时发生">内存分配何时发生？</h2>
@@ -199,8 +205,7 @@
 <p>​	内存分配器不仅关心对象的大小，还关心对象是否包含指针。为什么？因为垃圾回收器需要扫描包含指针的对象，以便追踪引用并找到存活数据。不包含指针的对象（比如一个 <code>[100]byte</code> 或仅包含整数的结构体）在垃圾回收期间可以安全跳过——没有需要追踪的内容。</p>
 <p>​	因此，Go 为每种情况维护独立的跨度：一种用于需要扫描的对象（scan），另一种用于不需要扫描的对象（noscan）。大小类别与扫描/非扫描标志的组合被称为跨度类别。由于有 68 种大小类别，每种又有 2 种变体，总共就有 136 种跨度类别。</p>
 <p>​	综合以上，完整的图景如下所示：</p>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310174420478.webp" alt="Arena, pages, spans and objects layout"  />
-</p>
+<p><img alt="Arena, pages, spans and objects layout" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310174420478.webp"></p>
 <p>​	分配器向操作系统请求内存区域，将其划分为页面，将页面分组为跨度，再将跨度划分为固定大小的槽位。每一级都使下一级变得易于管理。但我们还有一个尚未讨论的大问题：Go 程序同时运行许多 goroutine，它们都需要分配内存。如何在不使分配器成为瓶颈的情况下，保持这一切的有序运行？</p>
 <h2 id="锁竞争问题">锁竞争问题</h2>
 <p>​	至此我们已经了解了内存的组织方式——竞技场、页面、跨度、槽位。但还有一个关键问题尚未解决：当多个协程同时尝试分配内存时会发生什么？</p>
@@ -214,8 +219,7 @@
 <p>​	当一个 mcentral 没有更多 span 可以分配时，它会向 mheap 请求新的页面来创建一个新的 span。mheap 是全局的页面分配器——只有一个，访问它需要一个全局锁。这是慢速路径。它涉及搜索空闲页面，可能向操作系统请求一个新的 arena，并初始化一个新的 span。但这种情况很少发生，因为上面的层级吸收了大部分的需求。</p>
 <p>​	这也是我们之前提到的大对象（&gt;32KB）最终的去处——它们跳过 mcache 和 mcentral，直接进入 mheap。</p>
 <p>整个设计就像一个缓存链：</p>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310231232488.webp" alt="Memory allocator hierarchy levels"  />
-</p>
+<p><img alt="Memory allocator hierarchy levels" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260310231232488.webp"></p>
 <p>​	每一层都充当下一层的缓存。快速路径是无锁的，中等路径使用细粒度锁，而慢速路径在实际中足够罕见，其开销可以忽略不计。这一设计基于名为 tcmalloc（线程缓存分配器）的方法，最初由谷歌为 C/C++程序设计，但已针对 Go 的特定需求进行了调整。</p>
 <p>​	既然我们已经理解了结构和层级，接下来让我们一步步了解实际发生的过程。</p>
 <h2 id="分配流程">分配流程</h2>
@@ -267,13 +271,19 @@
       <link>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%B8%80%E5%BC%95%E5%AF%BC%E7%A8%8B%E5%BA%8F/</link>
       <pubDate>Fri, 27 Feb 2026 00:00:00 +0000</pubDate>
       <guid>https://luenci.com/en/posts/%E7%90%86%E8%A7%A3-go-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%B8%80%E5%BC%95%E5%AF%BC%E7%A8%8B%E5%BA%8F/</guid>
-      <description>&lt;blockquote&gt;
-&lt;p&gt;参考文章：https://internals-for-interns.com/posts/understanding-go-runtime&lt;/p&gt;
-&lt;p&gt;本次程序实验环境均在 ： mac os arm64  架构上运行&lt;/p&gt;</description>
+      <description>译解 Go 程序进入 main 前的 runtime 引导流程，包括线程、goroutine、调度器、内存分配器和 GC 初始化。</description>
       <content:encoded><![CDATA[<blockquote>
+<p>一句话结论：Go 程序真正执行 main 之前，runtime 已经完成线程、栈、调度器、内存分配器和 GC 等关键初始化。</p>
+<p>本文回答：</p>
+<ul>
+<li>Go 程序入口为什么不是直接进入 main？</li>
+<li>runtime 在 schedinit 阶段初始化了什么？</li>
+<li>system monitor 和 package init 在启动流程中处于什么位置？</li>
+</ul></blockquote>
+<blockquote>
 <p>参考文章：https://internals-for-interns.com/posts/understanding-go-runtime</p>
 <p>本次程序实验环境均在 ： mac os arm64  架构上运行</p></blockquote>
-<h1 id="tldrai总结人工审核">TL,DR（AI总结，人工审核）</h1>
+<h2 id="tldrai总结人工审核">TL,DR（AI总结，人工审核）</h2>
 <p>​	文章介绍 Go 程序启动时 runtime 的引导过程：从创建首个线程与 goroutine、初始化 TLS、CPU 检测，到调度器、内存分配器、GC 与 P 结构建立，最终启动 system monitor 并执行包初始化，才进入 main。</p>
 <h2 id="前言">前言</h2>
 <p>​	当你编写 Go 代码时，幕后会发生许多事情。协程是轻量级的，通道能直接运行，内存会自动管理，你完全无需考虑线程池。这一切都由 Go 运行时驱动——这是一个复杂的底层架构，会被编译进每个 Go 二进制文件中。</p>
@@ -400,8 +410,7 @@
 <h2 id="引导概览">引导概览</h2>
 <p>让我们逐步了解整个引导过程——从操作系统启动你的二进制文件，到你的 <code>func main()</code> 函数最终运行之间发生的一切。</p>
 <p>以下是全局概览——运行时系统在你的代码运行前采取的每一步：</p>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260226132531697.png" alt="Go bootstrap big picture"  />
-</p>
+<p><img alt="Go bootstrap big picture" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260226132531697.png"></p>
 <h2 id="入口点并非你的-main函数">入口点：并非你的 main()函数</h2>
 <p>第一个令人惊讶的事实：你的 <code>main</code> 函数并非程序的入口点。我们可以证明这一点。让我们使用 <code>readelf</code> 来找出我们那个什么都不做的二进制文件的实际入口点：</p>
 <blockquote>
@@ -501,7 +510,7 @@
 <p>但当它返回时会发生什么？</p>
 <h3 id="after-main-returns-main-返回之后">After main() Returns main() 返回之后</h3>
 <p>​	当你的 <code>main</code> 返回时，运行时并不会立即退出。它会给予一个短暂的宽限期，让那些正在处理恐慌的 goroutine 完成它们的延迟清理工作。但其他仍在运行的 goroutine 呢？它们会被直接终止——没有警告，没有清理。如果你需要它们完成，你必须显式地进行同步（例如，使用 <code>sync.WaitGroup</code> ）。</p>
-<h1 id="总结">总结</h1>
+<h2 id="总结">总结</h2>
 <p>​	那么，回到我们最初的问题：为什么 Go 在“什么都不做”时显得“慢”？现在你明白了——它其实并非无所事事。当你的<code>main</code>函数开始运行时，运行时环境已经从零开始构建了完整的执行环境：第一个 goroutine 和线程、线程本地存储、栈池、内存分配器、映射的哈希函数、垃圾回收器、每个 CPU 核心对应一个 P 的调度器、系统监控线程，以及所有包的初始化函数。</p>
 <p>​	这套机制相当复杂。但正是这些让 Go 语言在编写时显得如此轻松——协程之所以轻量，是因为栈池和分配器早已就位；内存管理之所以无感，是因为垃圾回收器已在后台运行；并发之所以能自然运作，是因为调度器在你的第一行代码执行前就已准备就绪。</p>
 ]]></content:encoded>
@@ -523,8 +532,7 @@
 &lt;p&gt;​	在计算机体系结构中，&amp;ldquo;字&amp;quot;是处理器可以在单个操作中处理的数据单元 - 通常是内存中可寻址的最小单位。它是固定大小的比特（二进制数字）组。处理器的字长决定了它处理数据的效率。常见的字长包括 8、16、32 和 64 比特。一些计算机处理器体系结构支持半字，即一个字中的一半比特数，以及双字，即两个相邻字。&lt;/p&gt;
 &lt;p&gt;​	现在最常见的架构是 32 位和 64 位。如果你有 32 位处理器，那意味着它可以一次访问 4 个字节，也就是字长为 4 个字节。如果你有 64 位处理器，那意味着它可以一次访问 8 个字节，也就是字长为 8 个字节。&lt;/p&gt;
 &lt;p&gt;​	将数据存储在内存中时，每个 32 位数据字都有一个唯一地址，如下所示。&lt;/p&gt;
-&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111819119.jpg&#34; alt=&#34;memory&#34;  /&gt;
-&lt;/p&gt;
+&lt;p&gt;&lt;img alt=&#34;memory&#34; loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111819119.jpg&#34;&gt;&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;&lt;em&gt;Figure. 1 - 可寻址内存&lt;/em&gt;&lt;/p&gt;&lt;/blockquote&gt;
 &lt;p&gt;​	我们可以使用加载字（lw）指令读取存储在内存中的数据并将其加载到一个寄存器中。&lt;/p&gt;
@@ -551,8 +559,7 @@
 <p>​	在计算机体系结构中，&ldquo;字&quot;是处理器可以在单个操作中处理的数据单元 - 通常是内存中可寻址的最小单位。它是固定大小的比特（二进制数字）组。处理器的字长决定了它处理数据的效率。常见的字长包括 8、16、32 和 64 比特。一些计算机处理器体系结构支持半字，即一个字中的一半比特数，以及双字，即两个相邻字。</p>
 <p>​	现在最常见的架构是 32 位和 64 位。如果你有 32 位处理器，那意味着它可以一次访问 4 个字节，也就是字长为 4 个字节。如果你有 64 位处理器，那意味着它可以一次访问 8 个字节，也就是字长为 8 个字节。</p>
 <p>​	将数据存储在内存中时，每个 32 位数据字都有一个唯一地址，如下所示。</p>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111819119.jpg" alt="memory"  />
-</p>
+<p><img alt="memory" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111819119.jpg"></p>
 <blockquote>
 <p><em>Figure. 1 - 可寻址内存</em></p></blockquote>
 <p>​	我们可以使用加载字（lw）指令读取存储在内存中的数据并将其加载到一个寄存器中。</p>
@@ -641,8 +648,7 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p>报告的大小是 24 字节，而不是 17 字节。这种差异是由内存对齐引起的。</p>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111822307.jpg" alt="dc2"  />
-</p>
+<p><img alt="dc2" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111822307.jpg"></p>
 <blockquote>
 <p>图 未优化的内存布局</p></blockquote>
 <p>​	Employee 结构将使用 8*3 = 24 字节。现在看到问题了， <code>Employee</code> 的布局中有很多空洞（对齐规则产生的间隙称为“填充”）。</p>
@@ -682,18 +688,15 @@
 </div>
 </div><h3 id="对齐方式如何影响性能">对齐方式如何影响性能</h3>
 <p>​	CPU 以字长而非字节大小读取数据。在 64 位系统中，一个字是 8 字节，而在 32 位系统中，一个字是 4 字节。简而言之，CPU 以其字大小的倍数来读取地址。为了获取变量 passportId，我们的 CPU 需要两个周期来访问数据，而不是一个。第一个周期将提取内存 0 到 7，随后的周期将提取其余部分。这是低效的- 我们需要数据结构对齐。通过简单地对齐数据，计算机确保 <code>var passportId</code> 可以在一个 CPU 周期内检索到。</p>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111825038.jpg" alt="duiqi"  />
-</p>
+<p><img alt="duiqi" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111825038.jpg"></p>
 <blockquote>
 <p><em>比较内存访问效率</em></p></blockquote>
 <p>​	填充是实现数据对齐的关键。填充发生是因为现代 CPU 被优化为从对齐地址的内存中读取数据。这种对齐使 CPU 能够在一次操作中读取数据。</p>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111826953.jpg" alt="di1"  />
-</p>
+<p><img alt="di1" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111826953.jpg"></p>
 <p>​	没有填充，数据可能不对齐，导致多次内存访问和性能较慢。因此，虽然填充可能会浪费一些内存，但它确保您的程序运行高效。</p>
 <h3 id="填充优化策略">填充优化策略</h3>
 <p>​	对齐的结构消耗更少的内存，仅因为它具备比未对齐更好的结构字段顺序。由于填充，两个 13 字节的数据结构分别变成了 16 字节和 24 字节。因此，通过简单地重新排列您的结构字段，可以节省额外的内存。</p>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111828383.jpg" alt="d12"  />
-</p>
+<p><img alt="d12" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202412111828383.jpg"></p>
 <blockquote>
 <p>优化字段顺序</p></blockquote>
 <p>​	不正确对齐的数据可能会拖慢性能，因为 CPU 可能需要多个周期来访问未对齐的字段。相反，正确对齐的数据可减少缓存行的加载，这对性能至关重要，特别是在内存速度成为瓶颈的系统中。</p>
@@ -946,93 +949,16 @@
       <link>https://luenci.com/en/posts/golang-pprof-%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E5%8D%97/</link>
       <pubDate>Sat, 03 Aug 2024 00:00:00 +0000</pubDate>
       <guid>https://luenci.com/en/posts/golang-pprof-%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E5%8D%97/</guid>
-      <description>&lt;h1 id=&#34;golang-pprof-性能分析指南&#34;&gt;Golang pprof 性能分析指南&lt;/h1&gt;
-&lt;blockquote&gt;
-&lt;p&gt;pprof 是一个用于可视化和分析分析数据的工具。&lt;/p&gt;&lt;/blockquote&gt;
-&lt;h2 id=&#34;采样方式&#34;&gt;采样方式&lt;/h2&gt;
-&lt;table&gt;
-  &lt;thead&gt;
-      &lt;tr&gt;
-          &lt;th style=&#34;text-align: left&#34;&gt;方式名称&lt;/th&gt;
-          &lt;th style=&#34;text-align: left&#34;&gt;如何使用&lt;/th&gt;
-          &lt;th style=&#34;text-align: left&#34;&gt;优点&lt;/th&gt;
-          &lt;th style=&#34;text-align: left&#34;&gt;缺点&lt;/th&gt;
-          &lt;th style=&#34;text-align: left&#34;&gt;使用场景&lt;/th&gt;
-      &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-      &lt;tr&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;runtime/pprof&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;手动调用【runtime.StartCPUProfile、runtime.SweightCPUProfile】等&lt;strong&gt;API&lt;/strong&gt;来进行数据的采集。采集程序（非 Server）的指定区块的运行数据进行分析。&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;&lt;strong&gt;灵活性高&lt;/strong&gt;、按需采集。&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;&lt;strong&gt;工具型应用&lt;/strong&gt;（比如说定制化的分析小工具、集成到公司监控系统）。这种应用运行一段时间就结束。&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;net/http/pprof&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;通过&lt;strong&gt;http&lt;/strong&gt;服务来获取Profile采样文件。 &lt;code&gt;import _ &amp;quot;net/http/pprof&amp;quot;&lt;/code&gt;。基于 HTTP Server 运行，并且可以采集运行时数据进行分析。&lt;code&gt;net/http/pprof中只是使用runtime/pprof包来进行封装了一下，并在http端口上暴露出来&lt;/code&gt;&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;&lt;strong&gt;简单易用&lt;/strong&gt;&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;在线服务（一直运行着的程序）&lt;/td&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;go test&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;通过命令&lt;code&gt;go test -bench . -cpuprofile cpu.prof&lt;/code&gt;来进行采集数据。&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;&lt;strong&gt;针对性强&lt;/strong&gt;、细化到函数&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;&lt;/td&gt;
-          &lt;td style=&#34;text-align: left&#34;&gt;进行某函数的性能测试&lt;/td&gt;
-      &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-&lt;h2 id=&#34;指标解释&#34;&gt;指标解释&lt;/h2&gt;
-&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151739088.png&#34; alt=&#34;350959005-c2182bee-333f-4ec3-94cb-7a36440bb105&#34;  /&gt;
-&lt;/p&gt;
-&lt;p&gt;常用指标如下：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;allocs：所有时刻的内存使用情况，包括正在使用的及已经回收的&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;block：导致在同步原语上发生阻塞的堆栈跟踪&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;cmdline： 当前程序的命令行的完整调用路径。&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;goroutine：目前的 goroutine 数量及运行情况&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;heap：当前时刻的内存使用情况&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;mutex：查看导致互斥锁的竞争持有者的堆栈跟踪&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;profile：默认进行 30s 的 CPU Profiling，得到一个分析用的 profile 文件&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;threadcreate：查看创建新 OS 线程的堆栈跟踪。&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;trance：当前程序执行的追踪，可以在秒数的 GET 参数中指定持续时间。在获取追踪文件后，请使用 go 工具的 trace 命令来调查追踪。（&lt;a href=&#34;https://mp.weixin.qq.com/s/I9xSMxy32cALSNQAN8wlnQ&#34;&gt;深入浅出 Go trace (qq.com)&lt;/a&gt;）&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;blockquote&gt;
-&lt;p&gt;注意，默认情况下是不追踪block和mutex的信息的，如果想要看这两个信息，需要在代码中加上两行：&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;div style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;
-&lt;table style=&#34;border-spacing:0;padding:0;margin:0;border:0;&#34;&gt;&lt;tr&gt;&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;&#34;&gt;
-&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;1
-&lt;/span&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679&#34;&gt;2
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
-&lt;td style=&#34;vertical-align:top;padding:0;margin:0;border:0;;width:100%&#34;&gt;
-&lt;pre tabindex=&#34;0&#34; style=&#34;color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;runtime.&lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;SetBlockProfileRate&lt;/span&gt;(&lt;span style=&#34;color:#a5d6ff&#34;&gt;1&lt;/span&gt;) &lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;// 开启对阻塞操作的跟踪，block  &lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;runtime.&lt;span style=&#34;color:#d2a8ff;font-weight:bold&#34;&gt;SetMutexProfileFraction&lt;/span&gt;(&lt;span style=&#34;color:#a5d6ff&#34;&gt;1&lt;/span&gt;) &lt;span style=&#34;color:#8b949e;font-style:italic&#34;&gt;// 开启对锁调用的跟踪，mutex&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
-&lt;/div&gt;
-&lt;/div&gt;&lt;/blockquote&gt;
-&lt;pre&gt;&lt;code&gt;注意，上文的所有信息都是实时的，如果你刷新一下，是可以看到数字在变化的。此时如果点击蓝色的连接，可以看到一些协程的栈信息，这些信息并不容易阅读。如果想要更加清晰的数据，需要将信息保存下来，在本地进行分析。
-&lt;/code&gt;&lt;/pre&gt;</description>
-      <content:encoded><![CDATA[<h1 id="golang-pprof-性能分析指南">Golang pprof 性能分析指南</h1>
+      <description>整理 Go pprof 的采样方式、指标含义和 CPU、内存、goroutine 等常见性能分析流程。</description>
+      <content:encoded><![CDATA[<blockquote>
+<p>一句话结论：用 pprof 做 Go 性能分析时，先选对采样入口，再结合 flat、cum 和调用图定位主要瓶颈。</p>
+<p>本文回答：</p>
+<ul>
+<li>runtime/pprof、net/http/pprof 和 go test 分别适合什么场景？</li>
+<li>flat、cum、sum 这些指标怎么理解？</li>
+<li>CPU、内存和 goroutine 问题分别如何采样？</li>
+</ul></blockquote>
+<h2 id="golang-pprof-性能分析指南">Golang pprof 性能分析指南</h2>
 <blockquote>
 <p>pprof 是一个用于可视化和分析分析数据的工具。</p></blockquote>
 <h2 id="采样方式">采样方式</h2>
@@ -1071,8 +997,7 @@
   </tbody>
 </table>
 <h2 id="指标解释">指标解释</h2>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151739088.png" alt="350959005-c2182bee-333f-4ec3-94cb-7a36440bb105"  />
-</p>
+<p><img alt="350959005-c2182bee-333f-4ec3-94cb-7a36440bb105" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151739088.png"></p>
 <p>常用指标如下：</p>
 <ul>
 <li>
@@ -1342,18 +1267,115 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 </span></span></code></pre></td></tr></table>
 </div>
 </div><h2 id="nethttppprof">net/http/pprof</h2>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gdscript3" data-lang="gdscript3"><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic"># 网页，运行该命令让程序开始半分钟（默认值）的CPU采样 服务开启了 pprof</span>
-</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">$</span> go <span style="color:#ff7b72">tool</span> pprof http:<span style="color:#ff7b72;font-weight:bold">//</span><span style="color:#a5d6ff">127.0</span><span style="color:#ff7b72;font-weight:bold">.</span><span style="color:#a5d6ff">0.1</span>:<span style="color:#a5d6ff">8080</span><span style="color:#ff7b72;font-weight:bold">/</span>debug<span style="color:#ff7b72;font-weight:bold">/</span>pprof<span style="color:#ff7b72;font-weight:bold">/</span>profile
-</span></span></code></pre></td></tr></table>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 472 41"
+      >
+      <g transform='translate(8,16)'>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>#</text>
+<text text-anchor='middle' x='8' y='20' fill='currentColor' style='font-size:1em'>$</text>
+<text text-anchor='middle' x='24' y='4' fill='currentColor' style='font-size:1em'>网</text>
+<text text-anchor='middle' x='24' y='20' fill='currentColor' style='font-size:1em'>g</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>页</text>
+<text text-anchor='middle' x='32' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>，</text>
+<text text-anchor='middle' x='48' y='4' fill='currentColor' style='font-size:1em'>运</text>
+<text text-anchor='middle' x='48' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='56' y='4' fill='currentColor' style='font-size:1em'>行</text>
+<text text-anchor='middle' x='56' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>该</text>
+<text text-anchor='middle' x='64' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>命</text>
+<text text-anchor='middle' x='72' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>令</text>
+<text text-anchor='middle' x='88' y='4' fill='currentColor' style='font-size:1em'>让</text>
+<text text-anchor='middle' x='88' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='96' y='4' fill='currentColor' style='font-size:1em'>程</text>
+<text text-anchor='middle' x='96' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='104' y='4' fill='currentColor' style='font-size:1em'>序</text>
+<text text-anchor='middle' x='104' y='20' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='112' y='4' fill='currentColor' style='font-size:1em'>开</text>
+<text text-anchor='middle' x='112' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='120' y='4' fill='currentColor' style='font-size:1em'>始</text>
+<text text-anchor='middle' x='120' y='20' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='128' y='4' fill='currentColor' style='font-size:1em'>半</text>
+<text text-anchor='middle' x='136' y='4' fill='currentColor' style='font-size:1em'>分</text>
+<text text-anchor='middle' x='136' y='20' fill='currentColor' style='font-size:1em'>h</text>
+<text text-anchor='middle' x='144' y='4' fill='currentColor' style='font-size:1em'>钟</text>
+<text text-anchor='middle' x='144' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='152' y='4' fill='currentColor' style='font-size:1em'>（</text>
+<text text-anchor='middle' x='152' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='160' y='4' fill='currentColor' style='font-size:1em'>默</text>
+<text text-anchor='middle' x='160' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='168' y='4' fill='currentColor' style='font-size:1em'>认</text>
+<text text-anchor='middle' x='168' y='20' fill='currentColor' style='font-size:1em'>:</text>
+<text text-anchor='middle' x='176' y='4' fill='currentColor' style='font-size:1em'>值</text>
+<text text-anchor='middle' x='176' y='20' fill='currentColor' style='font-size:1em'>/</text>
+<text text-anchor='middle' x='184' y='4' fill='currentColor' style='font-size:1em'>）</text>
+<text text-anchor='middle' x='184' y='20' fill='currentColor' style='font-size:1em'>/</text>
+<text text-anchor='middle' x='192' y='4' fill='currentColor' style='font-size:1em'>的</text>
+<text text-anchor='middle' x='192' y='20' fill='currentColor' style='font-size:1em'>1</text>
+<text text-anchor='middle' x='200' y='4' fill='currentColor' style='font-size:1em'>C</text>
+<text text-anchor='middle' x='200' y='20' fill='currentColor' style='font-size:1em'>2</text>
+<text text-anchor='middle' x='208' y='4' fill='currentColor' style='font-size:1em'>P</text>
+<text text-anchor='middle' x='208' y='20' fill='currentColor' style='font-size:1em'>7</text>
+<text text-anchor='middle' x='216' y='4' fill='currentColor' style='font-size:1em'>U</text>
+<text text-anchor='middle' x='216' y='20' fill='currentColor' style='font-size:1em'>.</text>
+<text text-anchor='middle' x='224' y='4' fill='currentColor' style='font-size:1em'>采</text>
+<text text-anchor='middle' x='224' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='232' y='4' fill='currentColor' style='font-size:1em'>样</text>
+<text text-anchor='middle' x='232' y='20' fill='currentColor' style='font-size:1em'>.</text>
+<text text-anchor='middle' x='240' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='248' y='4' fill='currentColor' style='font-size:1em'>服</text>
+<text text-anchor='middle' x='248' y='20' fill='currentColor' style='font-size:1em'>.</text>
+<text text-anchor='middle' x='256' y='4' fill='currentColor' style='font-size:1em'>务</text>
+<text text-anchor='middle' x='256' y='20' fill='currentColor' style='font-size:1em'>1</text>
+<text text-anchor='middle' x='264' y='4' fill='currentColor' style='font-size:1em'>开</text>
+<text text-anchor='middle' x='264' y='20' fill='currentColor' style='font-size:1em'>:</text>
+<text text-anchor='middle' x='272' y='4' fill='currentColor' style='font-size:1em'>启</text>
+<text text-anchor='middle' x='272' y='20' fill='currentColor' style='font-size:1em'>8</text>
+<text text-anchor='middle' x='280' y='4' fill='currentColor' style='font-size:1em'>了</text>
+<text text-anchor='middle' x='280' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='288' y='20' fill='currentColor' style='font-size:1em'>8</text>
+<text text-anchor='middle' x='296' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='296' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='304' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='304' y='20' fill='currentColor' style='font-size:1em'>/</text>
+<text text-anchor='middle' x='312' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='312' y='20' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='320' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='320' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='328' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='328' y='20' fill='currentColor' style='font-size:1em'>b</text>
+<text text-anchor='middle' x='336' y='20' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='344' y='20' fill='currentColor' style='font-size:1em'>g</text>
+<text text-anchor='middle' x='352' y='20' fill='currentColor' style='font-size:1em'>/</text>
+<text text-anchor='middle' x='360' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='368' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='376' y='20' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='384' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='392' y='20' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='400' y='20' fill='currentColor' style='font-size:1em'>/</text>
+<text text-anchor='middle' x='408' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='416' y='20' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='424' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='432' y='20' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='440' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='448' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='456' y='20' fill='currentColor' style='font-size:1em'>e</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151742895.png" alt="350959401-d56c6bdc-d272-4960-8ac0-943f42b46e54"  />
-</p>
+<p><img alt="350959401-d56c6bdc-d272-4960-8ac0-943f42b46e54" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151742895.png"></p>
 <h3 id="扩展参数选项">扩展参数选项</h3>
 <table>
   <thead>
@@ -1387,8 +1409,7 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 <p>通过Web浏览器可视化图</p></blockquote>
 <blockquote>
 <p><code>web</code> 将会生成一张svg格式的图片，并用默认打开程序打开（一般是浏览器）。渲染图片需要下载 <a href="https://graphviz.org/download/">Download | Graphviz</a></p></blockquote>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151744662.png" alt="350959152-f919098b-a923-4cbd-8349-89f0e3a0d52b"  />
-</p>
+<p><img alt="350959152-f919098b-a923-4cbd-8349-89f0e3a0d52b" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151744662.png"></p>
 <pre><code>节点的颜色越红，其cum和cum%越大。其颜色越灰白，则cum和cum%越小。
 
 节点越大，其flat和flat%越大；其越小，则flat和flat%越小
@@ -1402,18 +1423,15 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 <h4 id="weight">weight</h4>
 <blockquote>
 <p><code>weight</code>默认按flat排序，打印出消耗前10的函数。也可以选择消耗前N的函数，比如<code>weight5</code>，<code>weight20</code>。</p></blockquote>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151745485.png" alt="350959570-a1c83317-3d82-4bfe-aaf7-4abfebd1884f"  />
-</p>
+<p><img alt="350959570-a1c83317-3d82-4bfe-aaf7-4abfebd1884f" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151745485.png"></p>
 <h4 id="list">list</h4>
 <blockquote>
 <p>当发现某个函数资源占用情况可疑时，可以通过 <code>list 函数名</code> 定位到具体的代码位置。比如:<code> list Fire</code></p></blockquote>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151746075.png" alt="350959588-87007000-e59a-43d1-bcce-2c8e5fe79a9c"  />
-</p>
+<p><img alt="350959588-87007000-e59a-43d1-bcce-2c8e5fe79a9c" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151746075.png"></p>
 <h3 id="火焰图">火焰图</h3>
 <pre><code>调用顺序**由上到下**，每一块代表一个函数，越大代表占用 CPU 的时间更长。同时它也可以支持点击块深入进行分析。
 </code></pre>
-<p><img loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151746996.png" alt="350959621-4992c35f-ac6f-4e44-8246-a99ce6302bfb"  />
-</p>
+<p><img alt="350959621-4992c35f-ac6f-4e44-8246-a99ce6302bfb" loading="lazy" src="https://raw.githubusercontent.com/Lucareful/RepoImg/main/img/202410151746996.png"></p>
 <h2 id="代码优化建议">代码优化建议</h2>
 <p>以下是一些从其它项目借鉴或者自己总结的实践经验，它们只是建议，而不是准则，实际项目中应该以性能分析数据来作为优化的参考，<strong>避免过早优化</strong>。</p>
 <ol>
@@ -3983,17 +4001,68 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p>该程序的新输出是预期的：</p>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>Values: 0 1 2
-</span></span><span style="display:flex;"><span>Addresses: 0x40e020 0x40e024 0x40e028
-</span></span></code></pre></td></tr></table>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 304 41"
+      >
+      <g transform='translate(8,16)'>
+<text text-anchor='middle' x='0' y='4' fill='currentColor' style='font-size:1em'>V</text>
+<text text-anchor='middle' x='0' y='20' fill='currentColor' style='font-size:1em'>A</text>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='8' y='20' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='16' y='20' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='24' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='24' y='20' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='32' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='40' y='20' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='48' y='4' fill='currentColor' style='font-size:1em'>:</text>
+<text text-anchor='middle' x='48' y='20' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='56' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='64' y='20' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='72' y='20' fill='currentColor' style='font-size:1em'>:</text>
+<text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>1</text>
+<text text-anchor='middle' x='88' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='96' y='4' fill='currentColor' style='font-size:1em'>2</text>
+<text text-anchor='middle' x='96' y='20' fill='currentColor' style='font-size:1em'>x</text>
+<text text-anchor='middle' x='104' y='20' fill='currentColor' style='font-size:1em'>4</text>
+<text text-anchor='middle' x='112' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='120' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='128' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='136' y='20' fill='currentColor' style='font-size:1em'>2</text>
+<text text-anchor='middle' x='144' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='160' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='168' y='20' fill='currentColor' style='font-size:1em'>x</text>
+<text text-anchor='middle' x='176' y='20' fill='currentColor' style='font-size:1em'>4</text>
+<text text-anchor='middle' x='184' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='192' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='200' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='208' y='20' fill='currentColor' style='font-size:1em'>2</text>
+<text text-anchor='middle' x='216' y='20' fill='currentColor' style='font-size:1em'>4</text>
+<text text-anchor='middle' x='232' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='240' y='20' fill='currentColor' style='font-size:1em'>x</text>
+<text text-anchor='middle' x='248' y='20' fill='currentColor' style='font-size:1em'>4</text>
+<text text-anchor='middle' x='256' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='264' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='272' y='20' fill='currentColor' style='font-size:1em'>0</text>
+<text text-anchor='middle' x='280' y='20' fill='currentColor' style='font-size:1em'>2</text>
+<text text-anchor='middle' x='288' y='20' fill='currentColor' style='font-size:1em'>8</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p>说明：该行将<code>i := i</code>循环变量复制<code>i</code>到作用域为 for 循环体块的新变量中，也称为<code>i</code>. 新变量的地址是附加到数组的地址，这使得它比 for 循环体块更有效。在每次循环迭代中，都会创建一个新变量。</p>
+<p>说明：该行将<code>i := i</code>循环变量复制<code>i</code>到作用域为 for 循环体块的新变量中，也称为<code>i</code>. 新变量的地址是附加到数组的地址，这使得它比 for 循环体块更有效。在每次循环迭代中，都会创建一个新变量。</p>
 <p>虽然这个例子可能看起来有点明显，但在其他一些情况下，同样的意外行为可能更隐蔽。例如，循环变量可以是一个数组，而引用可以是一个切片：</p>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
 <table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
@@ -4016,15 +4085,42 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p>输出：</p>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>Values: [[3] [3] [3]]
-</span></span></code></pre></td></tr></table>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 176 25"
+      >
+      <g transform='translate(8,16)'>
+<text text-anchor='middle' x='0' y='4' fill='currentColor' style='font-size:1em'>V</text>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='24' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='48' y='4' fill='currentColor' style='font-size:1em'>:</text>
+<text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>[</text>
+<text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>[</text>
+<text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>3</text>
+<text text-anchor='middle' x='88' y='4' fill='currentColor' style='font-size:1em'>]</text>
+<text text-anchor='middle' x='104' y='4' fill='currentColor' style='font-size:1em'>[</text>
+<text text-anchor='middle' x='112' y='4' fill='currentColor' style='font-size:1em'>3</text>
+<text text-anchor='middle' x='120' y='4' fill='currentColor' style='font-size:1em'>]</text>
+<text text-anchor='middle' x='136' y='4' fill='currentColor' style='font-size:1em'>[</text>
+<text text-anchor='middle' x='144' y='4' fill='currentColor' style='font-size:1em'>3</text>
+<text text-anchor='middle' x='152' y='4' fill='currentColor' style='font-size:1em'>]</text>
+<text text-anchor='middle' x='160' y='4' fill='currentColor' style='font-size:1em'>]</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p>当在 Goroutine 中使用循环变量时，也可以证明同样的问题（见下一节）。</p>
+<p>当在 Goroutine 中使用循环变量时，也可以证明同样的问题（见下一节）。</p>
 <h1 id="在循环迭代器变量上使用-goroutines">在循环迭代器变量上使用 <code>goroutines</code></h1>
 <p>在 Go 中进行迭代时，可能会尝试使用 <code>goroutines</code> 并行处理数据。例如，您可以使用闭包编写如下内容：</p>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
@@ -4186,8 +4282,7 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://gitee.com/luenci/RepoImg/raw/master/img/202108281355882.png&#34; alt=&#34;image-20210828135504575&#34;  /&gt;
-&lt;/p&gt;
+&lt;p&gt;&lt;img alt=&#34;image-20210828135504575&#34; loading=&#34;lazy&#34; src=&#34;https://gitee.com/luenci/RepoImg/raw/master/img/202108281355882.png&#34;&gt;&lt;/p&gt;
 &lt;p&gt;在 Go 标准库中，它提供了 Mutex 来实现互斥锁这个功能。&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;共享资源。并发地读写共享资源，会出现数据竞争（data race）的问题，所以需要 Mutex、RWMutex 这样的并发原语来保护。&lt;/li&gt;
@@ -4230,8 +4325,7 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 </ul>
 </li>
 </ul>
-<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202108281355882.png" alt="image-20210828135504575"  />
-</p>
+<p><img alt="image-20210828135504575" loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202108281355882.png"></p>
 <p>在 Go 标准库中，它提供了 Mutex 来实现互斥锁这个功能。</p>
 <ul>
 <li>共享资源。并发地读写共享资源，会出现数据竞争（data race）的问题，所以需要 Mutex、RWMutex 这样的并发原语来保护。</li>
@@ -4434,8 +4528,7 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 <li>不可剥夺：资源只能由持有它的 goroutine 来释放。</li>
 <li>环路等待：一般来说，存在一组等待进程，P={P1，P2，…，PN}，P1 等待 P2 持有的资源，P2 等待 P3 持有的资源，依此类推，最后是 PN 等待 P1 持有的资源，这就形成了一个环路等待的死结。</li>
 </ul>
-<p><img loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202108281347706.png" alt="image-20210828135540673"  />
-</p>
+<p><img alt="image-20210828135540673" loading="lazy" src="https://gitee.com/luenci/RepoImg/raw/master/img/202108281347706.png"></p>
 <h2 id="mutex小结">Mutex小结</h2>
 <h2 id="rwmutex--读写锁">RWMutex — 读写锁</h2>
 <p>标准库中的 RWMutex 是一个 <code>reader/writer</code> 互斥锁。RWMutex在某一时刻只能由任意数量的 reader 持有，或者是只被单个的 writer 持有。RWMutex 的方法也很少，总共有 5 个。</p>
@@ -5775,8 +5868,7 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
 <h4 id="nil-pointers">Nil Pointers</h4>
 <p>​	指针是指向内存中某个位置的变量。因此，空指针将不指向任何位置。</p>
 <h4 id="nil-slice">Nil Slice</h4>
-<p><img loading="lazy" src="https://sushantdhiman.dev/content/images/2026/02/image-1.png" alt="img"  />
-</p>
+<p><img alt="img" loading="lazy" src="https://sushantdhiman.dev/content/images/2026/02/image-1.png"></p>
 <p>​	它有三个属性：一个指向存储实际数据的底层数组的指针、一个表示长度的整型变量，以及另一个表示容量的整型变量。</p>
 <p>​	当你声明一个 nil 切片时，长度(len)和容量(cap)属性仍然存在；只有指向底层数组的指针为 nil。这意味着即使你的切片是 nil，你仍然可以在其上使用以下方法，并且完全有效。</p>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
@@ -6036,9 +6128,9 @@ cum%即是`cum的时间/总运行时间`。内存等参数同理。
     </item>
     <item>
       <title>Golang指针详解</title>
-      <link>https://luenci.com/en/posts/go-%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8Bunsafe.pointeruintptr%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB/</link>
+      <link>https://luenci.com/en/posts/go-%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8Bunsafe/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://luenci.com/en/posts/go-%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8Bunsafe.pointeruintptr%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB/</guid>
+      <guid>https://luenci.com/en/posts/go-%E6%99%AE%E9%80%9A%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8Bunsafe/</guid>
       <description>&lt;h1 id=&#34;golang指针&#34;&gt;Golang指针&lt;/h1&gt;
 &lt;blockquote&gt;
 &lt;p&gt;原文来自:https://www.cnblogs.com/-wenli/p/12682477.html&lt;/p&gt;&lt;/blockquote&gt;

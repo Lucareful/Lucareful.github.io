@@ -4,7 +4,7 @@
     <title>网络模型 on Luenci</title>
     <link>https://luenci.com/en/tags/%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/</link>
     <description>Recent content in 网络模型 on Luenci</description>
-    <generator>Hugo -- 0.145.0</generator>
+    <generator>Hugo</generator>
     <language>en</language>
     <atom:link href="https://luenci.com/en/tags/%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml" />
     <item>
@@ -115,8 +115,7 @@
 <p>注：由于signal driven IO在实际中并不常用，所以我这只提及剩下的四种IO Model。</p>
 <h3 id="阻塞-ioblocking-io">阻塞 I/O（blocking IO）</h3>
 <p>​	在linux中，默认情况下所有的socket都是blocking，一个典型的读操作流程大概是这样：
-<img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/blocking-io.png" alt="blocking IO"  />
-</p>
+<img alt="blocking IO" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/blocking-io.png"></p>
 <p>​	当用户进程调用了<code>recvfrom</code>这个系统调用，<code>kernel</code>就开始了<code>IO</code>的第一个阶段：</p>
 <ul>
 <li>准备数据（对于网络IO来说，很多时候数据在一开始还没有到达。
@@ -128,15 +127,13 @@
 <p>​	当kernel一直等到数据准备好了，它就会将数据从kernel中拷贝到用户内存，然后kernel返回结果，用户进程才解除block的状态，重新运行起来。</p>
 <h3 id="非阻塞-iononblocking-io">非阻塞 I/O（nonblocking IO）</h3>
 <p>​	linux下，可以通过设置socket使其变为non-blocking。当对一个non-blocking socket执行读操作时，流程是这个样子：
-<img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/non-blocking-io.png" alt="非阻塞 I/O"  />
-</p>
+<img alt="非阻塞 I/O" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/non-blocking-io.png"></p>
 <p>​	当用户进程发出read操作时，如果kernel中的数据还没有准备好，那么它并不会block用户进程，而是立刻返回一个error。从用户进程角度io讲 ，它发起一个read操作后，并不需要等待，而是马上就得到了一个结果。用户进程判断结果是一个error时，它就知道数据还没有准备好，于是它可以再次发送read操作。一旦kernel中的数据准备好了，并且又再次收到了用户进程的system call，那么它马上就将数据拷贝到了用户内存，然后返回。</p>
 <blockquote>
 <p>所以，nonblocking IO的特点是用户进程需要<strong>不断的主动询问</strong>kernel数据好了没有。</p></blockquote>
 <h3 id="io-多路复用-io-multiplexing">I/O 多路复用（ IO multiplexing）</h3>
 <p>​	IO multiplexing就是我们说的select，poll，epoll，有些地方也称这种IO方式为event driven IO。select/epoll的好处就在于单个process就可以同时处理多个网络连接的IO。它的基本原理就是select，poll，epoll这个function会不断的轮询所负责的所有socket，当某个socket有数据到达了，就通知用户进程。</p>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/io-multiplexing.png" alt="I/O多路复用"  />
-</p>
+<p><img alt="I/O多路复用" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/io-multiplexing.png"></p>
 <p>​	<strong>当用户进程调用了select，那么整个进程会被block</strong>，而同时，kernel会“监视”所有select负责的socket，当任何一个socket中的数据准备好了，select就会返回。这个时候用户进程再调用read操作，将数据从kernel拷贝到用户进程。</p>
 <p>​	所以，I/O 多路复用的特点是通过一种机制一个进程能同时等待多个文件描述符，而这些文件描述符（套接字描述符）其中的任意一个进入读就绪状态，select()函数就可以返回。</p>
 <p>​	这个图和blocking IO的图其实并没有太大的不同，事实上，还更差一些。因为这里需要使用两个system call (select 和 recvfrom)，而blocking IO只调用了一个system call (recvfrom)。但是，用select的优势在于它可以同时处理多个connection。</p>
@@ -145,43 +142,318 @@
 <h4 id="io-多路复用之selectpollepoll详解">I/O 多路复用之select、poll、epoll详解</h4>
 <p>​	select，poll，epoll都是IO多路复用的机制。I/O多路复用就是通过一种机制，一个进程可以监视多个描述符，一旦某个描述符就绪（一般是读就绪或者写就绪），能够通知程序进行相应的读写操作。但select，poll，epoll本质上都是同步I/O，因为他们都需要在读写事件就绪后自己负责进行读写，也就是说这个读写过程是阻塞的，而异步I/O则无需自己负责进行读写，异步I/O的实现会负责把数据从内核拷贝到用户空间。（这里啰嗦下）</p>
 <h5 id="select">select</h5>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>int select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
-</span></span></code></pre></td></tr></table>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 792 25"
+      >
+      <g transform='translate(8,16)'>
+<text text-anchor='middle' x='0' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='48' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='56' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='88' y='4' fill='currentColor' style='font-size:1em'>(</text>
+<text text-anchor='middle' x='96' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='104' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='112' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='128' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='136' y='4' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='152' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='160' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='168' y='4' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='176' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='184' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='192' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='208' y='4' fill='currentColor' style='font-size:1em'>*</text>
+<text text-anchor='middle' x='216' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='224' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='232' y='4' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='240' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='248' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='256' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='264' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='272' y='4' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='288' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='296' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='304' y='4' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='312' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='320' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='328' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='344' y='4' fill='currentColor' style='font-size:1em'>*</text>
+<text text-anchor='middle' x='352' y='4' fill='currentColor' style='font-size:1em'>w</text>
+<text text-anchor='middle' x='360' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='368' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='376' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='384' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='392' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='400' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='408' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='416' y='4' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='432' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='440' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='448' y='4' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='456' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='464' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='472' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='488' y='4' fill='currentColor' style='font-size:1em'>*</text>
+<text text-anchor='middle' x='496' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='504' y='4' fill='currentColor' style='font-size:1em'>x</text>
+<text text-anchor='middle' x='512' y='4' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='520' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='528' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='536' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='544' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='552' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='560' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='568' y='4' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='584' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='592' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='600' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='608' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='616' y='4' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='624' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='640' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='648' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='656' y='4' fill='currentColor' style='font-size:1em'>m</text>
+<text text-anchor='middle' x='664' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='672' y='4' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='680' y='4' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='688' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='704' y='4' fill='currentColor' style='font-size:1em'>*</text>
+<text text-anchor='middle' x='712' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='720' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='728' y='4' fill='currentColor' style='font-size:1em'>m</text>
+<text text-anchor='middle' x='736' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='744' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='752' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='760' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='768' y='4' fill='currentColor' style='font-size:1em'>)</text>
+<text text-anchor='middle' x='776' y='4' fill='currentColor' style='font-size:1em'>;</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p>select 函数监视的文件描述符分3类，分别是writefds、readfds、和exceptfds。调用后select函数会阻塞，直到有描述副就绪（有数据 可读、可写、或者有except），或者超时（timeout指定等待时间，如果立即返回设为null即可），函数返回。当select函数返回后，可以 通过遍历fdset，来找到就绪的描述符。</p>
+<p>select 函数监视的文件描述符分3类，分别是writefds、readfds、和exceptfds。调用后select函数会阻塞，直到有描述副就绪（有数据 可读、可写、或者有except），或者超时（timeout指定等待时间，如果立即返回设为null即可），函数返回。当select函数返回后，可以 通过遍历fdset，来找到就绪的描述符。</p>
 <p>select目前几乎在所有的平台上支持，其良好跨平台支持也是它的一个优点。select的一 个缺点在于单个进程能够监视的文件描述符的数量存在最大限制，在Linux上一般为1024，可以通过修改宏定义甚至重新编译内核的方式提升这一限制，但 是这样也会造成效率的降低。</p>
 <h5 id="poll">poll</h5>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>int poll (struct pollfd *fds, unsigned int nfds, int timeout);
-</span></span></code></pre></td></tr></table>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 504 25"
+      >
+      <g transform='translate(8,16)'>
+<text text-anchor='middle' x='0' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='48' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='56' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>(</text>
+<text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='88' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='96' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='104' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='112' y='4' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='120' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='136' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='144' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='152' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='160' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='168' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='176' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='192' y='4' fill='currentColor' style='font-size:1em'>*</text>
+<text text-anchor='middle' x='200' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='208' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='216' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='224' y='4' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='240' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='248' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='256' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='264' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='272' y='4' fill='currentColor' style='font-size:1em'>g</text>
+<text text-anchor='middle' x='280' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='288' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='296' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='312' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='320' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='328' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='344' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='352' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='360' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='368' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='376' y='4' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='392' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='400' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='408' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='424' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='432' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='440' y='4' fill='currentColor' style='font-size:1em'>m</text>
+<text text-anchor='middle' x='448' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='456' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='464' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='472' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='480' y='4' fill='currentColor' style='font-size:1em'>)</text>
+<text text-anchor='middle' x='488' y='4' fill='currentColor' style='font-size:1em'>;</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p>​	不同与select使用三个位图来表示三个fdset的方式，poll使用一个 pollfd的指针实现。</p>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">5
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>struct pollfd {
-</span></span><span style="display:flex;"><span>    int fd; /* file descriptor */
-</span></span><span style="display:flex;"><span>    short events; /* requested events to watch */
-</span></span><span style="display:flex;"><span>    short revents; /* returned events witnessed */
-</span></span><span style="display:flex;"><span>};
-</span></span></code></pre></td></tr></table>
+<p>​	不同与select使用三个位图来表示三个fdset的方式，poll使用一个 pollfd的指针实现。</p>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 408 89"
+      >
+      <g transform='translate(8,16)'>
+<path d='M 88,32 L 96,16' fill='none' stroke='currentColor'></path>
+<path d='M 140,40 L 148,24' fill='none' stroke='currentColor'></path>
+<path d='M 148,56 L 156,40' fill='none' stroke='currentColor'></path>
+<path d='M 252,24 L 260,8' fill='none' stroke='currentColor'></path>
+<path d='M 380,40 L 388,24' fill='none' stroke='currentColor'></path>
+<path d='M 388,56 L 396,40' fill='none' stroke='currentColor'></path>
+<polygon points='100.000000,32.000000 88.000000,26.400000 88.000000,37.599998' fill='currentColor' transform='rotate(120.000000, 88.000000, 32.000000)'></polygon>
+<circle cx='104' cy='16' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='152' cy='32' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='160' cy='48' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='248' cy='16' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='376' cy='32' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='384' cy='48' r='6' stroke='currentColor' fill='currentColor'></circle>
+<text text-anchor='middle' x='0' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='0' y='68' fill='currentColor' style='font-size:1em'>}</text>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='8' y='68' fill='currentColor' style='font-size:1em'>;</text>
+<text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='24' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='32' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='32' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='32' y='52' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='40' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='40' y='36' fill='currentColor' style='font-size:1em'>h</text>
+<text text-anchor='middle' x='40' y='52' fill='currentColor' style='font-size:1em'>h</text>
+<text text-anchor='middle' x='48' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='48' y='36' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='48' y='52' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='56' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='56' y='36' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='56' y='52' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='64' y='20' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='64' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='64' y='52' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='72' y='20' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='80' y='20' fill='currentColor' style='font-size:1em'>;</text>
+<text text-anchor='middle' x='80' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='80' y='52' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='88' y='4' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='88' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='96' y='4' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='96' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='96' y='52' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='104' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='104' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='112' y='4' fill='currentColor' style='font-size:1em'>{</text>
+<text text-anchor='middle' x='112' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='112' y='52' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='120' y='20' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='120' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='120' y='52' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='128' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='128' y='36' fill='currentColor' style='font-size:1em'>;</text>
+<text text-anchor='middle' x='128' y='52' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='136' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='136' y='52' fill='currentColor' style='font-size:1em'>;</text>
+<text text-anchor='middle' x='144' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='160' y='20' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='168' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='168' y='36' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='176' y='20' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='176' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='176' y='52' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='184' y='20' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='184' y='36' fill='currentColor' style='font-size:1em'>q</text>
+<text text-anchor='middle' x='184' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='192' y='20' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='192' y='36' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='192' y='52' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='200' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='200' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='200' y='52' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='208' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='208' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='208' y='52' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='216' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='216' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='216' y='52' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='224' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='224' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='224' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='232' y='20' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='232' y='36' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='232' y='52' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='248' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='248' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='256' y='36' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='256' y='52' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='264' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='264' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='272' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='272' y='52' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='280' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='280' y='52' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='288' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='288' y='52' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='304' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='304' y='52' fill='currentColor' style='font-size:1em'>w</text>
+<text text-anchor='middle' x='312' y='36' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='312' y='52' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='320' y='52' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='328' y='36' fill='currentColor' style='font-size:1em'>w</text>
+<text text-anchor='middle' x='328' y='52' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='336' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='336' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='344' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='344' y='52' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='352' y='36' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='352' y='52' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='360' y='36' fill='currentColor' style='font-size:1em'>h</text>
+<text text-anchor='middle' x='360' y='52' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='368' y='52' fill='currentColor' style='font-size:1em'>d</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p>​	pollfd结构包含了要监视的event和发生的event，不再使用select“参数-值”传递的方式。同时，pollfd并没有最大数量限制（但是数量过大后性能也是会下降）。 和select函数一样，poll返回后，需要轮询pollfd来获取就绪的描述符。</p>
+<p>​	pollfd结构包含了要监视的event和发生的event，不再使用select“参数-值”传递的方式。同时，pollfd并没有最大数量限制（但是数量过大后性能也是会下降）。 和select函数一样，poll返回后，需要轮询pollfd来获取就绪的描述符。</p>
 <p>​	从上面看，select和poll都需要在返回后，<strong>通过遍历文件描述符来获取已经就绪的socket</strong>。事实上，同时连接的大量客户端在一时刻可能只有很少的处于就绪状态，因此随着监视的描述符数量的增长，其效率也会线性下降。</p>
 <p><strong>poll无最大文件描述符数量的限制</strong>。</p>
 <p>​	poll和select同样存在一个缺点：包含大量文件描述符的数组被整体复制于用户态和内核的地址空间之间，而不论这些文件	描述符是否就绪，其开销也随着文件描述符数量增加而线性增大。</p>
@@ -214,19 +486,216 @@
 <p>​	epoll是在2.6内核中提出的，是之前的select和poll的增强版本。相对于select和poll来说，epoll更加灵活，没有描述符限制。epoll使用一个文件描述符管理多个描述符，将用户关系的文件描述符的事件存放到内核的一个事件表中，这样在用户空间和内核空间的copy只需一次。</p>
 <h5 id="epoll操作过程">epoll操作过程</h5>
 <p>epoll操作过程需要三个接口，分别如下：</p>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>int epoll_create(int size)；//创建一个epoll的句柄，size用来告诉内核这个监听的数目一共有多大
-</span></span><span style="display:flex;"><span>int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)；
-</span></span><span style="display:flex;"><span>int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout);
-</span></span></code></pre></td></tr></table>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 664 57"
+      >
+      <g transform='translate(8,16)'>
+<circle cx='352' cy='32' r='6' stroke='currentColor' fill='currentColor'></circle>
+<text text-anchor='middle' x='0' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='0' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='0' y='36' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='8' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='8' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='16' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='16' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='32' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='32' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='40' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='40' y='36' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='48' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='48' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='48' y='36' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='56' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='56' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='56' y='36' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='64' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='64' y='36' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='72' y='20' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='72' y='36' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='80' y='20' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='80' y='36' fill='currentColor' style='font-size:1em'>w</text>
+<text text-anchor='middle' x='88' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='88' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='88' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='96' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='96' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='96' y='36' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='104' y='4' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='104' y='20' fill='currentColor' style='font-size:1em'>(</text>
+<text text-anchor='middle' x='104' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='112' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='112' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='112' y='36' fill='currentColor' style='font-size:1em'>(</text>
+<text text-anchor='middle' x='120' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='120' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='120' y='36' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='128' y='4' fill='currentColor' style='font-size:1em'>(</text>
+<text text-anchor='middle' x='128' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='128' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='136' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='136' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='144' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='144' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='152' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='152' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='152' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='160' y='20' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='160' y='36' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='168' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='168' y='20' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='168' y='36' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='176' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='176' y='20' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='176' y='36' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='184' y='4' fill='currentColor' style='font-size:1em'>z</text>
+<text text-anchor='middle' x='184' y='36' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='192' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='192' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='200' y='4' fill='currentColor' style='font-size:1em'>)</text>
+<text text-anchor='middle' x='200' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='200' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='208' y='4' fill='currentColor' style='font-size:1em'>；</text>
+<text text-anchor='middle' x='208' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='208' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='216' y='4' fill='currentColor' style='font-size:1em'>/</text>
+<text text-anchor='middle' x='216' y='36' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='224' y='4' fill='currentColor' style='font-size:1em'>/</text>
+<text text-anchor='middle' x='224' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='224' y='36' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='232' y='4' fill='currentColor' style='font-size:1em'>创</text>
+<text text-anchor='middle' x='232' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='232' y='36' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='240' y='4' fill='currentColor' style='font-size:1em'>建</text>
+<text text-anchor='middle' x='240' y='20' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='240' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='248' y='4' fill='currentColor' style='font-size:1em'>一</text>
+<text text-anchor='middle' x='256' y='4' fill='currentColor' style='font-size:1em'>个</text>
+<text text-anchor='middle' x='256' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='256' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='264' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='264' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='264' y='36' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='272' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='272' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='272' y='36' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='280' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='280' y='36' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='288' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='288' y='20' fill='currentColor' style='font-size:1em'>f</text>
+<text text-anchor='middle' x='288' y='36' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='296' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='296' y='20' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='296' y='36' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='304' y='4' fill='currentColor' style='font-size:1em'>的</text>
+<text text-anchor='middle' x='304' y='20' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='304' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='312' y='4' fill='currentColor' style='font-size:1em'>句</text>
+<text text-anchor='middle' x='312' y='36' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='320' y='4' fill='currentColor' style='font-size:1em'>柄</text>
+<text text-anchor='middle' x='320' y='20' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='320' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='328' y='4' fill='currentColor' style='font-size:1em'>，</text>
+<text text-anchor='middle' x='328' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='328' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='336' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='336' y='20' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='336' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='344' y='4' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='344' y='20' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='352' y='4' fill='currentColor' style='font-size:1em'>z</text>
+<text text-anchor='middle' x='352' y='20' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='360' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='360' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='368' y='4' fill='currentColor' style='font-size:1em'>用</text>
+<text text-anchor='middle' x='368' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='376' y='4' fill='currentColor' style='font-size:1em'>来</text>
+<text text-anchor='middle' x='376' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='376' y='36' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='384' y='4' fill='currentColor' style='font-size:1em'>告</text>
+<text text-anchor='middle' x='384' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='384' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='392' y='4' fill='currentColor' style='font-size:1em'>诉</text>
+<text text-anchor='middle' x='392' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='392' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='400' y='4' fill='currentColor' style='font-size:1em'>内</text>
+<text text-anchor='middle' x='400' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='400' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='408' y='4' fill='currentColor' style='font-size:1em'>核</text>
+<text text-anchor='middle' x='408' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='408' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='416' y='4' fill='currentColor' style='font-size:1em'>这</text>
+<text text-anchor='middle' x='416' y='20' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='416' y='36' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='424' y='4' fill='currentColor' style='font-size:1em'>个</text>
+<text text-anchor='middle' x='424' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='432' y='4' fill='currentColor' style='font-size:1em'>监</text>
+<text text-anchor='middle' x='432' y='20' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='432' y='36' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='440' y='4' fill='currentColor' style='font-size:1em'>听</text>
+<text text-anchor='middle' x='440' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='440' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='448' y='4' fill='currentColor' style='font-size:1em'>的</text>
+<text text-anchor='middle' x='448' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='448' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='456' y='4' fill='currentColor' style='font-size:1em'>数</text>
+<text text-anchor='middle' x='456' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='464' y='4' fill='currentColor' style='font-size:1em'>目</text>
+<text text-anchor='middle' x='464' y='36' fill='currentColor' style='font-size:1em'>m</text>
+<text text-anchor='middle' x='472' y='4' fill='currentColor' style='font-size:1em'>一</text>
+<text text-anchor='middle' x='472' y='20' fill='currentColor' style='font-size:1em'>*</text>
+<text text-anchor='middle' x='472' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='480' y='4' fill='currentColor' style='font-size:1em'>共</text>
+<text text-anchor='middle' x='480' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='480' y='36' fill='currentColor' style='font-size:1em'>x</text>
+<text text-anchor='middle' x='488' y='4' fill='currentColor' style='font-size:1em'>有</text>
+<text text-anchor='middle' x='488' y='20' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='488' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='496' y='4' fill='currentColor' style='font-size:1em'>多</text>
+<text text-anchor='middle' x='496' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='496' y='36' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='504' y='4' fill='currentColor' style='font-size:1em'>大</text>
+<text text-anchor='middle' x='504' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='504' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='512' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='512' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='520' y='20' fill='currentColor' style='font-size:1em'>)</text>
+<text text-anchor='middle' x='520' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='528' y='20' fill='currentColor' style='font-size:1em'>；</text>
+<text text-anchor='middle' x='528' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='536' y='36' fill='currentColor' style='font-size:1em'>,</text>
+<text text-anchor='middle' x='552' y='36' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='560' y='36' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='568' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='584' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='592' y='36' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='600' y='36' fill='currentColor' style='font-size:1em'>m</text>
+<text text-anchor='middle' x='608' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='616' y='36' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='624' y='36' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='632' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='640' y='36' fill='currentColor' style='font-size:1em'>)</text>
+<text text-anchor='middle' x='648' y='36' fill='currentColor' style='font-size:1em'>;</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p><strong>1. int epoll_create(int size);</strong>
+<p><strong>1. int epoll_create(int size);</strong>
 创建一个epoll的句柄，size用来告诉内核这个监听的数目一共有多大，这个参数不同于select()中的第一个参数，给出最大监听的fd+1的值，<code>参数size并不是限制了epoll所能监听的描述符最大个数，只是对内核初始分配内部数据结构的一个建议</code>。
 当创建好epoll句柄后，它就会占用一个fd值，在linux下如果查看/proc/进程id/fd/，是能够看到这个fd的，所以在使用完epoll后，必须调用close()关闭，否则可能导致fd被耗尽。</p>
 <p><strong>2. int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)；</strong></p>
@@ -238,21 +707,113 @@
 <li>fd：是需要监听的fd（文件描述符）</li>
 <li>epoll_event：是告诉内核需要监听什么事，struct epoll_event结构如下：</li>
 </ul>
-<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
-</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
-</span></code></pre></td>
-<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gdscript3" data-lang="gdscript3"><span style="display:flex;"><span>struct epoll_event {
-</span></span><span style="display:flex;"><span>  __uint32_t events;  <span style="color:#ff7b72;font-weight:bold">/*</span> Epoll events <span style="color:#ff7b72;font-weight:bold">*/</span>
-</span></span><span style="display:flex;"><span>  epoll_data_t data;  <span style="color:#ff7b72;font-weight:bold">/*</span> User data variable <span style="color:#ff7b72;font-weight:bold">*/</span>
-</span></span><span style="display:flex;"><span>};
-</span></span></code></pre></td></tr></table>
+
+
+
+<div class="goat svg-container ">
+  
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      font-family="Menlo,Lucida Console,monospace"
+      
+        viewBox="0 0 376 73"
+      >
+      <g transform='translate(8,16)'>
+<path d='M 16,24 L 24,24' fill='none' stroke='currentColor'></path>
+<path d='M 172,24 L 180,8' fill='none' stroke='currentColor'></path>
+<path d='M 176,32 L 184,16' fill='none' stroke='currentColor'></path>
+<path d='M 308,24 L 316,8' fill='none' stroke='currentColor'></path>
+<path d='M 356,40 L 364,24' fill='none' stroke='currentColor'></path>
+<circle cx='184' cy='16' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='184' cy='32' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='304' cy='16' r='6' stroke='currentColor' fill='currentColor'></circle>
+<circle cx='352' cy='32' r='6' stroke='currentColor' fill='currentColor'></circle>
+<text text-anchor='middle' x='0' y='4' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='0' y='52' fill='currentColor' style='font-size:1em'>}</text>
+<text text-anchor='middle' x='8' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='8' y='52' fill='currentColor' style='font-size:1em'>;</text>
+<text text-anchor='middle' x='16' y='4' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='16' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='24' y='4' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='24' y='20' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='24' y='36' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='32' y='4' fill='currentColor' style='font-size:1em'>c</text>
+<text text-anchor='middle' x='32' y='20' fill='currentColor' style='font-size:1em'>u</text>
+<text text-anchor='middle' x='32' y='36' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='40' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='40' y='20' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='40' y='36' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='48' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='48' y='36' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='56' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='56' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='56' y='36' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='64' y='4' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='64' y='20' fill='currentColor' style='font-size:1em'>3</text>
+<text text-anchor='middle' x='64' y='36' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='72' y='4' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='72' y='20' fill='currentColor' style='font-size:1em'>2</text>
+<text text-anchor='middle' x='72' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='80' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='80' y='20' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='80' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='88' y='4' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='88' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='88' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='96' y='4' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='96' y='36' fill='currentColor' style='font-size:1em'>_</text>
+<text text-anchor='middle' x='104' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='104' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='104' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='112' y='4' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='112' y='20' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='120' y='4' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='120' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='120' y='36' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='128' y='4' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='128' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='128' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='136' y='4' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='136' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='136' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='144' y='20' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='144' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='152' y='4' fill='currentColor' style='font-size:1em'>{</text>
+<text text-anchor='middle' x='152' y='20' fill='currentColor' style='font-size:1em'>;</text>
+<text text-anchor='middle' x='152' y='36' fill='currentColor' style='font-size:1em'>;</text>
+<text text-anchor='middle' x='200' y='20' fill='currentColor' style='font-size:1em'>E</text>
+<text text-anchor='middle' x='200' y='36' fill='currentColor' style='font-size:1em'>U</text>
+<text text-anchor='middle' x='208' y='20' fill='currentColor' style='font-size:1em'>p</text>
+<text text-anchor='middle' x='208' y='36' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='216' y='20' fill='currentColor' style='font-size:1em'>o</text>
+<text text-anchor='middle' x='216' y='36' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='224' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='224' y='36' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='232' y='20' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='240' y='36' fill='currentColor' style='font-size:1em'>d</text>
+<text text-anchor='middle' x='248' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='248' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='256' y='20' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='256' y='36' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='264' y='20' fill='currentColor' style='font-size:1em'>e</text>
+<text text-anchor='middle' x='264' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='272' y='20' fill='currentColor' style='font-size:1em'>n</text>
+<text text-anchor='middle' x='280' y='20' fill='currentColor' style='font-size:1em'>t</text>
+<text text-anchor='middle' x='280' y='36' fill='currentColor' style='font-size:1em'>v</text>
+<text text-anchor='middle' x='288' y='20' fill='currentColor' style='font-size:1em'>s</text>
+<text text-anchor='middle' x='288' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='296' y='36' fill='currentColor' style='font-size:1em'>r</text>
+<text text-anchor='middle' x='304' y='36' fill='currentColor' style='font-size:1em'>i</text>
+<text text-anchor='middle' x='312' y='36' fill='currentColor' style='font-size:1em'>a</text>
+<text text-anchor='middle' x='320' y='36' fill='currentColor' style='font-size:1em'>b</text>
+<text text-anchor='middle' x='328' y='36' fill='currentColor' style='font-size:1em'>l</text>
+<text text-anchor='middle' x='336' y='36' fill='currentColor' style='font-size:1em'>e</text>
+</g>
+
+    </svg>
+  
 </div>
-</div><p>events可以是以下几个宏的集合：</p>
+<p>events可以是以下几个宏的集合：</p>
 <ul>
 <li>EPOLLIN ：表示对应的文件描述符可以读（包括对端SOCKET正常关闭）；</li>
 <li>EPOLLOUT：表示对应的文件描述符可以写；</li>
@@ -602,8 +1163,7 @@
 <p>如果没有大量的idle-connection或者dead-connection，epoll的效率并不会比select/poll高很多，但是当遇到大量的idle-connection，就会发现epoll的效率大大高于select/poll</p>
 <h3 id="异步-ioasynchronous-io">异步 I/O（asynchronous IO）</h3>
 <p>Linux下的asynchronous IO其实用得很少。先看一下它的流程：
-<img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/async-io.png" alt="异步IO"  />
-</p>
+<img alt="异步IO" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/async-io.png"></p>
 <p>​	用户进程发起read操作之后，立刻就可以开始去做其它的事。而另一方面，从kernel的角度，当它受到一个asynchronous read之后，首先它会立刻返回，所以不会对用户进程产生任何block。然后，kernel会等待数据准备完成，然后将数据拷贝到用户内存，当这一切都完成之后，kernel会给用户进程发送一个signal，告诉它read操作完成了。</p>
 <h2 id="总结">总结</h2>
 <h3 id="blocking和non-blocking的区别">blocking和non-blocking的区别</h3>
@@ -618,8 +1178,7 @@
 <p>​	有人会说，non-blocking IO并没有被block啊。这里有个非常“狡猾”的地方，定义中所指的”IO operation”是指真实的IO操作，就是例子中的recvfrom这个system call。non-blocking IO在执行recvfrom这个system call的时候，如果kernel的数据没有准备好，这时候不会block进程。但是，当kernel中数据准备好的时候，recvfrom会将数据从kernel拷贝到用户内存中，这个时候进程是被block了，在这段时间内，进程是被block的。</p>
 <p>​	而asynchronous IO则不一样，当进程发起IO 操作之后，就直接返回再也不理睬了，直到kernel发送一个信号，告诉进程说IO完成。在这整个过程中，进程完全没有被block。</p>
 <h3 id="五种-io-模型的比较">五种 IO 模型的比较</h3>
-<p><img loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/06fig06.gif" alt="graphics/06fig06.gif"  />
-</p>
+<p><img alt="graphics/06fig06.gif" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/img/06fig06.gif"></p>
 <p>​	通过上面的图片，可以发现<code>non-blocking IO</code>和<code>asynchronous IO</code>的区别还是很明显的。在non-blocking IO中，虽然进程大部分时间都不会被block，但是它仍然要求进程去主动的check，并且当数据准备完成以后，也需要进程主动的再次调用recvfrom来将数据拷贝到用户内存。而asynchronous IO则完全不同。它就像是用户进程将整个IO操作交给了他人（kernel）完成，然后他人做完后发信号通知。在此期间，用户进程不需要去检查IO操作的状态，也不需要主动的去拷贝数据。</p>
 <h1 id="参考链接">参考链接</h1>
 <ul>
