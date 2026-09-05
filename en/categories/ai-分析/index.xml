@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>AI 分析 on Luenci</title>
+    <link>https://luenci.com/en/categories/ai-%E5%88%86%E6%9E%90/</link>
+    <description>Recent content in AI 分析 on Luenci</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 05 Sep 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://luenci.com/en/categories/ai-%E5%88%86%E6%9E%90/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Speaker| 从 LangSmith 到 AGENTS.md：一次 Agent 上下文优化实践</title>
+      <link>https://luenci.com/en/posts/langsmith-agents-md-context-optimization/</link>
+      <pubDate>Sat, 05 Sep 2026 00:00:00 +0000</pubDate>
+      <guid>https://luenci.com/en/posts/langsmith-agents-md-context-optimization/</guid>
+      <description>基于 LangSmith 执行轨迹与 30 次受控任务运行，分析模型往返、工具输出和上下文累积的 Token 开销，验证 AGENTS.md 优化规则的收益与适用边界。</description>
+      <content:encoded><![CDATA[<p>一次编码任务消耗了上百万 Token，最后却只交付了几十行代码。对于使用 Agent 的开发者来说，这种情况并不陌生：模型不断读取文件、调用工具、执行验证，任务完成了，上下文也随之膨胀。
+要理解这笔消耗，需要沿着执行过程往下看。一次任务包含多少次模型调用？哪些工具结果进入了上下文？哪些信息一直被保留，却没有参与后续决策？这些问题，比单独查看总 Token 更接近优化的入口。
+本文记录一次围绕编码 Agent 展开的上下文优化实践：先用 LangSmith 观察执行轨迹，再把减少重复往返、过滤工具返回的约定写进 <code>AGENTS.md</code>，最后通过两轮共 30 次任务运行检验效果。实验提供了正向证据，也暴露了一个容易忽略的问题：<strong>单项规则出现节省迹象，并不意味着叠加后还能获得更多收益。</strong></p>
+<h2 id="上下文的开销会沿着调用链累积">上下文的开销，会沿着调用链累积</h2>
+<p>Agent 通常通过多次模型调用完成任务。每次调用的输入除了当前请求，还可能包含系统指令、工具定义、历史对话，以及此前返回的代码、日志和文档。
+因此，需要区分单次输入与累计输入。假设一个任务发生了 <code>N</code> 次模型调用，第 <code>i</code> 次输入为 <code>Iᵢ</code>，则：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>累计输入 Token = I₁ + I₂ + … + Iₙ
+</span></span><span style="display:flex;"><span>单次峰值输入   = max(I₁, I₂, …, Iₙ)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>累计输入达到百万，并不表示某一次请求装入了百万 Token。相同的历史内容可能在多次调用的输入计量中重复出现。
+可以用一个简化模型理解这种增长：初始上下文为 <code>B</code>，每轮新增 <code>d</code> 个 Token，历史没有被压缩或移除，则：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>第 i 次输入 ≈ B + (i − 1) × d
+</span></span><span style="display:flex;"><span>累计输入    ≈ N × B + d × N × (N − 1) / 2
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>例如，初始上下文为 20,000 Token，每轮新增 3,000 Token，模型调用 10 次。最后一次输入约为 47,000 Token，累计输入却达到 335,000 Token。这只是机制示例；真实任务的每轮增量并不固定，还可能发生上下文压缩。</p>
+<p>这个模型揭示了两个优化机会。减少一次没有必要的模型往返，可能省下一整轮输入；减少一段很早进入上下文的无关输出，则可能同时减少后续多轮输入。若删去 <code>r</code> 个原本会被保留到后续 <code>k</code> 次请求中的 Token，累计输入的节省量近似为 <code>r × k</code>。</p>
+<p>缓存会影响这笔消耗的实际处理方式。Prompt caching 可以复用匹配前缀的计算状态，不能把累计输入理解为每轮都完整重算了全部历史。但缓存命中的内容仍属于逻辑输入，分析时需要同时记录总输入和缓存用量。<a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI Prompt caching</a></p>
+<h2 id="用-langsmith-定位增长发生在哪里">用 LangSmith 定位增长发生在哪里</h2>
+<p>LangSmith 的价值在于把任务展开成可观察的执行链路。沿着 Trace 查看模型调用和工具结果，可以定位首次输入是否过大、哪次读取带来了大量内容，以及哪些探索和验证重复发生。</p>
+<p>分析时，以下指标需要配合使用：</p>
+<table>
+  <thead>
+      <tr>
+          <th>指标</th>
+          <th>主要用途</th>
+          <th>需要注意的口径</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>首轮输入</td>
+          <td>观察启动任务的固定开销</td>
+          <td>包含多种来源，不能全部归因于 AGENTS.md</td>
+      </tr>
+      <tr>
+          <td>峰值输入</td>
+          <td>找到上下文最多的一次请求</td>
+          <td>与整个任务的累计输入不同</td>
+      </tr>
+      <tr>
+          <td>累计输入</td>
+          <td>衡量任务全过程的输入用量</td>
+          <td>包含缓存输入，不能直接换算为费用</td>
+      </tr>
+      <tr>
+          <td>模型调用次数</td>
+          <td>观察模型往返与决策次数</td>
+          <td>一次模型调用可以触发多个工具</td>
+      </tr>
+      <tr>
+          <td>工具返回字节</td>
+          <td>定位大日志、大列表和大段源码</td>
+          <td>字节数不是精确的 Token 数</td>
+      </tr>
+      <tr>
+          <td>模型输出 Token</td>
+          <td>衡量模型生成量</td>
+          <td>不等于最终给用户的回答长度</td>
+      </tr>
+      <tr>
+          <td>任务验证结果</td>
+          <td>检查输出是否满足契约</td>
+          <td>退出码为零不代表语义一定正确</td>
+      </tr>
+  </tbody>
+</table>
+<p>还要避免聚合层级造成的重复计数。LangSmith 的项目统计和 Trace 父节点可能已经汇总了子调用的用量，不能再把这些合计与对应子节点逐项相加。<a href="https://docs.langchain.com/langsmith/cost-tracking">LangSmith Cost tracking</a></p>
+<p>在早期观测中，一个高消耗前端任务的首次探索同时读取了多个完整 Skill、大量文件路径和源码。它把许多检查集中到了少数调用中，却也一次性带回了大量材料。这提示了一个值得验证的假设：<strong>批量执行能够减少往返，但批量返回过多内容也可能增加后续上下文。</strong></p>
+<p>另一次对同一业务项目的历史任务统计，出现了更直观的分歧：模型调用中位数从 16 降到 14，工具输出中位数却从约 64.5 KB 增到 124.8 KB，累计输入中位数从约 1.56M 增到 2.02M。调用次数下降，上下文用量仍然可能上升。</p>
+<p>这组数据来自本地运行记录的聚合，是两个时间段的非配对样本，任务复杂度可能不同。它能够帮助发现问题，不能证明变化由某条规则造成。自然流量适合提出假设；估计规则收益，还需要固定任务做对照。</p>
+<p>采集完整性同样影响结论。一次周度采集中，页面显示 79 条 Trace，虚拟滚动脚本却只取到 37 条。这样的样本不能与页面总计混合，用来计算完整分布、分位数或长会话占比。实际分析应先固定时间范围、时区、根 Trace 口径和完成状态，再核对去重后的记录数量与字段完整性。需要查询完整数据时，可以使用 SDK 的 <code>list_runs</code> 或 API 的 <code>/runs/query</code>。<a href="https://docs.langchain.com/langsmith/export-traces">LangSmith 查询文档</a></p>
+<h2 id="把优化目标写成可执行的行为约定">把优化目标写成可执行的行为约定</h2>
+<p>基于这些观察，优化集中在两个方向：减少没有信息增量的模型往返，以及减少进入模型的无关工具结果。</p>
+<p><code>AGENTS.md</code> 适合表达这类约定。Codex 会在工作开始前读取适用的指令文件，并结合全局和项目层级的规则。做对照实验时，需要确认每次独立运行实际加载的版本；磁盘文件发生变化，本身还不能证明运行中的指令已经变化。<a href="https://learn.chatgpt.com/docs/agent-configuration/agents-md">OpenAI AGENTS.md 文档</a></p>
+<p><strong>减少无效往返，首先要明确什么信息才算足够。</strong></p>
+<p>探索前确定所需证据、主要路线和停止条件，能够减少漫无目的的目录盘点与重复搜索。独立的只读检查可以在一次编排中完成，并分别处理成功和失败；后续操作依赖前一步结果时，仍应顺序执行。异步任务则应减少状态没有变化时的无效轮询。</p>
+<p>这类约定的目的，是让每次调用产生有效信息。验证失败后的诊断、发现新证据后的补查，都可能是必要工作。若把它简化成固定调用上限，模型就可能为了满足数量约束而跳过关键步骤。</p>
+<p><strong>控制工具返回，应发生在结果进入模型之前。</strong></p>
+<p>搜索结果可以先返回命中文件和相关代码段；API 结果可以先选择目标字段；测试结果可以先提供退出状态、失败项与必要诊断。完整材料保留在文件中，需要时再读取对应片段。</p>
+<table>
+  <thead>
+      <tr>
+          <th>场景</th>
+          <th>默认返回内容</th>
+          <th>展开条件</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>代码搜索</td>
+          <td>命中文件、相关代码段</td>
+          <td>需要追踪调用关系或检查完整契约</td>
+      </tr>
+      <tr>
+          <td>日志与测试</td>
+          <td>退出状态、失败项、必要诊断、原件位置</td>
+          <td>当前证据不足以解释失败</td>
+      </tr>
+      <tr>
+          <td>API / JSON</td>
+          <td>目标字段、总数、相关记录</td>
+          <td>决策依赖未返回字段</td>
+      </tr>
+      <tr>
+          <td>浏览器</td>
+          <td>目标区域、相关元素与状态</td>
+          <td>需要确认布局、邻近信息或交互结果</td>
+      </tr>
+      <tr>
+          <td>长文档与 Skill</td>
+          <td>操作入口、相关章节</td>
+          <td>执行需要具体规范、案例或模板</td>
+      </tr>
+  </tbody>
+</table>
+<p>原始结果已经进入模型之后，再让模型总结，无法追回已经发生的输入用量。因此，过滤需要由搜索参数、结构化字段选择或脚本来执行。返回内容还应保留错误状态、遗漏范围和原件位置，使模型能够判断是否需要补读。</p>
+<p>机械截断与有效过滤也有区别。截取前几千字可能保留了大量背景，却丢掉末尾的错误；只保留首尾，也可能遗漏中间的关键警告。控制展示量时，必须同时设计证据保留与补读机制。</p>
+<p>固定指令本身同样需要控制规模。实践中，我们删除了全局规则已经覆盖的重复约定，取消了一项默认强制加载额外 Skill 的要求，并把笼统的“少输出”改成具体的信息选择原则。</p>
+<p>Skill 的渐进式披露有助于进一步分层：初始目录提供名称、描述和路径，选中后才读取完整 <code>SKILL.md</code>。精简目录描述与拆分过大的主文件，影响的是不同阶段。详细规范、案例和模板可以按需读取，但收益取决于任务是否确实少读了无关内容。<a href="https://learn.chatgpt.com/docs/build-skills">OpenAI Skills 文档</a></p>
+<h2 id="两轮实验有收益也有回退">两轮实验：有收益，也有回退</h2>
+<p>观察到浪费之后，最容易做的事是继续增加规则。更可靠的做法是固定任务输入，检查规则是否改变了消耗与结果。</p>
+<p>实验使用本地 <code>codex exec</code>，固定模型为 <code>gpt-5.6-sol</code>、推理强度为 <code>medium</code>，选择安全审查、解析器修复、Schema 迁移三个小型任务。两轮实验分别回答“完整规则版本是否改善”和“两类专项规则各自有什么作用”，它们的基线不同，百分比不能直接比较。</p>
+<p><strong>第一轮：比较完整的新旧规则。</strong></p>
+<p>第一轮对比 2026 年 8 月 18 日与 8 月 28 日的规则快照。两组使用相同任务输入、Git 测试项目、工具范围和验证器，每版每任务运行一次，共六次。</p>
+<table>
+  <thead>
+      <tr>
+          <th>指标</th>
+          <th style="text-align: right">旧版</th>
+          <th style="text-align: right">新版</th>
+          <th style="text-align: right">变化</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>首轮输入合计</td>
+          <td style="text-align: right">54,645</td>
+          <td style="text-align: right">50,583</td>
+          <td style="text-align: right">−7.4%</td>
+      </tr>
+      <tr>
+          <td>累计输入，含缓存</td>
+          <td style="text-align: right">448,003</td>
+          <td style="text-align: right">355,938</td>
+          <td style="text-align: right"><strong>−20.6%</strong></td>
+      </tr>
+      <tr>
+          <td>输入＋输出总 Token</td>
+          <td style="text-align: right">453,790</td>
+          <td style="text-align: right">361,121</td>
+          <td style="text-align: right">−20.4%</td>
+      </tr>
+      <tr>
+          <td>模型调用</td>
+          <td style="text-align: right">22</td>
+          <td style="text-align: right">19</td>
+          <td style="text-align: right">−13.6%</td>
+      </tr>
+      <tr>
+          <td>工具调用</td>
+          <td style="text-align: right">18</td>
+          <td style="text-align: right">19</td>
+          <td style="text-align: right"><strong>＋5.6%</strong></td>
+      </tr>
+      <tr>
+          <td>工具输出字节</td>
+          <td style="text-align: right">16,582</td>
+          <td style="text-align: right">13,683</td>
+          <td style="text-align: right">−17.5%</td>
+      </tr>
+      <tr>
+          <td>自动验证通过</td>
+          <td style="text-align: right">3/3</td>
+          <td style="text-align: right">3/3</td>
+          <td style="text-align: right">保持</td>
+      </tr>
+  </tbody>
+</table>
+<img width="2520" height="1840" alt="01-before-after-input" src="https://github.com/user-attachments/assets/78a7d02d-faff-4966-9ccc-2addcb565c4c" />
+<p><em>图 1：累计输入合计下降 20.6%，但迁移任务增加 33.6%。每版每任务运行一次，图中输入包含缓存。</em></p>
+<p>合计结果表现出明显改善，但工具调用增加了一次。拆开看，安全审查的工具调用从 6 次降到 5 次，解析器修复保持 8 次，迁移任务从 4 次增到 6 次。迁移中增加了探索，并在标准验证入口失败后调用 Python 验证器。</p>
+<p>任务之间的 Token 变化同样不同：安全审查的累计输入下降 32.8%，解析器修复下降 38.9%，迁移反而增加 33.6%。这轮结果支持新版在三个任务的合计上更省，质量结论则限于当时验证器覆盖的契约。</p>
+<p>由于两个版本之间同时存在多项文本变化，无法据此分摊每一条规则的贡献。文件变短、首轮输入减少和执行路径变化，都可能参与了结果。</p>
+<p><strong>第二轮：把模型往返与工具输出规则拆开。</strong></p>
+<p>第二轮从相同的基础规则出发，设置四组：A 不添加两类专项规则，B 仅添加模型往返规则，C 仅添加工具输出规则，D 同时添加两类规则。关闭专项规则不妨碍模型原生使用批处理或摘要，四组也都能使用相同的输出工具。</p>
+<p>每组每任务重复两次，共 24 次运行。运行前冻结了输入、规则和执行顺序，预设合并组的总 Token 至少下降 10%，同时保持结果质量。模型往返因素包含集中探索、停止条件和异步等待等约定，因此实验检验的是规则包，无法细分到某一句话。</p>
+<table>
+  <thead>
+      <tr>
+          <th>组别</th>
+          <th style="text-align: right">模型调用</th>
+          <th style="text-align: right">模型可见工具返回字节</th>
+          <th style="text-align: right">输入＋输出总 Token</th>
+          <th style="text-align: right">相对 A</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>A：基线</td>
+          <td style="text-align: right">44</td>
+          <td style="text-align: right">39,859</td>
+          <td style="text-align: right">868,414</td>
+          <td style="text-align: right">—</td>
+      </tr>
+      <tr>
+          <td>B：仅模型往返规则</td>
+          <td style="text-align: right">41</td>
+          <td style="text-align: right">38,454</td>
+          <td style="text-align: right">817,865</td>
+          <td style="text-align: right"><strong>−5.82%</strong></td>
+      </tr>
+      <tr>
+          <td>C：仅工具输出规则</td>
+          <td style="text-align: right">40</td>
+          <td style="text-align: right">36,383</td>
+          <td style="text-align: right">792,201</td>
+          <td style="text-align: right"><strong>−8.78%</strong></td>
+      </tr>
+      <tr>
+          <td>D：两类同时开启</td>
+          <td style="text-align: right">46</td>
+          <td style="text-align: right">39,514</td>
+          <td style="text-align: right">930,905</td>
+          <td style="text-align: right"><strong>＋7.20%</strong></td>
+      </tr>
+  </tbody>
+</table>
+<p>B、C 分别出现节省迹象，D 却比基线消耗更多。若在已有输出规则的 C 组上再加入模型往返规则，总 Token 增加约 17.51%。这不足以证明普遍的负向交互机制，但已经说明，本轮合并方案没有达到验收标准。</p>
+<p>节省还集中在特定任务中。以下按每个任务两次运行的总 Token 中位数比较：</p>
+<table>
+  <thead>
+      <tr>
+          <th>任务</th>
+          <th style="text-align: right">B 相对 A</th>
+          <th style="text-align: right">C 相对 A</th>
+          <th style="text-align: right">D 相对 A</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Schema 迁移</td>
+          <td style="text-align: right">＋0.75%</td>
+          <td style="text-align: right">＋8.25%</td>
+          <td style="text-align: right">＋26.75%</td>
+      </tr>
+      <tr>
+          <td>安全审查</td>
+          <td style="text-align: right">＋28.16%</td>
+          <td style="text-align: right">＋10.34%</td>
+          <td style="text-align: right">＋20.46%</td>
+      </tr>
+      <tr>
+          <td>解析器修复</td>
+          <td style="text-align: right">−31.37%</td>
+          <td style="text-align: right">−32.15%</td>
+          <td style="text-align: right">−14.25%</td>
+      </tr>
+  </tbody>
+</table>
+<img width="2520" height="1840" alt="02-rule-combinations" src="https://github.com/user-attachments/assets/cc911474-bef0-4d20-bf81-8726557a2728" />
+<p><em>图 2：上半部分比较每组六次运行的输入加输出总量，下半部分比较各任务两次运行的中位数。所有变化均相对本轮 A 组，不与第一轮基线混用。</em></p>
+<p>解析器修复受益较多，迁移与审查没有稳定胜过基线。只有两次重复时，中位数等于平均值，不能把它视为已经充分抵抗随机波动。这组小样本更适合筛选候选方案，尚不足以证明跨任务稳定性或统计显著性。</p>
+<p>规则还带来了可测的固定开销：模型往返规则平均增加约 282 个首轮输入 Token，输出规则增加约 147 个，两类合并增加约 429 个。对于本来就只有少量调用的任务，新增指令未必能通过减少后续操作抵消。执行路径的变化也会影响总量，现有样本无法准确分摊各部分原因。</p>
+<p>两轮实验的工具字节口径也需要分别理解：第一轮主要统计命令完成事件中的输出，第二轮统计模型可见的工具返回记录。它们可以在各自实验内比较，不能跨轮直接比较绝对量，更不能将字节数视为工具内容的精确 Token 归因。</p>
+<h2 id="判断优化效果还要检查执行质量与缓存">判断优化效果，还要检查执行、质量与缓存</h2>
+<p><strong>工具具备裁剪能力，不等于实验测到了裁剪收益。</strong></p>
+<p>第二轮提供了一个输出包装脚本：成功命令的长输出保存完整原件，默认返回最多 6,000 个原始字节的首尾内容，并附上退出码、日志位置和省略量；失败命令保留完整诊断，传播失败退出码。</p>
+<p>但在 24 次任务中，脚本只被实际调用两次，原始输出分别为 123 字节和 816 字节，省略量都为零。实验没有触发实际截取，因此 C 组的 8.78% 降幅不能归因于机械裁剪。它反映的是输出指令对命令选择、读取范围和执行路径的影响。要验证裁剪本身，需要选择确实产生长输出的任务。</p>
+<p><strong>自动验证通过，也不等于所有建议都正确。</strong></p>
+<p>24 次运行全部完成并通过自动验证。进一步复核八份安全审查结果时，发现三份修复示例仍可能产生缓存键碰撞。它们使用租户 ID 和用户 ID 拼接字符串，却没有处理分隔符歧义。下面的反例可以直接复现：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>left <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#a5d6ff">&#34;a:user:b&#34;</span>, <span style="color:#a5d6ff">&#34;c&#34;</span>)
+</span></span><span style="display:flex;"><span>right <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#a5d6ff">&#34;a&#34;</span>, <span style="color:#a5d6ff">&#34;b:user:c&#34;</span>)
+</span></span><span style="display:flex;"><span>keys <span style="color:#ff7b72;font-weight:bold">=</span> [<span style="color:#79c0ff">f</span><span style="color:#a5d6ff">&#34;tenant:</span><span style="color:#a5d6ff">{</span>tenant<span style="color:#a5d6ff">}</span><span style="color:#a5d6ff">:user:</span><span style="color:#a5d6ff">{</span>user<span style="color:#a5d6ff">}</span><span style="color:#a5d6ff">&#34;</span> <span style="color:#ff7b72">for</span> tenant, user <span style="color:#ff7b72;font-weight:bold">in</span> (left, right)]
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">assert</span> left <span style="color:#ff7b72;font-weight:bold">!=</span> right <span style="color:#ff7b72;font-weight:bold">and</span> keys[<span style="color:#a5d6ff">0</span>] <span style="color:#ff7b72;font-weight:bold">==</span> keys[<span style="color:#a5d6ff">1</span>]
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>两组不同输入都得到 <code>tenant:a:user:b:user:c</code>。在标识符允许普通字符串的契约下，直接拼接分隔符无法保证无歧义编码。</p>
+<p>三个问题分别出现在 A、C、D，不能归因于某项优化。它们暴露的是验证覆盖的缺口：审查识别了正确的缺陷，具体修复建议却没有完全满足边界条件。如果要求所有建议都正确，这轮实验就没有通过完整的“无损”门槛。</p>
+<p><strong>总 Token 下降，也不能直接换算成费用下降。</strong></p>
+<p>第二轮的非缓存输入如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th>组别</th>
+          <th style="text-align: right">非缓存输入 Token</th>
+          <th style="text-align: right">相对 A</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>A</td>
+          <td style="text-align: right">93,360</td>
+          <td style="text-align: right">—</td>
+      </tr>
+      <tr>
+          <td>B</td>
+          <td style="text-align: right">101,095</td>
+          <td style="text-align: right">＋8.29%</td>
+      </tr>
+      <tr>
+          <td>C</td>
+          <td style="text-align: right">105,103</td>
+          <td style="text-align: right">＋12.58%</td>
+      </tr>
+      <tr>
+          <td>D</td>
+          <td style="text-align: right">106,585</td>
+          <td style="text-align: right">＋14.17%</td>
+      </tr>
+  </tbody>
+</table>
+<img width="2520" height="1840" alt="03-total-vs-uncached" src="https://github.com/user-attachments/assets/9f224d36-c36b-4d64-b408-eab4a5132283" />
+<p><em>图 3：同一组实验在两种计量口径下呈现不同方向。缓存条件未锁定，用量变化不能直接解释为费用变化。</em></p>
+<p>B、C 的总 Token 下降，非缓存输入却增加了。实验没有锁定缓存状态，也没有计算价格加权的实际费用，因此这里只能报告用量变化。规则修改和上下文压缩都可能改变缓存前缀，实际费用需要结合适用的缓存读写、普通输入和输出计价另算。<a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI 缓存机制</a></p>
+<h2 id="让上下文优化成为可复查的工程实践">让上下文优化成为可复查的工程实践</h2>
+<p>这次实验最有价值的产出，是一套可以继续使用的方法：</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>观察执行轨迹 → 定位重复与大输出 → 提出具体假设
+</span></span><span style="display:flex;"><span>→ 固定任务做对照 → 复核结果质量 → 决定适用范围
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>首先，选择一个真实且可复现的问题。与其泛泛要求“少用 Token”，更适合验证“首次探索返回了整份长日志，但后续只使用其中几类错误”。预先定义必须保留的事实，才能判断减少返回内容之后是否仍有足够证据。</p>
+<p>其次，把优化落实到工具返回入口。优先使用已有的搜索范围、JSON 字段选择、验证器摘要和按需文件读取。摘要要保留错误状态、遗漏范围与原件位置，并允许补读。必要验证和决定结果的证据，不能为了让数字更好看而省略。</p>
+<p>随后，固定任务输入、模型、推理强度、工具范围、规则快照和验证器，再比较候选方案。接受门槛应在运行前确定；除了总体用量，还要观察单任务回退、补读次数、失败重试和耗时。预算允许时增加重复与任务类型，并记录执行顺序和缓存条件。</p>
+<p>计量也需要能够对账。本次采集先对重复 usage 事件去重，再汇总每次调用用量，与最终累计值核对。缓存输入包含在总输入中，推理 Token 已包含在本实验的输出口径中，不能额外重复相加。没有真实模型调用的基础设施失败单独报告；已经发生调用的失败和重试，则保留其实际消耗。</p>
+<p>对于下一轮实验，最值得选择的是确实产生长日志或大 JSON 的任务。只有确认过滤实际发生、关键事实仍可获得，并把补读带来的消耗也计入，才能判断工具输出压缩是否带来了净收益。</p>
+<p>一个合理的优化目标，是让 Agent 用更少的无关信息和重复决策，完成同样可靠的工作。LangSmith 提供观察依据，<code>AGENTS.md</code> 表达行为约定，工具控制返回边界，而评测决定这些改变能否被采用。</p>
+<hr>
+<p>实验说明：本文基于 2026 年 8—9 月的自有测试。两轮对照共 30 次本地任务运行，主要用量已与原始记录核对；LangSmith 用于执行轨迹观察，实验统计来自本地运行记录。三个小型任务及有限重复次数构成了结论的适用范围，不代表其他模型、任务或缓存条件下的保证。</p>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>
