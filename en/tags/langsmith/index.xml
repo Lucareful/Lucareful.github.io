@@ -6,7 +6,7 @@
     <description>Recent content in LangSmith on Luenci</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 05 Sep 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 06 Sep 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://luenci.com/en/tags/langsmith/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>AI协同 | 从 LangSmith 到 AGENTS.md：一次 Agent 上下文优化实践</title>
@@ -14,12 +14,125 @@
       <pubDate>Sat, 05 Sep 2026 00:00:00 +0000</pubDate>
       <guid>https://luenci.com/en/posts/langsmith-agents-md-context-optimization/</guid>
       <description>基于 LangSmith 执行轨迹与 30 次受控任务运行，分析模型往返、工具输出和上下文累积的 Token 开销，验证 AGENTS.md 优化规则的收益与适用边界。</description>
-      <content:encoded><![CDATA[<p>一次编码任务消耗了上百万 Token，最后却只交付了几十行代码。对于使用 Agent 的开发者来说，这种情况并不陌生：模型不断读取文件、调用工具、执行验证，任务完成了，上下文也随之膨胀。
-要理解这笔消耗，需要沿着执行过程往下看。一次任务包含多少次模型调用？哪些工具结果进入了上下文？哪些信息一直被保留，却没有参与后续决策？这些问题，比单独查看总 Token 更接近优化的入口。
-本文记录一次围绕编码 Agent 展开的上下文优化实践：先用 LangSmith 观察执行轨迹，再把减少重复往返、过滤工具返回的约定写进 <code>AGENTS.md</code>，最后通过两轮共 30 次任务运行检验效果。实验提供了正向证据，也暴露了一个容易忽略的问题：<strong>单项规则出现节省迹象，并不意味着叠加后还能获得更多收益。</strong></p>
+      <content:encoded><![CDATA[<h1 id="用-langsmith-优化-agent-上下文从模型往返到工具输出">用 LangSmith 优化 Agent 上下文：从模型往返到工具输出</h1>
+<h2 id="太长不读">太长不读</h2>
+<p>下面先给出我当前使用的 <code>AGENTS.md</code>，方便直接参考。本机路径已脱敏；后文再展开上下文优化的思路与实验结果。</p>
+<div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">10
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">11
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">12
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">13
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">14
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">15
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">16
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">17
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">18
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">19
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">20
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">21
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">22
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">23
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">24
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">25
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">26
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">27
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">28
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">29
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">30
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">31
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">32
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">33
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">34
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">35
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">36
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">37
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">38
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">39
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">40
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">41
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">42
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">43
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">44
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">45
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">46
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">47
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">48
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">49
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">50
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">51
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">52
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"># Codex Global Working Agreements
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff;font-weight:bold"></span>
+</span></span><span style="display:flex;"><span>This file defines durable global guidance for <span style="color:#a5d6ff">`~/.codex`</span>; repo-local <span style="color:#a5d6ff">`AGENTS.md`</span> files may add narrower rules and take precedence within their scope.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## Configuration Boundaries
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> <span style="color:#a5d6ff">`AGENTS.md`</span>: durable cross-project agreements.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> <span style="color:#a5d6ff">`config.toml`</span>: model, sandbox, MCP, plugin, feature, and agent settings.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> <span style="color:#a5d6ff">`skills/`</span>: reusable workflows; <span style="color:#a5d6ff">`hooks.json`</span>: deterministic lifecycle checks; <span style="color:#a5d6ff">`automations/`</span>: scheduled work.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> When a task depends on runtime availability, inspect only the relevant live source and return a narrowly filtered result. Do not dump full inventories or infer availability from caches, history, or file presence alone.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Keep fast-changing inventory out of this file. Reduce permissions for untrusted projects in project-specific config.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## Code Simplicity and Abstraction
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Prefer direct calls and inline code. Do not introduce functions, methods, classes, interfaces, adapters, or services that only forward arguments or return an underlying result unchanged.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> A wrapper is justified only when it owns meaningful behavior or a real boundary, such as input validation, authorization, error translation, retry or timeout policy, transactions, observability, caching, compatibility normalization, or multiple implementations.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Naming, visual tidiness, speculative reuse, and future extensibility alone are not sufficient reasons for an abstraction.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Before adding custom code, reuse an existing project helper when appropriate; otherwise prefer the standard library, native platform features, or an already-installed dependency.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Centralize duplicated non-trivial policy once. Keep one-off calls inline instead of creating pass-through layers.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> When fixing bugs, prefer the shared root-cause location used by all callers. Preserve public APIs and observable behavior unless the task explicitly changes them.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## Context-Efficient Tool Orchestration
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> For tool-heavy work, decide the primary route, one fallback, required evidence, and stop condition. Do not narrate them when they are obvious.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Use one bounded discovery pass: batch distinct independent checks, reduce results at the boundary, and repeat inventories, searches, or validations only when new evidence changes the question. Use direct calls for judgment, approvals, citations, debugging, writes, or native artifacts.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Stop when the acceptance evidence is complete. After one failed attempt on a route, use its single fallback; never revisit completed or abandoned routes.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> If two consecutive calls add no material evidence, stop, name the exact evidence gap, and replan. Do not skip required implementation or validation to reduce calls.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Before exposing tool results to the model, return the smallest sufficient slice: prefer counts, matched paths, relevant line ranges, and structured summaries. Expand only when required evidence is still missing. Validate savings with representative same-task A/B tests.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## Long-Running Asynchronous Work
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Empty <span style="color:#a5d6ff">`write_stdin`</span> polls MUST use <span style="color:#a5d6ff">`yield_time_ms &gt;= 180000`</span>; prefer <span style="color:#a5d6ff">`300000`</span> when intermediate output is not needed.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> <span style="color:#a5d6ff">`functions.wait`</span> MUST use <span style="color:#a5d6ff">`yield_time_ms &gt;= 180000`</span>.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> <span style="color:#a5d6ff">`functions.exec`</span> MUST set its outer <span style="color:#a5d6ff">`@exec yield_time_ms`</span> at least 30000 ms longer than the longest nested tool wait, so the outer code cell does not yield first.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Do not apply the long wait to non-empty <span style="color:#a5d6ff">`write_stdin`</span> calls that send interactive input.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> These tools return early when the process or cell completes. Do not wake the model merely to report that work is still running.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## Tests and Documentation
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Before finishing a change, run the smallest relevant non-destructive validation and report what ran, what passed, and what remains unverified.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Add tests for realistic observable regressions, non-trivial invariants or boundaries, and concrete bugs. Code changing or coverage increasing is not sufficient justification by itself.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Prefer existing coverage at the behavior boundary. Avoid tests that mirror literals, mappings, obvious control flow, implementation details, or removed features unless absence is itself a contract. For concurrency, prefer deterministic coordination or controlled scheduling over sleeps when practical.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Comments should explain non-obvious rationale, invariants, safety constraints, or external quirks rather than restating code. Public API documentation should describe observable contracts, not incidental implementation details.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#79c0ff">## Security and Evidence Discipline
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Validate inputs at trust boundaries.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Never hardcode secrets; use environment variables or OAuth-backed config.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> Review <span style="color:#a5d6ff">`git diff`</span> or direct file diffs before pushing or publishing changes.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> State observed facts separately from inferences or recommendations.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> For code facts, cite <span style="color:#a5d6ff">`path:line`</span>; for external facts, cite official or primary sources.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> If evidence is incomplete, say what is missing instead of overstating confidence.
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>一次编码任务消耗了上百万 Token，最后却只交付了几十行代码。对于使用 Agent 的开发者来说，这种情况并不陌生：模型不断读取文件、调用工具、执行验证，任务完成了，上下文也随之膨胀。</p>
+<p>要理解这笔消耗，需要沿着执行过程往下看。一次任务包含多少次模型调用？哪些工具结果进入了上下文？哪些信息一直被保留，却没有参与后续决策？这些问题，比单独查看总 Token 更接近优化的入口。</p>
+<p>本文记录一次围绕编码 Agent 展开的上下文优化实践：先用 LangSmith 观察执行轨迹，再把减少重复往返、过滤工具返回的约定写进 <code>AGENTS.md</code>，最后通过两轮共 30 次任务运行检验效果。实验提供了正向证据，也暴露了一个容易忽略的问题：<strong>单项规则出现节省迹象，并不意味着叠加后还能获得更多收益。</strong></p>
 <h2 id="上下文的开销会沿着调用链累积">上下文的开销，会沿着调用链累积</h2>
-<p>Agent 通常通过多次模型调用完成任务。每次调用的输入除了当前请求，还可能包含系统指令、工具定义、历史对话，以及此前返回的代码、日志和文档。
-因此，需要区分单次输入与累计输入。假设一个任务发生了 <code>N</code> 次模型调用，第 <code>i</code> 次输入为 <code>Iᵢ</code>，则：</p>
+<p>Agent 通常通过多次模型调用完成任务。每次调用的输入除了当前请求，还可能包含系统指令、工具定义、历史对话，以及此前返回的代码、日志和文档。</p>
+<p>因此，需要区分单次输入与累计输入。假设一个任务发生了 <code>N</code> 次模型调用，第 <code>i</code> 次输入为 <code>Iᵢ</code>，则：</p>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
 <table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
 <pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
@@ -30,8 +143,8 @@
 </span></span><span style="display:flex;"><span>单次峰值输入   = max(I₁, I₂, …, Iₙ)
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>累计输入达到百万，并不表示某一次请求装入了百万 Token。相同的历史内容可能在多次调用的输入计量中重复出现。
-可以用一个简化模型理解这种增长：初始上下文为 <code>B</code>，每轮新增 <code>d</code> 个 Token，历史没有被压缩或移除，则：</p>
+</div><p>累计输入达到百万，并不表示某一次请求装入了百万 Token。相同的历史内容可能在多次调用的输入计量中重复出现。</p>
+<p>可以用一个简化模型理解这种增长：初始上下文为 <code>B</code>，每轮新增 <code>d</code> 个 Token，历史没有被压缩或移除，则：</p>
 <div class="highlight"><div style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
 <table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
 <pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#737679">1
@@ -206,7 +319,7 @@
       </tr>
   </tbody>
 </table>
-<img width="2520" height="1840" alt="01-before-after-input" src="https://github.com/user-attachments/assets/78a7d02d-faff-4966-9ccc-2addcb565c4c" />
+<p><img alt="第一轮累计输入对比：旧版合计 448003 Token，新版 355938 Token；迁移任务增加，审查与解析器修复下降" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260906102710292.png"></p>
 <p><em>图 1：累计输入合计下降 20.6%，但迁移任务增加 33.6%。每版每任务运行一次，图中输入包含缓存。</em></p>
 <p>合计结果表现出明显改善，但工具调用增加了一次。拆开看，安全审查的工具调用从 6 次降到 5 次，解析器修复保持 8 次，迁移任务从 4 次增到 6 次。迁移中增加了探索，并在标准验证入口失败后调用 Python 验证器。</p>
 <p>任务之间的 Token 变化同样不同：安全审查的累计输入下降 32.8%，解析器修复下降 38.9%，迁移反而增加 33.6%。这轮结果支持新版在三个任务的合计上更省，质量结论则限于当时验证器覆盖的契约。</p>
@@ -287,7 +400,7 @@
       </tr>
   </tbody>
 </table>
-<img width="2520" height="1840" alt="02-rule-combinations" src="https://github.com/user-attachments/assets/cc911474-bef0-4d20-bf81-8726557a2728" />
+<p><img alt="第二轮规则组合对比：B、C 组总 Token 分别下降 5.82% 和 8.78%，D 组增加 7.20%；节省主要集中于解析器修复" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260906103638040.png"></p>
 <p><em>图 2：上半部分比较每组六次运行的输入加输出总量，下半部分比较各任务两次运行的中位数。所有变化均相对本轮 A 组，不与第一轮基线混用。</em></p>
 <p>解析器修复受益较多，迁移与审查没有稳定胜过基线。只有两次重复时，中位数等于平均值，不能把它视为已经充分抵抗随机波动。这组小样本更适合筛选候选方案，尚不足以证明跨任务稳定性或统计显著性。</p>
 <p>规则还带来了可测的固定开销：模型往返规则平均增加约 282 个首轮输入 Token，输出规则增加约 147 个，两类合并增加约 429 个。对于本来就只有少量调用的任务，新增指令未必能通过减少后续操作抵消。执行路径的变化也会影响总量，现有样本无法准确分摊各部分原因。</p>
@@ -347,7 +460,7 @@
       </tr>
   </tbody>
 </table>
-<img width="2520" height="1840" alt="03-total-vs-uncached" src="https://github.com/user-attachments/assets/9f224d36-c36b-4d64-b408-eab4a5132283" />
+<p><img alt="总 Token 与非缓存输入的变化对比：B、C 总量下降而非缓存输入增加，D 两项均增加" loading="lazy" src="https://cdn.jsdelivr.net/gh/Lucareful/RepoImg/blog/20260906103640394.png"></p>
 <p><em>图 3：同一组实验在两种计量口径下呈现不同方向。缓存条件未锁定，用量变化不能直接解释为费用变化。</em></p>
 <p>B、C 的总 Token 下降，非缓存输入却增加了。实验没有锁定缓存状态，也没有计算价格加权的实际费用，因此这里只能报告用量变化。规则修改和上下文压缩都可能改变缓存前缀，实际费用需要结合适用的缓存读写、普通输入和输出计价另算。<a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI 缓存机制</a></p>
 <h2 id="让上下文优化成为可复查的工程实践">让上下文优化成为可复查的工程实践</h2>
